@@ -2347,7 +2347,7 @@
     "FEAT_WAITLIST_TITLE": "Llista d'espera",
     "FEAT_WAITLIST_DESC": "Els clients s'apunten amb nom, comensals i telèfon quan no hi ha taula — l'equip avisa i asseu des de Reserves.",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "Comandes a domicili en línia amb adreça i pagament; el personal crea entregues i els repartidors les compleixen.",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "Comandes a domicili en línia amb adreça, pagament i tarifes per zona; el personal i els repartidors les compleixen, i els clients segueixen l'estat.",
     "FEAT_PAYMENTS_TITLE": "Pagaments en línia",
     "FEAT_PAYMENTS_DESC": "Pagament amb targeta a taula o a la reserva via Stripe i Revolut.",
     "FEAT_ORDER_COMMENTS_TITLE": "Comentaris de la comanda",

@@ -2388,7 +2388,7 @@
     "FEAT_WAITLIST_TITLE": "Warteliste",
     "FEAT_WAITLIST_DESC": "Gäste tragen sich mit Name, Personenanzahl und Telefon ein, wenn kein Tisch frei ist — das Team benachrichtigt und setzt aus den Reservierungen.",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "Gäste bestellen Lieferung online mit Adresse und Zahlung; das Team legt Lieferaufträge an, Kuriere liefern aus.",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "Gäste bestellen Lieferung online mit Adresse, Zahlung und gebietsbasierten Gebühren; Team und Kuriere erfüllen, Kunden verfolgen den Status.",
     "FEAT_PAYMENTS_TITLE": "Online-Zahlungen",
     "FEAT_PAYMENTS_DESC": "Kartenzahlung am Tisch oder bei Buchung via Stripe und Revolut.",
     "FEAT_ORDER_COMMENTS_TITLE": "Bestellkommentare",

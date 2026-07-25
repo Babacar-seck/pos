@@ -2330,7 +2330,7 @@
     "FEAT_WAITLIST_TITLE": "Liste d'attente",
     "FEAT_WAITLIST_DESC": "Les clients s'inscrivent avec nom, taille du groupe et téléphone quand aucune table n'est libre — l'équipe notifie et place depuis Réservations.",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "Commande en livraison en ligne avec adresse et paiement ; le personnel crée les livraisons, les coursiers les assurent.",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "Livraison en ligne avec adresse, paiement et frais par zone ; le personnel et les coursiers assurent, les clients suivent le statut.",
     "FEAT_PAYMENTS_TITLE": "Paiements en ligne",
     "FEAT_PAYMENTS_DESC": "Paiement par carte à table ou à la réservation via Stripe et Revolut.",
     "FEAT_ORDER_COMMENTS_TITLE": "Commentaires de commande",

@@ -2288,7 +2288,7 @@
     "FEAT_WAITLIST_TITLE": "प्रतीक्षा सूची",
     "FEAT_WAITLIST_DESC": "टेबल न होने पर मेहमान नाम, समूह आकार और फ़ोन से कतार में जुड़ते हैं — स्टाफ़ आरक्षण से सूचित और बैठाता है।",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "मेहमान पते और भुगतान के साथ ऑनलाइन डिलीवरी ऑर्डर करते हैं; स्टाफ़ बनाता है, कूरियर पूरा करते हैं।",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "मेहमान पते, भुगतान और ज़ोन-आधारित शुल्क के साथ ऑनलाइन डिलीवरी ऑर्डर करते हैं; स्टाफ़ और कूरियर पूरा करते हैं, ग्राहक स्थिति ट्रैक करते हैं।",
     "FEAT_PAYMENTS_TITLE": "Online payments",
     "FEAT_PAYMENTS_DESC": "Accept card payments at the table or when booking via Stripe and Revolut Checkout.",
     "FEAT_ORDER_COMMENTS_TITLE": "ऑर्डर टिप्पणियाँ",

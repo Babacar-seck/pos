@@ -2465,7 +2465,7 @@
     "FEAT_WAITLIST_TITLE": "Lista de espera",
     "FEAT_WAITLIST_DESC": "Los clientes se apuntan con nombre, comensales y teléfono cuando no hay mesa — el equipo avisa y sienta desde Reservas.",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "Pedidos a domicilio en línea con dirección y pago; el personal crea entregas y los repartidores las cumplen.",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "Pedidos a domicilio en línea con dirección, pago y tarifas por zona; el personal y los repartidores los cumplen, y los clientes siguen el estado.",
     "FEAT_PAYMENTS_TITLE": "Pagos online",
     "FEAT_PAYMENTS_DESC": "Pagos con tarjeta en mesa o al reservar vía Stripe y Revolut.",
     "FEAT_ORDER_COMMENTS_TITLE": "Comentarios del pedido",

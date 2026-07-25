@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.40] - 2026-07-25
+
+### Changed
+
+- **Features page Delivery card:** Satisfecho Delivery marketing copy now mentions zone-based fees and customer order tracking across all shipped locales, matching the shipped Delivery product.
+
 ## [2.1.39] - 2026-07-25
 
 ### Added
