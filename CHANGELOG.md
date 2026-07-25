@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Landing footer git hash:** Regenerated `commit-hash.ts` so the landing footer short hash matches current `HEAD` while semver stays aligned with `package.json` (strict `test:landing-version` no longer needs a skip workaround).
+
 ## [2.1.48] - 2026-07-25
 
 ### Added
