@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.52",
+  "version": "2.1.53",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -19,6 +19,7 @@
     "test:tables-canvas-open-orders": "node scripts/test-tables-canvas-open-orders.mjs",
     "test:landing-version": "node scripts/test-landing-version.mjs",
     "test:landing-provider-links": "node scripts/test-landing-provider-links.mjs",
+    "test:features": "node scripts/test-features.mjs",
     "test:provider-register": "node scripts/test-provider-register.mjs",
     "test:provider-add-product": "node scripts/test-provider-add-product.mjs",
     "test:catalog": "node scripts/test-catalog.mjs",

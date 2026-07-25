@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.53] - 2026-07-26
+
+### Added
+
+- **Public features page Puppeteer smoke:** `npm run test:features` covers `/features` (hero title, category sections, home/register nav), indexed in `docs/testing.md`.
+
 ### Changed
 
 - **Agent task queue:** Archived the superseded demo-tables repair NEW (duplicate of #305) under `agents2/tasks/done/`, and retargeted the preflight skip-owner wording so it no longer points at that dead task.

@@ -260,6 +260,15 @@ npm run test:landing-provider-links --prefix front
 
 - Asserts footer has provider login and “Register as provider” links, a **Contact us** link with `mailto:hello@satisfecho.de`, and `data-testid="landing-contact-us"`; clicks register and checks navigation to `/provider/register` and presence of registration form.
 
+**Public features page (`/features`):**
+
+```bash
+npm run test:features --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-features.mjs
+```
+
+- No login. Opens `/features`, asserts `.features-page` shell, translated hero title (not a raw `FEATURES_PAGE.*` key), at least one `.features-category`, and brand link to `/` or a register CTA. Fails on pageerror or bad HTTP for the document.
+
 ---
 
 ### 5. Provider section
@@ -471,6 +480,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:tables-canvas-open-orders` | `scripts/test-tables-canvas-open-orders.mjs` (Floor plan: select table → staff orders shortcut link with `focusOrder` / `focusTableId`; .env demo user) |
 | `test:tables-waiter-assignment` | `scripts/test-tables-waiter-assignment.mjs` (Waiter: Table view has read-only assignment cells, no `select.waiter-select-inline`; requires `WAITER_LOGIN_EMAIL` / `WAITER_LOGIN_PASSWORD`, else skips with exit 0) |
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
+| `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
