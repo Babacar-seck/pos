@@ -118,7 +118,7 @@ If the demo account **ralf@roeber.de** no longer works on amvara9, it was almost
 
 ## Daily demo data reset (tenant 1)
 
-Demo restaurant **tenant 1** accumulates orders and reservations from sales demos. To keep Informes and demo flows fresh, reset and re-seed **orders + reservations only** (tables, products, and users are untouched) with the idempotent wrapper:
+Demo restaurant **tenant 1** accumulates orders, reservations, and waiting-list entries from sales demos. To keep Informes and demo flows fresh, reset and re-seed **orders** (including Satisfecho Delivery samples), **reservations**, and **waiting-list entries** for tenant 1 only (tables, products, and users are untouched) with the idempotent wrapper:
 
 ```bash
 cd /development/pos
