@@ -205,6 +205,7 @@ npm run test:landing-version --prefix front
 ```
 
 - Asserts `[data-testid="landing-version"]` or `.landing-version-bar` is visible and contains a version-like string (e.g. `1.0.1`). Skips if redirected to dashboard/login.
+- After a **`front/package.json`** version bump, run **`node front/scripts/get-commit-hash.js`** and commit **`commit-hash.ts`** with the bump so the footer semver matches (see committer / commit-changelog-version rule).
 - When `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` are set (e.g. from repo `.env`), also logs in with `TENANT_ID` (default `1`), then from `/dashboard` clicks each visible sidebar `a.nav-link` and each inventory `a.nav-sublink` (opens the inventory section when needed). Fullscreen routes (`/kitchen`, `/bar`) have no sidebar, so the test returns to `/dashboard` before each link. Without credentials, only the landing check runs (CI-friendly).
 - Set `LANDING_VERSION_ONLY=1` to force only the landing/version step even when `.env` defines demo login vars (e.g. `BASE_URL=https://satisfecho.de` smoke without a **401** from wrong credentials).
 - For **non-local** `BASE_URL`, the script runs a short HTTP reachability probe to `/` before Puppeteer so firewall/sandbox issues fail fast with a clear hint. Set `LANDING_SMOKE_NO_REACHABILITY_PROBE=1` to skip that probe. Use `SKIP_LANDING_PACKAGE_VERSION_CHECK=1` when the deployed footer semver may differ from this checkout’s `front/package.json`.
@@ -435,9 +436,24 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 - **Seed tables:** `docker compose exec back python -m app.seeds.seed_demo_tables` (idempotent).
 - **Seed demo products:** `docker compose exec back python -m app.seeds.seed_demo_products` (idempotent).
 - **Link demo products to catalog (images on /products):** `docker compose exec back python -m app.seeds.link_demo_products_to_catalog` — links products without images to provider products that have images; deploy runs this after catalog imports.
-- **Demo orders (Reports):** `docker compose exec back python -m app.seeds.seed_demo_orders` — seeds tenant 1 with paid and active orders over ±90 days; idempotent (skips if orders exist). Bootstrap runs this on virgin deploy. Optional: `./run_seeds.sh --demo-orders` from `back/`.
+- **Demo orders (Reports + Delivery):** `docker compose exec back python -m app.seeds.seed_demo_orders` — seeds tenant 1 with paid/active **table** orders over ±90 days plus a small Satisfecho Delivery mix; idempotent (skips if orders exist). Bootstrap / `reset_demo_data` run this. Optional: `./run_seeds.sh --demo-orders` from `back/`.
+- **Demo waiting list:** `docker compose exec back python -m app.seeds.seed_demo_waiting_list` — seeds tenant 1 with a few `waiting` + one `notified` entry for staff Waitlist / public `/waitlist/1`; idempotent (skips if entries exist). Bootstrap / `reset_demo_data` run this.
 
 See `AGENTS.md` for full seed and deploy notes.
+
+### i18n locale leaf parity (`en.json` vs siblings)
+
+When adding ngx-translate keys, every shipped locale under `front/public/i18n/*.json` should gain the same **leaf** keys as `en.json`. Run this standalone check (Python stdlib only; no npm packages):
+
+```bash
+python3 scripts/check-i18n-locale-parity.py
+# Sample more missing paths: python3 scripts/check-i18n-locale-parity.py --sample 20
+# Report drift without failing (optional CI / loop soft mode):
+#   I18N_PARITY_WARN_ONLY=1 python3 scripts/check-i18n-locale-parity.py
+#   # or: python3 scripts/check-i18n-locale-parity.py --warn-only
+```
+
+Exit **0** when all locales match; exit **1** when any locale is missing keys present in `en.json` (prints per-locale counts and a short sample of missing dotted paths). Extra keys in a locale (not in `en.json`) are reported as `extra=` but do not fail the check. Not wired into deploy; `go-ahead-loop.sh` may run it in warn-only mode when `I18N_PARITY_CHECK=1`.
 
 ---
 
@@ -470,6 +486,7 @@ GO_AHEAD_LOOP=1 ./scripts/go-ahead-loop.sh
 | `BASE_URL` | `http://127.0.0.1:4202` | Landing smoke (`test:landing-version`). |
 | `GO_AHEAD_LOG` | `.go-ahead-loop.log` (repo root) | Append log (gitignored). |
 | `SKIP_TESTS` | unset | Set to `1` to skip pytest and landing test. |
+| `I18N_PARITY_CHECK` | unset | Set to `1` to also run **`scripts/check-i18n-locale-parity.py`** in warn-only mode (logs drift; does not fail the loop). |
 | `COMPOSE_FILES` | `-f docker-compose.yml -f docker-compose.dev.yml` | Passed to **`docker compose`**. |
 
 **One short dry cycle** (pull + log only):

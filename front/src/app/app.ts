@@ -2,6 +2,7 @@ import { Component, signal, OnInit, OnDestroy, inject } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import { LanguageService } from './services/language.service';
+import { SeoService } from './services/seo.service';
 import { environment } from '../environments/environment';
 
 @Component({
@@ -17,8 +18,11 @@ export class App implements OnInit, OnDestroy {
 
   /** Inject so LanguageService initializes at bootstrap and applies browser default language everywhere from first load. */
   private languageService = inject(LanguageService);
+  private seo = inject(SeoService);
 
   ngOnInit() {
+    this.seo.start();
+
     // Set initial favicon based on current route
     this.updateFavicon(this.router.url);
 
@@ -33,6 +37,7 @@ export class App implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.seo.stop();
     this.routerSub?.unsubscribe();
   }
 

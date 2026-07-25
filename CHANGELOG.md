@@ -8,9 +8,59 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.33] - 2026-07-25
+
 ### Added
 
-- **Unpaid public delivery cleanup cron:** Documented amvara9 host cron (hourly UTC) and added `scripts/cleanup-unpaid-public-delivery-on-server.sh` so abandoned unpaid public Satisfecho Delivery checkouts are cleaned on all tenants (separate from tenant-1 demo reset).
+- **Public marketing SEO:** Per-route titles, meta descriptions, canonical and Open Graph/Twitter tags for public pages; `robots.txt`, `sitemap.xml`, and share image; nginx serves crawl files as static assets (not the SPA shell); staff/auth routes are `noindex` (#307).
+
+## [2.1.32] - 2026-07-23
+
+### Added
+
+- **Satisfecho Delivery zones, fees, and live tracking:** Restaurants can set a delivery fee, radius, and/or allowed postal codes; public checkout validates the address and includes the fee in payment totals; customers get a token-gated track page with live statuses (received → preparing → out for delivery → delivered) without maps (#306).
+
+### Fixed
+
+- **Public order token verify:** HMAC digests that contain `.` no longer fail intermittent token checks on public delivery flows.
+
+## [2.1.31] - 2026-07-23
+
+### Added
+
+- **Demo waiting-list entries:** Tenant 1 seed / `reset_demo_data` now clears and reseeds a small Waitlist queue (waiting + notified) so staff Waitlist and public `/waitlist/1` stay populated after daily demo reset.
+
+## [2.1.30] - 2026-07-23
+
+### Added
+
+- **Demo Satisfecho Delivery orders:** Tenant 1 seed / `reset_demo_data` now creates a small mix of paid and active Satisfecho Delivery samples (address/phone, optional courier when one exists) so Delivery, kitchen, and courier demos stay populated after daily reset.
+
+### Changed
+
+- **Committer version bumps:** Regenerating and staging `commit-hash.ts` via `get-commit-hash.js` is now required whenever `front/package.json` is bumped, so the landing footer and landing-version smoke stay aligned with the new semver.
+
+## [2.1.29] - 2026-07-23
+
+### Added
+
+- **i18n locale leaf-parity check:** `scripts/check-i18n-locale-parity.py` compares every shipped UI locale to `en.json` and fails when sibling locales miss keys; documented in `docs/testing.md`, referenced from the ngx-translate Cursor rule, and optionally runnable warn-only from `go-ahead-loop.sh` via `I18N_PARITY_CHECK=1`.
+
+### Changed
+
+- **Public `/features` page:** Added July capability cards — waiting list, Satisfecho Delivery, order comments, restaurant groups, guided signup, SaaS trial/paywall, and platform oversight — with localized copy in all shipped locales.
+- **Enhancement reviewer stamp:** Preflight now rotates `agents2/008-enhancement-reviewer/time-of-last-review.txt` when it exceeds a line cap (default 100), archiving older lines instead of letting the stamp grow without bound.
+
+## [2.1.28] - 2026-07-23
+
+### Added
+
+- **Unpaid public delivery cleanup cron:** Documented amvara9 host cron (hourly UTC) and added `scripts/cleanup-unpaid-public-delivery-on-server.sh` so abandoned unpaid public Satisfecho Delivery checkouts are cleaned on all tenants (separate from tenant-1 demo reset). Cron is installed and verified on amvara9 (hourly UTC at `:15`).
+- **SaaS paywall production enablement:** Ordered ops checklist in `docs/0052` (Stripe Price, webhook secret, grandfather check, flag flip, smoke) plus an amvara9 keep-off pointer in `docs/0001`; paywall stays off until operators follow the runbook.
+
+### Fixed
+
+- **Public Satisfecho Delivery checkout:** Catalog items from the public menu now create orders successfully — line IDs resolve `TenantProduct` → `Product` (still accepts legacy `Product.id`); regression pytest + delivery smoke cover create past cart (#304).
 
 ## [2.1.27] - 2026-07-23
 
