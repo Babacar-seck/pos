@@ -187,7 +187,7 @@ docker compose exec back python -m app.seeds.check_demo_tables
 
 Exit 0 means tenant 1 has T01–T10 with the correct seat counts; exit 1 reports missing or wrong tables.
 
-**Demo products (tenant 1):** Deploy also runs `app.seeds.seed_demo_products`, which seeds a default menu (main courses, beverages) for tenant 1. Idempotent; no images. To run manually: `docker compose exec back python -m app.seeds.seed_demo_products`.
+**Demo products (tenant 1):** Deploy also runs `app.seeds.seed_demo_products`, which seeds a default menu (main courses, beverages) for every tenant missing any of those names — including partial catalogs. Idempotent; does not delete existing products; no images. To run manually: `docker compose exec back python -m app.seeds.seed_demo_products`. **Check:** `docker compose exec back python -m app.seeds.check_demo_products` (exit 0 = tenant 1 has all demo product names).
 
 **Demo orders/reservations/waiting-list reset (tenant 1 only):** Clears orders, reservations, and waiting-list entries for tenant 1, then re-seeds (including Satisfecho Delivery samples and a small waitlist queue). Safe while the stack is up. Local: `docker compose exec back python -m app.seeds.reset_demo_data`. Production wrapper: `./scripts/reset-demo-data-on-server.sh`. Daily host cron on amvara9 is documented in **`docs/0001-ci-cd-amvara9.md`** (section *Daily demo data reset*).
 

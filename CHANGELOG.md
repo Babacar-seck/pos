@@ -8,8 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.35] - 2026-07-25
+
 ### Fixed
 
+- **Demo products seed for partial tenants:** `seed_demo_products` now fills missing default menu names on tenants that already have catalog/import rows (instead of skipping any non-empty tenant), and `check_demo_products` verifies tenant 1 has the full demo set.
 - **Delivery checkout smoke harness:** Public `test-delivery-checkout.mjs` now waits for the real cart step (`ul.delivery-cart-list`) and the cart Continue control, so it no longer false-passes on menu “View cart / Ver carrito” copy and then fails opening the address step.
 
 ## [2.1.34] - 2026-07-25
