@@ -41,13 +41,35 @@ You can override defaults with these repository secrets:
 | `DEPLOY_USER`     | `root`           | Deploy runs as another user |
 | `DEPLOY_PATH`     | `/development/pos` | Project is in a different directory |
 | `DEPLOY_SSH_PORT` | `60022`          | SSH port on amvara9 (repository **Variable**; not port 22) |
+| `MARKETING_ARTIFACT_TOKEN` | (required for marketing) | PAT (or fine-grained token) with **Actions: Read** on every repo listed in **`config/marketing-sites.json`**. Legacy fallback: `GUSTAZO_ARTIFACT_TOKEN` / `GH_TOKEN`. |
+
+## Marketing site artifacts (Deploy step 1)
+
+Before SSH, **Deploy to amvara9** runs **`scripts/sync-all-marketing-sites.sh`** with **`MARKETING_SYNC_FORCE=1`** and **`MARKETING_VERIFY_NO_PLACEHOLDERS=1`**. That downloads each site’s latest **non-expired** GitHub Actions artifact into **`front/sites/<slug>/`** (or **`<slug>/<deploySubpath>/`**). If any manifest site still has a placeholder (`bundle not loaded`) or is missing `index.html`, the job **fails** and never reaches amvara9.
+
+**Common failure: expired artifacts.** GitHub keeps Actions artifacts for a limited retention (often ~90 days). Older marketing repos (e.g. `010_antillana`, `020_dilruba`, `030_flamanapolitana`, `050_hakone`) that only publish `dist` and are not rebuilt often will fail download with HTTP 410 / “Artifact download failed”. Newer repos that rebuild more frequently stay green.
+
+**Fix / refresh cadence:**
+
+```bash
+# List which sites need a new Build (DRY_RUN=1), then dispatch:
+DRY_RUN=1 bash scripts/refresh-expired-marketing-artifacts.sh
+bash scripts/refresh-expired-marketing-artifacts.sh
+# Optional: WAIT=1 bash scripts/refresh-expired-marketing-artifacts.sh
+
+# After Builds are green, re-run Deploy (Actions → Deploy to amvara9 → Run workflow)
+# or locally (token required):
+MARKETING_SYNC_FORCE=1 MARKETING_VERIFY_NO_PLACEHOLDERS=1 bash scripts/sync-all-marketing-sites.sh
+```
+
+**`scripts/fetch-marketing-artifact.sh`** skips expired artifacts and walks recent successful runs; if all are expired it prints a clear error with the `gh workflow run Build --repo …` command. Prefer keeping marketing CI green (push or `workflow_dispatch` on **Build**) rather than shipping placeholders.
 
 ## Workflow
 
 - **File:** `.github/workflows/deploy-amvara9.yml`
 - **Trigger:** Push to **`master`** only (not **`development`**); **`workflow_dispatch`** for manual deploy
 - **Concurrency:** A single **`deploy-amvara9`** group queues jobs so two pushes cannot overlap on the same server checkout.
-- **Steps:** SSH to amvara9 (port **`DEPLOY_SSH_PORT`**, default **60022**) → `git fetch` → **`git checkout` + `reset --hard` to the pushed branch** (`${{ github.ref_name }}`, e.g. `master`) → marketing rsync → **`bash scripts/deploy-amvara9.sh`**
+- **Steps:** Fetch marketing artifacts (see above) → SSH to amvara9 (port **`DEPLOY_SSH_PORT`**, default **60022**) → `git fetch` → **`git checkout` + `reset --hard` to the pushed branch** (`${{ github.ref_name }}`, e.g. `master`) → marketing rsync → **`bash scripts/deploy-amvara9.sh`**
 - **Deploy script behaviour (GitHub #49):**
   - **`docker compose build`** for **back** and **front** runs **before** stopping app containers; a failed build leaves the previous stack running.
   - By default, **`docker compose down` is not used**; only **front**, **haproxy**, **ws-bridge**, and **back** are stopped so **db** and **redis** stay up. Override with **`DEPLOY_FULL_DOWN=1`** on the server for a full teardown.

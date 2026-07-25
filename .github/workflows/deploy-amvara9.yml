@@ -5,6 +5,8 @@
 # Optional: DEPLOY_HOST (default 167.235.138.59), DEPLOY_USER (default root), DEPLOY_PATH (default /development/pos), DEPLOY_SSH_PORT (default 60022; amvara9 SSH is not on port 22).
 # Marketing sites under /<slug>/ (see config/marketing-sites.json): optional MARKETING_ARTIFACT_TOKEN
 # (preferred) or legacy GUSTAZO_ARTIFACT_TOKEN — PAT with Actions read on each repo in the manifest.
+# MARKETING_VERIFY_NO_PLACEHOLDERS=1 fails the job if a manifest site is still a placeholder (often
+# expired Actions artifacts — refresh with scripts/refresh-expired-marketing-artifacts.sh).
 # CI rsync runs after git reset so bundles are not wiped (--delete removes dropped slugs).
 # Smoke test uses SMOKE_TEST_BASE_URL (default https://www.satisfecho.de) so SSL validates.
 

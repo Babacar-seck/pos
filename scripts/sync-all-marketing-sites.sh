@@ -220,10 +220,20 @@ if [[ "${MARKETING_VERIFY_NO_PLACEHOLDERS:-0}" == "1" ]]; then
   while IFS= read -r obj; do
     [[ -z "$obj" ]] || [[ "$obj" == "null" ]] && continue
     _slug=$(echo "$obj" | jq -r '.slug')
+    _sub=$(echo "$obj" | jq -r '.deploySubpath // empty')
     [[ -n "$_slug" && "$_slug" != "null" ]] || continue
+    if slug_excluded "$_slug"; then
+      continue
+    fi
     _idx="${ROOT}/front/sites/${_slug}/index.html"
-    if [[ -f "$_idx" ]] && grep -q "${PLACEHOLDER_SIG}" "$_idx" 2>/dev/null; then
-      log "::error::placeholder still present for slug=${_slug} — missing artifact or PAT scope; use a token with Actions read on every repo in config/marketing-sites.json."
+    [[ -n "$_sub" ]] && _idx="${ROOT}/front/sites/${_slug}/${_sub}/index.html"
+    if [[ ! -f "$_idx" ]]; then
+      log "::error::missing index.html for slug=${_slug}${_sub:+/${_sub}} after sync — artifact fetch failed or expired; re-run Build on the marketing repo (see scripts/refresh-expired-marketing-artifacts.sh)."
+      _ph_fail=1
+      continue
+    fi
+    if grep -q "${PLACEHOLDER_SIG}" "$_idx" 2>/dev/null; then
+      log "::error::placeholder still present for slug=${_slug}${_sub:+/${_sub}} — missing/expired artifact or PAT scope; refresh with scripts/refresh-expired-marketing-artifacts.sh or use a token with Actions read on every repo in config/marketing-sites.json."
       _ph_fail=1
     fi
   done < <(jq -c '.sites[]?' "$MANIFEST")
