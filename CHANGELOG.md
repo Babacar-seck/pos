@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.46] - 2026-07-25
+
+### Fixed
+
+- **Catalan UI strings:** Filled ~132 missing `ca.json` keys (auth OTP, orders/tax, products availability, reservations, reports overbooking, providers/taxes/OTP/UI modules, Settings delivery-integrations labels, co-owner hint, working-plan toasts) so Catalan matches English leaf keys.
+
 ## [2.1.45] - 2026-07-25
 
 ### Fixed
