@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** This NEW duplicated demo-table repair already shipped under GitHub **#305** / **CLOSED-305-20260723-0621-missing-tables.md**. Keeping it in the root queue risked a second coder re-touching `seed_demo_tables`.
+- **What was done:** Closed as superseded with no separate implementation. Archived via `move-agent-task-to-done.sh`. Sibling preflight NEW retargeted away from this file as the repair owner.
+- **What was tested:** `docker compose … exec back python -m app.seeds.check_demo_tables` → exit 0 (T01–T10 OK). No product/seed code changes.
+- **Why closed:** Superseded by **#305**; `check_demo_tables` healthy; archive task **WIP-0-20260723-1044-archive-superseded-demo-tables-repair-new**.
+- **Closed at (UTC):** 2026-07-25 22:25
+---
+
 # Repair demo tables T01–T10 for tenant 1
 
 > **Superseded by FEAT-305 / WIP→UNTESTED-305** (`UNTESTED-305-20260723-0621-missing-tables.md`, GitHub #305). Do **not** implement again under this NEW; same root cause and fix live there.

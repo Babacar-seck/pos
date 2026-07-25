@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent task queue:** Archived the superseded demo-tables repair NEW (duplicate of #305) under `agents2/tasks/done/`, and retargeted the preflight skip-owner wording so it no longer points at that dead task.
+
 ## [2.1.52] - 2026-07-25
 
 ### Added
