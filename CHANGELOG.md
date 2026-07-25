@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.48] - 2026-07-25
+
+### Added
+
+- **Restaurant groups Puppeteer smoke:** `npm run test:restaurant-groups` covers Settings → Restaurant group (create/join or member/leave), indexed in `docs/testing.md` and pointed from `docs/0054-restaurant-groups.md`.
+
 ## [2.1.47] - 2026-07-25
 
 ### Fixed

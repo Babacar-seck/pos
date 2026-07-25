@@ -138,6 +138,19 @@ npm run test:waiting-list --prefix front
 
 ---
 
+### 2a2. Restaurant groups (Settings)
+
+Smoke for **Settings → Restaurant group** (`docs/0054-restaurant-groups.md`). Logs in as owner/admin, opens the Restaurant group tab (`settings-restaurant-group-tab`), and asserts the section (`settings-restaurant-group-section`) with either create/join or member/leave UI.
+
+```bash
+npm run test:restaurant-groups --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-restaurant-groups.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; must be owner/admin), `HEADLESS`.
+
+---
+
 ### 2b. Working plan (schedule roles)
 
 Smoke test for the Working plan (shift schedule) page. Logs in as a user with schedule access (e.g. owner), opens `/working-plan`, and asserts the page and Add shift button are present.
@@ -439,6 +452,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:rate-limit-puppeteer` | `scripts/test-rate-limit-puppeteer.mjs` (Puppeteer: login page, 6 wrong attempts, expects error banner) |
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
 | `test:waiting-list` | `scripts/test-waiting-list.mjs` (public `/waitlist/:tenant` join → success; staff Reservations → Waitlist tab + GET `/waiting-list`) |
+| `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
 
 `test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.

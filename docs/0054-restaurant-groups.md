@@ -61,4 +61,4 @@ When **on**, tenant product lists (`GET /tenant-products` and related catalog pa
 | `POST` | `/restaurant-group/join` | Join by `join_code` |
 | `POST` | `/restaurant-group/leave` | Leave; deletes empty groups |
 
-Implementation: `back/app/restaurant_groups.py`, routes in `back/app/main.py`, migration `back/migrations/20260712140000_restaurant_group.sql`, Settings UI `front/src/app/settings/restaurant-group-settings.component.ts`. Tests: `back/tests/test_restaurant_groups.py`.
+Implementation: `back/app/restaurant_groups.py`, routes in `back/app/main.py`, migration `back/migrations/20260712140000_restaurant_group.sql`, Settings UI `front/src/app/settings/restaurant-group-settings.component.ts`. Tests: `back/tests/test_restaurant_groups.py`. Puppeteer smoke: `npm run test:restaurant-groups --prefix front` (see `docs/testing.md`).

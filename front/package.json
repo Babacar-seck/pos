@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.47",
+  "version": "2.1.48",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -45,6 +45,7 @@
     "test:courier-actions": "node scripts/test-courier-actions.mjs",
     "test:paywall": "node scripts/test-paywall.mjs",
     "test:waiting-list": "node scripts/test-waiting-list.mjs",
+    "test:restaurant-groups": "node scripts/test-restaurant-groups.mjs",
     "capture-screenshots": "node scripts/capture-screenshots.mjs"
   },
   "prettier": {
