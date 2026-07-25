@@ -124,6 +124,20 @@ npm run test:demo-data --prefix front
 
 ---
 
+### 2a. Waiting list (public + staff)
+
+Smoke for public `/waitlist/:tenantId` (form + join → success) and staff `/reservations` → Waitlist tab (list GET without hard fail). Creates a unique guest name/phone per run (idempotent; leaves a `waiting` row).
+
+```bash
+npm run test:waiting-list --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-waiting-list.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` from `.env` for staff tab), `HEADLESS`.
+- Staff Waitlist tab is skipped (public join still required) when credentials are unset.
+
+---
+
 ### 2b. Working plan (schedule roles)
 
 Smoke test for the Working plan (shift schedule) page. Logs in as a user with schedule access (e.g. owner), opens `/working-plan`, and asserts the page and Add shift button are present.
@@ -424,6 +438,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:rate-limit` | `scripts/test-rate-limit.mjs` (API rate limiting: login 5/15min, register 3/hour; expects 429 after limit) |
 | `test:rate-limit-puppeteer` | `scripts/test-rate-limit-puppeteer.mjs` (Puppeteer: login page, 6 wrong attempts, expects error banner) |
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
+| `test:waiting-list` | `scripts/test-waiting-list.mjs` (public `/waitlist/:tenant` join → success; staff Reservations → Waitlist tab + GET `/waiting-list`) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
 
 `test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.

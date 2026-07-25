@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.42] - 2026-07-25
+
+### Added
+
+- **Waiting list Puppeteer smoke:** `npm run test:waiting-list` covers public `/waitlist/:tenantId` join (success path) and staff Reservations → Waitlist tab (`GET /waiting-list`), indexed in `docs/testing.md`.
+
 ## [2.1.41] - 2026-07-25
 
 ### Fixed
