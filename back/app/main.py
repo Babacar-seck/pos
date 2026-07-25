@@ -36,6 +36,10 @@ from sqlmodel import Session, select
 
 from . import models, security
 from .db import check_db_connection, create_db_and_tables, get_session, engine
+from .provider_images import (
+    provider_product_image_url,
+    provider_product_stored_image_path,
+)
 from .settings import settings
 from .inventory_routes import router as inventory_router
 from .pricing_routes import router as pricing_router
@@ -4667,7 +4671,9 @@ def list_products(
                     select(models.Provider).where(models.Provider.id == provider_product.provider_id)
                 ).first()
                 if provider:
-                    image_filename = f"providers/{provider.token}/products/{provider_product.image_filename}"
+                    image_filename = provider_product_stored_image_path(
+                        provider.token, provider_product.image_filename
+                    )
 
         sell_price = tp.price_cents
         if sell_price is None:
@@ -4731,9 +4737,13 @@ def list_products(
                         select(models.Provider).where(models.Provider.id == provider_product.provider_id)
                     ).first()
                     if provider:
-                        product.image_filename = f"providers/{provider.token}/products/{provider_product.image_filename}"
-                        session.add(product)
-                        updated_count += 1
+                        stored = provider_product_stored_image_path(
+                            provider.token, provider_product.image_filename
+                        )
+                        if stored:
+                            product.image_filename = stored
+                            session.add(product)
+                            updated_count += 1
     
     # Commit all changes
     if tenant_products_without_product or updated_count > 0:
@@ -5524,10 +5534,8 @@ async def list_catalog(
                 select(models.Provider).where(models.Provider.id == pp.provider_id)
             ).first()
             if provider:
-                # Construct image URL - only use local images, never external URLs
-                image_url = None
-                if pp.image_filename:
-                    image_url = f"/uploads/providers/{provider.token}/products/{pp.image_filename}"
+                # Local images only; omit URL when file is missing (avoids catalog 404s)
+                image_url = provider_product_image_url(provider.token, pp.image_filename)
 
                 providers_data.append(
                     {
@@ -5662,12 +5670,8 @@ async def get_catalog_item(
             select(models.Provider).where(models.Provider.id == pp.provider_id)
         ).first()
         if provider:
-            # Construct image URL - only use local images, never external URLs
-            image_url = None
-            if pp.image_filename:
-                image_url = (
-                    f"/uploads/providers/{provider.token}/products/{pp.image_filename}"
-                )
+            # Local images only; omit URL when file is missing (avoids catalog 404s)
+            image_url = provider_product_image_url(provider.token, pp.image_filename)
 
             providers_data.append(
                 {
@@ -6324,9 +6328,7 @@ def provider_list_products(
     result = []
     for pp in products:
         catalog_item = session.get(models.ProductCatalog, pp.catalog_id)
-        image_url = None
-        if pp.image_filename:
-            image_url = f"/uploads/providers/{provider.token}/products/{pp.image_filename}"
+        image_url = provider_product_image_url(provider.token, pp.image_filename)
         result.append(
             {
                 "id": pp.id,
@@ -6676,7 +6678,7 @@ def create_tenant_product(
     category = catalog_item.category
     subcategory = catalog_item.subcategory
 
-    # Get image from provider product if available
+    # Get image from provider product if available (only when file exists on disk)
     image_filename = None
     if provider_product and provider_product.image_filename:
         provider = session.exec(
@@ -6685,8 +6687,8 @@ def create_tenant_product(
             )
         ).first()
         if provider:
-            image_filename = (
-                f"providers/{provider.token}/products/{provider_product.image_filename}"
+            image_filename = provider_product_stored_image_path(
+                provider.token, provider_product.image_filename
             )
 
     # 1. Create the actual Product (shows on /products page)
@@ -11066,8 +11068,11 @@ def get_menu(
                     )
                 ).first()
                 if provider:
-                    # Construct path to provider image
-                    image_filename = f"providers/{provider.token}/products/{provider_product.image_filename}"
+                    stored = provider_product_stored_image_path(
+                        provider.token, provider_product.image_filename
+                    )
+                    if stored:
+                        image_filename = stored
 
         # Build product data with detailed wine information
         product_data = {

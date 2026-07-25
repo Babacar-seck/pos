@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Script usage examples still pointed at agents/tasks.
+- **What was done:** Updated scripts/move-agent-task-to-done.sh header/examples to agents2/tasks (legacy note retained).
+- **What was tested:** head of script shows agents2/tasks primary.
+- **Why closed:** Acceptance criteria met.
+- **Closed at (UTC):** 2026-07-25 18:25
+---
+
 # Point move-agent-task-to-done.sh usage examples at agents2/tasks
 
 ## GitHub Issues

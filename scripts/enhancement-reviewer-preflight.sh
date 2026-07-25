@@ -24,6 +24,9 @@ G008_DOC_DRIFT=0
 G008_TASK_SIGNALS=0
 G008_DEMO_SIGNALS=0
 G008_SIGNALS=0
+G008_NEW_BACKLOG_PAUSE=0
+# Pause 008 task creation when root NEW-* depth exceeds this (override with ENHANCEMENT_NEW_BACKLOG_MAX).
+NEW_BACKLOG_MAX="${ENHANCEMENT_NEW_BACKLOG_MAX:-20}"
 
 emit() {
   if [[ -n "$CTX" ]]; then
@@ -105,6 +108,10 @@ untested_n=$(count_root_tasks "UNTESTED-")
 testing_n=$(count_root_tasks "TESTING-")
 closed_n=$(count_root_tasks "CLOSED-")
 emit "NEW=${new_n} FEAT=${feat_n} WIP=${wip_n} UNTESTED=${untested_n} TESTING=${testing_n} CLOSED=${closed_n}"
+if (( new_n > NEW_BACKLOG_MAX )); then
+  G008_NEW_BACKLOG_PAUSE=1
+  emit "PAUSE new_backlog NEW=${new_n} (threshold=${NEW_BACKLOG_MAX}; create 0 NEW/FEAT until drain — main coder 002)"
+fi
 if (( wip_n + testing_n > 8 )); then
   G008_TASK_SIGNALS=$((G008_TASK_SIGNALS + 1))
   emit "SIGNAL task_backlog wip+testing=${wip_n}+${testing_n} (consider pausing new FEAT until drain)"
@@ -195,8 +202,10 @@ emit "G008_WEEKLY_DUE=${G008_WEEKLY_DUE}"
 emit "G008_DOC_DRIFT=${G008_DOC_DRIFT}"
 emit "G008_TASK_SIGNALS=${G008_TASK_SIGNALS}"
 emit "G008_DEMO_SIGNALS=${G008_DEMO_SIGNALS}"
+emit "G008_NEW_BACKLOG_PAUSE=${G008_NEW_BACKLOG_PAUSE}"
 emit "G008_SIGNALS=${G008_SIGNALS}"
-emit "cursor_agent_when: G008_WEEKLY_DUE=1 OR G008_DOC_DRIFT>0 OR G008_TASK_SIGNALS>0 OR AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1"
+emit "cursor_agent_when: (not paused) AND (G008_WEEKLY_DUE=1 OR G008_DOC_DRIFT>0 OR G008_TASK_SIGNALS>0 OR G008_DEMO_SIGNALS>0 OR AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1)"
+emit "pause_when: NEW > ${NEW_BACKLOG_MAX} (ENHANCEMENT_NEW_BACKLOG_MAX); create 0 tasks until drain"
 
 if [[ "${ENHANCEMENT_PREFLIGHT_READONLY:-0}" != "1" ]]; then
   printf '%s UTC | 008 preflight | days=%s weekly_due=%s signals=%s doc_drift=%s demo=%s\n\n' \

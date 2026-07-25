@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Path/docs drift inside agents2 was fixed in-repo.
+- **What was done:** Updated live prompts/README/loop to agents2/tasks; added done/README.md and 002-coder.
+- **What was tested:** Preflight PAUSE + bash -n loop; rg for leftover agents/tasks in agents2 prompts.
+- **Why closed:** Acceptance criteria for this agents2-scoped NEW are met.
+- **Closed at (UTC):** 2026-07-25 18:25
+---
+
 # Fix pos-cursor-loop prompts that still say agents/tasks
 
 ## GitHub Issues

@@ -31,12 +31,14 @@ Do **not** duplicate **001**: skip issues already tracked by **001** (open POS i
 1. **Preflight digest** — prioritize **`SIGNAL`** lines.
 2. **Docs vs code** — skim **`docs/*.md`**, **`README.md`**, **`CHANGELOG.md` [Unreleased]** against recent **`back/`** / **`front/src/`** changes (do not bulk-rewrite docs; note gaps only).
 3. **Demo tenant 1** — tables/products seeds, orders/reservations freshness; **`reset_demo_data`** path and whether **daily cron** on production is missing.
-4. **Task queue health** — many **`WIP-*`** / **`TESTING-*`** → prefer **`NEW-*`** for tiny fixes only; defer large **`FEAT-*`** until backlog drains.
+4. **Task queue health** — many **`WIP-*`** / **`TESTING-*`** → prefer **`NEW-*`** for tiny fixes only; defer large **`FEAT-*`** until backlog drains. If the digest has a **`PAUSE new_backlog`** line (or **`G008_NEW_BACKLOG_PAUSE=1`**), **create zero** new task files this run — stamp only.
 5. **Open improvement themes** — recurring friction in seeds, deploy scripts, agent prompts, i18n gaps (one finding per theme).
 
 ### Task creation rules
 
 Create **at most 3** task files per run. Prefer **`FEAT-*`** for enhancements; use **`NEW-*`** only for a **concrete, small** fix you can describe like a log incident (e.g. broken seed check).
+
+**When paused:** if **`PAUSE new_backlog`** appears in the digest, create **0** tasks (do not queue more docs/path hygiene while **`NEW-*`** is deep).
 
 **Filename:** `FEAT-0-YYYYMMDD-HHMM-<kebab-slug>.md` or `NEW-0-YYYYMMDD-HHMM-<kebab-slug>.md` (UTC).
 
@@ -65,7 +67,8 @@ See **`agents2/008-enhancement-reviewer/sample-findings.md`** for a filled examp
 ### Instructions (order)
 
 1. Read preflight digest (`008-latest-context.txt`).
-2. If **`weekly_due=no`** and **no `SIGNAL` lines**, append stamp only (**`FEAT: 0 | NEW: 0`**) and stop — no task spam.
-3. Otherwise investigate top signals (docs, demo, queue).
-4. Create up to **3** deduped task files using the template.
-5. Update **`time-of-last-review.txt`** with run summary.
+2. If **`PAUSE new_backlog`** / **`G008_NEW_BACKLOG_PAUSE=1`**, append stamp only (**`FEAT: 0 | NEW: 0 | paused: new_backlog`**) and stop.
+3. If **`weekly_due=no`** and **no `SIGNAL` lines**, append stamp only (**`FEAT: 0 | NEW: 0`**) and stop — no task spam.
+4. Otherwise investigate top signals (docs, demo, queue).
+5. Create up to **3** deduped task files using the template.
+6. Update **`time-of-last-review.txt`** with run summary.

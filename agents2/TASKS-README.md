@@ -1,6 +1,8 @@
 # Task workflow (POS)
 
-Tasks move through a single pipeline from creation to closure. See **`docs/agent-loop.md`** for roles, POS-specific rules, and **optional GitHub Issues** updates (labels + comments per agent role). **Before renaming or editing task files**, sync **`development`** with **`./scripts/git-sync-development.sh`** (multi-agent workflow; **`pos-agent-loop.sh`** does this each step).
+Tasks move through a single pipeline from creation to closure. See **`docs/agent-loop.md`** for roles, POS-specific rules, and **optional GitHub Issues** updates (labels + comments per agent role). **Before renaming or editing task files**, sync **`development`** with **`./scripts/git-sync-development.sh`** (multi-agent workflow; **`agents2/pos-cursor-loop.sh`** does this each step).
+
+Live queue: **`agents2/tasks/`**. (A symlink **`agents` → `agents2`** may exist for older paths; prefer **`agents2/`** in new work.)
 
 ## Filename pattern
 
@@ -8,7 +10,9 @@ Tasks move through a single pipeline from creation to closure. See **`docs/agent
 
 Examples: `NEW-1234-20260323-1030-haproxy-503-on-orders.md`, `CLOSED-1234-20260323-1200-fix-login-banner.md`
 
-The **`<YYYYMMDD>`** segment (8 digits after the first `-`) is used to place archived tasks under **`done/YYYY/MM/DD/`** (see below). When renaming a task to **`CLOSED-…`**, use the **calendar day that work finished** (UTC or your team convention) in `YYYYMMDD` so each day’s folder reflects tasks completed that day.
+Use issue **`0`** when there is no GitHub issue (`NEW-0-…`, `FEAT-0-…`).
+
+The **`<YYYYMMDD>`** segment (8 digits after the issue number) is used to place archived tasks under **`done/YYYY/MM/DD/`** (see below). When renaming a task to **`CLOSED-…`**, use the **calendar day that work finished** (UTC or your team convention) in `YYYYMMDD` so each day’s folder reflects tasks completed that day.
 
 ## Statuses
 
@@ -36,23 +40,23 @@ Do not skip statuses. On test failure: **testing → wip** (coder fixes), then *
 Closed tasks are **not** kept in a single flat **`done/`** directory. After the closing reviewer prepends the **Closing summary**, the file is moved to:
 
 ```text
-agents/tasks/done/<YYYY>/<MM>/<DD>/<same-filename>.md
+agents2/tasks/done/<YYYY>/<MM>/<DD>/<same-filename>.md
 ```
 
-- **`<YYYY>`**, **`<MM>`**, and **`<DD>`** come from the **8-digit date in the filename** (`YYYYMMDD` right after the status prefix), not from “today” when you run the script.  
-  Example: `CLOSED-20260323-1200-slug.md` → **`agents/tasks/done/2026/03/23/CLOSED-20260323-1200-slug.md`**
-- **Same basename** as in **`agents/tasks/`**; only the directory changes.
+- **`<YYYY>`**, **`<MM>`**, and **`<DD>`** come from the **8-digit date in the filename** (`YYYYMMDD` in the stamp), not from “today” when you run the script.  
+  Example: `CLOSED-1234-20260323-1200-slug.md` → **`agents2/tasks/done/2026/03/23/CLOSED-1234-20260323-1200-slug.md`**
+- **Same basename** as in **`agents2/tasks/`**; only the directory changes.
 - One folder per **calendar day**; all tasks whose `CLOSED-` stamp shares that day live in the same **`DD`** folder.
 
 **Helper (recommended):** from repo root,
 
 ```bash
-./scripts/move-agent-task-to-done.sh agents/tasks/CLOSED-20260323-1200-example-slug.md
+./scripts/move-agent-task-to-done.sh agents2/tasks/CLOSED-1234-20260323-1200-example-slug.md
 ```
 
 The script creates **`done/YYYY/MM/DD`** if needed and moves the file. It only accepts **`CLOSED-`** filenames.
 
-See **`done/README.md`** for a short index of the archive tree.
+See **`agents2/tasks/done/README.md`** for a short index of the archive tree.
 
 ## Rules of thumb
 
