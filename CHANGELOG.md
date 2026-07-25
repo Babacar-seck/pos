@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.33] - 2026-07-25
+
+### Added
+
+- **Public marketing SEO:** Per-route titles, meta descriptions, canonical and Open Graph/Twitter tags for public pages; `robots.txt`, `sitemap.xml`, and share image; nginx serves crawl files as static assets (not the SPA shell); staff/auth routes are `noindex` (#307).
+
 ## [2.1.32] - 2026-07-23
 
 ### Added
