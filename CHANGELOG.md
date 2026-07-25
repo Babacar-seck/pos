@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.45] - 2026-07-25
+
+### Fixed
+
+- **Bulgarian UI strings:** Filled 25 missing `bg.json` keys (`PRODUCTS.PRODUCT_IMAGE` and Settings delivery-integrations labels) so Bulgarian matches English leaf keys.
+
 ## [2.1.44] - 2026-07-25
 
 ### Fixed
