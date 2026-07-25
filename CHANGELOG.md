@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.37] - 2026-07-25
+
+### Added
+
+- **Demo courier user:** Tenant 1 seed / `reset_demo_data` / bootstrap now create a courier-role user when missing (defaults match courier Puppeteer smokes), so Satisfecho Delivery samples can assign courier and `out_for_delivery` after daily reset. Run: `python -m app.seeds.seed_demo_courier_user`.
+
 ## [2.1.36] - 2026-07-25
 
 ### Added
