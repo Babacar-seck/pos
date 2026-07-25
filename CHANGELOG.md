@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.38] - 2026-07-25
+
+### Added
+
+- **Demo delivery orders check:** `python -m app.seeds.check_demo_delivery_orders` fails when tenant 1 has no Satisfecho Delivery sample orders (soft-warns only if courier is unassigned), so ops/preflight catch a dropped Delivery seed instead of relying on `demo_tables_check=ok` alone.
+
 ## [2.1.37] - 2026-07-25
 
 ### Added
