@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.41] - 2026-07-25
+
+### Fixed
+
+- **Spanish UI strings:** Filled ~15 missing `es.json` keys (book validation, working-plan toasts, reservation cancel/rate-limit, auth, menu customize, co-owner hint) and corrected the terms-of-service placeholder key typo so Spanish matches English leaf keys.
+
 ## [2.1.40] - 2026-07-25
 
 ### Changed
