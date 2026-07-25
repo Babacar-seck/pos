@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.39] - 2026-07-25
+
+### Added
+
+- **Demo waiting-list check:** `python -m app.seeds.check_demo_waiting_list` fails when tenant 1 lacks at least one `waiting` and one `notified` Waitlist row, so ops/preflight catch a dropped waiting-list seed instead of relying on `demo_tables_check=ok` alone.
+
 ## [2.1.38] - 2026-07-25
 
 ### Added

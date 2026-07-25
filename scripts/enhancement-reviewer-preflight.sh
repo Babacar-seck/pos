@@ -168,6 +168,7 @@ emit "=== Demo tenant 1 (seeds) ==="
 emit "reset_script=scripts/reset-demo-data-on-server.sh"
 emit "seed_module=back/app/seeds/reset_demo_data.py (idempotent orders+reservations reset)"
 emit "check_tables=back/app/seeds/check_demo_tables.py"
+emit "check_waiting_list=back/app/seeds/check_demo_waiting_list.py"
 if [[ -x "${ROOT}/scripts/reset-demo-data-on-server.sh" ]]; then
   if grep -qR '0 4 \* \* \*.*reset-demo-data-on-server\.sh' "${ROOT}/docs" 2>/dev/null; then
     emit "demo_daily_reset=documented (docs mention 04:00 UTC cron + reset-demo-data-on-server.sh)"
@@ -186,11 +187,19 @@ if command -v docker >/dev/null 2>&1; then
       G008_DEMO_SIGNALS=$((G008_DEMO_SIGNALS + 1))
       emit "SIGNAL demo_tables_check=fail (run seed_demo_tables)"
     fi
+    if docker compose -f "${ROOT}/docker-compose.yml" -f "${ROOT}/docker-compose.dev.yml" exec -T back python -m app.seeds.check_demo_waiting_list 2>/dev/null; then
+      emit "demo_waiting_list_check=ok"
+    else
+      G008_DEMO_SIGNALS=$((G008_DEMO_SIGNALS + 1))
+      emit "SIGNAL demo_waiting_list_check=fail (run seed_demo_waiting_list or reset_demo_data)"
+    fi
   else
     emit "demo_tables_check=skipped (back container not running)"
+    emit "demo_waiting_list_check=skipped (back container not running)"
   fi
 else
   emit "demo_tables_check=skipped (docker not on PATH)"
+  emit "demo_waiting_list_check=skipped (docker not on PATH)"
 fi
 emit ""
 
