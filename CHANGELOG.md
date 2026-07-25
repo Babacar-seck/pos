@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.55] - 2026-07-26
+
+### Added
+
+- **Public delivery-track Puppeteer smoke alias:** `npm run test:delivery-track` runs the committed invalid-token / error-state smoke for `/delivery/:tenantId/track`, indexed in `docs/testing.md` (cites `docs/0053`).
+
 ### Changed
 
 - **Enhancement preflight:** When `check_demo_tables` fails but an open root task already owns demo-table repair, emit an informational line instead of a wake SIGNAL so 008 is not re-woken on the same owned failure.

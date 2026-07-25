@@ -165,6 +165,19 @@ npm run test:staff-delivery --prefix front
 
 ---
 
+### 2a3a. Public Satisfecho Delivery track (invalid token)
+
+Smoke for the token-gated customer track page at `/delivery/:tenantId/track` (`docs/0053-satisfecho-delivery-order-channel.md`). Opens the route with a missing/invalid `public_order_token` and asserts an error / not-found state (no raw `DELIVERY_TRACK.*` i18n keys). Does not create a paid order or cover the happy-path track flow.
+
+```bash
+npm run test:delivery-track --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-delivery-track.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `HEADLESS`. No login.
+
+---
+
 ### 2a4. Staff guest feedback
 
 Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), that `GET /tenant/guest-feedback` does not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
@@ -517,6 +530,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
 | `test:order-comments` | `scripts/test-order-comments.mjs` (public Take Away menu: item + order comments → kitchen `.item-notes` / `.order-notes`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
+| `test:delivery-track` | `scripts/test-delivery-track.mjs` (public `/delivery/:tenantId/track` invalid-token / error-state; see `docs/0053`) |
 | `test:staff-delivery` | `scripts/test-staff-delivery.mjs` (staff `/staff/orders`: create Satisfecho Delivery + edit address/phone; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 
 `test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.
