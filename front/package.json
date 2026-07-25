@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.50",
+  "version": "2.1.51",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -24,6 +24,7 @@
     "test:catalog": "node scripts/test-catalog.mjs",
     "test:order-8-status": "node scripts/test-order-8-status.mjs",
     "test:register-page": "node scripts/test-register-page.mjs",
+    "test:guided-signup-wizard": "node scripts/test-guided-signup-wizard.mjs",
     "test:reports": "node scripts/test-reports.mjs",
     "test:order-tip-flows": "node scripts/test-order-tip-flows.mjs",
     "test:working-plan": "node scripts/test-working-plan.mjs",

@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.51] - 2026-07-25
+
+### Added
+
+- **Guided signup wizard Puppeteer smoke:** `npm run test:guided-signup-wizard` covers `/register` step 0 intro → account fields + Back/Next without creating a tenant, indexed in `docs/testing.md`.
+
 ## [2.1.50] - 2026-07-25
 
 ### Added

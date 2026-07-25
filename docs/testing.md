@@ -307,6 +307,15 @@ npm run test:register-page --prefix front
 
 - Loads `/register`, checks `.register-explanation` and provider/guest text (English when `Accept-Language: en`).
 
+**Guided signup wizard** (multi-step intro → account fields; non-destructive):
+
+```bash
+npm run test:guided-signup-wizard --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-guided-signup-wizard.mjs
+```
+
+- Opens `/register`, asserts step-0 intro + **Get started**, advances to restaurant/account fields (tenant, address, phone, email, password) with Back/Next, then Back to intro. Does **not** submit or create a tenant. Prefer local HAProxy (`BASE_URL=http://127.0.0.1:4202`).
+
 **Full registration flow** (fill form, submit, check success/error):
 
 ```bash
@@ -456,6 +465,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |
 | `test:register-page` | `scripts/test-register-page.mjs` |
+| `test:guided-signup-wizard` | `scripts/test-guided-signup-wizard.mjs` (guided `/register` wizard: step 0 intro → Get started → account fields + Back/Next; no tenant create) |
 | `test:reports` | `scripts/test-reports.mjs` (Reports page smoke; owner/admin) |
 | `test:order-tip-flows` | `scripts/test-order-tip-flows.mjs` (Settings tip entry mode + Reports tips card; owner/admin) |
 | `test:changelog` | `scripts/test-changelog.mjs` (Dashboard What's new → changelog modal; API serves CHANGELOG.md) |
@@ -558,7 +568,7 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Tables** | `test-tables-page.mjs`, `test-tables-waiter-assignment.mjs` (optional waiter creds) | View toggle, Table view and data table; waiter assignment visibility (no empty dropdown). |
 | **Landing** | Version, provider links | Version bar; footer links to provider login/register. |
 | **Provider portal** | Register, add-product, landing links | No dedicated “login only” test; add-product covers login + dashboard. |
-| **Staff auth** | Register page content, full register | Who-is-this-for; full registration (no cleanup). |
+| **Staff auth** | Register page content, guided wizard, full register | Who-is-this-for; guided step 0→1 (no create); full registration (no cleanup). |
 | **Orders** | Order #8 status dropdown; `review-order-edit-puppeteer.mjs` (Edit button, order edit modal, status popover) | Order #8: requires existing order in Active Orders. Review script: login, /staff/orders, card + History Edit, status dropdown z-index. |
 | **Reports** | `test-reports.mjs` | Smoke: page loads (owner/admin). |
 | **Tips (POS)** | `test-order-tip-flows.mjs` | Settings Payments tip mode toggle + Reports tips summary card. |
