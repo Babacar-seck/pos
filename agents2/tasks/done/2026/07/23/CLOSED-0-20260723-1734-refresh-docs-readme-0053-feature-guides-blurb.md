@@ -1,3 +1,7 @@
+## Closing summary
+
+Superseded by **`WIP-0-20260723-2103-retarget-0053-blurb-zones-track`**, which owns the **`docs/README.md`** Feature guides row for **0053** (public `/delivery`, unpaid TTL, plus zones/fees and `/track`). No separate implementation of this pre-zones blurb.
+
 # Refresh docs/README Feature guides blurb for 0053 (public delivery + TTL)
 
 ## GitHub Issues
