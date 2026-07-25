@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.49] - 2026-07-25
+
+### Added
+
+- **Order comments Puppeteer smoke:** `npm run test:order-comments` covers public Take Away item + order notes through kitchen highlight (`.item-notes` / `.order-notes`), indexed in `docs/testing.md`.
+
 ### Changed
 
 - **Front entrypoint commit-hash regen:** `docker-entrypoint.sh` now logs regen progress, the written `version`/`commitHash`, and clear warnings on script failure or package mismatch (container still starts). Dockerfile `ENTRYPOINT` uses the bind-mounted `/app/docker-entrypoint.sh` so host edits apply without baking a stale script into the image.

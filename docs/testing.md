@@ -453,6 +453,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
 | `test:waiting-list` | `scripts/test-waiting-list.mjs` (public `/waitlist/:tenant` join → success; staff Reservations → Waitlist tab + GET `/waiting-list`) |
 | `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
+| `test:order-comments` | `scripts/test-order-comments.mjs` (public Take Away menu: item + order comments → kitchen `.item-notes` / `.order-notes`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
 
 `test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.
@@ -547,9 +548,9 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Reports** | `test-reports.mjs` | Smoke: page loads (owner/admin). |
 | **Tips (POS)** | `test-order-tip-flows.mjs` | Settings Payments tip mode toggle + Reports tips summary card. |
 | **Users / Bartender role** | `test-bartender-role.mjs` | Admin/owner: /users → Add user → role dropdown includes Bartender. |
-| **Kitchen display** | `test-kitchen-status-dropdown.mjs` | Status dropdown visible and not clipped on /kitchen. |
+| **Kitchen display** | `test-kitchen-status-dropdown.mjs`, `test-order-comments.mjs` | Status dropdown visible and not clipped on /kitchen; guest item/order comments highlighted. |
 | **Catalog** | `test-catalog.mjs` | Cards and image placeholders. |
-| **Menu (customer)** | `test-menu-logo.mjs` | Logo on `/menu/:token`. |
+| **Menu (customer)** | `test-menu-logo.mjs`, `test-order-comments.mjs` | Logo on `/menu/:token`; Take Away comments → kitchen. |
 | **WebSocket** | `test-websocket.mjs` | Post-login WS (ws-bridge required). |
 | **Rate limiting** | `test-rate-limit.mjs`, `test-rate-limit-puppeteer.mjs` | API: 429 after limit; Puppeteer: login page shows error banner (e.g. "Too many login attempts") when rate limited. See `docs/0020-rate-limiting-production.md` for all limits (login, register, payment, public menu, upload, admin). |
 | **SaaS signup paywall** | `test-paywall.mjs` | Requires `SAAS_PAYWALL_ENABLED=true` (see `docs/0052-saas-signup-paywall.md`). Registers a new tenant, asserts `/paywall` + localized copy (no raw `PAYWALL.*`), starts free trial, confirms `/dashboard` unlocks. Skips with exit 0 when paywall is off; set `REQUIRE_PAYWALL=1` to fail instead. |
