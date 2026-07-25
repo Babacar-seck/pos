@@ -11,6 +11,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 ### Changed
 
 - **Enhancement preflight:** When `check_demo_tables` fails but an open root task already owns demo-table repair, emit an informational line instead of a wake SIGNAL so 008 is not re-woken on the same owned failure.
+- **Security review (delivery track):** `docs/SECURITY-REVIEW.md` now covers Satisfecho Delivery zone/fee validation, public config and delivery-status endpoints, the 24h `public_order_token` (pay + track), and the 2h unpaid-create cleanup residual; corrected the stale token-expiry comment in `main.py` (#306).
 
 ## [2.1.54] - 2026-07-26
 

@@ -873,7 +873,7 @@ def _verify_staff_menu_token(table_token: str, token: str) -> bool:
         return False
 
 
-# Public Satisfecho Delivery checkout + track: token covers pay (~1h) and track (~24h)
+# Public Satisfecho Delivery checkout + track: signed token covers pay and track (24h)
 PUBLIC_DELIVERY_ORDER_TOKEN_EXPIRY = 86400  # 24 hours
 
 
