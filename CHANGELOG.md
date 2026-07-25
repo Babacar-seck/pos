@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.43] - 2026-07-25
+
+### Fixed
+
+- **German UI strings:** Filled ~91 missing `de.json` keys (auth OTP, settings taxes/providers/security, reservations notes/overbooking, products tax/availability, book validation, and related menu/orders/reports strings) so German matches English leaf keys.
+
 ## [2.1.42] - 2026-07-25
 
 ### Added
