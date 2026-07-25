@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Front entrypoint commit-hash regen:** `docker-entrypoint.sh` now logs regen progress, the written `version`/`commitHash`, and clear warnings on script failure or package mismatch (container still starts). Dockerfile `ENTRYPOINT` uses the bind-mounted `/app/docker-entrypoint.sh` so host edits apply without baking a stale script into the image.
+
 ### Fixed
 
 - **Landing footer git hash:** Regenerated `commit-hash.ts` so the landing footer short hash matches current `HEAD` while semver stays aligned with `package.json` (strict `test:landing-version` no longer needs a skip workaround).
