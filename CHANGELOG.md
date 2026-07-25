@@ -12,6 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 - **Courier portal test credentials:** Documented commented `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`, plus matching manual-testing notes in `AGENTS.md` and the `test:courier-actions` row in `docs/testing.md` (defaults aligned with the smoke script and demo courier seed).
 - **Daily demo reset ops doc:** `docs/0001-ci-cd-amvara9.md` now states that tenant-1 daily reset clears/reseeds orders (including Satisfecho Delivery samples), reservations, and waiting-list entries — not only orders and reservations.
+- **Rate-limit ops doc:** `docs/0020-rate-limiting-production.md` now lists public `satisfecho-delivery-config` and `delivery-status` GETs under the shared public-menu IP bucket (`RATE_LIMIT_PUBLIC_MENU_PER_MINUTE`), including that track-page polling shares that budget.
 
 ## [2.1.55] - 2026-07-26
 
