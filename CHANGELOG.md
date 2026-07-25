@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.47] - 2026-07-25
+
+### Fixed
+
+- **Chinese and Hindi UI strings:** Filled ~189 missing keys in `zh-CN.json` and `hi.json` (auth OTP, orders/tax, public take-away, Revolut payments, products availability/tax, reservations, reports overbooking, providers/taxes/OTP/UI modules, Settings delivery-integrations labels, co-owner hint, working-plan toasts) so Simplified Chinese and Hindi match English leaf keys.
+
 ## [2.1.46] - 2026-07-25
 
 ### Fixed
