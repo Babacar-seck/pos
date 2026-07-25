@@ -82,30 +82,16 @@ async function main() {
       await addBtn.click();
       await page.waitForSelector('button.delivery-cart-btn:not([disabled])', { timeout: 5000 });
       await page.click('button.delivery-cart-btn');
-      await page.waitForFunction(
-        () => (document.body?.innerText || '').length > 0,
-        { timeout: 5000 },
-      );
-      const cartText = await page.evaluate(() => document.body.innerText);
-      if (!/cart|Warenkorb|carrito|panier|Continue|Weiter|Continuar/i.test(cartText)) {
-        throw new Error('Cart step did not appear after add');
-      }
+      // Cart step only (not menu "View cart" / Ver carrito copy)
+      await page.waitForSelector('ul.delivery-cart-list', { timeout: 10000 });
       console.log('Cart step OK');
 
       // Address → create order (regression: TenantProduct menu IDs must not 400)
-      const continueBtns = await page.$$('button.btn-primary');
-      let wentAddress = false;
-      for (const btn of continueBtns) {
-        const label = await page.evaluate((el) => (el.textContent || '').trim(), btn);
-        if (/address|Adresse|dirección|adresse|Continue|Weiter|Continuar/i.test(label)) {
-          await btn.click();
-          wentAddress = true;
-          break;
-        }
-      }
-      if (!wentAddress) {
+      const continueBtn = await page.$('.delivery-actions button.btn-primary');
+      if (!continueBtn) {
         throw new Error('Could not open address step from cart');
       }
+      await continueBtn.click();
       await page.waitForSelector('form.delivery-form', { timeout: 10000 });
       await page.type('input[name="phone"]', '+34600111222');
       await page.type('textarea[name="address"]', 'Calle Smoke Test 1, Madrid');

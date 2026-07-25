@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Delivery checkout smoke harness:** Public `test-delivery-checkout.mjs` now waits for the real cart step (`ul.delivery-cart-list`) and the cart Continue control, so it no longer false-passes on menu “View cart / Ver carrito” copy and then fails opening the address step.
+
 ## [2.1.34] - 2026-07-25
 
 ### Added
