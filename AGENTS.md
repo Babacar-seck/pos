@@ -128,6 +128,8 @@ Run these from the repo root or from `front/` when the app is up (e.g. on port 4
 
 **Provider portal (manual testing):** `.env` can define `PROVIDER_TEST_EMAIL=pos-provider@amvara.de` and `PROVIDER_TEST_PASSWORD=123456` for testing the provider dashboard at `/provider` (log in at `/provider/login`).
 
+**Courier portal (manual testing):** `.env` / `config.env` can define `COURIER_EMAIL=courier-test-phase1@amvara.de` and `COURIER_PASSWORD=secret` for the courier dashboard at `/courier` (log in at `/courier/login`). Same defaults as `front/scripts/test-courier-actions.mjs` and `app.seeds.seed_demo_courier_user` (see `config.env.example`).
+
 **Staff flow (login → reservations → create → cancel):**
 
 ```bash

@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Courier portal test credentials:** Documented commented `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`, plus matching manual-testing notes in `AGENTS.md` and the `test:courier-actions` row in `docs/testing.md` (defaults aligned with the smoke script and demo courier seed).
+
 ## [2.1.55] - 2026-07-26
 
 ### Added
