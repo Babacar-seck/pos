@@ -73,6 +73,84 @@ count_root_tasks() {
   echo "$n"
 }
 
+# Newest CHANGELOG version section date (YYYY-MM-DD), or empty.
+newest_changelog_version_date() {
+  awk '
+    /^## \[[0-9]+\.[0-9]+\.[0-9]+\] - [0-9]{4}-[0-9]{2}-[0-9]{2}/ {
+      if (match($0, /[0-9]{4}-[0-9]{2}-[0-9]{2}/)) {
+        print substr($0, RSTART, RLENGTH)
+        exit
+      }
+    }
+  ' CHANGELOG.md 2>/dev/null || true
+}
+
+# Calendar days (UTC) since YYYY-MM-DD; 999 if unparseable.
+days_since_ymd() {
+  local ymd="$1"
+  [[ -n "$ymd" ]] || { echo 999; return; }
+  python3 - "$ymd" <<'PY'
+import sys
+from datetime import datetime, timezone, date
+raw = sys.argv[1].strip()[:10]
+try:
+    d = date.fromisoformat(raw)
+except ValueError:
+    print(999)
+    raise SystemExit(0)
+today = datetime.now(timezone.utc).date()
+print(max(0, (today - d).days))
+PY
+}
+
+# Hours since CHANGELOG.md git last-touch (or mtime); 99999 if unknown.
+changelog_touch_age_hours() {
+  python3 - <<'PY'
+import subprocess, os
+from datetime import datetime, timezone
+ts = None
+try:
+    out = subprocess.check_output(
+        ["git", "log", "-1", "--format=%cI", "--", "CHANGELOG.md"],
+        stderr=subprocess.DEVNULL,
+        text=True,
+    ).strip()
+    if out:
+        ts = datetime.fromisoformat(out.replace("Z", "+00:00"))
+except Exception:
+    pass
+if ts is None and os.path.isfile("CHANGELOG.md"):
+    ts = datetime.fromtimestamp(os.path.getmtime("CHANGELOG.md"), timezone.utc)
+if ts is None:
+    print(99999)
+else:
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    hours = (datetime.now(timezone.utc) - ts.astimezone(timezone.utc)).total_seconds() / 3600.0
+    print(int(max(0, hours)))
+PY
+}
+
+# True (0) when changelog_sparse should be suppressed after a recent version cut.
+# - Newest ## [N.N.N] - YYYY-MM-DD within last 2 calendar days (UTC), or
+# - CHANGELOG git/mtime touch within 48h and Unreleased has 0 bullets.
+changelog_sparse_fresh_cut() {
+  local unreleased_lines="${1:-0}"
+  local version_date days age_h
+  version_date="$(newest_changelog_version_date)"
+  days="$(days_since_ymd "$version_date")"
+  if (( days <= 2 )); then
+    return 0
+  fi
+  if (( unreleased_lines == 0 )); then
+    age_h="$(changelog_touch_age_hours)"
+    if (( age_h <= 48 )); then
+      return 0
+    fi
+  fi
+  return 1
+}
+
 # First open root task that owns demo-table repair (basename), or empty.
 # Matches filename/body markers from 008 (check_demo_tables|seed_demo_tables|repair-demo-tables).
 # Excludes this preflight meta-task; ignores doc-only body cites without a repair/demo-tables slug.
@@ -170,10 +248,16 @@ if [[ -f CHANGELOG.md ]]; then
   changelog_touch=$(git log -1 --format=%ci -- CHANGELOG.md 2>/dev/null | head -1 || stat -f %Sm -t "%Y-%m-%d" CHANGELOG.md 2>/dev/null || true)
   if grep -q '^\[Unreleased\]' CHANGELOG.md 2>/dev/null || grep -q '## \[Unreleased\]' CHANGELOG.md 2>/dev/null; then
     unreleased_lines=$(awk '/^## \[Unreleased\]/{f=1;next} /^## \[[0-9]/{f=0} f && /^- /{c++} END{print c+0}' CHANGELOG.md)
+    newest_ver_date="$(newest_changelog_version_date)"
     emit "changelog_unreleased_bullets=${unreleased_lines:-0} changelog_last_touch=${changelog_touch:-unknown}"
+    emit "changelog_newest_version_date=${newest_ver_date:-unknown}"
     if (( code_commits_14d > 5 && unreleased_lines < 2 )); then
-      G008_DOC_DRIFT=$((G008_DOC_DRIFT + 1))
-      emit "SIGNAL changelog_sparse Unreleased may lag recent code (${code_commits_14d} commits, ${unreleased_lines} bullets)"
+      if changelog_sparse_fresh_cut "$unreleased_lines"; then
+        emit "changelog_sparse=suppressed (recent version cut; newest=${newest_ver_date:-unknown}, unreleased=${unreleased_lines})"
+      else
+        G008_DOC_DRIFT=$((G008_DOC_DRIFT + 1))
+        emit "SIGNAL changelog_sparse Unreleased may lag recent code (${code_commits_14d} commits, ${unreleased_lines} bullets)"
+      fi
     fi
   fi
 fi
