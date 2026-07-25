@@ -165,6 +165,19 @@ npm run test:staff-delivery --prefix front
 
 ---
 
+### 2a4. Staff guest feedback
+
+Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), that `GET /tenant/guest-feedback` does not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
+
+```bash
+npm run test:guest-feedback-staff --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-guest-feedback-staff.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; user needs reservations access), `HEADLESS`.
+
+---
+
 ### 2b. Working plan (schedule roles)
 
 Smoke test for the Working plan (shift schedule) page. Logs in as a user with schedule access (e.g. owner), opens `/working-plan`, and asserts the page and Add shift button are present.
@@ -482,6 +495,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
 | `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
+| `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |

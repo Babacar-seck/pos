@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.54] - 2026-07-26
+
+### Added
+
+- **Staff guest-feedback Puppeteer smoke:** `npm run test:guest-feedback-staff` covers staff `/guest-feedback` (login, page shell, list GET, no raw `FEEDBACK.*` keys; empty list OK), indexed in `docs/testing.md`.
+
 ## [2.1.53] - 2026-07-26
 
 ### Added
