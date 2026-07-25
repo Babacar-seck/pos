@@ -2,13 +2,24 @@
 
 ![POS2 — Restaurant POS and ordering](docs/banner.svg)
 
-
 [![version](https://img.shields.io/github/v/release/satisfecho/pos?style=flat-square&label=version)](https://github.com/satisfecho/pos/releases)
 [![build](https://img.shields.io/github/check-runs/satisfecho/pos/master?style=flat-square&label=build)](https://github.com/satisfecho/pos/actions)
+[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE.md)
+[![last commit](https://img.shields.io/github/last-commit/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/commits)
+[![stars](https://img.shields.io/github/stars/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/stargazers)
+
+[![Docker](https://img.shields.io/badge/deploy-docker--compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
+[![Angular](https://img.shields.io/badge/frontend-Angular-DD0031?style=flat-square&logo=angular&logoColor=white)](front/)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](back/)
+[![PostgreSQL](https://img.shields.io/badge/db-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](docker-compose.yml)
 
 **Restaurant POS and ordering infrastructure — self-hosted, multi-tenant, real-time.**
 
 _A point-of-sale system with a customer-facing menu, table management, reservations, and online payments (**Stripe** and optional **Revolut**). Staff use the Angular admin; customers order via QR codes and pay at the table. You keep full control of your data and deployment._
+
+**Topics:** `restaurant-pos` · `multi-tenant` · `self-hosted` · `docker` · `fastapi` · `angular` · `postgresql` · `stripe` · `kitchen-display`
+
+**[Try the live demo →](https://satisfecho.de/)**
 
 ---
 </div>
@@ -26,13 +37,17 @@ POS2 is built for restaurants and venues that want:
 
 The frontend is Angular; the backend is FastAPI with PostgreSQL and Redis. All major flows are implemented and documented (see [ROADMAP.md](ROADMAP.md) and the `docs/` folder).
 
-### Screenshot — Staff dashboard
+### Screenshots
 
-The staff dashboard gives quick access to Catalog, Reservations, Kitchen display, Reports, and more.
+Staff dashboard, kitchen display, and customer menu — a quick visual sense of the product.
 
-![Staff dashboard — quick links to Catalog, Reservations, Kitchen, Reports](docs/screenshots/dashboard.png)
+<p float="left">
+  <img src="docs/screenshots/dashboard.png" width="32%" alt="Staff dashboard — Catalog, Reservations, Kitchen, Reports" />
+  <img src="docs/screenshots/kitchen.png" width="32%" alt="Kitchen display — full-screen order cards" />
+  <img src="docs/screenshots/menu.png" width="32%" alt="Customer menu — browse, cart, place order" />
+</p>
 
-*More screenshots (orders, kitchen display, reports, customer menu) are listed in [docs/screenshots/README.md](docs/screenshots/README.md).*
+*More screenshots (orders, reports, reservations, tables, provider portal) are listed in [docs/screenshots/README.md](docs/screenshots/README.md).*
 
 ---
 
@@ -315,3 +330,9 @@ Full guide: [docs/0004-deployment.md](docs/0004-deployment.md).
 | **DB connection errors** | Ensure `db` is healthy (`docker compose -f docker-compose.yml -f docker-compose.dev.yml ps`); with Compose, use `DB_HOST=db`. Check credentials in `config.env`. |
 
 More: [docs/0004-deployment.md](docs/0004-deployment.md) and [AGENTS.md](AGENTS.md).
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=satisfecho/pos&type=Date)](https://star-history.com/#satisfecho/pos&Date)

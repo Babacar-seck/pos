@@ -25,7 +25,7 @@ Optional: set `PROVIDER_TEST_EMAIL` and `PROVIDER_TEST_PASSWORD` to also capture
 
 ### Staff dashboard
 
-Quick links to Catalog, Reservations, Kitchen, Reports, and more. Used in the [main README](../../README.md).
+Quick links to Catalog, Reservations, Kitchen, Reports, and more. Used in the [main README](../../README.md) screenshot collage.
 
 ![Staff dashboard at /dashboard](dashboard.png)
 
@@ -37,7 +37,7 @@ Orders list with order cards, status, items, and actions.
 
 ### Kitchen display
 
-Full-screen view for the kitchen. See [docs/0015-kitchen-display.md](../0015-kitchen-display.md).
+Full-screen view for the kitchen. Used in the [main README](../../README.md) screenshot collage. See [docs/0015-kitchen-display.md](../0015-kitchen-display.md).
 
 ![Kitchen display at /kitchen](kitchen.png)
 
@@ -61,7 +61,7 @@ Tables canvas and floor plan.
 
 ### Customer menu
 
-Customer-facing menu at `/menu/{table_token}`: products, cart, place order.
+Customer-facing menu at `/menu/{table_token}`: products, cart, place order. Used in the [main README](../../README.md) screenshot collage.
 
 ![Customer menu](menu.png)
 
@@ -77,11 +77,11 @@ Provider catalog management. See [docs/0014-provider-portal.md](../0014-provider
 
 | File | Where it's used |
 |------|------------------|
-| `dashboard.png` | Main README |
+| `dashboard.png` | Main README (screenshot collage) |
 | `orders.png` | — |
-| `kitchen.png` | docs/0015-kitchen-display.md |
+| `kitchen.png` | Main README (screenshot collage); docs/0015-kitchen-display.md |
 | `reports.png` | docs/0016-reports.md |
 | `reservations.png` | docs/0011-table-reservation-user-guide.md |
 | `tables.png` | — |
-| `menu.png` | — |
+| `menu.png` | Main README (screenshot collage) |
 | `provider.png` | docs/0014-provider-portal.md |

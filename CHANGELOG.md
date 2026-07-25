@@ -12,6 +12,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 - **Marketing artifact refresh helper:** `scripts/refresh-expired-marketing-artifacts.sh` detects expired or missing GitHub Actions artifacts for sites in `config/marketing-sites.json` and can re-dispatch each site’s Build workflow (`DRY_RUN=1` / `WAIT=1`) before Deploy (#309).
 
+### Changed
+
+- **README discoverability:** Added license/stars/last-commit and stack badges, a topics line, live demo CTA, a three-image screenshot collage (dashboard, kitchen, menu), and a Star History chart; screenshots index updated to match (#310).
+
 ### Fixed
 
 - **Deploy marketing fetch:** Artifact download skips expired Actions artifacts, scans recent successful runs, and reports clear HTTP/expiry errors; sync verify checks `deploySubpath` index paths and missing files so Deploy to amvara9 fails with actionable guidance instead of opaque download failures (#309).
