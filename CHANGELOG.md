@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.44] - 2026-07-25
+
+### Fixed
+
+- **French UI strings:** Filled ~149 missing `fr.json` keys (auth OTP, kitchen stations, settings taxes/providers/security/UI modules, reservations notes/overbooking, products tax/availability, orders/tax, and related menu/reports/working-plan strings) so French matches English leaf keys.
+
 ## [2.1.43] - 2026-07-25
 
 ### Fixed
