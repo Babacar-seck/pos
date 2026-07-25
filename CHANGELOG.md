@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.50] - 2026-07-25
+
+### Added
+
+- **Staff Satisfecho Delivery Puppeteer smoke:** `npm run test:staff-delivery` covers staff `/staff/orders` create + edit delivery metadata (channel badge, address, phone), indexed in `docs/testing.md`.
+
 ## [2.1.49] - 2026-07-25
 
 ### Added

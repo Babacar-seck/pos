@@ -151,6 +151,20 @@ npm run test:restaurant-groups --prefix front
 
 ---
 
+### 2a3. Staff Satisfecho Delivery (create + edit)
+
+Smoke for staff **`/staff/orders`**: open **New delivery order**, create a Satisfecho Delivery order (address, phone, one product; optional courier), assert Delivery tab channel badge / address, then **Edit delivery** and save a phone change. Does not cover public checkout (`test-delivery-checkout.mjs`) or courier portal (`test:courier-actions`).
+
+```bash
+npm run test:staff-delivery --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-staff-delivery.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; user needs order-update permission), `HEADLESS`.
+- Leaves one delivery order per run (demo hygiene OK).
+
+---
+
 ### 2b. Working plan (schedule roles)
 
 Smoke test for the Working plan (shift schedule) page. Logs in as a user with schedule access (e.g. owner), opens `/working-plan`, and asserts the page and Add shift button are present.
@@ -455,6 +469,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
 | `test:order-comments` | `scripts/test-order-comments.mjs` (public Take Away menu: item + order comments → kitchen `.item-notes` / `.order-notes`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
+| `test:staff-delivery` | `scripts/test-staff-delivery.mjs` (staff `/staff/orders`: create Satisfecho Delivery + edit address/phone; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 
 `test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.
 
