@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Enhancement preflight:** When `check_demo_tables` fails but an open root task already owns demo-table repair, emit an informational line instead of a wake SIGNAL so 008 is not re-woken on the same owned failure.
+
 ## [2.1.54] - 2026-07-26
 
 ### Added

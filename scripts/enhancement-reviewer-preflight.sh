@@ -73,6 +73,45 @@ count_root_tasks() {
   echo "$n"
 }
 
+# First open root task that owns demo-table repair (basename), or empty.
+# Matches filename/body markers from 008 (check_demo_tables|seed_demo_tables|repair-demo-tables).
+# Excludes this preflight meta-task; ignores doc-only body cites without a repair/demo-tables slug.
+open_demo_tables_repair_owner() {
+  local f base
+  shopt -s nullglob
+  for f in "$TASKDIR"/NEW-*.md "$TASKDIR"/FEAT-*.md "$TASKDIR"/WIP-*.md \
+    "$TASKDIR"/UNTESTED-*.md "$TASKDIR"/TESTING-*.md; do
+    [[ -f "$f" ]] || continue
+    base=$(basename "$f")
+    case "$base" in
+      *preflight-skip-demo-tables*) continue ;;
+    esac
+    case "$base" in
+      *repair-demo-tables* | *repair_demo_tables* | *missing-tables*)
+        echo "$base"
+        shopt -u nullglob
+        return 0
+        ;;
+    esac
+    if [[ "$base" == *check_demo_tables* || "$base" == *seed_demo_tables* || "$base" == *repair-demo-tables* ]]; then
+      echo "$base"
+      shopt -u nullglob
+      return 0
+    fi
+    case "$base" in
+      *demo-table* | *demo_table* | *seed-demo-table* | *check-demo-table*)
+        if grep -qE 'check_demo_tables|seed_demo_tables|repair-demo-tables' "$f" 2>/dev/null; then
+          echo "$base"
+          shopt -u nullglob
+          return 0
+        fi
+        ;;
+    esac
+  done
+  shopt -u nullglob
+  return 1
+}
+
 mkdir -p "$STATE_DIR"
 [[ -f "$STATE_FILE" ]] || echo '{"last_run":null,"findings":[]}' >"$STATE_FILE"
 
@@ -184,8 +223,13 @@ if command -v docker >/dev/null 2>&1; then
     if docker compose -f "${ROOT}/docker-compose.yml" -f "${ROOT}/docker-compose.dev.yml" exec -T back python -m app.seeds.check_demo_tables 2>/dev/null; then
       emit "demo_tables_check=ok"
     else
-      G008_DEMO_SIGNALS=$((G008_DEMO_SIGNALS + 1))
-      emit "SIGNAL demo_tables_check=fail (run seed_demo_tables)"
+      demo_tables_owner="$(open_demo_tables_repair_owner || true)"
+      if [[ -n "$demo_tables_owner" ]]; then
+        emit "demo_tables_check=fail (owned by open task ${demo_tables_owner})"
+      else
+        G008_DEMO_SIGNALS=$((G008_DEMO_SIGNALS + 1))
+        emit "SIGNAL demo_tables_check=fail (run seed_demo_tables)"
+      fi
     fi
     if docker compose -f "${ROOT}/docker-compose.yml" -f "${ROOT}/docker-compose.dev.yml" exec -T back python -m app.seeds.check_demo_waiting_list 2>/dev/null; then
       emit "demo_waiting_list_check=ok"
