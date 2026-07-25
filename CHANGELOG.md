@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.36] - 2026-07-25
+
+### Added
+
+- **Demo delivery fee/zone settings:** Tenant 1 seed / `reset_demo_data` now sets a demo Satisfecho Delivery fee (250¢) and Madrid postal codes when unset, so public `/delivery/1` shows a fee and rejects out-of-zone codes after daily reset. Check: `python -m app.seeds.check_demo_delivery_settings`.
+
 ## [2.1.35] - 2026-07-25
 
 ### Fixed

@@ -1,9 +1,10 @@
 """
 Clear tenant 1's orders, reservations, and waiting-list entries, then re-seed
-demo orders, reservations, and waiting-list samples.
+demo orders, reservations, waiting-list samples, and delivery fee/zone settings.
 Use this to refresh demo data on a server (e.g. amvara9) so Informes show meaningful data.
-Re-seed includes table orders plus Satisfecho Delivery samples (see seed_demo_orders)
-and a small waiting-list queue (see seed_demo_waiting_list).
+Re-seed includes table orders plus Satisfecho Delivery samples (see seed_demo_orders),
+a small waiting-list queue (see seed_demo_waiting_list), and demo delivery fee/postal
+coverage when unset (see seed_demo_delivery_settings).
 
 Does NOT remove tables, products, or users—only orders, order items, fiscal invoices,
 inventory rows tied to those orders, reservations, and waiting_list_entry for tenant 1.
@@ -76,10 +77,12 @@ def run() -> None:
             f"{deleted_waiting} waiting-list entries."
         )
 
+    from app.seeds.seed_demo_delivery_settings import run as run_delivery_settings
     from app.seeds.seed_demo_orders import run as run_orders
     from app.seeds.seed_demo_reservations import run as run_reservations
     from app.seeds.seed_demo_waiting_list import run as run_waiting_list
 
+    run_delivery_settings()
     run_orders()
     run_reservations()
     run_waiting_list()

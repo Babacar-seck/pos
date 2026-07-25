@@ -110,6 +110,8 @@ Tests: `back/tests/test_cleanup_unpaid_public_delivery.py`.
 
 `seed_demo_orders` (also run by `reset_demo_data`) includes a small mix of Satisfecho Delivery samples (`order_channel=satisfecho_delivery`, `table_id` null, address/phone) so the Delivery tab, kitchen cards, and courier Mine list stay populated after daily demo reset. Assigns an existing courier only when one already exists for tenant 1.
 
+`seed_demo_delivery_settings` (also run by `reset_demo_data` / `bootstrap_demo`) sets tenant 1 `delivery_fee_cents=250` and postal codes `28001` / `28013` when fee and zone are still unset, so public `/delivery/1` shows a fee and rejects out-of-zone codes. Idempotent; does not overwrite operator-customized fee/zone. Check: `python -m app.seeds.check_demo_delivery_settings`.
+
 ## Migration
 
 `back/migrations/20260720220000_order_satisfecho_delivery.sql` — columns + backfill marketplace channel from existing `delivery_integration_id`.

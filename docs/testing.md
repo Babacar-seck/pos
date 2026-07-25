@@ -440,6 +440,8 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 - **Clear orphan provider product images:** `docker compose exec back python -m app.seeds.clear_orphan_provider_product_images` — sets `ProviderProduct.image_filename` (and Product `providers/...` refs) to null when the file is missing under `uploads/providers/`, so catalog stops requesting 404 URLs.
 - **Demo orders (Reports + Delivery):** `docker compose exec back python -m app.seeds.seed_demo_orders` — seeds tenant 1 with paid/active **table** orders over ±90 days plus a small Satisfecho Delivery mix; idempotent (skips if orders exist). Bootstrap / `reset_demo_data` run this. Optional: `./run_seeds.sh --demo-orders` from `back/`.
 - **Demo waiting list:** `docker compose exec back python -m app.seeds.seed_demo_waiting_list` — seeds tenant 1 with a few `waiting` + one `notified` entry for staff Waitlist / public `/waitlist/1`; idempotent (skips if entries exist). Bootstrap / `reset_demo_data` run this.
+- **Demo delivery fee/zone:** `docker compose exec back python -m app.seeds.seed_demo_delivery_settings` — sets tenant 1 fee (250¢) + postal codes when unset; idempotent. Bootstrap / `reset_demo_data` run this.
+- **Demo delivery settings check:** `docker compose exec back python -m app.seeds.check_demo_delivery_settings` (exit 0 = tenant 1 has non-zero fee and/or postal/radius).
 
 See `AGENTS.md` for full seed and deploy notes.
 
