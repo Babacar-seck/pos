@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.52] - 2026-07-25
+
+### Added
+
+- **Bar display Puppeteer smoke:** `npm run test:bar-display` covers staff `/bar` route load (chrome + Bar title, not Kitchen), indexed in `docs/testing.md`.
+
 ## [2.1.51] - 2026-07-25
 
 ### Added

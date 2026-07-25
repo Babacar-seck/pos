@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.51",
+  "version": "2.1.52",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -37,6 +37,7 @@
     "test:support-access": "node scripts/test-support-access.mjs",
     "test:kitchen-status-dropdown": "node scripts/test-kitchen-status-dropdown.mjs",
     "test:kitchen-timer": "node scripts/test-kitchen-timer.mjs",
+    "test:bar-display": "node scripts/test-bar-display.mjs",
     "test:rate-limit": "node scripts/test-rate-limit.mjs",
     "test:rate-limit-puppeteer": "node scripts/test-rate-limit-puppeteer.mjs",
     "test:book-whatsapp": "node scripts/test-book-whatsapp-puppeteer.mjs",

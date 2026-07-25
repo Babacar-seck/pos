@@ -443,6 +443,19 @@ npm run test:kitchen-status-dropdown --prefix front
 
 ---
 
+### 13b. Bar display – route smoke
+
+Login, open `/bar`, assert URL contains `/bar`, kitchen/bar chrome (`.kitchen-view` header, timer settings, fullscreen toggle), and title is Bar display (not Kitchen).
+
+```bash
+npm run test:bar-display --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-bar-display.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `DEMO_LOGIN_*` / `ADMIN_*` (staff with `kitchen_bar` module), `HEADLESS`.
+
+---
+
 ## npm scripts (front)
 
 From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <script>`.
@@ -472,6 +485,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:settings-providers` | `scripts/test-settings-providers.mjs` (Settings → Providers tab; personal providers smoke; uses .env, tenant=1) |
 | `test:bartender-role` | `scripts/test-bartender-role.mjs` (Users → Add user → role dropdown includes Bartender) |
 | `test:kitchen-status-dropdown` | `scripts/test-kitchen-status-dropdown.mjs` (Kitchen display: status dropdown visible, not clipped) |
+| `test:bar-display` | `scripts/test-bar-display.mjs` (Bar display `/bar`: route + chrome + Bar title) |
 | `test:rate-limit` | `scripts/test-rate-limit.mjs` (API rate limiting: login 5/15min, register 3/hour; expects 429 after limit) |
 | `test:rate-limit-puppeteer` | `scripts/test-rate-limit-puppeteer.mjs` (Puppeteer: login page, 6 wrong attempts, expects error banner) |
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
@@ -573,7 +587,7 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Reports** | `test-reports.mjs` | Smoke: page loads (owner/admin). |
 | **Tips (POS)** | `test-order-tip-flows.mjs` | Settings Payments tip mode toggle + Reports tips summary card. |
 | **Users / Bartender role** | `test-bartender-role.mjs` | Admin/owner: /users → Add user → role dropdown includes Bartender. |
-| **Kitchen display** | `test-kitchen-status-dropdown.mjs`, `test-order-comments.mjs` | Status dropdown visible and not clipped on /kitchen; guest item/order comments highlighted. |
+| **Kitchen / Bar display** | `test-kitchen-status-dropdown.mjs`, `test-bar-display.mjs`, `test-order-comments.mjs` | Status dropdown on `/kitchen`; `/bar` route + chrome + Bar title; guest item/order comments highlighted. |
 | **Catalog** | `test-catalog.mjs` | Cards and image placeholders. |
 | **Menu (customer)** | `test-menu-logo.mjs`, `test-order-comments.mjs` | Logo on `/menu/:token`; Take Away comments → kitchen. |
 | **WebSocket** | `test-websocket.mjs` | Post-login WS (ws-bridge required). |
