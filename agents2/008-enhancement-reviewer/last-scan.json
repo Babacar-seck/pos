@@ -138,12 +138,18 @@
       "iso": "2026-07-25T17:17:56Z",
       "new": 0,
       "note": "stamp-only: owned docs_stale\u00d713; Unreleased=3; NEW=121; no new tasks"
+    },
+    {
+      "feat": 0,
+      "iso": "2026-07-25T17:25:11Z",
+      "new": 0,
+      "note": "stamp-only: owned docs_stale\u00d713; Unreleased=3; NEW=121; no new tasks"
     }
   ],
   "g008_signals": 13,
-  "last_agent_iso": "2026-07-25T17:17:56Z",
-  "last_agent_run_iso": "2026-07-25T17:17:56Z",
-  "last_run": "2026-07-25T17:17:59Z",
+  "last_agent_iso": "2026-07-25T17:25:11Z",
+  "last_agent_run_iso": "2026-07-25T17:25:11Z",
+  "last_run": "2026-07-25T17:25:14Z",
   "last_signals": 13,
   "new_created": 0
 }
