@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **VeriFactu (#326):** Archived the verified agents2 task after PASS checks (hash-chain migration, 7 fiscal pytest, Settings Test save + Live 400, issue/cancel ValidarQR + sandbox, immutability 409→anulacion, landing smoke, docs 0018/0065). The feature itself shipped in 2.1.134.
 - **Price promotions (#322):** Archived the verified agents2 task after PASS checks (7 pytest, Settings → Promotions create/toggle, QR menu live prices, order-line promo audit/tax, tenant isolation, landing smoke, front build). The feature itself shipped in 2.1.135.
 - **Migration (#321):** Archived the verified agents2 task after PASS checks (17 pytest, CLI dry-run on sample CSV, invalid apply refused with no writes, docs 0062, landing smoke). The CSV cutover toolkit itself shipped in 2.1.134.
 - **Docs (0051):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` Feature guides lists the floor-plan table join/unjoin MVP (distinct from 0054 restaurant groups). The index itself shipped in 2.1.99.
