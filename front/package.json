@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.84",
+  "version": "2.1.85",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",

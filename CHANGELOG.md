@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.85] - 2026-07-26
+
+### Changed
+
+- **Root README Features / Access Points:** Documented restaurant groups (create/join/leave, optional shared customers and catalog; link to `docs/0054`) and waiting list (Reservations cue + public `/waitlist/{tenantId}` Access Point; link to `docs/0011`).
+
 ## [2.1.84] - 2026-07-26
 
 ### Changed
