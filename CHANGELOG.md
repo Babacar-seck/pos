@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.105] - 2026-07-26
+
+### Changed
+
+- **Docs Quick links:** Added Satisfecho Delivery (`0053`), SaaS signup paywall (`0052`, keep-off until runbook), and platform operator (`0059`) so operators find those guides without digging into Feature guides.
+
 ## [2.1.104] - 2026-07-26
 
 ### Changed
