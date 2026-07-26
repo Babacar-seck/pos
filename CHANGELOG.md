@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.128] - 2026-07-26
+
+### Changed
+
+- **Docs (0031 / #50):** Marked core order customizations as **shipped** (staff product questions, public menu answers including multi-select, kitchen/invoice summary); optional per-option price deltas remain open — aligned README and ROADMAP.
+
 ## [2.1.127] - 2026-07-26
 
 ### Changed

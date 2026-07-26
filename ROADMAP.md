@@ -30,12 +30,13 @@
 - **SaaS signup paywall**: Hard paywall for restaurant signups (trial/subscribe before staff app); flag default off. See `docs/0052-saas-signup-paywall.md`.
 - **Platform operator portal**: SaaS metrics and tenant oversight at `/platform`. See `docs/0059-platform-operator-portal.md`.
 - **Order / item comments**: Guests can add notes on Take Away / menu orders; kitchen display shows item and order notes. See `docs/0015-kitchen-display.md` (smoke: `test:order-comments`).
+- **Order customizations (GitHub [#50](https://github.com/satisfecho/pos/issues/50))**: Staff configure product questions on **`/products`**; public menu collects answers (including multi-select choice); kitchen/invoice use `customization_summary`. See `docs/0031-order-customizations-plan.md`.
 
 ### ❌ Missing Features / To Be Implemented
 - **Customer accounts (end-user)**: Registration, login, email verification, MFA, account-based order history, and customer-facing self-serve invoices — **not shipped** (staff Factura CRM is separate; see Completed). Design notes: `docs/0002-customer-features-plan.md`.
 - **Order management Phase 4 (advanced)**: Batch status updates, status/audit history, item replacement, modification after payment/refund, analytics. See `docs/0007-implementation-verification.md` § "NOT IMPLEMENTED (Phase 4)".
 - **Stricter “immediate payment” (optional)**: Today the menu auto-opens payment after place order; customers can still close the modal. A strict “cannot place another order or proceed without paying” flow is not enforced.
-- **Order customizations (GitHub [#50](https://github.com/satisfecho/pos/issues/50))**: **Phase 1 done** — staff configure questions on **`/products`** (edit product); customer menu already collects answers. **Still open:** pizza-style swap/add toppings, multi-select, priced modifiers — see `docs/0031-order-customizations-plan.md`.
+- **Order customization price deltas (optional, [#50](https://github.com/satisfecho/pos/issues/50))**: Per-option priced modifiers — **not shipped**; core customizations are under Completed. See `docs/0031-order-customizations-plan.md`.
 - **Large multi-topic tracks ([#52](https://github.com/satisfecho/pos/issues/52)–[#54](https://github.com/satisfecho/pos/issues/54))**: Per-theme status in `docs/0032-github-issues-roadmap.md` (#52: warehouses, split bills, join tables, offline, etc.; **partial**: guest feedback + Google review, billing-customer **birth date**). #53–#54: kitchen SLAs, marketing/comms — open slices as smaller issues when building.
 
 ### Documentation reference
