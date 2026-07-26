@@ -16,13 +16,13 @@
 
 ## Problem / goal
 
-`scripts/enhancement-reviewer-preflight.sh` emits `SIGNAL changelog_sparse` whenever **[Unreleased]** has fewer than 2 bullets and there were >5 `back/` / `front/src/` commits in 14 days. After a same-day (or recent) `## [X.Y.Z]` cut, Unreleased is **correctly empty**, but the SIGNAL still fires and keeps waking **008**. That false positive also nudges agents to re-open changelog hygiene while **`NEW-0-20260712-1614-changelog-unreleased-recent-work`** already owns post-cut Unreleased tracking.
+`scripts/enhancement-reviewer-preflight.sh` emits `SIGNAL changelog_sparse` whenever **[Unreleased]** has fewer than 2 bullets and there were >5 `back/` / `front/src/` commits in 14 days. After a same-day (or recent) `## [X.Y.Z]` cut, Unreleased is **correctly empty**, but the SIGNAL still fires and keeps waking **008**. That false positive also nudged agents to re-open changelog hygiene while a product NEW once owned post-cut Unreleased tracking. **Historical owner** **`NEW-0-20260712-1614-changelog-unreleased-recent-work`** was archived 2026-07-26 as **`done/2026/07/12/CLOSED-0-20260712-1614-changelog-unreleased-recent-work.md`** (further Unreleased = committer/coder when new work lands).
 
 ## Evidence (008 preflight / review)
 
 - Digest 2026-07-22T21:19Z: `SIGNAL changelog_sparse Unreleased may lag recent code (13 commits, 0 bullets)` while latest section is **`## [2.1.24] - 2026-07-22`** (same UTC day as the sweep)
 - Heuristic only counts Unreleased `- ` bullets vs 14d code commits; it does not look at the newest versioned section date or whether CHANGELOG was just cut
-- Open owner for real lag after new work: **`NEW-0-20260712-1614-changelog-unreleased-recent-work.md`** (scoped to post-2.1.24 / WIP-304)
+- ~~Open owner for real lag after new work: **`NEW-0-20260712-1614-changelog-unreleased-recent-work.md`** (scoped to post-2.1.24 / WIP-304)~~ — **archived** 2026-07-26 under `done/2026/07/12/`; Unreleased ownership → committer / `.cursor/rules/commit-changelog-version.mdc`
 
 ## High-level instructions for coder
 
@@ -31,7 +31,7 @@
   - `CHANGELOG.md` git last-touch is within **48h** and Unreleased has 0 bullets (fresh cut)
 - Keep emitting informational lines (`changelog_unreleased_bullets=0`, last touch) for humans
 - Optionally still SIGNAL if Unreleased is empty **and** the newest version section is older than 2 days **and** there were code commits after that section’s date
-- Do not invent Unreleased bullets in this task; product changelog edits stay on the existing NEW
+- Do not invent Unreleased bullets in this task; product changelog edits stay with committer/coder (July-12 NEW later archived; do not re-open it)
 - Pass criteria: readonly preflight after a same-day cut with empty Unreleased does **not** emit `changelog_sparse`; a deliberately stale empty Unreleased with older version date still can
 
 ## Implementation notes (2026-07-25 UTC)

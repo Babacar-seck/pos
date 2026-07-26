@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Stale July-12 NEW still owned post-2.1.24 `[Unreleased]` tracking while CHANGELOG had already moved on through many cuts (tip **2.1.66**), risking duplicate Unreleased bullets and inflating the root NEW queue.
+- **What was done:** Closed and archived this task with no CHANGELOG edit. Post-2.1.24 work (including #304 TenantProduct delivery IDs) already lives under versioned sections; empty `[Unreleased]` after the latest cut is correct. Further Unreleased entries remain committer/coder duty when new user-visible work lands (`.cursor/rules/commit-changelog-version.mdc`). Sibling preflight false-positive is already **CLOSED-0-20260722-2120** under `done/`.
+- **What was tested:** Archive path/summary present; tip section `## [2.1.66] - 2026-07-26` with empty Unreleased; no duplicate Unreleased bullets invented — overall **PASS** (queue hygiene; no product code).
+- **Why closed:** Superseded by later cuts and committer workflow; pass criteria of retarget task prefer-close path met.
+- **Closed at (UTC):** 2026-07-26 02:14
+---
+
 # Update CHANGELOG [Unreleased] for recent user-visible work
 
 ## GitHub Issues

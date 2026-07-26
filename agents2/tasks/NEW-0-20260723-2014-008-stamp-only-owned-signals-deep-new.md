@@ -10,7 +10,7 @@ Preflight keeps waking **008** on the same owned **`SIGNAL docs_stale`** / **`ch
 
 ## Evidence (008 preflight / review)
 
-- Digest 2026-07-23T20:13Z: `weekly_due=no`, `NEW=111`, `G008_SIGNALS=15` all from docs/changelog heuristics; every SIGNAL stale-doc basename already has a root NEW; changelog empty Unreleased after same-day **2.1.30** cut (owned by 2120/1138/1614)
+- Digest 2026-07-23T20:13Z: `weekly_due=no`, `NEW=111`, `G008_SIGNALS=15` all from docs/changelog heuristics; every SIGNAL stale-doc basename already has a root NEW; changelog empty Unreleased after same-day cut (preflight false-positive owned by **CLOSED-0-20260722-2120**; product Unreleased is committer duty — July-12 owner archived as **`done/2026/07/12/CLOSED-0-20260712-1614-changelog-unreleased-recent-work.md`** via **UNTESTED-0-20260723-1138**)
 - Same-day 008 runs keep queuing 3 NEW each hour (README rows, smokes, indexes) while older NEWs sit unstarted
 - Sibling **`NEW-0-20260722-1433-preflight-signal-deep-new-backlog`** owns preflight SIGNAL only — this task owns **agent prompt behaviour**
 

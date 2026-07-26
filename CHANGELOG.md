@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent task queue:** Archived the stale July-12 changelog Unreleased NEW and its retarget follow-up under `agents2/tasks/done/`, and retargeted sibling Evidence so Unreleased ownership points at the committer workflow instead of an outdated root NEW.
+
 ## [2.1.66] - 2026-07-26
 
 ### Added
