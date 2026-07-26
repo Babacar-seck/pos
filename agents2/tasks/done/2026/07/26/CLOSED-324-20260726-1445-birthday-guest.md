@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Guest birthday MVP for reservations (#324) was implemented and handed off as CLOSED after a full PASS test report.
+- **What was done:** Optional month/day birthday capture on public book and staff reservations, tenant settings for capture/marketing/consent, migration + docs + pytest; no outbound birthday messaging.
+- **What was tested:** Migration, 8/8 pytest, public book + staff create/edit/clear, settings consent/capture toggles, front build, landing smoke — all PASS.
+- **Why closed:** All testing criteria passed; feature fully delivered for this issue.
+- **Closed at (UTC):** 2026-07-26 16:40
+---
+
 # Birthday guest capture
 
 ## GitHub Issues
@@ -46,3 +56,38 @@ Capture **birthdays** for guests generally (not only billing customers), with op
 **Pass:** Steps 1–2 green; birthday visible to staff after public or staff entry; marketing default off / consent only when enabled; no outbound birthday emails/SMS.
 
 **Fail:** Migration missing, pytest failures, birthday not persisted/shown, marketing consent accepted while marketing disabled, or Angular build errors.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26T16:36:54Z → 2026-07-26T16:39:48Z (log window ~16:36–16:40 UTC).
+2. **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:4202`; branch `development` (synced before start).
+3. **What was tested:** Migration ≥ `20260726170000`; pytest `test_guest_birthday.py`; public `/book/1` birthday selectors + submit Mar 15; staff list/create/clear birthday; settings capture/marketing/consent toggles; front build health; landing smoke.
+4. **Results:**
+   - Migrate / columns: **PASS** — schema version `20260726190000`; reservation `guest_birthday_{month,day,marketing_consent}`; tenant `guest_birthday_{capture_enabled,marketing_enabled,consent_text}`.
+   - Pytest: **PASS** — `8 passed` in 3.07s (`tests/test_guest_birthday.py -q`).
+   - Public book UI + submit: **PASS** — month/day selectors visible when capture on; booking `#2676` “Birthday Test Guest” confirmed; `GET /reservations/2676` → month=3, day=15, marketing_consent=false.
+   - Staff create/edit + list: **PASS** — staff `POST /reservations` with Mar 15 (id 2674); clear via `PUT` → null/null; staff UI card shows `Birthday: March 15` for public guest.
+   - Settings / consent / capture off: **PASS** — marketing on shows checkbox “Tester consent text for #324” on `/book/1`; marketing off via API; capture off hides birthday fields on public book; Settings UI has `guest_birthday_capture_enabled` / `guest_birthday_marketing_enabled` inputs. Demo tenant restored (capture on, marketing off, consent cleared).
+   - Front build: **PASS** — no TS/NG compile failures in `pos-front` logs (only unrelated NG8107 warnings).
+   - Smoke: **PASS** — `npm run test:landing-version` → “Landing version OK; demo login … OK”.
+   - No outbound birthday email/SMS: **PASS** — MVP capture-only; no birthday send path exercised or observed.
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Guest birthday MVP is ready: optional month/day on public book and staff reservations, staff visibility, and marketing consent gated correctly. Safe defaults (marketing off) are solid for GDPR; campaign automation can wait for promos/loyalty follow-ups.
+7. **URLs tested:**
+   1. http://127.0.0.1:4202/book/1
+   2. http://127.0.0.1:4202/login
+   3. http://127.0.0.1:4202/reservations
+   4. http://127.0.0.1:4202/settings
+   5. http://127.0.0.1:4202/ (landing smoke)
+8. **Relevant log excerpts (last section):**
+```
+INFO: Database schema version (max applied): 20260726190000
+… 20260726170000_guest_birthday.sql … status: applied
+✅ Database schema version: 20260726190000
+........ [100%] 8 passed, 1 warning in 3.07s
+INFO: … "PUT /tenant/settings HTTP/1.1" 200 OK
+INFO: … "POST /reservations HTTP/1.1" 200 OK
+INFO: … "PUT /reservations/2674 HTTP/1.1" 200 OK
+INFO: … "GET /reservations/2676 HTTP/1.1" 200 OK
+>>> RESULT: Landing version OK; demo restaurant card OK; demo login (tenant=1) OK; sidebar nav OK.
+```
