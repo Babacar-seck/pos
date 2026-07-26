@@ -50,6 +50,11 @@ from .inventory_models import (
     SupplierUpdate,
     TransactionType,
     UnitOfMeasure,
+    Warehouse,
+    WarehouseCreate,
+    WarehouseResponse,
+    WarehouseStock,
+    WarehouseUpdate,
 )
 from .inventory_service import (
     adjust_stock,
@@ -57,7 +62,10 @@ from .inventory_service import (
     calculate_product_cost,
     generate_po_number,
     get_low_stock_items,
+    get_or_create_default_warehouse,
     receive_goods,
+    resolve_warehouse,
+    set_default_warehouse,
 )
 
 
@@ -316,15 +324,19 @@ def adjust_inventory_stock(
             detail=f"Invalid adjustment type. Must be one of: {[t.value for t in valid_types]}"
         )
     
-    transaction = adjust_stock(
-        session=session,
-        inventory_item=item,
-        quantity=adjustment.quantity,
-        unit=adjustment.unit,
-        adjustment_type=adjustment.adjustment_type,
-        notes=adjustment.notes,
-        created_by_id=current_user.id,
-    )
+    try:
+        transaction = adjust_stock(
+            session=session,
+            inventory_item=item,
+            quantity=adjustment.quantity,
+            unit=adjustment.unit,
+            adjustment_type=adjustment.adjustment_type,
+            notes=adjustment.notes,
+            created_by_id=current_user.id,
+            warehouse_id=adjustment.warehouse_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     
     session.commit()
     
@@ -334,7 +346,167 @@ def adjust_inventory_stock(
         "new_quantity": float(item.current_quantity),
         "unit": item.unit.value,
         "transaction_id": transaction.id,
+        "warehouse_id": transaction.warehouse_id,
     }
+
+
+# ============ WAREHOUSES ============
+
+@router.get("/warehouses", response_model=list[WarehouseResponse])
+@admin_user_limit()
+def list_warehouses(
+    request: Request,
+    response: Response,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.INVENTORY_READ))],
+    session: Session = Depends(get_session),
+    active_only: bool = True,
+):
+    """List warehouses for the tenant. Ensures a default warehouse exists."""
+    get_or_create_default_warehouse(session, current_user.tenant_id)
+    session.commit()
+
+    statement = (
+        select(Warehouse)
+        .where(Warehouse.tenant_id == current_user.tenant_id)
+        .where(Warehouse.is_deleted == False)
+    )
+    if active_only:
+        statement = statement.where(Warehouse.is_active == True)
+    statement = statement.order_by(Warehouse.is_default.desc(), Warehouse.name)
+    warehouses = session.exec(statement).all()
+    return [
+        WarehouseResponse(
+            id=w.id,
+            name=w.name,
+            code=w.code,
+            is_default=w.is_default,
+            is_active=w.is_active,
+            created_at=w.created_at,
+            updated_at=w.updated_at,
+        )
+        for w in warehouses
+    ]
+
+
+@router.post("/warehouses", response_model=WarehouseResponse)
+@admin_user_limit()
+def create_warehouse(
+    request: Request,
+    response: Response,
+    payload: WarehouseCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.INVENTORY_WRITE))],
+    session: Session = Depends(get_session),
+):
+    """Create a named warehouse for the tenant."""
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Warehouse name is required")
+
+    get_or_create_default_warehouse(session, current_user.tenant_id)
+
+    warehouse = Warehouse(
+        tenant_id=current_user.tenant_id,
+        name=name,
+        code=(payload.code or "").strip() or None,
+        is_default=False,
+        is_active=True,
+    )
+    session.add(warehouse)
+    session.flush()
+
+    if payload.is_default:
+        set_default_warehouse(session, current_user.tenant_id, warehouse.id)
+
+    session.commit()
+    session.refresh(warehouse)
+    return WarehouseResponse(
+        id=warehouse.id,
+        name=warehouse.name,
+        code=warehouse.code,
+        is_default=warehouse.is_default,
+        is_active=warehouse.is_active,
+        created_at=warehouse.created_at,
+        updated_at=warehouse.updated_at,
+    )
+
+
+@router.put("/warehouses/{warehouse_id}", response_model=WarehouseResponse)
+@admin_user_limit()
+def update_warehouse(
+    request: Request,
+    response: Response,
+    warehouse_id: int,
+    payload: WarehouseUpdate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.INVENTORY_WRITE))],
+    session: Session = Depends(get_session),
+):
+    """Update warehouse metadata; optionally set as default."""
+    warehouse = session.get(Warehouse, warehouse_id)
+    if not warehouse or warehouse.tenant_id != current_user.tenant_id or warehouse.is_deleted:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+
+    if payload.name is not None:
+        name = payload.name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="Warehouse name is required")
+        warehouse.name = name
+    if payload.code is not None:
+        warehouse.code = payload.code.strip() or None
+    if payload.is_active is not None:
+        if warehouse.is_default and payload.is_active is False:
+            raise HTTPException(status_code=400, detail="Cannot deactivate the default warehouse")
+        warehouse.is_active = payload.is_active
+
+    warehouse.updated_at = datetime.now(timezone.utc)
+    session.add(warehouse)
+
+    if payload.is_default is True:
+        set_default_warehouse(session, current_user.tenant_id, warehouse.id)
+
+    session.commit()
+    session.refresh(warehouse)
+    return WarehouseResponse(
+        id=warehouse.id,
+        name=warehouse.name,
+        code=warehouse.code,
+        is_default=warehouse.is_default,
+        is_active=warehouse.is_active,
+        created_at=warehouse.created_at,
+        updated_at=warehouse.updated_at,
+    )
+
+
+@router.delete("/warehouses/{warehouse_id}")
+@admin_user_limit()
+def delete_warehouse(
+    request: Request,
+    response: Response,
+    warehouse_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.INVENTORY_WRITE))],
+    session: Session = Depends(get_session),
+):
+    """Soft-delete a non-default warehouse (must have zero stock)."""
+    warehouse = session.get(Warehouse, warehouse_id)
+    if not warehouse or warehouse.tenant_id != current_user.tenant_id or warehouse.is_deleted:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+    if warehouse.is_default:
+        raise HTTPException(status_code=400, detail="Cannot delete the default warehouse")
+
+    stock_rows = session.exec(
+        select(WarehouseStock).where(WarehouseStock.warehouse_id == warehouse_id)
+    ).all()
+    if any(float(row.quantity or 0) != 0 for row in stock_rows):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete a warehouse that still has stock; transfer or adjust to zero first",
+        )
+
+    warehouse.is_deleted = True
+    warehouse.is_active = False
+    warehouse.updated_at = datetime.now(timezone.utc)
+    session.add(warehouse)
+    session.commit()
+    return {"status": "deleted", "id": warehouse_id}
 
 
 # ============ SUPPLIERS ============
@@ -736,13 +908,17 @@ def receive_purchase_order(
         for item in receive_input.items
     ]
     
-    batches = receive_goods(
-        session=session,
-        purchase_order=po,
-        received_items=received_items,
-        created_by_id=current_user.id,
-        notes=receive_input.notes,
-    )
+    try:
+        batches = receive_goods(
+            session=session,
+            purchase_order=po,
+            received_items=received_items,
+            created_by_id=current_user.id,
+            notes=receive_input.notes,
+            warehouse_id=receive_input.warehouse_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     
     session.commit()
     
@@ -750,6 +926,7 @@ def receive_purchase_order(
         "status": "received",
         "po_status": po.status.value,
         "batches_created": len(batches),
+        "warehouse_id": batches[0].warehouse_id if batches else receive_input.warehouse_id,
     }
 
 
@@ -1004,8 +1181,16 @@ def get_stock_levels(
     current_user: Annotated[models.User, Depends(require_permission(Permission.INVENTORY_READ))],
     session: Session = Depends(get_session),
     category: InventoryCategory | None = None,
+    warehouse_id: int | None = None,
 ):
-    """Get current stock levels for all items"""
+    """Get current stock levels for all items (optionally filtered by warehouse)."""
+    warehouse = None
+    if warehouse_id is not None:
+        try:
+            warehouse = resolve_warehouse(session, current_user.tenant_id, warehouse_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     statement = (
         select(InventoryItem)
         .where(InventoryItem.tenant_id == current_user.tenant_id)
@@ -1018,22 +1203,37 @@ def get_stock_levels(
     
     statement = statement.order_by(InventoryItem.name)
     items = session.exec(statement).all()
+
+    stock_by_item: dict[int, Decimal] = {}
+    if warehouse is not None:
+        ws_rows = session.exec(
+            select(WarehouseStock)
+            .where(WarehouseStock.tenant_id == current_user.tenant_id)
+            .where(WarehouseStock.warehouse_id == warehouse.id)
+        ).all()
+        stock_by_item = {row.inventory_item_id: row.quantity for row in ws_rows}
     
     result = []
     for item in items:
-        total_value = int(float(item.current_quantity) * item.average_cost_cents)
+        if warehouse is not None:
+            qty = float(stock_by_item.get(item.id, Decimal("0")))
+        else:
+            qty = float(item.current_quantity)
+        total_value = int(qty * item.average_cost_cents)
         
         result.append(StockLevelResponse(
             id=item.id,
             sku=item.sku,
             name=item.name,
             unit=item.unit.value if item.unit else "piece",
-            current_quantity=float(item.current_quantity),
+            current_quantity=qty,
             reorder_level=float(item.reorder_level),
             average_cost_cents=item.average_cost_cents,
             total_value_cents=total_value,
-            is_low_stock=item.current_quantity <= item.reorder_level,
+            is_low_stock=qty <= float(item.reorder_level),
             category=item.category.value if item.category else "other",
+            warehouse_id=warehouse.id if warehouse else None,
+            warehouse_name=warehouse.name if warehouse else None,
         ))
     
     return result

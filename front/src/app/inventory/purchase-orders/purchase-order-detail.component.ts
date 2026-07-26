@@ -17,6 +17,7 @@ import {
   PurchaseOrderStatus,
   ReceiveGoodsInput,
   ReceivedItemInput,
+  Warehouse,
 } from '../inventory.types';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
@@ -184,6 +185,16 @@ import {
                 </button>
               </div>
               <p class="field-hint receive-partial-hint">{{ 'INVENTORY.PURCHASE_ORDERS.RECEIVE_PARTIAL_HINT' | translate }}</p>
+              <div class="form-group">
+                <label for="receive_warehouse">{{ 'INVENTORY.WAREHOUSES.WAREHOUSE' | translate }}</label>
+                <select id="receive_warehouse" [(ngModel)]="receiveWarehouseId">
+                  @for (wh of warehouses(); track wh.id) {
+                    <option [ngValue]="wh.id">
+                      {{ wh.name }}@if (wh.is_default) { ({{ 'INVENTORY.WAREHOUSES.DEFAULT_BADGE' | translate }})}
+                    </option>
+                  }
+                </select>
+              </div>
               <div class="receive-table-wrapper">
                 <table class="receive-table">
                   <thead>
@@ -239,6 +250,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
   private translate = inject(TranslateService);
 
   order = signal<PurchaseOrder | null>(null);
+  warehouses = signal<Warehouse[]>([]);
   loading = signal(true);
   showReceiveModal = signal(false);
   showStatusHelp = signal(false);
@@ -261,14 +273,29 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   receiveQuantities: number[] = [];
   receiveNotes = '';
+  receiveWarehouseId: number | null = null;
 
   ngOnInit() {
     const id = +this.route.snapshot.paramMap.get('id')!;
+    this.loadWarehouses();
     this.loadOrder(id, this.route.snapshot.queryParamMap.get('receive') === '1');
   }
 
   toggleStatusHelp() {
     this.showStatusHelp.update((open) => !open);
+  }
+
+  loadWarehouses() {
+    this.inventoryService.getWarehouses().subscribe({
+      next: warehouses => {
+        this.warehouses.set(warehouses);
+        if (this.receiveWarehouseId == null) {
+          const def = warehouses.find(w => w.is_default) || warehouses[0];
+          this.receiveWarehouseId = def?.id ?? null;
+        }
+      },
+      error: () => { }
+    });
   }
 
   loadOrder(id: number, openReceive = false) {
@@ -342,7 +369,11 @@ export class PurchaseOrderDetailComponent implements OnInit {
     }
 
     this.receiving.set(true);
-    const input: ReceiveGoodsInput = { items, notes: this.receiveNotes || undefined };
+    const input: ReceiveGoodsInput = {
+      items,
+      notes: this.receiveNotes || undefined,
+      warehouse_id: this.receiveWarehouseId || undefined,
+    };
 
     this.inventoryService.receivePurchaseOrder(order.id, input).subscribe({
       next: () => { this.receiving.set(false); this.showReceiveModal.set(false); this.loadOrder(order.id); },

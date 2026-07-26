@@ -30,6 +30,7 @@ interface FeatureCategory {
         </a>
         <div class="features-nav__links">
           <a routerLink="/features" class="features-nav__link features-nav__link--active">{{ 'LANDING.NAV_FEATURES' | translate }}</a>
+          <a routerLink="/pricing" class="features-nav__link">{{ 'LANDING.NAV_PRICING' | translate }}</a>
           <a routerLink="/" fragment="guests" class="features-nav__link">{{ 'LANDING.NAV_GUESTS' | translate }}</a>
           <a routerLink="/" fragment="demo" class="features-nav__link">{{ 'LANDING.NAV_DEMO' | translate }}</a>
         </div>
@@ -320,6 +321,7 @@ export class FeaturesComponent {
         { titleKey: 'FEATURES_PAGE.FEAT_WORKING_PLAN_TITLE', descKey: 'FEATURES_PAGE.FEAT_WORKING_PLAN_DESC' },
         { titleKey: 'FEATURES_PAGE.FEAT_INVENTORY_TITLE', descKey: 'FEATURES_PAGE.FEAT_INVENTORY_DESC' },
         { titleKey: 'FEATURES_PAGE.FEAT_INVOICING_TITLE', descKey: 'FEATURES_PAGE.FEAT_INVOICING_DESC' },
+        { titleKey: 'FEATURES_PAGE.FEAT_TSE_TITLE', descKey: 'FEATURES_PAGE.FEAT_TSE_DESC' },
         { titleKey: 'FEATURES_PAGE.FEAT_CONTRACTS_TITLE', descKey: 'FEATURES_PAGE.FEAT_CONTRACTS_DESC' },
         { titleKey: 'FEATURES_PAGE.FEAT_RESTAURANT_GROUPS_TITLE', descKey: 'FEATURES_PAGE.FEAT_RESTAURANT_GROUPS_DESC' },
       ],

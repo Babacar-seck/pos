@@ -21,6 +21,9 @@ import { SidebarComponent } from '../shared/sidebar.component';
 import { FocusFirstInputDirective } from '../shared/focus-first-input.directive';
 import { TranslationsComponent } from '../translations/translations.component';
 import { KitchenStationsSettingsComponent } from './kitchen-stations-settings.component';
+import { LoyaltySettingsComponent } from './loyalty-settings.component';
+import { PrintSettingsComponent } from './print-settings.component';
+import { PromoSettingsComponent } from './promo-settings.component';
 import { RestaurantGroupSettingsComponent } from './restaurant-group-settings.component';
 import { DeliveryIntegrationsSettingsComponent } from './delivery-integrations-settings.component';
 import { SocialPostsSettingsComponent } from './social-posts-settings.component';
@@ -40,6 +43,9 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
     TranslateModule,
     TranslationsComponent,
     KitchenStationsSettingsComponent,
+    LoyaltySettingsComponent,
+    PrintSettingsComponent,
+    PromoSettingsComponent,
     RestaurantGroupSettingsComponent,
     DeliveryIntegrationsSettingsComponent,
     ContractTemplatesSettingsComponent,
@@ -177,6 +183,43 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
             <span>{{ 'SETTINGS.KITCHEN_STATIONS_TAB' | translate }}</span>
           </button>
           }
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-loyalty-tab"
+            [class.active]="activeSection() === 'loyalty'"
+            (click)="activeSection.set('loyalty')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/>
+            </svg>
+            <span>{{ 'SETTINGS.LOYALTY_TAB' | translate }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-printing-tab"
+            [class.active]="activeSection() === 'printing'"
+            (click)="activeSection.set('printing')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span>{{ 'SETTINGS.PRINTING_TAB' | translate }}</span>
+          </button>
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-promos-tab"
+            [class.active]="activeSection() === 'promos'"
+            (click)="activeSection.set('promos')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            <span>{{ 'SETTINGS.PROMOS_TAB' | translate }}</span>
+          </button>
           <button
             type="button"
             class="tab"
@@ -546,6 +589,12 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
           <app-restaurant-group-settings />
         } @else if (activeSection() === 'kitchen-stations') {
           <app-kitchen-stations-settings />
+        } @else if (activeSection() === 'loyalty') {
+          <app-loyalty-settings />
+        } @else if (activeSection() === 'printing') {
+          <app-print-settings />
+        } @else if (activeSection() === 'promos') {
+          <app-promo-settings />
         } @else if (activeSection() === 'delivery-integrations') {
           <app-delivery-integrations-settings />
         } @else if (activeSection() === 'social-posts') {
@@ -1338,6 +1387,56 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
                     />
                     <p class="hint">{{ 'SETTINGS.FISCAL_AEAT_SECRET_HINT' | translate }}</p>
                   </div>
+
+                  <div class="divider"></div>
+                  <h3>{{ 'SETTINGS.TSE_TITLE' | translate }}</h3>
+                  <p class="hint">{{ 'SETTINGS.TSE_DESC' | translate }}</p>
+                  <div class="form-group">
+                    <label for="fiscal_country">{{ 'SETTINGS.FISCAL_COUNTRY' | translate }}</label>
+                    <input
+                      type="text"
+                      id="fiscal_country"
+                      [(ngModel)]="formData.fiscal_country"
+                      name="fiscal_country"
+                      maxlength="2"
+                      class="input-small"
+                      placeholder="DE"
+                    />
+                    <p class="hint">{{ 'SETTINGS.FISCAL_COUNTRY_HINT' | translate }}</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_mode">{{ 'SETTINGS.TSE_MODE' | translate }}</label>
+                    <select id="tse_mode" class="form-select" [(ngModel)]="formData.tse_mode" name="tse_mode">
+                      <option value="off">{{ 'SETTINGS.TSE_MODE_OFF' | translate }}</option>
+                      <option value="test">{{ 'SETTINGS.TSE_MODE_TEST' | translate }}</option>
+                      <option value="live">{{ 'SETTINGS.TSE_MODE_LIVE' | translate }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_client_id">{{ 'SETTINGS.TSE_CLIENT_ID' | translate }}</label>
+                    <input
+                      type="text"
+                      id="tse_client_id"
+                      [(ngModel)]="formData.tse_client_id"
+                      name="tse_client_id"
+                      maxlength="128"
+                      class="input-medium"
+                      autocomplete="off"
+                    />
+                    <p class="hint">{{ 'SETTINGS.TSE_CLIENT_ID_HINT' | translate }}</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_api_secret">{{ 'SETTINGS.TSE_API_SECRET' | translate }}</label>
+                    <input
+                      type="password"
+                      id="tse_api_secret"
+                      [(ngModel)]="formData.tse_api_secret"
+                      name="tse_api_secret"
+                      placeholder="••••••••••••••••"
+                      autocomplete="off"
+                    />
+                    <p class="hint">{{ 'SETTINGS.TSE_API_SECRET_HINT' | translate }}</p>
+                  </div>
                   
                   <div class="form-group checkbox-row">
                     <label class="switch">
@@ -1600,6 +1699,41 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
                       <p class="hint">{{ 'SETTINGS.RESERVATION_REMINDER_2H_HINT' | translate }}</p>
                     </div>
                   </div>
+                  <h3 class="subsection-title">{{ 'SETTINGS.GUEST_BIRTHDAY' | translate }}</h3>
+                  <p class="subsection-desc">{{ 'SETTINGS.GUEST_BIRTHDAY_DESC' | translate }}</p>
+                  <div class="form-group checkbox-row">
+                    <label class="switch">
+                      <input type="checkbox" [(ngModel)]="formData.guest_birthday_capture_enabled" name="guest_birthday_capture_enabled">
+                      <span class="slider round"></span>
+                    </label>
+                    <div>
+                      <label class="check-label">{{ 'SETTINGS.GUEST_BIRTHDAY_CAPTURE' | translate }}</label>
+                      <p class="hint">{{ 'SETTINGS.GUEST_BIRTHDAY_CAPTURE_HINT' | translate }}</p>
+                    </div>
+                  </div>
+                  <div class="form-group checkbox-row">
+                    <label class="switch">
+                      <input type="checkbox" [(ngModel)]="formData.guest_birthday_marketing_enabled" name="guest_birthday_marketing_enabled">
+                      <span class="slider round"></span>
+                    </label>
+                    <div>
+                      <label class="check-label">{{ 'SETTINGS.GUEST_BIRTHDAY_MARKETING' | translate }}</label>
+                      <p class="hint">{{ 'SETTINGS.GUEST_BIRTHDAY_MARKETING_HINT' | translate }}</p>
+                    </div>
+                  </div>
+                  @if (formData.guest_birthday_marketing_enabled) {
+                    <div class="form-group">
+                      <label for="guest_birthday_consent_text">{{ 'SETTINGS.GUEST_BIRTHDAY_CONSENT_TEXT' | translate }}</label>
+                      <textarea
+                        id="guest_birthday_consent_text"
+                        [(ngModel)]="formData.guest_birthday_consent_text"
+                        name="guest_birthday_consent_text"
+                        rows="2"
+                        [placeholder]="'SETTINGS.GUEST_BIRTHDAY_CONSENT_PLACEHOLDER' | translate"
+                      ></textarea>
+                      <small class="field-hint">{{ 'SETTINGS.GUEST_BIRTHDAY_CONSENT_HINT' | translate }}</small>
+                    </div>
+                  }
                 </div>
               }
 
@@ -2944,6 +3078,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     | 'reservations'
     | 'taxes'
     | 'kitchen-stations'
+    | 'loyalty'
+    | 'printing'
+    | 'promos'
     | 'restaurant-group'
     | 'delivery-integrations'
     | 'social-posts'
@@ -3148,6 +3285,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     reservation_dress_code: null,
     reservation_reminder_24h_enabled: false,
     reservation_reminder_2h_enabled: false,
+    guest_birthday_capture_enabled: true,
+    guest_birthday_marketing_enabled: false,
+    guest_birthday_consent_text: null,
     delivery_fee_cents: 0,
     delivery_radius_meters: null,
     delivery_postal_codes: null,
@@ -3163,6 +3303,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     fiscal_mode: 'off' as 'off' | 'test' | 'live',
     fiscal_invoice_series: 'VF',
     fiscal_aeat_api_secret: null as string | null,
+    fiscal_country: null as string | null,
+    tse_mode: 'off' as 'off' | 'test' | 'live',
+    tse_client_id: null as string | null,
+    tse_api_secret: null as string | null,
   };
 
   allTimezones: string[] = [];
@@ -3267,6 +3411,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
           reservation_dress_code: settings.reservation_dress_code ?? null,
           reservation_reminder_24h_enabled: settings.reservation_reminder_24h_enabled ?? false,
           reservation_reminder_2h_enabled: settings.reservation_reminder_2h_enabled ?? false,
+          guest_birthday_capture_enabled: settings.guest_birthday_capture_enabled ?? true,
+          guest_birthday_marketing_enabled: settings.guest_birthday_marketing_enabled ?? false,
+          guest_birthday_consent_text: settings.guest_birthday_consent_text ?? null,
           delivery_fee_cents: settings.delivery_fee_cents ?? 0,
           delivery_radius_meters: settings.delivery_radius_meters ?? null,
           delivery_postal_codes: this.formatDeliveryPostalCodesForForm(settings.delivery_postal_codes),
@@ -3290,6 +3437,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
               : 'off',
           fiscal_invoice_series: settings.fiscal_invoice_series?.trim() || 'VF',
           fiscal_aeat_api_secret: null,
+          fiscal_country: settings.fiscal_country?.trim()?.toUpperCase() || null,
+          tse_mode:
+            settings.tse_mode === 'test' || settings.tse_mode === 'live' ? settings.tse_mode : 'off',
+          tse_client_id: settings.tse_client_id?.trim() || null,
+          tse_api_secret: null,
         };
         this.clockQrLastToken.set(null);
         this.clockQrTokenLoading.set(false);
@@ -4219,6 +4371,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // Always send reminder options so they are persisted (default false if unset)
     updateData.reservation_reminder_24h_enabled = this.formData.reservation_reminder_24h_enabled ?? false;
     updateData.reservation_reminder_2h_enabled = this.formData.reservation_reminder_2h_enabled ?? false;
+    updateData.guest_birthday_capture_enabled = this.formData.guest_birthday_capture_enabled ?? true;
+    updateData.guest_birthday_marketing_enabled = this.formData.guest_birthday_marketing_enabled ?? false;
+    updateData.guest_birthday_consent_text = (this.formData.guest_birthday_consent_text || '').trim() || null;
 
     const seen = new Set<number>();
     const tipPresets: number[] = [];
@@ -4256,6 +4411,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
     if (updateData.fiscal_aeat_api_secret === '' || updateData.fiscal_aeat_api_secret == null) {
       delete updateData.fiscal_aeat_api_secret;
+    }
+    if (updateData.tse_api_secret === '' || updateData.tse_api_secret == null) {
+      delete updateData.tse_api_secret;
+    }
+    const fc = (updateData.fiscal_country || '').toString().trim().toUpperCase();
+    updateData.fiscal_country = fc.length === 2 ? fc : null;
+    if (!updateData.tse_client_id) {
+      updateData.tse_client_id = null;
     }
 
     this.api.updateTenantSettings(updateData).subscribe({

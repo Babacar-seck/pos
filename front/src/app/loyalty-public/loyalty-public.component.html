@@ -1,0 +1,74 @@
+<div class="book-page loyalty-public" data-testid="loyalty-public-page">
+  <header class="book-header">
+    <app-language-picker></app-language-picker>
+  </header>
+
+  @if (loading()) {
+    <p class="hint">{{ 'COMMON.LOADING' | translate }}</p>
+  } @else if (errorKind() === 'invalid_tenant') {
+    <p class="error">{{ 'LOYALTY_PUBLIC.INVALID_TENANT' | translate }}</p>
+  } @else if (errorKind() === 'not_enabled') {
+    <p class="error">{{ 'LOYALTY_PUBLIC.NOT_ENABLED' | translate }}</p>
+  } @else if (program(); as p) {
+    <main class="book-main">
+      <h1>{{ p.program_name }}</h1>
+      <p class="lede">
+        {{
+          'LOYALTY_PUBLIC.LEDE'
+            | translate
+              : {
+                  earn: p.earn_units_per_order,
+                  mode: p.mode,
+                  threshold: p.redemption_threshold,
+                }
+        }}
+      </p>
+
+      @if (submitted()) {
+        <div class="success" data-testid="loyalty-join-success">
+          <p>{{ 'LOYALTY_PUBLIC.JOINED' | translate }}</p>
+          <p>
+            {{ 'LOYALTY_PUBLIC.BALANCE' | translate }}: <strong>{{ balance() }}</strong>
+          </p>
+          @if (memberToken()) {
+            <p class="token-hint">{{ 'LOYALTY_PUBLIC.KEEP_LINK' | translate }}</p>
+            <p class="token">
+              <code>{{ origin }}/loyalty/card/{{ memberToken() }}</code>
+            </p>
+          }
+          @if (walletNote()) {
+            <p class="hint">{{ walletNote() }}</p>
+          }
+        </div>
+      } @else {
+        <form (ngSubmit)="submit()" class="join-form">
+          <label>
+            <span>{{ 'LOYALTY_PUBLIC.NAME' | translate }}</span>
+            <input type="text" [(ngModel)]="displayName" name="displayName" required />
+          </label>
+          <label>
+            <span>{{ 'LOYALTY_PUBLIC.EMAIL' | translate }}</span>
+            <input type="email" [(ngModel)]="email" name="email" />
+          </label>
+          <label>
+            <span>{{ 'LOYALTY_PUBLIC.PHONE' | translate }}</span>
+            <input type="tel" [(ngModel)]="phone" name="phone" />
+          </label>
+          <p class="hint">{{ 'LOYALTY_PUBLIC.CONTACT_HINT' | translate }}</p>
+          @if (submitError()) {
+            <p class="error">{{ submitError() }}</p>
+          }
+          <button type="submit" class="btn primary" [disabled]="!canSubmit() || submitting()">
+            {{
+              submitting()
+                ? ('COMMON.SAVING' | translate)
+                : ('LOYALTY_PUBLIC.JOIN' | translate)
+            }}
+          </button>
+        </form>
+      }
+    </main>
+  }
+
+  <app-legal-links></app-legal-links>
+</div>

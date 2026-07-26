@@ -17,6 +17,9 @@ import {
     InventoryItemCreate,
     InventoryItemUpdate,
     StockAdjustment,
+    Warehouse,
+    WarehouseCreate,
+    WarehouseUpdate,
     Supplier,
     SupplierCreate,
     SupplierUpdate,
@@ -104,8 +107,27 @@ export class InventoryService {
     adjustStock(
         id: number,
         adjustment: StockAdjustment
-    ): Observable<{ status: string; item_id: number; new_quantity: number; unit: string; transaction_id: number }> {
+    ): Observable<{ status: string; item_id: number; new_quantity: number; unit: string; transaction_id: number; warehouse_id?: number | null }> {
         return this.http.post<any>(`${this.apiUrl}/items/${id}/adjust`, adjustment);
+    }
+
+    // ============ WAREHOUSES ============
+
+    getWarehouses(activeOnly = true): Observable<Warehouse[]> {
+        const params = new HttpParams().set('active_only', String(activeOnly));
+        return this.http.get<Warehouse[]>(`${this.apiUrl}/warehouses`, { params });
+    }
+
+    createWarehouse(warehouse: WarehouseCreate): Observable<Warehouse> {
+        return this.http.post<Warehouse>(`${this.apiUrl}/warehouses`, warehouse);
+    }
+
+    updateWarehouse(id: number, updates: WarehouseUpdate): Observable<Warehouse> {
+        return this.http.put<Warehouse>(`${this.apiUrl}/warehouses/${id}`, updates);
+    }
+
+    deleteWarehouse(id: number): Observable<{ status: string; id: number }> {
+        return this.http.delete<{ status: string; id: number }>(`${this.apiUrl}/warehouses/${id}`);
     }
 
     // ============ SUPPLIERS ============
@@ -209,9 +231,13 @@ export class InventoryService {
 
     // ============ STOCK & REPORTS ============
 
-    getStockLevels(category?: InventoryCategory): Observable<StockLevel[]> {
+    getStockLevels(options?: {
+        category?: InventoryCategory;
+        warehouseId?: number | null;
+    }): Observable<StockLevel[]> {
         let params = new HttpParams();
-        if (category) params = params.set('category', category);
+        if (options?.category) params = params.set('category', options.category);
+        if (options?.warehouseId != null) params = params.set('warehouse_id', String(options.warehouseId));
         return this.http.get<StockLevel[]>(`${this.apiUrl}/stock-levels`, { params });
     }
 

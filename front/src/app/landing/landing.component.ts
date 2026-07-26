@@ -32,6 +32,7 @@ const LANDING_DEMO_TABLE_NAME = 'Take Away';
         </a>
         <div class="landing-nav__links">
           <a routerLink="/features" class="landing-nav__link">{{ 'LANDING.NAV_FEATURES' | translate }}</a>
+          <a routerLink="/pricing" class="landing-nav__link">{{ 'LANDING.NAV_PRICING' | translate }}</a>
           <a href="#guests" class="landing-nav__link">{{ 'LANDING.NAV_GUESTS' | translate }}</a>
           <a href="#demo" class="landing-nav__link">{{ 'LANDING.NAV_DEMO' | translate }}</a>
         </div>

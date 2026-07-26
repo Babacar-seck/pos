@@ -23,6 +23,7 @@ from app.saas_billing import (
     construct_saas_webhook_event,
     initial_status_for_new_tenant,
     path_is_saas_exempt,
+    plan_config,
     process_saas_stripe_event,
     start_trial,
     tenant_has_saas_access,
@@ -39,6 +40,31 @@ def test_path_is_saas_exempt():
     assert not path_is_saas_exempt("/orders")
     assert not path_is_saas_exempt("/tables")
     assert not path_is_saas_exempt("/reports/sales")
+
+
+def test_plan_config_includes_plans_catalog():
+    """Public pricing page (#328) expects a multi-tier-ready plans[] array."""
+    cfg = plan_config()
+    assert "enabled" in cfg
+    assert isinstance(cfg["trial_days"], int)
+    assert isinstance(cfg["price_cents"], int)
+    assert isinstance(cfg["currency"], str)
+    assert isinstance(cfg["plans"], list) and len(cfg["plans"]) >= 1
+    hosted = cfg["plans"][0]
+    assert hosted["id"] == "hosted_standard"
+    assert hosted["price_cents"] == cfg["price_cents"]
+    assert hosted["trial_days"] == cfg["trial_days"]
+    assert hosted["currency"] == cfg["currency"]
+    assert hosted["interval"] == "month"
+
+
+def test_saas_config_endpoint_returns_plans():
+    client = TestClient(app)
+    res = client.get("/saas/config")
+    assert res.status_code == 200
+    body = res.json()
+    assert isinstance(body.get("plans"), list) and body["plans"]
+    assert body["plans"][0]["id"] == "hosted_standard"
 
 
 def test_tenant_has_access_when_paywall_disabled():

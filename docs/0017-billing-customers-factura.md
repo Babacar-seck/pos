@@ -13,7 +13,7 @@ Restaurants often need to issue **tax invoices (Factura)** to B2B customers or a
 
 ## Customers page (`/customers`)
 
-- **Access**: Staff with order access (owner, admin, waiter, receptionist). Write (add/edit/delete) requires `billing_customer:write` (owner, admin, waiter).
+- **Access**: Open **Operations → Customers (Invoice)** in the staff sidebar (`/customers`). It is **not** under Catalog & inventory. Staff with order access (owner, admin, waiter, receptionist). Write (add/edit/delete) requires `billing_customer:write` (owner, admin, waiter).
 - **List**: All billing customers for the tenant, with search by name, company name, tax ID, or email.
 - **Add**: “Add customer” opens a form: Name (required), Company name, Tax ID / CIF, Address, Email, Phone, optional **Birth date** (CRM / occasions; not printed on the tax invoice).
 - **Edit / Delete**: From the table; delete does not remove the link on orders that already reference the customer (order keeps the saved data).

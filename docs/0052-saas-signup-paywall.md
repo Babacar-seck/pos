@@ -33,12 +33,23 @@ Columns on `tenant`:
 
 ## API
 
-- `GET /saas/config` — public plan flags
+- `GET /saas/config` — public plan flags (`enabled`, `trial_days`, `price_cents`, `currency`, `stripe_checkout_available`) plus a forward-compatible **`plans`** array (currently one `hosted_standard` tier with the same price/trial). Used by `/paywall`, signup, and the public **`/pricing`** page (#328).
 - `GET /saas/subscription` — current tenant status (auth)
 - `POST /saas/start-trial` — owner/admin; starts trial
 - `POST /saas/checkout-session` — Stripe Checkout URL when configured
 - `POST /saas/confirm-checkout` — after redirect with `session_id` (fast path)
 - `POST /saas/webhook` — Stripe billing webhook (signature via `SAAS_STRIPE_WEBHOOK_SECRET`); source of truth for subscription lifecycle
+
+## Public pricing page
+
+Prospects can open **`/pricing`** (linked from landing / features nav and footer) to see:
+
+- Hosted monthly price and trial days from live `GET /saas/config` (env-driven; no drifting hardcoded copy).
+- A short “what’s included” list (QR ordering, kitchen/bar, reservations, reports, loyalty).
+- Self-host / AGPLv3 as a zero license-cost alternative.
+- When `SAAS_PAYWALL_ENABLED` is false, the page still shows plan numbers but states that hosted paywall billing is **not** required on that deployment.
+
+Smoke: `npm run test:pricing --prefix front` (see `docs/testing.md`).
 
 ## Stripe webhook
 
@@ -62,7 +73,7 @@ Signing secret → `SAAS_STRIPE_WEBHOOK_SECRET`. Checkout and Subscription metad
 
 ## Guided restaurant signup wizard
 
-Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new restaurant before the hard paywall or staff dashboard. Distinct from **provider** signup (`/provider/register`) and from **platform operator** oversight ([0015-platform-operator-portal.md](0015-platform-operator-portal.md)).
+Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new restaurant before the hard paywall or staff dashboard. Distinct from **provider** signup (`/provider/register`) and from **platform operator** oversight ([0059-platform-operator-portal.md](0059-platform-operator-portal.md)).
 
 ### Guest path
 
@@ -76,7 +87,7 @@ Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new 
    | 3 | Photos / price tweak | Authenticated `PATCH`/`upload` on `/products/*` for those starter rows (optional images). |
    | 4 | Done (QR + public menu link) | Finish CTA: **`/paywall`** when `SAAS_PAYWALL_ENABLED=true`, else **`/dashboard`**. |
 3. When paywall is on: trial or Stripe Checkout on `/paywall` unlocks the staff app (see **Flow** and **API** above).
-4. Platform operators can later review the new tenant under `/platform` (signups metric, tenant detail) — see [0015-platform-operator-portal.md](0015-platform-operator-portal.md).
+4. Platform operators can later review the new tenant under `/platform` (signups metric, tenant detail) — see [0059-platform-operator-portal.md](0059-platform-operator-portal.md).
 
 ### Priming vs 402 middleware
 

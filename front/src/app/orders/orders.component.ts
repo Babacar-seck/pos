@@ -12,6 +12,7 @@ import {
   OrderItemCreate,
   OrderLineModifiers,
   FiscalInvoicePublic,
+  TseTransactionPublic,
   Product,
   User,
   OrderDeliveryUpdate,
@@ -19,11 +20,13 @@ import {
 import { AudioService } from '../services/audio.service';
 import { WaiterAlertService, WaiterAlertItem } from '../services/waiter-alert.service';
 import { PermissionService, Permission } from '../services/permission.service';
+import { PrintBridgeService } from '../services/print-bridge.service';
 import { Subscription } from 'rxjs';
 import { AgGridAngular } from 'ag-grid-angular';
 import { SidebarComponent } from '../shared/sidebar.component';
 import { StaffPosToolbarComponent } from '../shared/staff-pos-toolbar.component';
 import { FocusFirstInputDirective } from '../shared/focus-first-input.directive';
+import { OfflineCashSaleComponent } from './offline-cash-sale.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { intlLocaleFromTranslate } from '../shared/intl-locale';
 import { currencySymbolFromIsoCode } from '../shared/currency-symbol';
@@ -48,7 +51,7 @@ ModuleRegistry.registerModules([
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [AgGridAngular, SidebarComponent, StaffPosToolbarComponent, FormsModule, FocusFirstInputDirective, TranslateModule],
+  imports: [AgGridAngular, SidebarComponent, StaffPosToolbarComponent, FormsModule, FocusFirstInputDirective, TranslateModule, OfflineCashSaleComponent],
   template: `
     <app-sidebar>
         <div class="page-header page-header--staff-flow">
@@ -72,6 +75,9 @@ ModuleRegistry.registerModules([
         </div>
 
         <div class="content">
+          @if (canMarkPaid() && canUpdateStatus()) {
+            <app-offline-cash-sale />
+          }
           @if (loading()) {
             <div class="empty-state"><p>{{ 'ORDERS.LOADING' | translate }}</p></div>
           } @else {
@@ -149,6 +155,11 @@ ModuleRegistry.registerModules([
                         }
                         @if (order.staff_urgent) {
                           <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
+                        }
+                        @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                          <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                        } @else if (order.hub_fulfillment) {
+                          <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
                         }
                         <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                       </div>
@@ -284,6 +295,16 @@ ModuleRegistry.registerModules([
                         @if (canUpdateStatus() && order.status !== 'cancelled') {
                           <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
                             {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
+                          </button>
+                        }
+                        @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-testid="request-hub-fulfillment"
+                            (click)="requestHubFulfillment(order)"
+                          >
+                            {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
                           </button>
                         }
                         <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
@@ -458,6 +479,11 @@ ModuleRegistry.registerModules([
                           @if (order.staff_urgent) {
                             <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
                           }
+                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                          } @else if (order.hub_fulfillment) {
+                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
+                          }
                           <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                         </div>
                       </div>
@@ -588,6 +614,16 @@ ModuleRegistry.registerModules([
                           @if (canUpdateStatus() && order.status !== 'cancelled') {
                             <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
                               {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
+                            </button>
+                          }
+                          @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
+                            <button
+                              type="button"
+                              class="btn btn-secondary"
+                              data-testid="request-hub-fulfillment"
+                              (click)="requestHubFulfillment(order)"
+                            >
+                              {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
                             </button>
                           }
                           <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
@@ -758,6 +794,11 @@ ModuleRegistry.registerModules([
                           }
                           @if (order.staff_urgent) {
                             <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
+                          }
+                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                          } @else if (order.hub_fulfillment) {
+                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
                           }
                           <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                         </div>
@@ -975,6 +1016,7 @@ ModuleRegistry.registerModules([
                 <button type="button" class="btn btn-secondary" (click)="closeOrderEdit()">{{ 'COMMON.CLOSE' | translate }}</button>
                 <button type="button" class="btn btn-secondary" (click)="saveEditOrderBilling()">{{ 'COMMON.SAVE' | translate }}</button>
                 <button type="button" class="btn btn-secondary" (click)="printEditOrderInvoice()">{{ 'ORDERS.PRINT_INVOICE' | translate }}</button>
+                <button type="button" class="btn btn-secondary" (click)="printEditOrderKitchen()">{{ 'ORDERS.PRINT_KITCHEN' | translate }}</button>
                 @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
                   <button type="button" class="btn btn-primary" (click)="markEditOrderAsPaid(order)">{{ 'ORDERS.MARK_AS_PAID' | translate }}</button>
                 }
@@ -1166,6 +1208,37 @@ ModuleRegistry.registerModules([
                 <p class="payment-amount-line">
                   {{ 'ORDERS.SUBTOTAL' | translate }}: {{ formatPrice(orderPaymentSubtotal(orderToMarkPaid()!)) }}
                 </p>
+                @if ((orderToMarkPaid()!.loyalty_discount_cents || 0) > 0) {
+                  <p class="payment-amount-line" data-testid="loyalty-discount-line">
+                    {{ 'ORDERS.LOYALTY_DISCOUNT' | translate }}:
+                    −{{ formatPrice(orderToMarkPaid()!.loyalty_discount_cents || 0) }}
+                  </p>
+                }
+                @if (canRedeemLoyalty() && !(orderToMarkPaid()!.loyalty_units_redeemed)) {
+                  <div class="form-group" data-testid="loyalty-redeem-block">
+                    <label for="loyalty-member-token">{{ 'ORDERS.LOYALTY_MEMBER_TOKEN' | translate }}</label>
+                    <input
+                      id="loyalty-member-token"
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="loyaltyRedeemToken"
+                      name="loyaltyRedeemToken"
+                      [placeholder]="'ORDERS.LOYALTY_MEMBER_TOKEN_HINT' | translate"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      style="margin-top: 0.5rem"
+                      [disabled]="!loyaltyRedeemToken.trim() || loyaltyRedeeming()"
+                      (click)="redeemLoyaltyForPaymentOrder()"
+                    >
+                      {{ 'ORDERS.LOYALTY_REDEEM' | translate }}
+                    </button>
+                    @if (loyaltyRedeemError()) {
+                      <p class="modal-hint" style="color:#b00020">{{ loyaltyRedeemError() }}</p>
+                    }
+                  </div>
+                }
                 @if (tipEntryModeOverpayment()) {
                   <p class="modal-hint">{{ 'ORDERS.OVERPAYMENT_PAYMENT_HINT' | translate }}</p>
                   <div class="form-group">
@@ -1220,6 +1293,62 @@ ModuleRegistry.registerModules([
                   <p class="modal-hint">{{ 'ORDERS.FINISH_ORDER_HELP' | translate }}</p>
                 } @else {
                   <p class="modal-hint">{{ 'ORDERS.PAY_NOW_HELP' | translate }}</p>
+                }
+                @if (orderToMarkPaid(); as payOrder) {
+                  <div class="split-pay-summary" data-testid="split-pay-summary">
+                    <p class="modal-hint">
+                      {{ 'ORDERS.AMOUNT_DUE' | translate }}: {{ formatPrice(paymentAmountDueCents(payOrder)) }}
+                      @if ((payOrder.amount_paid_cents || 0) > 0) {
+                        — {{ 'ORDERS.AMOUNT_PAID' | translate }}: {{ formatPrice(payOrder.amount_paid_cents || 0) }}
+                        — {{ 'ORDERS.AMOUNT_REMAINING' | translate }}: {{ formatPrice(paymentAmountRemainingCents(payOrder)) }}
+                      }
+                    </p>
+                    @if (payOrder.payments && payOrder.payments.length > 0) {
+                      <ul class="split-pay-list" data-testid="split-pay-list">
+                        @for (p of payOrder.payments; track p.id) {
+                          <li>
+                            {{ formatPrice(p.amount_cents) }} · {{ p.payment_method }}
+                            @if (p.payer_label) { ({{ p.payer_label }}) }
+                          </li>
+                        }
+                      </ul>
+                    }
+                    @if (!paymentModalFinishMode() && paymentAmountRemainingCents(payOrder) > 0) {
+                      <div class="form-group">
+                        <label for="partial-pay-amount">{{ 'ORDERS.PARTIAL_PAYMENT_AMOUNT' | translate }}</label>
+                        <input
+                          id="partial-pay-amount"
+                          type="text"
+                          inputmode="decimal"
+                          class="form-control"
+                          [(ngModel)]="partialPaymentAmountInput"
+                          name="partialPaymentAmount"
+                          data-testid="partial-pay-amount"
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label for="partial-pay-label">{{ 'ORDERS.PAYER_LABEL' | translate }}</label>
+                        <input
+                          id="partial-pay-label"
+                          type="text"
+                          class="form-control"
+                          [(ngModel)]="partialPaymentPayerLabel"
+                          name="partialPaymentPayerLabel"
+                          data-testid="partial-pay-label"
+                          [placeholder]="'ORDERS.PAYER_LABEL_HINT' | translate"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-testid="record-partial-payment"
+                        (click)="confirmPartialPayment()"
+                        [disabled]="processingPayment()"
+                      >
+                        {{ 'ORDERS.RECORD_PARTIAL_PAYMENT' | translate }}
+                      </button>
+                    }
+                  </div>
                 }
                 <div class="form-group">
                   <label for="payment-method">{{ 'ORDERS.PAYMENT_METHOD' | translate }}</label>
@@ -1517,6 +1646,14 @@ ModuleRegistry.registerModules([
       font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
       color: #b91c1c; background: rgba(220, 38, 38, 0.1);
       padding: 2px 8px; border-radius: 6px; width: fit-content;
+    }
+    .order-hub-badge {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
+      color: #1e40af; background: rgba(37, 99, 235, 0.1);
+      padding: 2px 8px; border-radius: 6px; width: fit-content;
+    }
+    .order-hub-badge.prepared {
+      color: #166534; background: rgba(22, 163, 74, 0.12);
     }
     .btn-delete-order {
       display: inline-flex; align-items: center; gap: var(--space-2);
@@ -2265,6 +2402,20 @@ ModuleRegistry.registerModules([
     .waiter-alert-dismiss:hover {
       background: rgba(255,255,255,0.35);
     }
+    .split-pay-summary {
+      margin: var(--space-3) 0;
+      padding: var(--space-3) 0;
+      border-top: 1px solid var(--color-border);
+    }
+    .split-pay-list {
+      margin: 0.5rem 0 0.75rem;
+      padding-left: 1.25rem;
+      font-size: 0.875rem;
+      color: var(--color-text-muted, #666);
+    }
+    .split-pay-summary .btn {
+      margin-bottom: var(--space-3);
+    }
     @keyframes slideDown {
       from { transform: translateY(-100%); }
       to { transform: translateY(0); }
@@ -2307,11 +2458,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private translate = inject(TranslateService);
   private waiterAlerts = inject(WaiterAlertService);
   private permissions = inject(PermissionService);
+  private printBridge = inject(PrintBridgeService);
 
   // Permission checks for UI
   canUpdateStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status'));
   canUpdateItemStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:item_status'));
   canMarkPaid = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid'));
+  canRedeemLoyalty = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'loyalty:redeem'),
+  );
   /** Finish (deliver all + pay) needs both status updates and mark-paid (same as backend). */
   canFinishOrder = computed(() =>
     this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status') &&
@@ -2370,10 +2525,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
   paymentMethod = 'cash';
   /** Selected POS tip preset percent; 0 = no tip */
   paymentTipPercent = 0;
+  loyaltyRedeemToken = '';
+  loyaltyRedeeming = signal(false);
+  loyaltyRedeemError = signal('');
   /** When tip_entry_mode is overpayment: amount charged on card/terminal (major units, locale decimal) */
   paymentAmountPaidInput = '';
   /** Editable tip in major units (defaults from amount − subtotal) */
   paymentTipAmountInput = '';
+  /** Split-bill partial payment amount (major units) */
+  partialPaymentAmountInput = '';
+  partialPaymentPayerLabel = '';
   processingPayment = signal(false);
   statusDropdownOpen = signal<number | null>(null); // Order ID for which dropdown is open
   itemStatusDropdownOpen = signal<string | null>(null); // "orderId-itemId" for which dropdown is open
@@ -3111,6 +3272,41 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
   }
 
+  printEditOrderKitchen() {
+    const order = this.editOrder();
+    if (!order?.id) return;
+    void this.printKitchenTicket(order);
+  }
+
+  async printKitchenTicket(order: Order) {
+    if (!order.id) return;
+    const result = await this.printBridge.tryEnqueue('kitchen', order.id, 'kitchen');
+    if (result.ok) {
+      this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+      return;
+    }
+    this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+    const items = (order.items || []).filter((i) => !i.removed_by_customer);
+    const rows = items
+      .map(
+        (i) =>
+          `<tr><td>${i.quantity || 1}×</td><td>${this.escapeHtml(i.product_name || '')}</td></tr>`,
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html><head><title>Kitchen #${order.id}</title>
+<style>body{font-family:monospace;padding:16px} h1{font-size:18px}</style></head><body>
+<h1>KITCHEN #${order.id}</h1>
+<p>Table: ${this.escapeHtml(order.table_name || '—')}</p>
+<table>${rows}</table>
+<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}<\/script>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+    }
+  }
+
   markEditOrderAsPaid(order: Order) {
     this.closeOrderEdit();
     this.paymentModalFinishMode.set(false);
@@ -3524,6 +3720,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return m === 'test' || m === 'live';
   }
 
+  private tseEnabled(): boolean {
+    const m = this.tenantSettings()?.tse_mode;
+    return m === 'test' || m === 'live';
+  }
+
   private fiscalIssueErrorMessage(err: { error?: { detail?: unknown } }): string {
     const d = err?.error?.detail;
     if (typeof d === 'string' && d.trim()) return d;
@@ -3552,6 +3753,38 @@ export class OrdersComponent implements OnInit, OnDestroy {
     billingCustomer?: BillingCustomer | null,
     fiscalMeta?: FiscalInvoicePublic | null
   ) {
+    let tseMeta: TseTransactionPublic | null = null;
+    if (order.id != null && this.tseEnabled()) {
+      try {
+        tseMeta = await new Promise<TseTransactionPublic | null>((resolve) => {
+          this.api.getOrderTseTransaction(order.id!).subscribe({
+            next: (row) => resolve(row),
+            error: () => resolve(null),
+          });
+        });
+      } catch {
+        tseMeta = null;
+      }
+    }
+
+    const needBrowserFiscalOrTse = !!(fiscalMeta || tseMeta);
+    if (order.id != null && !needBrowserFiscalOrTse) {
+      const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
+      if (result.ok) {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+        return;
+      }
+      this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+    } else if (order.id != null && needBrowserFiscalOrTse) {
+      // Still enqueue a receipt job when bridge is up; also open browser for QR/fiscal/TSE text.
+      const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
+      if (result.ok) {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+      } else {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+      }
+    }
+
     const settings = this.tenantSettings();
     const tenantId = this.api.getCurrentUser()?.tenant_id;
     const logoUrl = settings?.logo_filename && tenantId
@@ -3647,6 +3880,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
       }
     }
 
+    let tseQrDataUrl = '';
+    if (tseMeta?.qr_content) {
+      try {
+        const QRCode = (await import('qrcode')).default;
+        tseQrDataUrl = await QRCode.toDataURL(tseMeta.qr_content, { width: 180, margin: 1 });
+      } catch (e) {
+        console.warn('TSE QR generation failed', e);
+      }
+    }
+
     const fiscalNumberLine = fiscalMeta
       ? `${this.escapeHtml(this.translate.instant('ORDERS.FISCAL_INVOICE_NUMBER'))}: ${this.escapeHtml(fiscalMeta.full_number)}`
       : '';
@@ -3663,6 +3906,21 @@ export class OrdersComponent implements OnInit, OnDestroy {
   </div>`
         : '';
 
+    const tseBlock =
+      tseMeta != null
+        ? `
+  <div class="tse-kassensichv" style="margin-top: 20px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+    <p style="margin: 0 0 10px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #334155;">
+      ${this.escapeHtml(this.translate.instant('ORDERS.TSE_LABEL'))}
+    </p>
+    <p style="margin: 0 0 4px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_SERIAL'))}: ${this.escapeHtml(tseMeta.tse_serial || '')}</p>
+    <p style="margin: 0 0 4px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_COUNTER'))}: ${tseMeta.signature_counter}</p>
+    <p style="margin: 0 0 12px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_TIME'))}: ${this.escapeHtml(tseMeta.time_start || '')}</p>
+    ${tseQrDataUrl ? `<div style="text-align:center;margin:8px 0;"><img src="${tseQrDataUrl}" alt="" width="180" height="180" /></div>` : ''}
+    <p style="margin: 8px 0 0; font-size: 9px; color: #64748b; word-break: break-all;">${this.escapeHtml((tseMeta.signature_value || '').slice(0, 96))}</p>
+    <p style="margin: 8px 0 0; font-size: 9px; color: #94a3b8;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_DISCLAIMER'))}</p>
+  </div>`
+        : '';
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3730,6 +3988,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     </tr>
   </table>
   ${fiscalBlock}
+  ${tseBlock}
   <div class="footer">${this.translate.instant('ORDERS.INVOICE_FOOTER')}</div>
   <div class="invoice-oss">${this.getInvoiceOssLine()}</div>
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
@@ -3952,6 +4211,34 @@ export class OrdersComponent implements OnInit, OnDestroy {
     });
   }
 
+  hubFulfillmentLabel(status: string): string {
+    switch (status) {
+      case 'prepared_at_hq':
+        return 'ORDERS.HUB_PREPARED_BADGE';
+      case 'preparing':
+        return 'ORDERS.HUB_PREPARING_BADGE';
+      case 'cancelled':
+        return 'ORDERS.HUB_CANCELLED_BADGE';
+      default:
+        return 'ORDERS.HUB_REQUESTED_BADGE';
+    }
+  }
+
+  requestHubFulfillment(order: Order): void {
+    if (!this.canUpdateStatus() || !order.can_request_hub_fulfillment) return;
+    this.api.createOrderHubFulfillment(order.id).subscribe({
+      next: (ff) => {
+        this.orders.update((list) =>
+          list.map((o) =>
+            o.id === order.id
+              ? { ...o, hub_fulfillment: ff, can_request_hub_fulfillment: false }
+              : o
+          )
+        );
+      },
+    });
+  }
+
   updateStatus(order: Order, status: string) {
     this.statusDropdownOpen.set(null); // Close dropdown
     this.api.updateOrderStatus(order.id, status).subscribe({
@@ -4107,6 +4394,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
   }
 
   openFinishPaymentModal(order: Order) {
@@ -4117,6 +4406,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
   }
 
   closePaymentModal() {
@@ -4126,6 +4417,73 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
+  }
+
+  paymentAmountDueCents(order: Order): number {
+    if (order.amount_due_cents != null && order.amount_due_cents >= 0) {
+      return order.amount_due_cents;
+    }
+    return this.paymentGrandTotalCents(order);
+  }
+
+  paymentAmountRemainingCents(order: Order): number {
+    if (order.amount_remaining_cents != null && order.amount_remaining_cents >= 0) {
+      return order.amount_remaining_cents;
+    }
+    const paid = order.amount_paid_cents || 0;
+    return Math.max(0, this.paymentAmountDueCents(order) - paid);
+  }
+
+  confirmPartialPayment() {
+    const order = this.orderToMarkPaid();
+    if (!order || !this.paymentMethod) return;
+    const cents = this.parseMoneyMajorToCents(this.partialPaymentAmountInput);
+    if (cents < 1) {
+      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_AMOUNT_REQUIRED'), 'error');
+      return;
+    }
+    const remaining = this.paymentAmountRemainingCents(order);
+    if (cents > remaining) {
+      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_EXCEEDS'), 'error');
+      return;
+    }
+    this.processingPayment.set(true);
+    this.api
+      .recordOrderPayment(order.id, {
+        amount_cents: cents,
+        payment_method: this.paymentMethod,
+        payer_label: this.partialPaymentPayerLabel.trim() || null,
+      })
+      .subscribe({
+        next: (res) => {
+          this.processingPayment.set(false);
+          this.partialPaymentAmountInput = '';
+          this.partialPaymentPayerLabel = '';
+          if (res.status === 'paid' || res.paid_at) {
+            this.showToast(this.translate.instant('COMMON.SUCCESS'), 'success');
+            this.closePaymentModal();
+            this.loadOrders();
+            return;
+          }
+          const updated: Order = {
+            ...order,
+            amount_due_cents: res.amount_due_cents,
+            amount_paid_cents: res.amount_paid_cents,
+            amount_remaining_cents: res.amount_remaining_cents,
+            payments: res.payments,
+          };
+          this.orderToMarkPaid.set(updated);
+          this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_RECORDED'), 'success');
+          this.loadOrders();
+        },
+        error: (err) => {
+          this.processingPayment.set(false);
+          const detail = err?.error?.detail || this.translate.instant('ORDERS.FAILED_TO_MARK_PAID');
+          this.showToast(typeof detail === 'string' ? detail : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'), 'error');
+        },
+      });
   }
 
   orderPaymentSubtotal(order: Order): number {
@@ -4198,13 +4556,44 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   paymentGrandTotalCents(order: Order | null | undefined): number {
     if (!order) return 0;
-    return this.orderPaymentSubtotal(order) + this.paymentTipPreviewCents(order);
+    const discount = Math.max(0, order.loyalty_discount_cents || 0);
+    return Math.max(0, this.orderPaymentSubtotal(order) - discount) + this.paymentTipPreviewCents(order);
   }
 
   paymentOverpaymentGrandTotalCents(): number {
     const order = this.orderToMarkPaid();
     if (!order) return 0;
-    return this.orderPaymentSubtotal(order) + this.parseMoneyMajorToCents(this.paymentTipAmountInput);
+    const discount = Math.max(0, order.loyalty_discount_cents || 0);
+    return (
+      Math.max(0, this.orderPaymentSubtotal(order) - discount) +
+      this.parseMoneyMajorToCents(this.paymentTipAmountInput)
+    );
+  }
+
+  redeemLoyaltyForPaymentOrder(): void {
+    const order = this.orderToMarkPaid();
+    const token = this.loyaltyRedeemToken.trim();
+    if (!order || !token || this.loyaltyRedeeming()) return;
+    this.loyaltyRedeeming.set(true);
+    this.loyaltyRedeemError.set('');
+    this.api.redeemLoyaltyOnOrder(order.id, { member_token: token }).subscribe({
+      next: (res) => {
+        this.loyaltyRedeeming.set(false);
+        order.loyalty_discount_cents = res.discount_cents;
+        order.loyalty_units_redeemed = res.units_redeemed;
+        order.loyalty_membership_id = res.membership_id;
+        order.total_cents = Math.max(
+          0,
+          this.orderPaymentSubtotal(order) - (res.discount_cents || 0),
+        ) + (order.tip_amount_cents || 0);
+        this.loyaltyRedeemToken = '';
+        this.orderToMarkPaid.set({ ...order });
+      },
+      error: (err) => {
+        this.loyaltyRedeeming.set(false);
+        this.loyaltyRedeemError.set(err?.error?.detail || 'Redeem failed');
+      },
+    });
   }
 
   confirmMarkAsPaid() {

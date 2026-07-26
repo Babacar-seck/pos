@@ -1,5 +1,25 @@
 # Table PIN Security System
 
+## Status: shipped
+
+Table PIN security is **live**. Prefer this status section (and current code) over treating the rest of the doc as an open design proposal.
+
+**What shipped**
+
+- **Staff:** activate table → 4-digit PIN, regenerate PIN, close/deactivate (`POST /tables/{id}/activate`, `…/regenerate-pin`, `…/close`).
+- **Public menu:** inactive tables reject orders (“not accepting orders”); PIN required on place-order; PIN kept in `sessionStorage` for the table session.
+- **Shared order:** one active order per activated table; customers append to the same order.
+
+**Optional GPS / location check**
+
+- Tenant fields `latitude` / `longitude` / `location_radius_meters` / `location_check_enabled` (default **off**) and Settings UI exist.
+- When enabled, public `POST /menu/{table_token}/order` may flag (not block) orders outside the radius via `flagged_for_review` / `location_flagged` — **not** a missing epic; leave off unless the restaurant opts in.
+- Do **not** start a new GPS product track from this doc.
+
+Anything below is **operator / reference** detail (workflows, schema, API shapes, troubleshooting).
+
+---
+
 This document describes the table PIN security system implemented to prevent unauthorized ordering through shared or bookmarked menu links.
 
 ## Overview
@@ -9,7 +29,7 @@ The Table PIN Security System provides a multi-layered approach to ensure that o
 1. **Table Activation** - Staff must activate a table before customers can order
 2. **PIN Validation** - Customers enter a 4-digit PIN to place orders
 3. **Shared Orders** - One order per table (all customers add to the same order)
-4. **Location Verification** (Optional) - GPS-based flagging for suspicious orders
+4. **Location Verification** (Optional) - GPS-based flagging for suspicious orders (off by default; see Status)
 
 ## How It Works
 

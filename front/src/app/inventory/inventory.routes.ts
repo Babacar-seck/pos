@@ -19,6 +19,10 @@ export const INVENTORY_ROUTES: Routes = [
         loadComponent: () => import('./suppliers/suppliers.component').then((m) => m.SuppliersComponent),
     },
     {
+        path: 'warehouses',
+        loadComponent: () => import('./warehouses/warehouses.component').then((m) => m.WarehousesComponent),
+    },
+    {
         path: 'purchase-orders',
         loadComponent: () =>
             import('./purchase-orders/purchase-orders.component').then((m) => m.PurchaseOrdersComponent),

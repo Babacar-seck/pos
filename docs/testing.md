@@ -208,7 +208,7 @@ npm run test:courier-actions --prefix front
 
 ### 2a3d. Platform operator portal
 
-Smoke for the SaaS platform operator dashboard (`/platform`, login at `/platform/login`): log in, assert metric cards on the dashboard, open a tenant detail page, and confirm the public Satisfecho Delivery link for that tenant. See `docs/0015-platform-operator-portal.md`. Does not cover tenant staff login, paywall (`test:paywall`), or courier portal (`test:courier-actions`).
+Smoke for the SaaS platform operator dashboard (`/platform`, login at `/platform/login`): log in, assert metric cards on the dashboard, open a tenant detail page, and confirm the public Satisfecho Delivery link for that tenant. See `docs/0059-platform-operator-portal.md`. Does not cover tenant staff login, paywall (`test:paywall`), or courier portal (`test:courier-actions`).
 
 ```bash
 npm run test:platform-operator --prefix front
@@ -222,7 +222,7 @@ npm run test:platform-operator --prefix front
 
 ### 2a4. Staff guest feedback
 
-Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), that `GET /tenant/guest-feedback` does not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
+Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), trends analytics panel, Export CSV control, that `GET /tenant/guest-feedback` and `GET /tenant/guest-feedback/summary` do not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
 
 ```bash
 npm run test:guest-feedback-staff --prefix front
@@ -246,6 +246,17 @@ npm run test:working-plan --prefix front
 - **Env:** `BASE_URL`, `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `ADMIN_EMAIL`/`ADMIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` (from `.env`). `TENANT_ID` (default `1`) — login uses `/login?tenant=1` so the user is in the correct tenant. User must have schedule access (owner, admin, kitchen, bartender, waiter, receptionist). `HEADLESS`.
 - **Asserts:** After login, `/working-plan` loads; `[data-testid="working-plan-page"]` and `[data-testid="working-plan-add-shift"]` are present; week navigation is present; switching to Calendar view shows `[data-testid="working-plan-calendar-grid"]` with header and day cells; days that do not meet personnel requirements (too many or too few staff) are marked red; **Excel export** controls `[data-testid="working-plan-export-worker"]` and `[data-testid="working-plan-export-excel"]` are present when the tenant has schedulable users. The working-plan route is lazy-loaded—if UI changes don’t appear after editing, do a full page refresh or restart the dev server.
 
+**Calendar route smoke** (`test:working-plan-calendar` — differs from `test:working-plan`): opens **`/working-plan/calendar` directly** (no week-view navigation) and **fails if the page logs console errors**. Use this when changing the calendar route or lazy-load; use `test:working-plan` for week grid, in-page calendar switch, staffing colours, and Excel export asserts.
+
+```bash
+npm run test:working-plan-calendar --prefix front
+# Or: LOGIN_EMAIL=owner@amvara.de LOGIN_PASSWORD=secret node front/scripts/test-working-plan-calendar.mjs
+# Headless: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-working-plan-calendar.mjs
+```
+
+- **Env:** Same as `test:working-plan` (`BASE_URL`, `LOGIN_*` / `DEMO_LOGIN_*` / `ADMIN_*`, `TENANT_ID` default `1`, `HEADLESS`).
+- **Asserts:** After login, `/working-plan/calendar` loads; calendar chrome is present; no console `error` messages during the run.
+
 **Debug (inspect red / staffing days — not a pass/fail smoke):**
 
 ```bash
@@ -253,7 +264,7 @@ npm run debug:working-plan-calendar --prefix front
 # Or: LOGIN_EMAIL=... LOGIN_PASSWORD=... BASE_URL=http://127.0.0.1:4202 node front/scripts/debug-working-plan-calendar.mjs
 ```
 
-- Logs into the working-plan calendar and prints cell / red-day counts for diagnosing staffing-day colouring. Same login env as `test:working-plan` (`LOGIN_*` / `DEMO_LOGIN_*`, optional `TENANT_ID`, `BASE_URL`). For CI-style checks use **`test:working-plan`** (and **`test:working-plan-calendar`** when indexed).
+- Logs into the working-plan calendar and prints cell / red-day counts for diagnosing staffing-day colouring. Same login env as `test:working-plan` (`LOGIN_*` / `DEMO_LOGIN_*`, optional `TENANT_ID`, `BASE_URL`). For CI-style checks use **`test:working-plan`** and **`test:working-plan-calendar`**.
 
 ---
 
@@ -345,6 +356,15 @@ npm run test:features --prefix front
 ```
 
 - No login. Opens `/features`, asserts `.features-page` shell, translated hero title (not a raw `FEATURES_PAGE.*` key), at least one `.features-category`, and brand link to `/` or a register CTA. Fails on pageerror or bad HTTP for the document.
+
+**Public pricing page (`/pricing`):**
+
+```bash
+npm run test:pricing --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-pricing.mjs
+```
+
+- No login. Fetches `GET /api/saas/config`, opens `/pricing` (must not redirect home), asserts translated hero, price and trial text matching config, self-host card, register CTA, and billing-active vs inactive note matching `enabled`. Fails on pageerror.
 
 ---
 
@@ -669,6 +689,8 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `debug:reservations` | `scripts/debug-reservations.mjs` |
 | `debug:reservations:public` | `scripts/debug-reservations-public.mjs` |
 | `debug:working-plan-calendar` | `scripts/debug-working-plan-calendar.mjs` (inspect red/staffing days on calendar; not a pass/fail smoke — use `test:working-plan` / `test:working-plan-calendar` for CI) |
+| `test:working-plan` | `scripts/test-working-plan.mjs` (week view + in-page calendar switch, staffing colours, Excel export; needs schedule access + `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:working-plan-calendar` | `scripts/test-working-plan-calendar.mjs` (direct `/working-plan/calendar` load; fails on console errors; same login env as `test:working-plan`) |
 | `test:register` | `scripts/test-register.mjs` |
 | `test:demo-data` | `scripts/test-demo-data.mjs` |
 | `test:tables-page` | `scripts/test-tables-page.mjs` |
@@ -677,6 +699,8 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:tables-waiter-assignment` | `scripts/test-tables-waiter-assignment.mjs` (Waiter: Table view has read-only assignment cells, no `select.waiter-select-inline`; requires `WAITER_LOGIN_EMAIL` / `WAITER_LOGIN_PASSWORD`, else skips with exit 0) |
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
 | `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
+| `test:pricing` | `scripts/test-pricing.mjs` (public `/pricing`: live `GET /saas/config` price/trial, self-host card, billing note vs `enabled`; no login) |
+| Print agent (manual / API) | Backend: `pytest tests/test_print_jobs.py`; LAN dry-run: create agent in Settings → Printing, then `PRINT_AGENT_API_BASE=http://127.0.0.1:4202/api PRINT_AGENT_TOKEN=… PRINT_AGENT_DRY_RUN=1 python3 scripts/print-agent/print_agent.py` and enqueue via Orders → Print kitchen / invoice (`docs/0070-hardware-printing.md`) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
 | `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
@@ -722,9 +746,10 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 ## Backend / data checks (non-Puppeteer)
 
 - **Demo tables:** `docker compose exec back python -m app.seeds.check_demo_tables` (exit 0 = T01–T10 present for tenant 1).
-- **Overbooking 0025 (one empty table / full slot):** `docker compose exec back python -m app.seeds.check_overbooking_0025` (exit 0 = pass; creates/cleanup test data). Unittest: `docker compose exec back python -m tests.test_overbooking_0025 -v`. Scenario notes: `docs/0025-test-scenario-one-empty-table.md` (demo seats = 5×4 + 5×2 = 30).
+- **Overbooking 0025 (one empty table / full slot):** `docker compose exec back python -m app.seeds.check_overbooking_0025` (exit 0 = pass; creates/cleanup test data). Unittest: `docker compose exec back python -m tests.test_overbooking_0025 -v`. Scenario notes: `docs/0058-test-scenario-one-empty-table.md` (demo seats = 5×4 + 5×2 = 30).
 - **Seed tables:** `docker compose exec back python -m app.seeds.seed_demo_tables` (idempotent).
 - **Seed demo products:** `docker compose exec back python -m app.seeds.seed_demo_products` (idempotent; fills missing DEMO_PRODUCTS names on partial tenants).
+- **Import products CSV (migration #321):** dry-run then apply — see [0062-pos-migration-import.md](0062-pos-migration-import.md). Example: `docker compose exec back python -m app.seeds.import_products_csv --tenant-id 1 --csv /app/fixtures/migration/sample_products.csv --dry-run`. Tests: `docker compose exec back python3 -m pytest tests/test_import_products_csv.py -q`.
 - **Demo products check:** `docker compose exec back python -m app.seeds.check_demo_products` (exit 0 = tenant 1 has all DEMO_PRODUCTS names; extra catalog rows OK).
 - **Link demo products to catalog (images on /products):** `docker compose exec back python -m app.seeds.link_demo_products_to_catalog` — links products without images to provider products that have images; deploy runs this after catalog imports.
 - **Clear orphan provider product images:** `docker compose exec back python -m app.seeds.clear_orphan_provider_product_images` — sets `ProviderProduct.image_filename` (and Product `providers/...` refs) to null when the file is missing under `uploads/providers/`, so catalog stops requesting 404 URLs.
@@ -818,7 +843,7 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Staff menu link** | `test:staff-menu-link` | Open menu from staff orders skips PIN. |
 | **Rate limiting** | `test-rate-limit.mjs`, `test-rate-limit-puppeteer.mjs` | API: 429 after limit; Puppeteer: login page shows error banner (e.g. "Too many login attempts") when rate limited. See `docs/0020-rate-limiting-production.md` for all limits (login, register, payment, public menu, upload, admin). |
 | **SaaS signup paywall** | `test-paywall.mjs` | Requires `SAAS_PAYWALL_ENABLED=true` (see `docs/0052-saas-signup-paywall.md`). Registers a new tenant, asserts `/paywall` + localized copy (no raw `PAYWALL.*`), starts free trial, confirms `/dashboard` unlocks. Skips with exit 0 when paywall is off; set `REQUIRE_PAYWALL=1` to fail instead. |
-| **Platform operator** | `test-platform-operator.mjs` | `/platform/login` → dashboard metrics → tenant detail + `/delivery/{id}` link (`docs/0015-platform-operator-portal.md`). Seed with `ensure_platform_operator`; `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`. |
+| **Platform operator** | `test-platform-operator.mjs` | `/platform/login` → dashboard metrics → tenant detail + `/delivery/{id}` link (`docs/0059-platform-operator-portal.md`). Seed with `ensure_platform_operator`; `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`. |
 
 **Not covered (or partial):** No automated cleanup of test-created data (e.g. provider/restaurant registration leaves DB entries). No Puppeteer tests for settings, inventory, or tables canvas. Unit tests (Karma/Jasmine) are separate; see `npm test` in front.
 

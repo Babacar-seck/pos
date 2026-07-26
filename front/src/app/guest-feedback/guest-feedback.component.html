@@ -39,9 +39,107 @@
           {{ 'FEEDBACK.VIEW_PUBLIC_FORM' | translate }}
         </a>
       }
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm"
+        data-testid="feedback-export-csv"
+        (click)="exportCsv()"
+        [disabled]="exporting()"
+      >
+        {{ exporting() ? ('FEEDBACK.EXPORTING' | translate) : ('FEEDBACK.EXPORT_CSV' | translate) }}
+      </button>
       <button type="button" class="btn btn-ghost btn-sm" (click)="load()">{{ 'ORDERS.REFRESH' | translate }}</button>
     </div>
   </div>
+
+  @if (summary(); as s) {
+    <section
+      class="feedback-analytics no-print-on-feedback-qr"
+      data-testid="feedback-analytics"
+      aria-labelledby="feedback-analytics-heading"
+    >
+      <div class="feedback-analytics-header">
+        <h2 id="feedback-analytics-heading">{{ 'FEEDBACK.ANALYTICS_TITLE' | translate }}</h2>
+        <div class="feedback-days-toggle" role="group" [attr.aria-label]="'FEEDBACK.LOOKBACK' | translate">
+          @for (d of [30, 90, 365]; track d) {
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="summaryDays() === d"
+              [class.btn-ghost]="summaryDays() !== d"
+              (click)="setSummaryDays(d)"
+            >
+              {{ ('FEEDBACK.DAYS_' + d) | translate }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="summary-cards">
+        <div class="summary-card">
+          <span class="summary-label">{{ 'FEEDBACK.STAT_TOTAL' | translate }}</span>
+          <span class="summary-value">{{ s.total_count }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">{{ 'FEEDBACK.STAT_AVERAGE' | translate }}</span>
+          <span class="summary-value">
+            @if (s.average_rating != null) {
+              {{ s.average_rating }}★
+            } @else {
+              —
+            }
+          </span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">{{ 'FEEDBACK.STAT_WITH_COMMENT' | translate }}</span>
+          <span class="summary-value">{{ s.with_comment_count }}</span>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">{{ 'FEEDBACK.STAT_WITH_CONTACT' | translate }}</span>
+          <span class="summary-value">{{ s.with_contact_count }}</span>
+        </div>
+      </div>
+
+      <div class="analytics-grid">
+        <div class="rating-bars" [attr.aria-label]="'FEEDBACK.RATING_DISTRIBUTION' | translate">
+          <h3>{{ 'FEEDBACK.RATING_DISTRIBUTION' | translate }}</h3>
+          @for (stars of starLevels; track stars) {
+            <div class="bar-row">
+              <span class="bar-label">{{ stars }}★</span>
+              <div class="bar-track">
+                <div
+                  class="bar-fill"
+                  [style.width.%]="(ratingCount(stars) / maxRatingCount()) * 100"
+                ></div>
+              </div>
+              <span class="bar-count">{{ ratingCount(stars) }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="daily-trend" [attr.aria-label]="'FEEDBACK.DAILY_TREND' | translate">
+          <h3>{{ 'FEEDBACK.DAILY_TREND' | translate }}</h3>
+          @if (recentDays().length === 0) {
+            <p class="trend-empty">{{ 'FEEDBACK.TREND_EMPTY' | translate }}</p>
+          } @else {
+            <div class="trend-bars">
+              @for (day of recentDays(); track day.date) {
+                <div class="trend-col" [title]="day.date + ': ' + day.count">
+                  <div class="trend-bar-wrap">
+                    <div
+                      class="trend-bar"
+                      [style.height.%]="(day.count / maxDayCount()) * 100"
+                    ></div>
+                  </div>
+                  <span class="trend-date">{{ day.date.slice(5) }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  }
 
   @if (loading()) {
     <div class="empty-state no-print-on-feedback-qr"><p>{{ 'FEEDBACK.LOADING' | translate }}</p></div>

@@ -1,11 +1,21 @@
 # amvara9: Public menu images not loading (satisfecho.de)
 
-If images on the public menu (e.g. https://satisfecho.de/menu/{table_token}) or on /products or /catalog are missing or broken, the backend is likely returning 404 for `/api/uploads/...` requests. This doc explains the fix and how to verify on the server.
+## Status: ops guide — upload routes shipped
 
-## Cause and fix (in repo)
+Explicit `GET /uploads/...` product/provider routes are **in tree** (`back/app/main.py`) and ship with every normal amvara9 deploy. Do **not** treat a current `/api/uploads/...` **404** as “redeploy for StaticFiles.”
 
-- **Cause:** Behind HAProxy (and nginx in the front container), FastAPI’s `StaticFiles` mount often returns 404 for nested paths like `/uploads/1/products/...` and `/uploads/providers/{token}/products/...`.
-- **Fix:** Explicit FastAPI routes were added in `back/app/main.py`:
+| curl / browser result | Meaning | Next step |
+|-----------------------|---------|-----------|
+| **200** | File on disk; routes OK | Done |
+| **404** JSON `{"detail":"Image not found"}` (or `Invalid filename`) | **Routes are active**; file missing or DB orphan `image_filename` | Check disk under `back/uploads/…`; clear orphans (below); see [testing.md](testing.md) *Clear orphan provider product images* and [0014-provider-portal.md](0014-provider-portal.md) |
+| **404** with empty/HTML body (no FastAPI JSON) | Unusual — old back image or wrong proxy | Confirm prod `back` image via [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) / [0004-deployment.md](0004-deployment.md); redeploy only then |
+
+Historical context: nested `StaticFiles` paths used to 404 behind HAProxy; that mount issue was fixed with the explicit routes above. Remaining broken images are almost always **missing-on-disk** or **orphan DB refs** (catalog helpers already omit `image_url` when the file is absent).
+
+## Cause and fix (in repo — historical)
+
+- **Cause (historical):** Behind HAProxy (and nginx in the front container), FastAPI’s `StaticFiles` mount often returned 404 for nested paths like `/uploads/1/products/...` and `/uploads/providers/{token}/products/...`.
+- **Fix (shipped):** Explicit FastAPI routes in `back/app/main.py`:
   - `GET /uploads/providers/{provider_token}/products/{filename}` (catalog/provider images)
   - `GET /uploads/{tenant_id}/products/{filename}` (tenant product images; used by public menu and /products)
 - **Persistence:** The fix is in code. After every deploy that builds and runs the latest `back` image, these routes are active. No one-off server tweaks are required.
@@ -20,8 +30,9 @@ curl -sI https://satisfecho.de/api/health
 
 # If you have a known image path (e.g. tenant 1 product image), replace with a real filename from DB or back/uploads
 curl -sI "https://satisfecho.de/api/uploads/1/products/some-existing-file.jpg"
-# Expect: 200 OK (if file exists) or 404 with body {"detail":"Image not found"} (route is present, file missing)
-# Bad: 404 with no JSON or different body → old back image without explicit routes; redeploy.
+# Expect: 200 OK (if file exists)
+# Or: 404 + JSON {"detail":"Image not found"} → route OK, file/DB orphan (not a StaticFiles redeploy)
+# Rare: 404 with no JSON → old back image or proxy; see Status table above
 ```
 
 ## Investigate on server (SSH amvara9)
@@ -66,10 +77,12 @@ If the script prints “OK: explicit upload route is active” but the browser s
 
 ## If images still 404 after a fresh deploy
 
+Prefer the Status table first: JSON `Image not found` means **do not** chase StaticFiles — check files and orphans.
+
 1. Ensure the deploy script **built** the back image: `docker compose ... build back` (deploy-amvara9.sh does this).
 2. Ensure **no host-level proxy** (e.g. nginx on the host) is routing `satisfecho.de` to a different backend or stripping paths.
 3. Ensure `back/uploads` on the host has the files (tenant and catalog imports write there); see AGENTS.md “Demo tables” and “Catalog on deploy”.
 4. **Orphan DB refs:** If `ProviderProduct.image_filename` points at a file that is not on disk, catalog/API used to emit `/uploads/providers/...` URLs that 404. Clear those refs with:
-   `docker compose exec back python -m app.seeds.clear_orphan_provider_product_images`
-   Catalog and provider list endpoints also omit `image_url` when the file is missing (UI shows the placeholder). Public tenant menu (`GET /public/tenants/{id}/menu`, used by `/delivery/{id}` and `/public-menu/{id}`) likewise omits `image_url` when the file is missing.
+   `docker compose --env-file config.env -f docker-compose.yml -f docker-compose.prod.yml exec back python -m app.seeds.clear_orphan_provider_product_images`
+   (Local/dev: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec back python -m app.seeds.clear_orphan_provider_product_images`.) Catalog and provider list endpoints also omit `image_url` when the file is missing (UI shows the placeholder). Public tenant menu (`GET /public/tenants/{id}/menu`, used by `/delivery/{id}` and `/public-menu/{id}`) likewise omits `image_url` when the file is missing. See [testing.md](testing.md) and [0014-provider-portal.md](0014-provider-portal.md).
 5. **Frontend `/api` prefix:** API returns paths like `/uploads/...`. Public menu already prefixes `environment.apiUrl` (`/api`). Delivery checkout must do the same — if `<img src>` is bare `/uploads/...`, HAProxy sends the request to the front container and you get 404 spam without ever hitting the back upload routes (FEAT-312 / #312).

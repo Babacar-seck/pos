@@ -27,19 +27,33 @@ import { ApiService, PlatformInfo, PlatformMetrics, PlatformTenantSummary } from
         <p class="platform-error">{{ error() | translate }}</p>
       } @else if (metrics()) {
         <section class="metrics-grid">
-          <article class="metric-card">
+          <article class="metric-card" data-metric="tenant_count">
             <h2>{{ 'PLATFORM_DASHBOARD.TENANT_COUNT' | translate }}</h2>
             <p class="metric-value">{{ metrics()!.tenant_count }}</p>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-metric="signups_30d">
             <h2>{{ 'PLATFORM_DASHBOARD.SIGNUPS_30D' | translate }}</h2>
             <p class="metric-value">{{ metrics()!.signups_last_30_days }}</p>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-metric="logins_total">
+            <h2>{{ 'PLATFORM_DASHBOARD.LOGINS_TOTAL' | translate }}</h2>
+            <p class="metric-value">{{ metrics()!.logins_total }}</p>
+          </article>
+          <article class="metric-card" data-metric="last_login">
+            <h2>{{ 'PLATFORM_DASHBOARD.LAST_LOGIN' | translate }}</h2>
+            <p class="metric-value metric-value-sm">
+              @if (metrics()!.last_login_at) {
+                {{ formatDate(metrics()!.last_login_at!) }}
+              } @else {
+                {{ 'PLATFORM_DASHBOARD.NO_LOGINS' | translate }}
+              }
+            </p>
+          </article>
+          <article class="metric-card" data-metric="logins_24h">
             <h2>{{ 'PLATFORM_DASHBOARD.LOGINS_24H' | translate }}</h2>
             <p class="metric-value">{{ metrics()!.logins_last_24_hours }}</p>
           </article>
-          <article class="metric-card">
+          <article class="metric-card" data-metric="logins_7d">
             <h2>{{ 'PLATFORM_DASHBOARD.LOGINS_7D' | translate }}</h2>
             <p class="metric-value">{{ metrics()!.logins_last_7_days }}</p>
           </article>
@@ -181,6 +195,7 @@ import { ApiService, PlatformInfo, PlatformMetrics, PlatformTenantSummary } from
       margin: 0 0 var(--space-2);
     }
     .metric-value { font-size: 2rem; font-weight: 600; margin: 0; }
+    .metric-value-sm { font-size: 1.125rem; line-height: 1.35; word-break: break-word; }
     .platform-section { margin-bottom: var(--space-8); }
     .platform-section h2 { font-size: 1.125rem; margin-bottom: var(--space-2); }
     .section-hint { margin: 0 0 var(--space-3); font-size: 0.875rem; }

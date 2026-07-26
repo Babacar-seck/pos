@@ -109,6 +109,10 @@ def leave_group(session: Session, tenant_id: int) -> None:
     if not membership:
         raise HTTPException(status_code=404, detail="Not a member of any restaurant group")
     group_id = membership.group_id
+    group = session.get(models.RestaurantGroup, group_id)
+    if group and group.hub_tenant_id == tenant_id:
+        group.hub_tenant_id = None
+        session.add(group)
     session.delete(membership)
     session.flush()
     remaining = session.exec(
@@ -133,12 +137,15 @@ def group_detail(session: Session, tenant_id: int) -> dict | None:
         .where(models.RestaurantGroupMember.group_id == group.id)
         .order_by(models.Tenant.name.asc())
     ).all()
+    hub_id = getattr(group, "hub_tenant_id", None)
     return {
         "id": group.id,
         "name": group.name,
         "join_code": group.join_code,
         "share_products": group.share_products,
         "share_customers": group.share_customers,
+        "hub_tenant_id": hub_id,
+        "is_hub": hub_id == tenant_id if hub_id is not None else False,
         "created_at": group.created_at.isoformat(),
         "members": [
             {
@@ -146,6 +153,7 @@ def group_detail(session: Session, tenant_id: int) -> dict | None:
                 "tenant_name": tenant.name,
                 "joined_at": member.joined_at.isoformat(),
                 "is_current": member.tenant_id == tenant_id,
+                "is_hub": hub_id is not None and member.tenant_id == hub_id,
             }
             for member, tenant in members
         ],

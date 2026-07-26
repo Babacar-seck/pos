@@ -6,19 +6,20 @@ This document complements **`docs/0017-billing-customers-factura.md`**. It descr
 
 ## Disclaimer
 
-- **No production AEAT submission** is implemented in this codebase path. Real endpoints, certificates, and payload field mapping **must** follow the **official AEAT technical documentation** and **professional tax advice**. Field mapping in stored JSON is **intentionally a stub** until integrated.
-- Enabling **live** mode does **not** by itself satisfy legal filing obligations.
+- **No production AEAT submission** is implemented as a direct AEAT HTTP/SOAP client in this codebase. Real endpoints, certificates, and payload field mapping **must** follow the **official AEAT technical documentation**, **certified middleware**, and **professional tax advice**. See **`docs/0065-verifactu-production.md`** (Phase 0 ADR: prefer buy/middleware).
+- Enabling **live** mode is **gated** (`FISCAL_LIVE_UNLOCK` + middleware URL) and does **not** by itself satisfy legal filing obligations.
+- Internal hash chain uses schema **`pos.fiscal.hash.v1`** — this is **not** a claim of the official AEAT huella algorithm until middleware supplies it.
 
 ## Tenant configuration
 
 | Setting | Meaning |
 |--------|---------|
 | **`fiscal_mode`**: `off` | Default. Printing a Factura behaves as before (browser-only HTML). |
-| **`fiscal_mode`**: `test` | Staff printing triggers **POST `/orders/{id}/fiscal-invoice/issue`** (stub AEAT; no HTTP call to AEAT). |
-| **`fiscal_mode`**: `live` | Same issuance pipeline; numbering is **production-oriented** on the server; **AEAT wire protocol is still not called** until integrated. |
+| **`fiscal_mode`**: `test` | Staff printing triggers **POST `/orders/{id}/fiscal-invoice/issue`**: allocates number, chains hash, builds AEAT ValidarQR URL shape, and runs **near-real-time sandbox** submission (local record and/or middleware hook). |
+| **`fiscal_mode`**: `live` | Same pipeline only when unlock + middleware are configured; **direct AEAT wire is still not invented here**. |
 | **`fiscal_invoice_series`** | Prefix for display and allocation (e.g. `VF`). |
 | **`fiscal_invoice_next_number`** | Next sequence value; incremented **atomically** when a **new** fiscal row is created (not on re-print). |
-| **`fiscal_aeat_api_secret`** | Optional placeholder for future AEAT client credentials; masked in API responses like payment secrets. |
+| **`fiscal_aeat_api_secret`** | Optional placeholder for future AEAT/middleware client credentials; masked in API responses like payment secrets. |
 
 Configure via **Settings → Payments** (fiscal section) or **PUT `/tenant/settings`**.
 
@@ -26,8 +27,9 @@ Configure via **Settings → Payments** (fiscal section) or **PUT `/tenant/setti
 
 | Method | Path | Role |
 |--------|------|------|
-| **POST** | `/orders/{order_id}/fiscal-invoice/issue` | Issue or return existing fiscal metadata (**idempotent** per order). Requires **`order:read`**. |
-| **GET** | `/orders/{order_id}/fiscal-invoice` | Read persisted fiscal metadata if present. |
+| **POST** | `/orders/{order_id}/fiscal-invoice/issue` | Issue or return existing fiscal **alta** (**idempotent** per order). Requires **`order:read`**. |
+| **GET** | `/orders/{order_id}/fiscal-invoice` | Read persisted fiscal **alta** if present. |
+| **POST** | `/orders/{order_id}/fiscal-invoice/cancel` | Issue **anulación** (credit-note cancel) for the alta; then order may be deleted/edited again. |
 
 ### Issuance rules
 
@@ -35,7 +37,10 @@ Configure via **Settings → Payments** (fiscal section) or **PUT `/tenant/setti
 - **Soft-deleted orders**: Not found (`404`).
 - **Cancelled orders**: Cannot issue (`400`).
 - **Order status**: Must be **`paid`** or **`completed`**.
-- **Idempotency**: At most **one** fiscal invoice row per `(tenant_id, order_id)`; repeated calls return the same record.
+- **Idempotency**: At most **one** fiscal **alta** per `(tenant_id, order_id)`; repeated calls return the same record.
+- **Immutability**: While an active (non-cancelled) alta exists, staff **cannot** soft-delete the order, change line items/amounts, or set status to cancelled (`409`). Use **cancel** (anulación) first.
+- **Hash chain**: Each new row stores `previous_hash` / `record_hash` (tenant-scoped chronological chain).
+- **QR**: `verification_qr_content` is an AEAT ValidarQR URL (`nif`, `numserie`, `fecha`, `importe`). Cotejo on AEAT’s site requires prior remisión.
 
 ## Frontend
 
@@ -43,11 +48,22 @@ When **`fiscal_mode`** is `test` or `live`, **Print Factura** (orders modal) and
 
 ## Environment
 
-No global AEAT secrets are required for the stub. Per-tenant secrets use **`fiscal_aeat_api_secret`** (optional). Do not commit real credentials; use **`config.env`** / deployment secrets for shared keys when introduced.
+| Variable | Meaning |
+|----------|---------|
+| `FISCAL_MIDDLEWARE_BASE_URL` | Optional certified adapter base; empty = local sandbox only |
+| `FISCAL_MIDDLEWARE_API_KEY` | Middleware auth (do not commit secrets) |
+| `FISCAL_LIVE_UNLOCK` | Must be true with middleware URL before `fiscal_mode: live` |
+
+Per-tenant secrets use **`fiscal_aeat_api_secret`** (optional).
 
 ## Testing
 
 1. Set tenant **`fiscal_mode`** to **`test`** and save Settings.
-2. Mark an order **paid**, then **Print Factura** — expect success and invoice showing fiscal number + QR block.
-3. Set **`fiscal_mode`** to **`off`** — print should match prior behaviour without calling issue (browser-only).
-4. Unpaid order with fiscal mode on — issue should fail with a clear error.
+2. Mark an order **paid**, then **Print Factura** — expect success and invoice showing fiscal number + QR block (ValidarQR URL).
+3. Attempt to delete or edit line items on that order — expect **409** until fiscal cancel.
+4. **POST** `/orders/{id}/fiscal-invoice/cancel` — expect anulación number; delete should then succeed.
+5. Set **`fiscal_mode`** to **`off`** — print should match prior behaviour without calling issue (browser-only).
+6. Unpaid order with fiscal mode on — issue should fail with a clear error.
+7. Setting **`fiscal_mode: live`** without unlock/middleware — expect **400**.
+
+See also **`docs/0065-verifactu-production.md`**.

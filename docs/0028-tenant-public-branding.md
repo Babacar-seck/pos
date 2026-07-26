@@ -1,6 +1,8 @@
 # Tenant public branding (background color & header image)
 
-Restaurant owners can customise the look of **public-facing pages** (book a table, customer menu, reservation view) with:
+**Status: shipped.** Public background colour and header image are live for the routes in the coverage table below. This doc is the operator/agent reference for Settings fields, API, and which public pages bind those tokens.
+
+Restaurant owners can customise the look of **public-facing pages** (book a table, customer menu, reservation view, waiting list, guest feedback) with:
 
 - **Background colour** — Hex colour for the page background (e.g. `#1E22AA` for RAL5002 Azul). Set in **Settings → Business profile** via colour picker, hex input, or the **RAL5002 (Azul)** preset.
 - **Header background image** — Image shown behind the hero header (logo and restaurant name). Upload in **Settings → Business profile**; JPG, PNG, WebP or AVIF; same size/optimisation as logo. Remove via the ✕ button (calls `DELETE /tenant/header-background`).
@@ -12,6 +14,8 @@ Restaurant owners can customise the look of **public-facing pages** (book a tabl
 | `/book/:tenantId` | ✓ | ✓ |
 | `/menu/:token` | ✓ | ✓ |
 | `/reservation?token=...` | ✓ | ✓ |
+| `/waitlist/:tenantId` | ✓ | ✓ |
+| `/feedback/:tenantId` | ✓ | ✓ |
 | Landing `/` | — | — (multi-tenant list) |
 
 When a header image is set, a dark overlay keeps text readable.

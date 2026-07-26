@@ -1,17 +1,19 @@
 # Table Reservation – Implementation Plan
 
-This document summarizes findings from open-source reservation systems and proposes a concrete plan for adding table reservation to pos2.
+> **Shipped core / design history.** Guest and staff table reservations (and waiting list) are live. For how-to and ops, use **[0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md)**. This file keeps the original research, schema/API design, and phased plan for context. Bullets labelled “optional for a later phase” below are backlog ideas, not gaps in the essential scope.
+
+This document summarizes findings from open-source reservation systems and the concrete plan that was used to add table reservation to pos2.
 
 ---
 
 ## Essential scope
 
-Two user groups are **essential** (in scope for the first release):
+Two user groups were **essential** (first release — now shipped):
 
 1. **Staff** – Create, edit, cancel, and list reservations; seat reservations at tables; finish reservations; see table status (available / reserved / occupied) on the table canvas.
 2. **Web end users (customers)** – Reserve a table via the web (date, time, party size, name, phone); view their reservation(s); cancel their reservation. No login required for the minimal flow (identify by phone or booking reference).
 
-Optional for a later phase: logged-in “My reservations,” email/SMS confirmations, opening-hours enforcement.
+Optional later-phase ideas (backlog, not essential gaps): logged-in “My reservations,” email/SMS confirmations, opening-hours enforcement.
 
 ---
 

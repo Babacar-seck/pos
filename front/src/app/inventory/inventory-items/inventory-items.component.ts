@@ -19,6 +19,7 @@ import {
   InventoryItemUpdate,
   StockAdjustment,
   Supplier,
+  Warehouse,
   UnitOfMeasure,
   InventoryCategory,
   inventoryUnitKey,
@@ -332,6 +333,16 @@ import {
                 </div>
               </div>
               <div class="form-group">
+                <label for="adjust_warehouse">{{ 'INVENTORY.WAREHOUSES.WAREHOUSE' | translate }}</label>
+                <select id="adjust_warehouse" formControlName="warehouse_id">
+                  @for (wh of warehouses(); track wh.id) {
+                    <option [ngValue]="wh.id">
+                      {{ wh.name }}@if (wh.is_default) { ({{ 'INVENTORY.WAREHOUSES.DEFAULT_BADGE' | translate }})}
+                    </option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
                 <label for="adjust_notes">{{ 'INVENTORY.ITEMS.NOTES' | translate }}</label>
                 <input type="text" id="adjust_notes" formControlName="notes" [placeholder]="'INVENTORY.ITEMS.NOTES_PLACEHOLDER' | translate" />
               </div>
@@ -372,6 +383,7 @@ export class InventoryItemsComponent implements OnInit {
   // State signals
   items = signal<InventoryItem[]>([]);
   suppliers = signal<Supplier[]>([]);
+  warehouses = signal<Warehouse[]>([]);
   loading = signal(true);
   saving = signal(false);
   error = signal('');
@@ -410,6 +422,7 @@ export class InventoryItemsComponent implements OnInit {
     quantity: [1, [Validators.required, Validators.min(0.01)]],
     unit: ['piece', Validators.required],
     adjustment_type: ['adjustment_add', Validators.required],
+    warehouse_id: [null as number | null, Validators.required],
     notes: [''],
   });
 
@@ -435,6 +448,7 @@ export class InventoryItemsComponent implements OnInit {
   ngOnInit() {
     this.loadItems();
     this.loadSuppliers();
+    this.loadWarehouses();
   }
 
   loadItems() {
@@ -449,6 +463,13 @@ export class InventoryItemsComponent implements OnInit {
     this.inventoryService.getSuppliers().subscribe({
       next: suppliers => this.suppliers.set(suppliers),
       error: err => console.error('Failed to load suppliers:', err)
+    });
+  }
+
+  loadWarehouses() {
+    this.inventoryService.getWarehouses().subscribe({
+      next: warehouses => this.warehouses.set(warehouses),
+      error: err => console.error('Failed to load warehouses:', err)
     });
   }
 
@@ -468,7 +489,14 @@ export class InventoryItemsComponent implements OnInit {
 
   openAdjustModal(item: InventoryItem) {
     this.adjustingItem.set(item);
-    this.adjustForm.reset({ quantity: 1, unit: item.unit, adjustment_type: 'adjustment_add', notes: '' });
+    const defaultWh = this.warehouses().find(w => w.is_default) || this.warehouses()[0];
+    this.adjustForm.reset({
+      quantity: 1,
+      unit: item.unit,
+      adjustment_type: 'adjustment_add',
+      warehouse_id: defaultWh?.id ?? null,
+      notes: '',
+    });
     this.showAdjustModal.set(true);
   }
 
@@ -512,7 +540,13 @@ export class InventoryItemsComponent implements OnInit {
     if (!this.adjustForm.valid || !this.adjustingItem()) return;
     this.saving.set(true);
     const data = this.adjustForm.value;
-    const adjustment: StockAdjustment = { quantity: data.quantity, unit: data.unit, adjustment_type: data.adjustment_type, notes: data.notes || undefined };
+    const adjustment: StockAdjustment = {
+      quantity: data.quantity,
+      unit: data.unit,
+      adjustment_type: data.adjustment_type,
+      notes: data.notes || undefined,
+      warehouse_id: data.warehouse_id || undefined,
+    };
 
     this.inventoryService.adjustStock(this.adjustingItem()!.id, adjustment).subscribe({
       next: () => { this.saving.set(false); this.closeModals(); this.loadItems(); },

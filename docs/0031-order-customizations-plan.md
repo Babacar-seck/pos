@@ -1,5 +1,7 @@
 # Order customizations (pizza-style modifiers) — GitHub [#50](https://github.com/satisfecho/pos/issues/50)
 
+> **Status: core #50 shipped; optional price deltas not shipped.** Staff product-question config, public menu answers (including multi-select choice), and kitchen/invoice `customization_summary` are live. **Remaining (optional):** per-option **price deltas**. Do not treat Phase 1–3 as open backlog.
+
 **Goal:** Let guests change a dish when ordering (e.g. remove pepperoni, add another cheese), not only fixed “one answer per question” flows.
 
 ## What already exists (do not reinvent)

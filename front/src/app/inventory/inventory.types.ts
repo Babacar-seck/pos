@@ -92,6 +92,32 @@ export interface StockAdjustment {
     unit: UnitOfMeasure;
     adjustment_type: 'adjustment_add' | 'adjustment_subtract' | 'waste';
     notes?: string | null;
+    warehouse_id?: number | null;
+}
+
+// ============ WAREHOUSES ============
+
+export interface Warehouse {
+    id: number;
+    name: string;
+    code?: string | null;
+    is_default: boolean;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WarehouseCreate {
+    name: string;
+    code?: string | null;
+    is_default?: boolean;
+}
+
+export interface WarehouseUpdate {
+    name?: string | null;
+    code?: string | null;
+    is_active?: boolean | null;
+    is_default?: boolean | null;
 }
 
 // ============ SUPPLIERS ============
@@ -207,6 +233,7 @@ export interface ReceivedItemInput {
 export interface ReceiveGoodsInput {
     items: ReceivedItemInput[];
     notes?: string | null;
+    warehouse_id?: number | null;
 }
 
 // ============ RECIPES ============
@@ -271,6 +298,8 @@ export interface StockLevel {
     total_value_cents: number;
     is_low_stock: boolean;
     category: string;  // Serialized as string from backend
+    warehouse_id?: number | null;
+    warehouse_name?: string | null;
 }
 
 export interface LowStockItem {

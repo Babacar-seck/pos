@@ -377,7 +377,7 @@ committer_changed_paths() {
   } | sort -u )
 }
 
-# True when every changed path is allowed for AGENT_COMMITTER_LOCAL stamp-only auto-commit.
+# True when every changed path is an agents2 reviewer stamp/scan file (no product/docs/task work).
 committer_paths_all_local_stamp_allowlist() {
   local f had=0
   while IFS= read -r f; do
@@ -395,47 +395,18 @@ committer_paths_all_local_stamp_allowlist() {
   ((had == 1))
 }
 
-# Commit + push only 001 reviewer stamp when AGENT_COMMITTER_LOCAL is on and tree is stamp-only.
-# Return 0: committed and pushed (or already clean after no-op — should not happen).
-# Return 1: use cursor-agent / manual (mixed paths, wrong branch, LOCAL off, or commit failed).
+# When AGENT_COMMITTER_LOCAL is on and the dirty tree is stamp/scan-only: do not commit.
+# Stamps stay local until a later commit that also includes real code/docs/task changes.
+# Return 0: stamp-only handled (skip cursor-agent; no new commit).
+# Return 1: not stamp-only / LOCAL off — continue to cursor-agent or manual.
 committer_try_local_stamp_only() {
   [[ "${AGENT_COMMITTER_LOCAL:-1}" == "0" ]] && return 1
-  local br
-  br=$(cd "$REPO_ROOT" && git rev-parse --abbrev-ref HEAD 2>/dev/null) || return 1
-  if [[ "$br" != "development" ]]; then
-    echo "----- committer (local skip: repo not on development — use cursor or checkout)" >&2
-    return 1
-  fi
   if ! committer_paths_all_local_stamp_allowlist; then
     return 1
   fi
-  (
-    cd "$REPO_ROOT" || exit 1
-    git add -- agents2/001-gh-reviewer/time-of-last-review.txt
-    git add -- agents2/005-marketing-repos-reviewer/time-of-last-review.txt agents2/005-marketing-repos-reviewer/last-scan.json 2>/dev/null || true
-    git add -- agents2/008-enhancement-reviewer/time-of-last-review.txt agents2/008-enhancement-reviewer/last-scan.json 2>/dev/null || true
-    if git diff --staged --quiet; then
-      exit 1
-    fi
-    git commit -m "chore(agents2): update 001 reviewer time-of-last-review stamp"
-    set +e
-    git pull --rebase --autostash origin development
-    local prc=$?
-    set -e
-    if ((prc != 0)); then
-      echo "----- committer (local: git pull --rebase failed — resolve and retry)" >&2
-      exit 1
-    fi
-    set +e
-    git push origin development
-    local psh=$?
-    set -e
-    if ((psh != 0)); then
-      echo "----- committer (local: git push failed — check network or permissions)" >&2
-      exit 1
-    fi
-    exit 0
-  )
+  echo "----- committer (local: stamp-only dirty tree — leave uncommitted; no cursor-agent)" >&2
+  ( cd "$REPO_ROOT" && git status -sb ) || true
+  return 0
 }
 
 # After committer created a new commit, comment on linked GitHub issues (non-fatal).
@@ -811,8 +782,7 @@ step_committer() {
   head_before=$(cd "$REPO_ROOT" && git rev-parse HEAD 2>/dev/null) || head_before=""
 
   if [[ "${AGENT_COMMITTER_LOCAL:-1}" != "0" ]] && committer_try_local_stamp_only; then
-    echo "----- committer (local: committed and pushed stamp-only changes; no cursor-agent)"
-    committer_notify_github_issues_if_new_commit "$head_before"
+    # Stamp/scan-only: leave dirty; do not commit or invoke cursor-agent (#313).
     return 0
   fi
 
@@ -887,7 +857,7 @@ Environment:
   AGENT_LOG_REVIEWER_ALWAYS  If 1, always invoke 001 cursor-agent (skip preflight gate).
   AGENT_001_SKIP_PREFLIGHT   If 1, always invoke 001 (legacy); digest still written when built.
   AGENT_001_RUN_WHEN_GH_UNKNOWN  If 1, run 001 when gh failed/missing and digest otherwise empty.
-  AGENT_COMMITTER_LOCAL        If not 0 (default 1), committer tries a local git commit+push for allowlisted machine paths only (currently agents2/001-gh-reviewer/time-of-last-review.txt). No cursor-agent for that case.
+  AGENT_COMMITTER_LOCAL        If not 0 (default 1), when the dirty tree is only allowlisted stamp/scan files (001/005/008 time-of-last-review / last-scan.json), skip commit and cursor-agent (leave stamps local). Set to 0 to fall through (not recommended for stamp-only).
   AGENT_COMMITTER_USE_CURSOR   If 1 (default), run 040-committer via cursor-agent when there are non-stamp changes. Set to 0 to disable cursor committer (manual commits only).
   AGENT_001_LOCAL_LOG_REVIEWER  If not 0 (default 1), never invoke cursor-agent for 001 when only Docker log heuristics fired and GitHub preflight succeeded with zero untracked issues (fully local digest + optional Ollama triage). Set to 0 to allow cursor-agent for that case (e.g. auto NEW-* from logs).
   AGENT_001_OLLAMA_LOG_TRIAGE  If 0, never run local LLM triage. Otherwise (default) triage runs when llama.cpp OpenAI API responds (GET \$LLAMA_CPP_BASE_URL/models, default http://127.0.0.1:8080/v1) and python3 exists, or when ollama list shows ≥1 model at OLLAMA_HOST (default http://127.0.0.1:11434) — only for log-only 001 signals. LLAMA_CPP_MODEL (default Bonsai-8B.gguf); OLLAMA_MODEL (default Gemma4:latest). Default triage order is Ollama first, then llama.cpp; AGENT_001_LLAMA_CPP_FIRST=1 restores llama-first. AGENT_001_SKIP_LLAMA_CPP=1 forces Ollama only.   AGENT_001_LOG_TRIAGE_DEBUG=1 prints triage script stderr (llama.cpp / ollama errors).

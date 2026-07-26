@@ -183,6 +183,11 @@ class Tenant(SQLModel, table=True):
     reservation_reminder_24h_enabled: bool = Field(default=False)
     reservation_reminder_2h_enabled: bool = Field(default=False)
 
+    # Guest birthday capture (reservations): default capture-only, no marketing outbound
+    guest_birthday_capture_enabled: bool = Field(default=True)
+    guest_birthday_marketing_enabled: bool = Field(default=False)
+    guest_birthday_consent_text: str | None = Field(default=None)  # GDPR copy when marketing enabled
+
     # Satisfecho Delivery: flat fee + coverage (postal list and/or radius from lat/lng)
     delivery_fee_cents: int = Field(default=0)
     delivery_radius_meters: int | None = Field(default=None)
@@ -243,6 +248,14 @@ class Tenant(SQLModel, table=True):
     fiscal_invoice_series: str = Field(default="VF", max_length=32)
     fiscal_invoice_next_number: int = Field(default=1)
     fiscal_aeat_api_secret: str | None = Field(default=None, max_length=512)
+
+    # Germany TSE / KassenSichV (separate from VeriFactu — see docs/0072-tse-fiscal-compliance.md)
+    fiscal_country: str | None = Field(default=None, max_length=2)  # e.g. DE, ES (UI hint)
+    tse_mode: str = Field(default="off", max_length=16)  # off | test | live
+    tse_client_id: str | None = Field(default=None, max_length=128)
+    tse_api_secret: str | None = Field(default=None, max_length=512)
+    tse_serial_number: str | None = Field(default=None, max_length=128)
+    tse_signature_counter: int = Field(default=1)
 
     # Platform SaaS subscription (Satisfecho paywall — not restaurant guest payments)
     # none | trialing | active | canceled | past_due | grandfathered
@@ -374,8 +387,10 @@ class PlatformLoginSummary(SQLModel):
 class PlatformMetricsResponse(SQLModel):
     tenant_count: int
     signups_last_30_days: int
+    logins_total: int
     logins_last_24_hours: int
     logins_last_7_days: int
+    last_login_at: datetime | None = None
     recent_tenants: list[PlatformTenantSummary]
     recent_logins: list[PlatformLoginSummary]
 
@@ -756,6 +771,10 @@ class Reservation(TenantMixin, table=True):
     preferred_floor_id: int | None = Field(default=None, foreign_key="floor.id")
     # BCP 47-ish tag from booking request (?lang= / Accept-Language); overrides tenant default_language for emails
     locale: str | None = Field(default=None, max_length=16)
+    # Guest birthday: month/day only (no year) for privacy; optional marketing consent
+    guest_birthday_month: int | None = Field(default=None)  # 1–12
+    guest_birthday_day: int | None = Field(default=None)  # 1–31
+    guest_birthday_marketing_consent: bool = Field(default=False)
 
 
 class WaitingListStatus(str, Enum):
@@ -798,6 +817,80 @@ class GuestFeedback(TenantMixin, table=True):
     client_user_agent: str | None = Field(default=None, max_length=512)
 
 
+class PricePromotion(TenantMixin, table=True):
+    """Tenant-scoped pricing promo (#322). MVP: percent_off_category."""
+
+    __tablename__ = "price_promotion"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(max_length=120)
+    promo_type: str = Field(default="percent_off_category", max_length=32)
+    percent_off: int = Field(ge=1, le=100)
+    category: str = Field(max_length=120)
+    channels: list | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    starts_at: datetime | None = Field(default=None)
+    ends_at: datetime | None = Field(default=None)
+    days_of_week: list | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool = Field(default=False)
+    enabled: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyProgram(TenantMixin, table=True):
+    """Per-tenant club loyalty config (points or stamps). One row per tenant (#327)."""
+
+    __tablename__ = "loyalty_program"
+    __table_args__ = (UniqueConstraint("tenant_id", name="uq_loyalty_program_tenant"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    enabled: bool = Field(default=False)
+    program_name: str = Field(default="Club", max_length=120)
+    mode: str = Field(default="points", max_length=16)  # points | stamps
+    earn_units_per_order: int = Field(default=1, ge=0)
+    redemption_threshold: int = Field(default=10, ge=1)
+    reward_discount_cents: int = Field(default=500, ge=0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyMembership(TenantMixin, table=True):
+    """Customer membership in a tenant loyalty program."""
+
+    __tablename__ = "loyalty_membership"
+
+    id: int | None = Field(default=None, primary_key=True)
+    program_id: int = Field(foreign_key="loyalty_program.id", index=True)
+    billing_customer_id: int | None = Field(
+        default=None, foreign_key="billing_customer.id", index=True
+    )
+    display_name: str = Field(max_length=200)
+    email: str | None = Field(default=None, max_length=320, index=True)
+    phone: str | None = Field(default=None, max_length=40, index=True)
+    member_token: str = Field(max_length=64, unique=True, index=True)
+    balance: int = Field(default=0, ge=0)
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyLedgerEntry(TenantMixin, table=True):
+    """Append-only earn/redeem/adjust ledger. Balance never goes negative."""
+
+    __tablename__ = "loyalty_ledger_entry"
+
+    id: int | None = Field(default=None, primary_key=True)
+    membership_id: int = Field(foreign_key="loyalty_membership.id", index=True)
+    entry_type: str = Field(max_length=16)  # earn | redeem | adjust
+    units: int  # signed: earn +, redeem -
+    balance_after: int = Field(ge=0)
+    order_id: int | None = Field(default=None, foreign_key="order.id", index=True)
+    note: str | None = Field(default=None, max_length=500)
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class BillingCustomer(TenantMixin, table=True):
     """Customer registered for tax invoicing (Factura). Company details for printing invoices."""
     __tablename__ = "billing_customer"
@@ -824,6 +917,8 @@ class RestaurantGroup(SQLModel, table=True):
     join_code: str = Field(max_length=32, unique=True, index=True)
     share_products: bool = Field(default=False)
     share_customers: bool = Field(default=False)
+    # Central kitchen member for branch fulfillment (#323); null = no hub designated
+    hub_tenant_id: int | None = Field(default=None, foreign_key="tenant.id", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -853,6 +948,49 @@ class RestaurantGroupJoin(SQLModel):
     join_code: str = Field(max_length=32)
 
 
+class RestaurantGroupHubUpdate(SQLModel):
+    """Set or clear the group's central kitchen (hub) tenant."""
+
+    hub_tenant_id: int | None = None
+
+
+class HubFulfillmentStatus(str, Enum):
+    requested = "requested"
+    preparing = "preparing"
+    prepared_at_hq = "prepared_at_hq"
+    cancelled = "cancelled"
+
+
+class BranchHubFulfillment(SQLModel, table=True):
+    """Transfer-style record: branch order prepared / fulfilled at group hub kitchen (#323)."""
+
+    __tablename__ = "branch_hub_fulfillment"
+
+    id: int | None = Field(default=None, primary_key=True)
+    group_id: int = Field(foreign_key="restaurant_group.id", index=True)
+    order_id: int = Field(foreign_key="order.id", unique=True, index=True)
+    branch_tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    hub_tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    status: HubFulfillmentStatus = Field(
+        default=HubFulfillmentStatus.requested, max_length=32, index=True
+    )
+    notes: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    prepared_at: datetime | None = None
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    prepared_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+
+
+class HubFulfillmentCreate(SQLModel):
+    notes: str | None = None
+
+
+class HubFulfillmentStatusUpdate(SQLModel):
+    status: HubFulfillmentStatus
+    notes: str | None = None
+
+
 class FiscalInvoice(SQLModel, table=True):
     """Server-issued fiscal document row for an order (VeriFactu preparation; not a substitute for AEAT filing)."""
 
@@ -871,6 +1009,43 @@ class FiscalInvoice(SQLModel, table=True):
     response_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     verification_qr_content: str = Field(default="", sa_column=Column(Text, nullable=False))
     verification_text: str = Field(default="", sa_column=Column(Text, nullable=False))
+    # alta | anulacion — see docs/0065-verifactu-production.md
+    record_type: str = Field(default="alta", max_length=16)
+    previous_hash: str = Field(default="", max_length=64)
+    record_hash: str = Field(default="", max_length=64)
+    cancels_fiscal_invoice_id: int | None = Field(default=None, foreign_key="fiscal_invoice.id")
+    amount_cents: int = Field(default=0)
+    submission_status: str = Field(default="local_only", max_length=32)
+    sandbox_submitted_at: datetime | None = Field(default=None)
+
+
+class TseTransaction(SQLModel, table=True):
+    """German TSE signed transaction row (KassenSichV preparation; not a BSI certification claim)."""
+
+    __tablename__ = "tse_transaction"
+
+    id: int | None = Field(default=None, primary_key=True)
+    tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    process_type: str = Field(max_length=16)  # sale | storno | refund
+    mode: str = Field(max_length=16)  # test | live
+    tse_serial: str = Field(default="", max_length=128)
+    signature_counter: int = Field(default=0)
+    signature_value: str = Field(default="", sa_column=Column(Text, nullable=False))
+    qr_content: str = Field(default="", sa_column=Column(Text, nullable=False))
+    process_data: str = Field(default="", sa_column=Column(Text, nullable=False))
+    transaction_number: int = Field(default=0)
+    certificate_serial: str = Field(default="", max_length=128)
+    time_start: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    time_end: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    amount_cents: int = Field(default=0)
+    request_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    response_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    submission_status: str = Field(default="local_stub", max_length=32)
+    storno_of_tse_transaction_id: int | None = Field(
+        default=None, foreign_key="tse_transaction.id"
+    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Order(TenantMixin, table=True):
@@ -925,8 +1100,51 @@ class Order(TenantMixin, table=True):
     courier_user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
     delivery_fee_cents: int = Field(default=0)  # Snapshot of tenant delivery fee at create
 
+    # Club loyalty (#327): order-level discount via order_discounts.order_level_discount_cents (#322)
+    loyalty_membership_id: int | None = Field(
+        default=None, foreign_key="loyalty_membership.id", index=True
+    )
+    loyalty_discount_cents: int = Field(default=0, ge=0)
+    loyalty_units_redeemed: int = Field(default=0, ge=0)
+
     items: list["OrderItem"] = Relationship(back_populates="order")
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
+
+
+class OrderPayment(TenantMixin, table=True):
+    """One payment leg against an order (split bill / partial pay). See docs/0071-split-bill.md."""
+
+    __tablename__ = "order_payment"
+
+    id: int | None = Field(default=None, primary_key=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    amount_cents: int = Field(ge=1)
+    payment_method: str = Field(max_length=32)  # cash, terminal, stripe, other, …
+    payer_label: str | None = Field(default=None, max_length=120)
+    tip_amount_cents: int | None = Field(default=None, ge=0)
+    stripe_payment_intent_id: str | None = Field(default=None, max_length=128)
+    paid_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    paid_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    voided_at: datetime | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
+class OfflineOrderIdempotency(TenantMixin, table=True):
+    """Ledger so staff offline cash sales sync without double-creating orders (#319)."""
+
+    __tablename__ = "offline_order_idempotency"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "idempotency_key",
+            name="uq_offline_order_idempotency_tenant_key",
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    idempotency_key: str = Field(max_length=64, index=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class OrderItemStatus(str, Enum):
@@ -943,7 +1161,7 @@ class OrderItem(SQLModel, table=True):
     product_id: int = Field(foreign_key="product.id")
     product_name: str  # Snapshot of product name at order time
     quantity: int
-    price_cents: int  # Snapshot of price at order time (tax-inclusive)
+    price_cents: int  # Snapshot of price at order time (tax-inclusive; after promo)
     cost_cents: int | None = None  # Snapshot of cost at order time for profit
     notes: str | None = None  # Item-specific notes (e.g., "no onions")
     # Structured answers to product questions: {"question_id": value} (value: str for choice/text, int for scale, list[str] for multi choice)
@@ -953,6 +1171,11 @@ class OrderItem(SQLModel, table=True):
     # Pizza-style modifiers: {"remove": [...], "add": [...], "substitute": [{"from","to"}, ...]}
     line_modifiers: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     line_modifiers_summary: str | None = Field(default=None, max_length=1024)
+    # Price promo audit (#322): list price before discount; unit discount; promo snapshot
+    list_price_cents: int | None = None
+    discount_cents: int = Field(default=0, ge=0)
+    promo_id: int | None = Field(default=None, foreign_key="price_promotion.id", index=True)
+    promo_snapshot: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     # Tax snapshot at order time for invoice breakdown
     tax_id: int | None = Field(default=None, foreign_key="tax.id", index=True)
     tax_rate_percent: int | None = None  # e.g. 10, 21, 0
@@ -1072,6 +1295,9 @@ class ReservationCreate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None  # 1–12; pair with day or both omit
+    guest_birthday_day: int | None = None  # 1–31
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class ReservationUpdate(SQLModel):
@@ -1090,6 +1316,9 @@ class ReservationUpdate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None
+    guest_birthday_day: int | None = None
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class ReservationStatusUpdate(SQLModel):
@@ -1122,6 +1351,78 @@ class GuestFeedbackCreate(SQLModel):
     reservation_token: str | None = Field(default=None, max_length=128)
 
 
+class PricePromotionCreate(SQLModel):
+    """Staff create body for a price promotion (#322)."""
+
+    name: str = Field(max_length=120)
+    promo_type: str = Field(default="percent_off_category", max_length=32)
+    percent_off: int = Field(ge=1, le=100)
+    category: str = Field(max_length=120)
+    channels: list[str] | None = None
+    starts_at: datetime | str | None = None
+    ends_at: datetime | str | None = None
+    days_of_week: list[int] | None = None
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool = False
+    enabled: bool = True
+
+
+class PricePromotionUpdate(SQLModel):
+    """Staff PATCH/PUT body for a price promotion (#322)."""
+
+    name: str | None = Field(default=None, max_length=120)
+    percent_off: int | None = Field(default=None, ge=1, le=100)
+    category: str | None = Field(default=None, max_length=120)
+    channels: list[str] | None = None
+    starts_at: datetime | str | None = None
+    ends_at: datetime | str | None = None
+    days_of_week: list[int] | None = None
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool | None = None
+    enabled: bool | None = None
+
+
+class LoyaltyProgramUpdate(SQLModel):
+    """Staff PUT body for loyalty program settings."""
+
+    enabled: bool | None = None
+    program_name: str | None = Field(default=None, max_length=120)
+    mode: str | None = Field(default=None, max_length=16)
+    earn_units_per_order: int | None = Field(default=None, ge=0)
+    redemption_threshold: int | None = Field(default=None, ge=1)
+    reward_discount_cents: int | None = Field(default=None, ge=0)
+
+
+class LoyaltyJoinCreate(SQLModel):
+    """Public join body for /public/tenants/{id}/loyalty/join."""
+
+    display_name: str = Field(max_length=200)
+    email: str | None = Field(default=None, max_length=320)
+    phone: str | None = Field(default=None, max_length=40)
+
+
+class LoyaltyAdjustCreate(SQLModel):
+    """Staff manual balance adjustment (owner/admin)."""
+
+    delta_units: int
+    note: str | None = Field(default=None, max_length=500)
+
+
+class LoyaltyRedeemCreate(SQLModel):
+    """Staff redeem one reward onto an unpaid order."""
+
+    membership_id: int | None = None
+    member_token: str | None = Field(default=None, max_length=64)
+
+
+class OrderLoyaltyMembershipSet(SQLModel):
+    """Link or clear a loyalty membership on an unpaid order (for earn-on-paid)."""
+
+    loyalty_membership_id: int | None = None
+
+
 class PublicReservationCreate(SQLModel):
     """Public booking: tenant_id required. Staff use ReservationCreate (no tenant_id)."""
     tenant_id: int
@@ -1141,6 +1442,9 @@ class PublicReservationCreate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None
+    guest_birthday_day: int | None = None
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class PublicReservationUpdate(SQLModel):
@@ -1301,6 +1605,28 @@ class OrderMarkPaid(SQLModel):
     amount_paid_cents: int | None = None
 
 
+class OrderPaymentCreate(SQLModel):
+    """Staff records a partial or settling payment leg (#318)."""
+
+    amount_cents: int = Field(ge=1)
+    payment_method: str = "cash"
+    payer_label: str | None = Field(default=None, max_length=120)
+    tip_amount_cents: int | None = Field(default=None, ge=0)
+    note: str | None = Field(default=None, max_length=500)
+
+
+class OfflineCashOrderCreate(SQLModel):
+    """Staff offline → online cash sale sync (idempotent). See docs/0063-offline-capable-client.md."""
+
+    idempotency_key: str = Field(min_length=8, max_length=64)
+    table_id: int
+    items: list[OrderItemCreate]
+    notes: str | None = None
+    customer_name: str | None = None
+    # Client clock at queue time (advisory only; server timestamps win).
+    client_created_at: datetime | None = None
+
+
 class OrderBillingCustomerSet(SQLModel):
     """Set or clear the billing customer (Factura) for an order."""
     billing_customer_id: int | None = None
@@ -1405,6 +1731,10 @@ class TenantUpdate(SQLModel):
     reservation_reminder_24h_enabled: bool | None = None
     reservation_reminder_2h_enabled: bool | None = None
 
+    guest_birthday_capture_enabled: bool | None = None
+    guest_birthday_marketing_enabled: bool | None = None
+    guest_birthday_consent_text: str | None = None
+
     # Satisfecho Delivery fee + coverage
     delivery_fee_cents: int | None = None
     delivery_radius_meters: int | None = None
@@ -1435,6 +1765,12 @@ class TenantUpdate(SQLModel):
     fiscal_mode: str | None = Field(default=None, max_length=16)
     fiscal_invoice_series: str | None = Field(default=None, max_length=32)
     fiscal_aeat_api_secret: str | None = Field(default=None, max_length=512)
+
+    # Germany TSE (separate from VeriFactu)
+    fiscal_country: str | None = Field(default=None, max_length=2)
+    tse_mode: str | None = Field(default=None, max_length=16)
+    tse_client_id: str | None = Field(default=None, max_length=128)
+    tse_api_secret: str | None = Field(default=None, max_length=512)
 
 
 class TenantProductCreate(SQLModel):
@@ -2017,3 +2353,77 @@ class SocialPostTarget(SQLModel, table=True):
     status: str = Field(default="pending", max_length=32)
     external_id: str | None = Field(default=None, max_length=256)
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+
+
+class PrintAgent(TenantMixin, table=True):
+    """LAN print agent registered for a tenant (#317). Raw token shown once; only hash stored."""
+
+    __tablename__ = "print_agent"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "device_id", name="uq_print_agent_tenant_device"),
+        UniqueConstraint("token_hash", name="uq_print_agent_token_hash"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    device_id: str = Field(max_length=64)
+    display_name: str = Field(default="Print agent", max_length=120)
+    token_hash: str = Field(max_length=64, index=True)
+    last_seen_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    revoked_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class PrintJob(TenantMixin, table=True):
+    """Queued kitchen/receipt print job for a LAN agent (#317)."""
+
+    __tablename__ = "print_job"
+
+    id: int | None = Field(default=None, primary_key=True)
+    job_type: str = Field(max_length=16)  # kitchen | receipt
+    printer_role: str = Field(default="receipt", max_length=32)
+    status: str = Field(default="pending", max_length=16)
+    order_id: int | None = Field(default=None, foreign_key="order.id", index=True)
+    payload: dict = Field(default_factory=dict, sa_column=Column(JSONB, nullable=False))
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    claimed_by_agent_id: int | None = Field(default=None, foreign_key="print_agent.id")
+    claimed_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    completed_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    error_message: str | None = Field(default=None, max_length=500)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class PrintJobCreate(SQLModel):
+    """Staff request to enqueue a kitchen or receipt print job."""
+
+    job_type: str = Field(max_length=16)  # kitchen | receipt
+    order_id: int | None = None
+    printer_role: str | None = Field(default=None, max_length=32)
+    payload: dict[str, Any] | None = None
+
+
+class PrintAgentCreate(SQLModel):
+    """Create a print agent; raw token returned once."""
+
+    device_id: str = Field(min_length=1, max_length=64)
+    display_name: str = Field(default="Print agent", max_length=120)
+
+
+class PrintJobComplete(SQLModel):
+    """Agent ack for a claimed job."""
+
+    status: str = Field(max_length=16)  # done | failed
+    error_message: str | None = Field(default=None, max_length=500)

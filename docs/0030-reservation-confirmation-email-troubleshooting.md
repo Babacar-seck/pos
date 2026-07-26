@@ -1,10 +1,12 @@
 # Reservation confirmation email troubleshooting (amvara9)
 
+**Status (ops troubleshooting — current):** Use this runbook when a booking has a customer email but no confirmation arrives. For **SMTP setup** (Gmail App Password, Settings → Email fields) see [`0056-gmail-setup.md`](0056-gmail-setup.md). For **provider comparison / research** (SendGrid, Resend, etc.) see [`0005-email-sending-options.md`](0005-email-sending-options.md) — research only, not a shipping checklist.
+
 When public bookings include a customer email but no confirmation email is received, check the following.
 
-**Note:** From a machine where `ssh amvara9` is configured (key-based auth), an agent can run the commands below remotely. If SSH is unavailable, run them on the server and paste the output.
+**Note:** From a machine where `ssh amvara9` is configured (key-based auth), an agent can run the commands below remotely. If SSH is unavailable, run them on the server and paste the output. The same diagnostic works locally with the dev compose files (see below).
 
-## Run diagnostic on amvara9 (one command)
+## Run diagnostic (one command)
 
 SSH to amvara9, then from the deploy directory:
 
@@ -13,6 +15,14 @@ cd /development/pos
 COMPOSE_OPTS="--env-file config.env -f docker-compose.yml -f docker-compose.prod.yml"
 docker compose $COMPOSE_OPTS exec back python scripts/diagnose_reservation_email.py
 ```
+
+**Local (dev overlay):** from the repo root:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec back python scripts/diagnose_reservation_email.py
+```
+
+Script path inside the back container (`WORKDIR /app`): `scripts/diagnose_reservation_email.py` (host: `back/scripts/diagnose_reservation_email.py`).
 
 This prints: global SMTP status, **per-tenant SMTP** (confirmations use tenant SMTP if set, else global `config.env`), recent reservations with email, and what to check next. Share this output to investigate further.
 
@@ -43,21 +53,23 @@ docker compose $COMPOSE_OPTS logs -f back
 
 ## 2. What to look for in logs
 
-After the code change that added logging, you will see one of:
+After a booking with email, you will see one of:
 
 | Log message | Meaning |
 |-------------|--------|
-| `Reservation confirmation skipped: tenant_id=... has no SMTP configured` | **Most common:** The tenant (e.g. Cobalto) has no Email settings. Configure **Settings → Email** in the app (SMTP host, port, user, password) for the tenant, or set global `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` in `config.env` on the server. |
+| `Reservation confirmation skipped: tenant_id=... (name=...) has no SMTP and global SMTP not set` | **Most common:** Neither tenant nor global SMTP is usable. Configure **Settings → Email** for the tenant (SMTP host, port, TLS, user, password; optional From), or set global `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` in `config.env` on the server. |
 | `Reservation confirmation skipped: reservation_id=... has no customer_email` | The booking was created without an email address. |
-| `SMTP credentials not configured (tenant or global)` | From email_service: neither tenant nor global SMTP is set. |
+| `Reservation confirmation skipped: tenant_id=... reservation_id=... not found` | Background task could not load tenant or reservation (rare / race). |
+| `SMTP credentials not configured (tenant or global)` | From `email_service`: neither tenant nor global SMTP credentials are set at send time. |
 | `Failed to send email to ...` | SMTP connection or auth failed (wrong host/port/credentials, firewall, TLS issue). Check the exception text in the same log line. |
-| `Reservation confirmation email sent for reservation_id=...` | Email was sent successfully. |
+| `Reservation confirmation email failed for reservation_id=...` | Wrapper around a send failure (same investigation as `Failed to send email`). |
+| `Reservation confirmation email sent for reservation_id=... to ...` | Email was sent successfully. |
 
 ## 3. When is the confirmation email sent?
 
 - Whenever a reservation is **created** with a non-empty **customer email** (staff UI or public booking).
 - **Public** bookings also get a **token**; the confirmation email may include a **view/cancel** link when `public_app_base_url` is set. Staff-created reservations have no token, so the email has details only (no self-service link).
-- **SMTP** must be configured for the tenant (Settings → Email) or globally in `config.env`, or sending is skipped with a log line.
+- **SMTP** must be configured for the tenant (Settings → Email) or globally in `config.env`, or sending is skipped with a log line. Usability for “has SMTP” is `smtp_user` + `smtp_password` (tenant or global); host/port/TLS must still be correct for the provider or send will fail (see [0056](0056-gmail-setup.md)).
 
 ### Custom subject and body (Settings → Email)
 
@@ -69,7 +81,7 @@ Tenants can set **plain-text** subject and body with `{{placeholders}}` (e.g. `{
 
 ## 4. Quick check: tenant SMTP (or use full diagnostic above)
 
-The reservation confirmation flow uses **tenant SMTP** if the tenant has it; otherwise it falls back to **global** `config.env` SMTP. If neither is set, the backend skips sending and logs "Reservation confirmation skipped".
+The reservation confirmation flow uses **tenant SMTP** if the tenant has `smtp_user` + `smtp_password`; otherwise it falls back to **global** `config.env` SMTP. If neither is set, the backend skips sending and logs that tenant and global SMTP are not set.
 
 Quick DB check:
 
@@ -85,7 +97,7 @@ with Session(engine) as s:
 "
 ```
 
-If `smtp_configured=False`, configure Email in the app (Settings → Email) and save.
+If `smtp_configured=False`, configure Email in the app (Settings → Email) and save. Prefer the full diagnostic script above when investigating production.
 
 ## 5. Global SMTP (config.env)
 

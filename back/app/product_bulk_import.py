@@ -1,15 +1,17 @@
-"""Product bulk import: JSON preview/confirm and optional vision extraction."""
+"""Product bulk import: JSON/CSV preview/confirm and optional vision extraction."""
 
 from __future__ import annotations
 
 import base64
+import csv
+import io
 import json
 import re
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
 import requests
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlmodel import Session, select
 
 from . import models
@@ -18,6 +20,22 @@ from .settings import settings
 
 MAX_BULK_IMPORT_ROWS = 500
 MAX_VISION_IMAGE_BYTES = 8 * 1024 * 1024  # 8MB for menu photo upload (not persisted)
+
+# Canonical CSV headers for migration / cutover imports (see docs/0062-pos-migration-import.md).
+CSV_REQUIRED_HEADERS = frozenset({"name"})
+CSV_OPTIONAL_HEADERS = frozenset(
+    {
+        "price",
+        "price_cents",
+        "cost",
+        "cost_cents",
+        "category",
+        "subcategory",
+        "description",
+        "ingredients",
+    }
+)
+CSV_KNOWN_HEADERS = CSV_REQUIRED_HEADERS | CSV_OPTIONAL_HEADERS
 
 
 class ProductBulkImportItemIn(BaseModel):
@@ -284,6 +302,116 @@ def parse_json_import_payload(raw: Any) -> list[ProductBulkImportItemIn]:
     if isinstance(raw, list):
         return [ProductBulkImportItemIn.model_validate(x) for x in raw]
     raise ValueError("invalid_json_structure")
+
+
+def _csv_cell(row: dict[str, str], key: str) -> str | None:
+    raw = row.get(key)
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    return text if text else None
+
+
+def _csv_float(row: dict[str, str], key: str) -> float | None:
+    text = _csv_cell(row, key)
+    if text is None:
+        return None
+    try:
+        return float(text.replace(",", "."))
+    except ValueError as exc:
+        raise ValueError(f"invalid_{key}") from exc
+
+
+def _csv_int(row: dict[str, str], key: str) -> int | None:
+    text = _csv_cell(row, key)
+    if text is None:
+        return None
+    try:
+        return int(text)
+    except ValueError as exc:
+        raise ValueError(f"invalid_{key}") from exc
+
+
+def parse_products_csv(text: str) -> list[ProductBulkImportItemIn]:
+    """
+    Parse a UTF-8 (optional BOM) products CSV into bulk-import items.
+
+    Required column: ``name``.
+    Price: ``price`` (major units) and/or ``price_cents`` (at least one required per row —
+    enforced later by ``build_preview``).
+    Optional: ``cost``, ``cost_cents``, ``category``, ``subcategory``, ``description``,
+    ``ingredients``.
+    """
+    if text is None:
+        raise ValueError("empty_csv")
+    # utf-8-sig strips BOM from Excel exports
+    stream = io.StringIO(text.lstrip("\ufeff"))
+    reader = csv.DictReader(stream)
+    if not reader.fieldnames:
+        raise ValueError("empty_csv")
+
+    headers = [((h or "").strip().casefold()) for h in reader.fieldnames]
+    if not any(headers):
+        raise ValueError("empty_csv")
+    if len(headers) != len(set(headers)):
+        raise ValueError("duplicate_csv_headers")
+    if "name" not in headers:
+        raise ValueError("missing_name_column")
+
+    unknown = [h for h in headers if h and h not in CSV_KNOWN_HEADERS]
+    if unknown:
+        raise ValueError(f"unknown_csv_columns:{','.join(unknown)}")
+
+    # Remap rows to lower-case keys
+    items: list[ProductBulkImportItemIn] = []
+    for row_num, raw_row in enumerate(reader, start=2):  # header is line 1
+        if len(items) >= MAX_BULK_IMPORT_ROWS:
+            raise ValueError("too_many_rows")
+        row = {
+            ((k or "").strip().casefold()): (v if v is not None else "")
+            for k, v in raw_row.items()
+        }
+        # Skip fully blank lines
+        if not any(str(v).strip() for v in row.values()):
+            continue
+        try:
+            item = ProductBulkImportItemIn(
+                name=_csv_cell(row, "name") or "",
+                price=_csv_float(row, "price"),
+                price_cents=_csv_int(row, "price_cents"),
+                cost=_csv_float(row, "cost"),
+                cost_cents=_csv_int(row, "cost_cents"),
+                category=_csv_cell(row, "category"),
+                subcategory=_csv_cell(row, "subcategory"),
+                description=_csv_cell(row, "description"),
+                ingredients=_csv_cell(row, "ingredients"),
+            )
+        except ValueError as exc:
+            raise ValueError(f"row_{row_num}:{exc}") from exc
+        except ValidationError as exc:
+            raise ValueError(f"row_{row_num}:invalid_fields") from exc
+        items.append(item)
+
+    if not items:
+        raise ValueError("empty_csv")
+    return items
+
+
+def format_preview_report(preview: ProductBulkImportPreviewResponse) -> str:
+    """Human-readable validation report for CLI dry-run / apply."""
+    s = preview.summary
+    lines = [
+        f"total={s.total} valid={s.valid} invalid={s.invalid} "
+        f"create={s.create} update={s.update}",
+    ]
+    for row in preview.items:
+        status = "OK" if row.valid else "INVALID"
+        err = f" errors={','.join(row.errors)}" if row.errors else ""
+        lines.append(
+            f"  [{status}] row={row.row_index} action={row.action} "
+            f"name={row.name!r} price_cents={row.price_cents}{err}"
+        )
+    return "\n".join(lines)
 
 
 def vision_api_configured() -> bool:

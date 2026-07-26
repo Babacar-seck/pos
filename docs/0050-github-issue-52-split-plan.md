@@ -1,10 +1,12 @@
 # GitHub #52 — dedicated issues & plan
 
-**Parent:** [#52 — Various topics to enhance](https://github.com/satisfecho/pos/issues/52)
+> **Historical / closed umbrella.** Parent [#52](https://github.com/satisfecho/pos/issues/52) is **CLOSED** (2026-03-23). Do **not** file the pasted issue bodies below as new GitHub issues without product-owner review — they are archival drafts, not live backlog. For current roadmap status prefer **[0032-github-issues-roadmap.md](0032-github-issues-roadmap.md)** and shipped feature docs (e.g. **[0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md)**, table groups in **[0051-table-groups-mvp.md](0051-table-groups-mvp.md)**).
 
-The umbrella issue listed many themes. This document **plans** them as **separate GitHub issues** with suggested **order**, **dependencies**, and **ready-to-paste** titles and bodies.
+**Parent:** [#52 — Various topics to enhance](https://github.com/satisfecho/pos/issues/52) (closed)
 
-**Filing on GitHub:** If `gh issue create` fails with a token/permissions error, file each block below as a new issue (or run `gh` after `gh auth refresh` with `repo` scope and org access). After filing, paste the new issue numbers into a comment on #52 and update [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md).
+The umbrella issue listed many themes. This document **planned** them as **separate GitHub issues** with suggested **order**, **dependencies**, and **ready-to-paste** titles and bodies. Phases A–E and the paste bodies below are kept for history only.
+
+**Filing on GitHub (historical note):** The guidance below was for when #52 was open. Prefer updating [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) and opening issues only when product owns a real gap — do not bulk-refile from this file.
 
 ---
 
@@ -301,7 +303,7 @@ One **production kitchen** fulfils items for **multiple branches** (sucursales):
 Interface to **aggregators** (Uber Eats, …): menu sync, order ingestion, status callbacks (within API constraints).
 
 ## Context
-[#52](https://github.com/satisfecho/pos/issues/52). See `docs/0031-order-customizations-plan.md` (delivery integrations).
+[#52](https://github.com/satisfecho/pos/issues/52). See `docs/0031-order-customizations-plan.md` (delivery integrations). First-party **Satisfecho Delivery** is already in product — [0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md); this issue is aggregators only.
 
 ## Scope (proposal)
 - Phase 0: vendor API review + sandbox credentials pattern (env, secrets).

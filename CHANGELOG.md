@@ -8,6 +8,285 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Day close-out (#329):** Archived the verified agents2 meta task after PASS checks (GitHub open issues empty, live queue clear of leftover product work, day archives #311–#328 present, landing + loyalty public API smoke). Status inventory only; no product code.
+- **VeriFactu (#326):** Archived the verified agents2 task after PASS checks (hash-chain migration, 7 fiscal pytest, Settings Test save + Live 400, issue/cancel ValidarQR + sandbox, immutability 409→anulacion, landing smoke, docs 0018/0065). The feature itself shipped in 2.1.134.
+- **Price promotions (#322):** Archived the verified agents2 task after PASS checks (7 pytest, Settings → Promotions create/toggle, QR menu live prices, order-line promo audit/tax, tenant isolation, landing smoke, front build). The feature itself shipped in 2.1.135.
+- **Migration (#321):** Archived the verified agents2 task after PASS checks (17 pytest, CLI dry-run on sample CSV, invalid apply refused with no writes, docs 0062, landing smoke). The CSV cutover toolkit itself shipped in 2.1.134.
+- **Docs (0051):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` Feature guides lists the floor-plan table join/unjoin MVP (distinct from 0054 restaurant groups). The index itself shipped in 2.1.99.
+- **Docs (SECURITY-REVIEW):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the security review notes under Quick links and Reference & notes. The index itself shipped in 2.1.103.
+- **Inventory multi-warehouse (#320):** Archived the verified agents2 task after PASS checks (migration `20260726132730`, 6/6 pytest, warehouse CRUD + adjust/receive isolation, Stock Dashboard filter, landing smoke). The feature itself shipped in 2.1.134.
+- **Guest feedback (#325):** Archived the verified agents2 task after PASS checks (12/12 pytest, staff trends + CSV export smoke, public `/feedback/1`, docs 0064, front build). The feature itself shipped in 2.1.134.
+- **Guest birthdays (#324):** Archived the verified agents2 task after PASS checks (migration, 8/8 pytest, public book + staff create/edit/clear, settings capture/marketing consent toggles, front build, landing smoke). The feature itself shipped in 2.1.135.
+- **Docs (0030):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the reservation confirmation email troubleshooting runbook under Email & SMTP and Quick links. The index itself shipped with the 0030 refresh in 2.1.100.
+- **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
+- **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
+
+## [2.1.138] - 2026-07-26
+
+### Fixed
+
+- **Club loyalty (#327):** Public join, balance, and wallet endpoints no longer return 500 under live SlowAPI — correct `@public_menu_ip_limit()` usage and inject `response: Response` like other public menu routes.
+
+### Changed
+
+- **Club loyalty (#327):** Archived the verified agents2 task after PASS checks (live public APIs under SlowAPI, UI join + card, 5 pytest, landing smoke, docs 0066). The MVP itself shipped in 2.1.134.
+
+## [2.1.137] - 2026-07-26
+
+### Added
+
+- **German TSE / KassenSichV preparation (#316):** Cloud-TSE ADR and Phase 1 MVP — per-tenant fiscal country and TSE mode (off/test/live, independent of VeriFactu), stub-signed sale/storno on pay and unmark-paid, receipt TSE fields (print-bridge + browser), DSFinV-K date-range export stub, Settings UI and `/features` honesty. Live mode stays gated until provider unlock; not marketed as BSI-certified. See `docs/0072-tse-fiscal-compliance.md`.
+
+## [2.1.136] - 2026-07-26
+
+### Added
+
+- **Split bill / partial payments (#318):** Staff can record multiple payment legs on one order (by amount), with remaining-balance reconciliation; order marks paid only when covered. One Factura/VeriFactu alta per settled order; loyalty still earns once. See `docs/0071-split-bill.md`.
+- **Public pricing page (#328):** Real `/pricing` route shows trial length and monthly hosted price from `GET /saas/config` (not hardcoded), plus AGPLv3 self-host tier; respects `SAAS_PAYWALL_ENABLED` so inactive billing is not implied everywhere. Multi-tier-ready `plans[]` on the config payload.
+- **Hardware printing (#317):** Option C ADR + LAN print agent — staff `POST /print-jobs` (kitchen|receipt), agent auth token, poll/claim/complete, Settings → Printing, ESC/POS agent script (`scripts/print-agent/`), browser `window.print()` fallback with offline warning (`docs/0070-hardware-printing.md`).
+
+## [2.1.135] - 2026-07-26
+
+### Added
+
+- **Branch hub fulfillment (#323):** ADR chooses linked tenants via restaurant groups (not a parallel site hierarchy); warehouses stay same-tenant stock bins. Designate a group **hub kitchen**, branch staff can request HQ prep (fulfillment record), hub marks **prepared at HQ**; Orders show the state. See `docs/0069-branch-hub-fulfillment.md`.
+- **Price promotions (#322):** Tenant %-off category engine (time window + channel eligibility), Settings → Promotions, live QR/public menu prices, order-line promo audit snapshot, shared order-level discount helper for loyalty (`docs/0068-price-promotions.md`).
+- **Guest birthdays (#324):** Optional month/day on reservations (public `/book` + staff create/edit), staff visibility, tenant settings for capture vs marketing consent (capture-only by default; no outbound messages). See `docs/0067-guest-birthday.md`.
+
+## [2.1.134] - 2026-07-26
+
+### Added
+
+- **Club loyalty (#327):** Tenant points/stamps program — Settings tab, public join `/loyalty/{tenantId}` + balance card, auto-earn once per paid order, staff redeem at checkout (`loyalty_discount_cents` until #322 promos), append-only ledger; Apple/Google Wallet issuance gated on certs (`docs/0066-club-loyalty.md`).
+- **VeriFactu (#326):** Production-path prep — Phase 0 build-vs-buy ADR (`docs/0065-verifactu-production.md`), internal hash chain, AEAT ValidarQR URL shape, test-mode sandbox submission, order immutability after fiscal issue, anulación (credit-note cancel) endpoint; `fiscal_mode: live` gated until middleware unlock. Official AEAT SOAP/huella still via certified middleware (not invented in-app).
+- **Guest feedback (#325):** Staff trends dashboard (averages, star distribution, daily volume) and CSV export on `/guest-feedback`; APIs `GET /tenant/guest-feedback/summary` and `GET /tenant/guest-feedback/export` (`docs/0064-guest-feedback-analytics.md`).
+- **Migration (#321):** CSV cutover toolkit for products + categories — sample CSV, idempotent CLI (`--dry-run` / `--apply`), validation report that refuses writes on bad rows, and cutover runbook (`docs/0062-pos-migration-import.md`).
+- **Inventory (#320):** Multi-warehouse (almacenes) MVP — tenant-scoped warehouses, per-location stock on receive/adjust, warehouse CRUD under Inventory, and stock dashboard filter by location.
+
+## [2.1.133] - 2026-07-26
+
+### Added
+
+- **Offline POS (#319):** Architecture ADR + threat model (`docs/0063-offline-capable-client.md`); staff MVP queues a take-away **cash** sale offline and syncs via idempotent `POST /orders/offline-cash`, with a clear offline/pending banner.
+
+## [2.1.132] - 2026-07-26
+
+### Changed
+
+- **Docs (0060 / 0021):** Confirmed the working-plan implementation plan is marked **historical / pre-build** (use the living 0021 guide) and archived the verification task.
+
+## [2.1.131] - 2026-07-26
+
+### Changed
+
+- **Ops (#311):** Closed the verified production promote task for release **2.1.92** (merge to `master`, GitHub release, Deploy to amvara9, and production smoke already green).
+
+## [2.1.130] - 2026-07-26
+
+### Changed
+
+- **Repo hygiene (#314):** Removed stale merged remote and local feature branches while keeping `development`, `master`, and unmerged tips that still need a human keep-or-delete decision.
+
+## [2.1.129] - 2026-07-26
+
+### Changed
+
+- **Docs (0022):** Marked OAuth / social-login notes as **research / deferred** (auth remains email/password; do not queue implementation from this doc) and aligned README plus the 0019–0022 prioritisation guide.
+
+## [2.1.128] - 2026-07-26
+
+### Changed
+
+- **Docs (0031 / #50):** Marked core order customizations as **shipped** (staff product questions, public menu answers including multi-select, kitchen/invoice summary); optional per-option price deltas remain open — aligned README and ROADMAP.
+
+## [2.1.127] - 2026-07-26
+
+### Changed
+
+- **Docs (0002):** Clarified the customer features plan as **partial** — staff Billing Customers (Factura) and fiscal invoices are shipped; end-user accounts, MFA, and self-serve history are not — and aligned README indexes plus ROADMAP.
+
+## [2.1.126] - 2026-07-26
+
+### Changed
+
+- **Docs (0009):** Marked table PIN security as **shipped** (staff activate / PIN / regenerate / close; public-menu gates; optional GPS flagging off by default) and aligned the docs README Plans blurb.
+
+## [2.1.125] - 2026-07-26
+
+### Changed
+
+- **Docs (0051):** Marked floor-plan table join/unjoin as a **shipped** behavioural reference (canvas join/unjoin, combined seats, reservation pool, per-table QR tokens) and aligned the docs README Feature guides blurb.
+
+## [2.1.124] - 2026-07-26
+
+### Changed
+
+- **Docs (0008):** Marked the order-management logic spec as **shipped core / design reference** (session-scoped orders are live; do not re-open the shared unpaid-order problem as backlog) and aligned the docs README blurb.
+
+## [2.1.123] - 2026-07-26
+
+### Added
+
+- **Platform operator dashboard (#315):** Show all-time login count and last-login time on `/platform` (API `logins_total` / `last_login_at`, metric cards, i18n, smoke coverage).
+
+### Changed
+
+- **Docs (0057):** Marked the amvara9 deploy/CSS stale-build guide as **shipped** (`deploy-amvara9.sh` `--no-cache` front + SPA `index.html` no-cache headers) and aligned the docs README blurb.
+
+## [2.1.122] - 2026-07-26
+
+### Changed
+
+- **Docs (0005):** Marked email-sending options as **research only** (not a shipping checklist), with ops pointers to **0056** (Gmail/SMTP) and **0030** (confirmation troubleshooting), and aligned the docs README blurb.
+
+## [2.1.121] - 2026-07-26
+
+### Changed
+
+- **Docs (0050 / #52):** Marked the GitHub #52 split plan as **historical** (parent umbrella closed; do not re-file paste bodies without review) and aligned the docs README Plans blurb toward **0032** and shipped feature docs.
+
+## [2.1.120] - 2026-07-26
+
+### Changed
+
+- **Docs (0028):** Documented that tenant public branding (background colour and header image) also covers waitlist and guest feedback, marked the guide as shipped, and aligned the docs README blurb.
+
+## [2.1.119] - 2026-07-26
+
+### Changed
+
+- **Docs (0013):** Marked customer verification alternatives as **research only** (not a shipping decision; app uses email/password), softened SMS “recommended” framing to research-relative language, and aligned the docs README Reference blurb.
+
+## [2.1.118] - 2026-07-26
+
+### Changed
+
+- **Docs (0010):** Marked the table-reservation implementation plan as **shipped core / design history** (pointing readers to **0011** for live how-to) and reframed later-phase items as backlog; updated the docs README Plans blurb.
+
+## [2.1.117] - 2026-07-26
+
+### Changed
+
+- **Ops docs (0027):** Clarified that amvara9 upload routes are already shipped; JSON `Image not found` means a missing file or orphan DB ref (not a StaticFiles redeploy), and aligned orphan-clear compose paths plus the docs README blurb.
+
+## [2.1.116] - 2026-07-26
+
+### Changed
+
+- **Docs (0032 / #52 roadmap):** Noted first-party **Satisfecho Delivery** as **Partial / shipped core** (with link to 0053), and clarified that **Uber Eats** remains separate **Not started** aggregator work; short cross-link in the 0050 Issue 10 context.
+
+## [2.1.115] - 2026-07-26
+
+### Changed
+
+- **Docs (0023):** Refreshed prioritisation for docs 0019–0022 so **0021 (working plan)** is treated as shipped background and the next open item is **0022 (OAuth)**, with optional **0020** rate-limit follow-ups as non-blocking hardening; aligned the docs README index blurb.
+
+## [2.1.114] - 2026-07-26
+
+### Changed
+
+- **Docs (0007):** Marked the January 2026 implementation verification report as a **historical** snapshot (stale `main.py` line refs are not current truth) and clarified the docs README index to point readers to 0008 / live code / tests for order behaviour.
+
+## [2.1.113] - 2026-07-26
+
+### Changed
+
+- **Overbooking docs (0025):** Marked reservation overbooking detection as **shipped** (live report API, 400 on over capacity, UI/reports pointers, 0058 / checker links) and aligned the docs README Plans blurb so agents no longer treat it as an unstarted proposal.
+
+## [2.1.112] - 2026-07-26
+
+### Changed
+
+- **Testing docs:** Documented `test:working-plan-calendar` (direct `/working-plan/calendar` load, fails on console errors) in section 2b and the npm scripts table, distinct from week-view `test:working-plan`.
+
+## [2.1.111] - 2026-07-26
+
+### Changed
+
+- **Docs Quick links:** Added multi-location restaurant groups (`0054-restaurant-groups.md`) so operators can open that guide from the docs index without digging into Feature guides.
+
+## [2.1.110] - 2026-07-26
+
+### Changed
+
+- **Docs index (VeriFactu):** Feature guides now list `0018-verifactu-fiscal-invoicing.md` after billing/Factura 0017, with a short cross-link on the 0017 blurb (tenant `fiscal_mode`, server-issued fiscal stub, Factura QR/disclaimer; no production AEAT submission yet).
+
+## [2.1.109] - 2026-07-26
+
+### Changed
+
+- **Docs index (reservations):** Feature guides and Quick links now mention the public waiting list (`/waitlist/:tenantId`) and staff Waiting list tab alongside booking in the 0011 blurbs.
+
+## [2.1.108] - 2026-07-26
+
+### Changed
+
+- **Docs index (agent-loop):** Reference blurb now points at the live `agents2/tasks/` queue (+ prompts), with a short note that legacy `agents/` may appear in older notes.
+
+## [2.1.107] - 2026-07-26
+
+### Changed
+
+- **Reports guide (0016):** Documented the Overbooking slots summary card (`overbooking_slots_count`, shown when count &gt; 0) and cross-linked to 0025 overbooking detection; updated the docs README 0016 blurb.
+
+## [2.1.106] - 2026-07-26
+
+### Changed
+
+- **Docs index (Deployment):** Listed `0027-amvara9-menu-images-troubleshooting.md` under Deployment & operations in `docs/README.md`, with short see-also links from the 0004 and 0026 blurbs, so operators find the uploads-404 runbook next to HAProxy/deploy docs.
+
+## [2.1.105] - 2026-07-26
+
+### Changed
+
+- **Docs Quick links:** Added Satisfecho Delivery (`0053`), SaaS signup paywall (`0052`, keep-off until runbook), and platform operator (`0059`) so operators find those guides without digging into Feature guides.
+
+## [2.1.104] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (working plan):** Kept the living shift-schedule guide as `0021-working-plan.md`; moved the pre-build BetterShift/implementation plan to `0060-working-plan-implementation-plan.md` with a historical banner. Updated `docs/README.md` Implementation plans rows.
+
+## [2.1.103] - 2026-07-26
+
+### Changed
+
+- **Docs index:** Listed `SECURITY-REVIEW.md` under Quick links and Reference & notes in `docs/README.md` (structured security pass — not a pentest).
+- **Agent cursor-rules catalog:** Related link in `docs/agent-cursor-rules.md` now points at `agents2/TASKS-README.md` and the live `agents2/tasks/` queue (legacy `agents/tasks/` noted only).
+
+## [2.1.102] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (platform operator):** Kept kitchen display as `0015-kitchen-display.md`; moved the platform operator portal guide to `0059-platform-operator-portal.md`. Updated Feature guides, root README, ROADMAP, testing, screenshots, and SaaS paywall cross-links.
+
+## [2.1.101] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (unique prefixes):** Kept VeriFactu as `0018`, WhatsApp as `0024`, and overbooking detection as `0025`; moved Gmail setup → `0056-gmail-setup.md`, deploy CSS fix → `0057-deploy-css-fix-amvara9.md`, and overbooking one-empty-table scenario → `0058-test-scenario-one-empty-table.md`. Updated `docs/README.md`, cross-links, and `config.env.example`.
+
+## [2.1.100] - 2026-07-26
+
+### Changed
+
+- **Reservation confirmation email troubleshooting (0030):** Refreshed the ops runbook — current-status banner with links to Gmail setup (now `0056-gmail-setup.md`) and email research (0005), local Docker diagnose command, log strings aligned with the backend, and indexing under Email & SMTP plus Quick links in `docs/README.md`.
+
+## [2.1.99] - 2026-07-26
+
+### Changed
+
+- **Agent committer:** Stamp/scan-only dirty trees (`agents2` 001/005/008 `time-of-last-review` / `last-scan.json`) are no longer auto-committed; stamps stay local until a commit that also includes real code, docs, or task work (#313).
+- **Docs index:** Listed `0051-table-groups-mvp.md` under Feature guides in `docs/README.md` (floor-plan join/unjoin MVP; distinct from 0054 restaurant multi-location groups).
+
+## [2.1.98] - 2026-07-26
+
+### Changed
+
+- **Customers / Factura docs (0017):** Documented that **Customers (Invoice)** (`/customers`) lives under **Operations** in the staff sidebar, not under Catalog & inventory, so operators find the page after the #290 nav regroup.
+
 ## [2.1.97] - 2026-07-26
 
 ### Changed
@@ -124,7 +403,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 
-- **Overbooking scenario docs (0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0025-test-scenario-one-empty-table.md`, and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
+- **Overbooking scenario docs (0058, maps 0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0058-test-scenario-one-empty-table.md` (formerly `0025-test-scenario-one-empty-table.md`), and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
 
 ## [2.1.78] - 2026-07-26
 

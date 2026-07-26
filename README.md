@@ -72,7 +72,8 @@ Staff dashboard, kitchen display, and customer menu — a quick visual sense of 
 | **Satisfecho Delivery** | First-party delivery channel (not Glovo/Uber): staff **Delivery** tab on Orders, create/assign courier, public guest checkout at `/delivery/{tenantId}`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
 | **Courier portal** | Couriers log in at `/courier/login` and work Mine / order actions at `/courier`. Demo credentials: `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
 | **SaaS signup paywall** | After guided signup (`/register` / `/signup`), new tenants may hit `/paywall` (trial or subscribe) when `SAAS_PAYWALL_ENABLED=true`. Default is `false` for local/demo. See [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md). |
-| **Platform operator** | Satisfecho platform admins log in at `/platform/login` and oversee tenants at `/platform`. Distinct from provider and tenant staff. See [docs/0015-platform-operator-portal.md](docs/0015-platform-operator-portal.md). |
+| **Public pricing** | Hosted trial/monthly price from live `GET /saas/config` at **`/pricing`** (no login). Self-host / AGPLv3 alternative; does not imply billing when paywall is off. |
+| **Platform operator** | Satisfecho platform admins log in at `/platform/login` and oversee tenants at `/platform`. Distinct from provider and tenant staff. See [docs/0059-platform-operator-portal.md](docs/0059-platform-operator-portal.md). |
 | **Products & images** | Staff manage products at `/products`. On deploy, demo products are linked to catalog provider products so the Products page shows images (beer/pizza/wine import); first load of `/products` backfills image URLs. |
 | **Provider portal** | Suppliers register at `/provider/register`, log in at `/provider/login`, and manage their catalog at `/provider` (tile/list view, search, add/edit/delete products, company details). See [docs/0014-provider-portal.md](docs/0014-provider-portal.md). |
 | **Tenant branding (public)** | Per-tenant **background colour** (hex, e.g. RAL5002 Azul) and **header background image** for book, menu, and reservation-view pages. Set in Settings → Business profile; optional dark overlay when a header image is used. See [docs/0028-tenant-public-branding.md](docs/0028-tenant-public-branding.md). |
@@ -145,6 +146,7 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **Public booking** | http://localhost:4202/book/{tenantId} |
 | **Public waiting list** | http://localhost:4202/waitlist/{tenantId} |
 | **Public features (marketing)** | http://localhost:4202/features |
+| **Public pricing** | http://localhost:4202/pricing |
 | **Public guest feedback** | http://localhost:4202/feedback/{tenantId} |
 | **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
@@ -204,7 +206,7 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | [docs/0009-table-pin-security.md](docs/0009-table-pin-security.md) | Table activation and PIN validation |
 | [docs/0012-translation-implementation.md](docs/0012-translation-implementation.md) | i18n (frontend + backend + DB content) |
 | [docs/0004-deployment.md](docs/0004-deployment.md) | Domain/IP deployment and env vars |
-| [docs/0002-customer-features-plan.md](docs/0002-customer-features-plan.md) | Customer accounts: registration, login, MFA, order history, invoices |
+| [docs/0002-customer-features-plan.md](docs/0002-customer-features-plan.md) | Customer features plan (**partial**): staff Factura customers shipped; end-user accounts/MFA not shipped |
 | [docs/0005-email-sending-options.md](docs/0005-email-sending-options.md) | Email configuration options |
 | [docs/0013-verification-alternatives.md](docs/0013-verification-alternatives.md) | Verification flow alternatives |
 | [docs/0014-provider-portal.md](docs/0014-provider-portal.md) | Provider registration, login, and catalog management |

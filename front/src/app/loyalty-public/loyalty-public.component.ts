@@ -1,0 +1,120 @@
+import { Component, DestroyRef, OnInit, afterNextRender, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { merge } from 'rxjs';
+import { ApiService, LoyaltyProgramPublic } from '../services/api.service';
+import { LanguagePickerComponent } from '../shared/language-picker.component';
+import { LegalLinksComponent } from '../shared/legal-links.component';
+import { contactEmailValid, contactPhoneValid } from '../shared/contact-validators';
+
+@Component({
+  selector: 'app-loyalty-public',
+  standalone: true,
+  imports: [FormsModule, TranslateModule, LanguagePickerComponent, LegalLinksComponent],
+  templateUrl: './loyalty-public.component.html',
+  styleUrls: ['../book/book.component.scss', './loyalty-public.component.scss'],
+})
+export class LoyaltyPublicComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private api = inject(ApiService);
+  private translate = inject(TranslateService);
+  private title = inject(Title);
+  private destroyRef = inject(DestroyRef);
+
+  tenantId = signal(0);
+  program = signal<LoyaltyProgramPublic | null>(null);
+  loading = signal(true);
+  errorKind = signal<'invalid_tenant' | 'not_enabled' | null>(null);
+  submitting = signal(false);
+  submitted = signal(false);
+  submitError = signal<string | null>(null);
+  memberToken = signal<string | null>(null);
+  balance = signal(0);
+  walletNote = signal('');
+  origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : '';
+
+  displayName = '';
+  email = '';
+  phone = '';
+
+  constructor() {
+    afterNextRender(() => this.updateDocumentTitle());
+  }
+
+  ngOnInit(): void {
+    merge(
+      this.translate.onLangChange,
+      this.translate.onTranslationChange,
+      this.translate.onDefaultLangChange,
+    )
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateDocumentTitle());
+
+    const idParam = this.route.snapshot.paramMap.get('tenantId');
+    const id = idParam ? Number(idParam) : NaN;
+    if (!Number.isFinite(id) || id <= 0) {
+      this.errorKind.set('invalid_tenant');
+      this.loading.set(false);
+      return;
+    }
+    this.tenantId.set(id);
+    this.api.getPublicLoyaltyProgram(id).subscribe({
+      next: (p) => {
+        this.program.set(p);
+        this.walletNote.set(p.wallet?.detail || '');
+        this.loading.set(false);
+        this.updateDocumentTitle();
+      },
+      error: () => {
+        this.errorKind.set('not_enabled');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  canSubmit(): boolean {
+    if (!this.displayName.trim()) return false;
+    const hasEmail = !!this.email.trim();
+    const hasPhone = !!this.phone.trim();
+    if (!hasEmail && !hasPhone) return false;
+    if (hasEmail && !contactEmailValid(this.email)) return false;
+    if (hasPhone && !contactPhoneValid(this.phone)) return false;
+    return true;
+  }
+
+  submit(): void {
+    if (!this.canSubmit() || this.submitting()) return;
+    this.submitting.set(true);
+    this.submitError.set(null);
+    this.api
+      .joinPublicLoyalty(this.tenantId(), {
+        display_name: this.displayName.trim(),
+        email: this.email.trim() || undefined,
+        phone: this.phone.trim() || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          this.submitting.set(false);
+          this.submitted.set(true);
+          this.memberToken.set(res.membership.member_token ?? null);
+          this.balance.set(res.membership.balance);
+          this.walletNote.set(res.wallet?.detail || this.walletNote());
+        },
+        error: (err) => {
+          this.submitting.set(false);
+          this.submitError.set(err?.error?.detail || 'Join failed');
+        },
+      });
+  }
+
+  private updateDocumentTitle(): void {
+    const name = this.program()?.program_name || this.translate.instant('LOYALTY_PUBLIC.TITLE');
+    this.title.setTitle(String(name));
+  }
+}

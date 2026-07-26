@@ -126,6 +126,43 @@ class InventoryCategory(str, Enum):
 
 # ============ CORE MODELS ============
 
+class Warehouse(TenantMixin, table=True):
+    """
+    Stock location within a tenant (e.g. main kitchen, cold room, bar).
+    Each tenant has at least one default warehouse.
+    """
+    __tablename__ = "warehouse"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    code: str | None = Field(default=None, index=True)
+    is_default: bool = Field(default=False, index=True)
+    is_active: bool = Field(default=True, index=True)
+    is_deleted: bool = Field(default=False, index=True)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
+class WarehouseStock(TenantMixin, table=True):
+    """Per-warehouse quantity for an inventory item."""
+    __tablename__ = "warehouse_stock"
+
+    id: int | None = Field(default=None, primary_key=True)
+    warehouse_id: int = Field(foreign_key="warehouse.id", index=True)
+    inventory_item_id: int = Field(foreign_key="inventory_item.id", index=True)
+    quantity: Decimal = Field(
+        default=Decimal("0"),
+        sa_type=Numeric(12, 4),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+
 class InventoryItem(TenantMixin, table=True):
     """
     Raw materials, ingredients, and supplies.
@@ -215,6 +252,13 @@ class InventoryBatch(TenantMixin, table=True):
         default=None,
         foreign_key="purchase_order.id",
         index=True
+    )
+
+    # Stock location (nullable for legacy rows; new receipts set it)
+    warehouse_id: int | None = Field(
+        default=None,
+        foreign_key="warehouse.id",
+        index=True,
     )
     
     # Batch details
@@ -462,6 +506,13 @@ class InventoryTransaction(TenantMixin, table=True):
         foreign_key="purchase_order.id",
         index=True
     )
+
+    # Stock location for this movement (nullable for legacy rows)
+    warehouse_id: int | None = Field(
+        default=None,
+        foreign_key="warehouse.id",
+        index=True,
+    )
     
     # Audit trail
     notes: str | None = None
@@ -478,6 +529,31 @@ class InventoryTransaction(TenantMixin, table=True):
 
 
 # ============ REQUEST/RESPONSE SCHEMAS ============
+
+class WarehouseCreate(SQLModel):
+    """Schema for creating a warehouse"""
+    name: str
+    code: str | None = None
+    is_default: bool = False
+
+
+class WarehouseUpdate(SQLModel):
+    """Schema for updating a warehouse"""
+    name: str | None = None
+    code: str | None = None
+    is_active: bool | None = None
+    is_default: bool | None = None
+
+
+class WarehouseResponse(SQLModel):
+    """Response schema for warehouse"""
+    id: int
+    name: str
+    code: str | None
+    is_default: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
 class InventoryItemCreate(SQLModel):
     """Schema for creating an inventory item"""
@@ -510,6 +586,7 @@ class StockAdjustment(SQLModel):
     unit: UnitOfMeasure
     adjustment_type: TransactionType  # adjustment_add, adjustment_subtract, or waste
     notes: str | None = None
+    warehouse_id: int | None = None  # Defaults to tenant default warehouse
 
 
 class SupplierCreate(SQLModel):
@@ -575,6 +652,7 @@ class ReceiveGoodsInput(SQLModel):
     """Schema for receiving goods against a PO"""
     items: list[ReceivedItemInput]
     notes: str | None = None
+    warehouse_id: int | None = None  # Destination warehouse; defaults to tenant default
 
 
 class ProductRecipeItemCreate(SQLModel):
@@ -624,6 +702,8 @@ class StockLevelResponse(SQLModel):
     total_value_cents: int  # current_quantity * average_cost
     is_low_stock: bool
     category: str  # Serialize as string
+    warehouse_id: int | None = None
+    warehouse_name: str | None = None
 
 
 class ProductCostResponse(SQLModel):

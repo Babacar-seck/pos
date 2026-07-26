@@ -377,6 +377,29 @@
     overflow-x: hidden;
 }
 
+.connectivity-banner {
+    margin: 0 0 var(--space-4);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.connectivity-banner--offline {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #ef4444;
+}
+
+.connectivity-banner--pending {
+    background: #fffbeb;
+    color: #92400e;
+    border-color: #f59e0b;
+}
+
 // Staff toolbar: hide main sidebar (tablet+) for a wider canvas
 @include for-tablet-portrait-up {
     .layout.layout--nav-collapsed {

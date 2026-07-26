@@ -322,6 +322,15 @@ export interface RegisterResponse {
   email: string;
 }
 
+/** One catalog tier from GET /saas/config (multi-tier ready; #328) */
+export interface SaasPlanTier {
+  id: string;
+  trial_days: number;
+  price_cents: number;
+  currency: string;
+  interval: string;
+}
+
 /** Platform SaaS subscription / hard paywall (issue #296) */
 export interface SaasSubscription {
   enabled: boolean;
@@ -329,6 +338,8 @@ export interface SaasSubscription {
   price_cents: number;
   currency: string;
   stripe_checkout_available: boolean;
+  /** Forward-compatible plan catalog; omit or empty → use top-level price fields */
+  plans?: SaasPlanTier[];
   status?: string;
   has_access?: boolean;
   trial_ends_at?: string | null;
@@ -411,8 +422,10 @@ export interface PlatformLoginSummary {
 export interface PlatformMetrics {
   tenant_count: number;
   signups_last_30_days: number;
+  logins_total: number;
   logins_last_24_hours: number;
   logins_last_7_days: number;
+  last_login_at?: string | null;
   recent_tenants: PlatformTenantSummary[];
   recent_logins: PlatformLoginSummary[];
 }
@@ -574,6 +587,10 @@ export interface PublicTenantMenuProduct {
   name: string;
   price_cents: number;
   price_formatted: string;
+  list_price_cents?: number | null;
+  list_price_formatted?: string | null;
+  promo_label?: string | null;
+  promo_percent_off?: number | null;
   description: string | null;
   category: string | null;
   subcategory: string | null;
@@ -635,6 +652,10 @@ export interface TenantSummary {
   timezone?: string | null;
   /** Optional max guests per time slot (tenant cap); for book UI limits */
   reservation_max_guests_per_slot?: number | null;
+  /** Guest birthday capture on public book (month/day only). */
+  guest_birthday_capture_enabled?: boolean;
+  guest_birthday_marketing_enabled?: boolean;
+  guest_birthday_consent_text?: string | null;
 }
 
 /** Planned opening-hours baselines and date overrides (issue #194). */
@@ -764,6 +785,129 @@ export interface GuestFeedback {
   client_user_agent?: string | null;
 }
 
+/** Staff analytics from GET /tenant/guest-feedback/summary. */
+export interface GuestFeedbackSummary {
+  days: number;
+  total_count: number;
+  average_rating: number | null;
+  rating_counts: Record<string, number>;
+  with_comment_count: number;
+  with_contact_count: number;
+  by_day: Array<{ date: string; count: number; average_rating: number | null }>;
+}
+
+/** Club loyalty (#327) */
+export interface LoyaltyWalletStatus {
+  apple_wallet_configured?: boolean;
+  google_wallet_configured?: boolean;
+  apple_wallet_available?: boolean;
+  google_wallet_available?: boolean;
+  detail?: string;
+  membership_id?: number;
+}
+
+/** Price promotions (#322) */
+export interface PricePromotion {
+  id: number;
+  tenant_id: number;
+  name: string;
+  promo_type: string;
+  percent_off: number;
+  category: string;
+  channels?: string[] | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  days_of_week?: number[] | null;
+  start_time_local?: string | null;
+  end_time_local?: string | null;
+  stackable: boolean;
+  enabled: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface LoyaltyProgram {
+  id: number;
+  tenant_id: number;
+  enabled: boolean;
+  program_name: string;
+  mode: 'points' | 'stamps' | string;
+  earn_units_per_order: number;
+  redemption_threshold: number;
+  reward_discount_cents: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+  wallet?: LoyaltyWalletStatus;
+  join_path?: string;
+}
+
+export interface LoyaltyProgramPublic {
+  tenant_id: number;
+  tenant_name: string;
+  program_name: string;
+  mode: string;
+  earn_units_per_order: number;
+  redemption_threshold: number;
+  reward_discount_cents: number;
+  wallet?: LoyaltyWalletStatus;
+}
+
+export interface PrintBridgeStatus {
+  agent_online: boolean;
+  online_count: number;
+  agent_count: number;
+  last_seen_at: string | null;
+  online_window_seconds: number;
+}
+
+export interface PrintJob {
+  id: number;
+  tenant_id: number;
+  job_type: 'kitchen' | 'receipt' | string;
+  printer_role: string;
+  status: string;
+  order_id: number | null;
+  payload: Record<string, unknown>;
+  created_by_user_id?: number | null;
+  claimed_by_agent_id?: number | null;
+  claimed_at?: string | null;
+  completed_at?: string | null;
+  error_message?: string | null;
+  created_at?: string | null;
+}
+
+export interface PrintJobCreateResponse {
+  job: PrintJob;
+  bridge: PrintBridgeStatus;
+}
+
+export interface PrintAgent {
+  id: number;
+  tenant_id: number;
+  device_id: string;
+  display_name: string;
+  last_seen_at: string | null;
+  revoked_at: string | null;
+  created_at?: string | null;
+  online: boolean;
+  /** Present only on create response */
+  token?: string;
+}
+
+export interface LoyaltyMembership {
+  id: number;
+  tenant_id: number;
+  program_id: number;
+  billing_customer_id?: number | null;
+  display_name: string;
+  email?: string | null;
+  phone?: string | null;
+  balance: number;
+  member_token?: string;
+  joined_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface Product {
   id?: number;
   name: string;
@@ -799,6 +943,10 @@ export interface Product {
   questions?: ProductQuestion[];
   /** Prep station for KDS (/kitchen vs /bar); null = use tenant default by category */
   kitchen_station_id?: number | null;
+  /** Live promo pricing (#322) from public/QR menu */
+  list_price_cents?: number | null;
+  promo_label?: string | null;
+  promo_percent_off?: number | null;
 }
 
 /** Kitchen / bar prep station (owner-defined; filters KDS by station). */
@@ -1109,6 +1257,10 @@ export interface Reservation {
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
   preferred_floor_name?: string | null;
+  /** Month 1–12 (no year); optional guest birthday */
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean;
   /** Present only for staff responses */
   client_ip?: string | null;
   client_user_agent?: string | null;
@@ -1135,6 +1287,9 @@ export interface ReservationCreate {
   allergies_has?: boolean | null;
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean | null;
 }
 
 export interface ReservationUpdate {
@@ -1153,6 +1308,9 @@ export interface ReservationUpdate {
   allergies_has?: boolean | null;
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean | null;
 }
 
 /** Public update by token: delay notice, reservation notes, customer notes. */
@@ -1236,6 +1394,26 @@ export interface FiscalInvoicePublic {
   verification_text: string;
 }
 
+/** German TSE transaction metadata (KassenSichV preparation — not a certification claim). */
+export interface TseTransactionPublic {
+  id: number;
+  order_id: number;
+  process_type: string;
+  mode: string;
+  tse_serial: string;
+  signature_counter: number;
+  signature_value: string;
+  qr_content: string;
+  process_data?: string;
+  transaction_number: number;
+  certificate_serial?: string;
+  time_start: string | null;
+  time_end: string | null;
+  amount_cents: number;
+  submission_status?: string;
+  disclaimer?: string;
+}
+
 /** Billing customer for Factura (tax invoice) */
 export interface BillingCustomer {
   id: number;
@@ -1258,6 +1436,7 @@ export interface RestaurantGroupMember {
   tenant_name: string;
   joined_at: string;
   is_current: boolean;
+  is_hub?: boolean;
 }
 
 export interface RestaurantGroup {
@@ -1266,8 +1445,41 @@ export interface RestaurantGroup {
   join_code: string;
   share_products: boolean;
   share_customers: boolean;
+  hub_tenant_id?: number | null;
+  is_hub?: boolean;
   created_at: string;
   members: RestaurantGroupMember[];
+}
+
+export interface HubFulfillment {
+  id: number;
+  group_id: number;
+  order_id: number;
+  branch_tenant_id: number;
+  hub_tenant_id: number;
+  status: 'requested' | 'preparing' | 'prepared_at_hq' | 'cancelled' | string;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  prepared_at?: string | null;
+  created_by_user_id?: number | null;
+  prepared_by_user_id?: number | null;
+  order_status?: string;
+  order_customer_name?: string | null;
+}
+
+/** One split-bill payment leg (#318). */
+export interface OrderPaymentLeg {
+  id: number;
+  order_id: number;
+  amount_cents: number;
+  payment_method: string;
+  payer_label?: string | null;
+  tip_amount_cents?: number | null;
+  paid_by_user_id?: number | null;
+  paid_at?: string | null;
+  voided_at?: string | null;
+  note?: string | null;
 }
 
 export interface Order {
@@ -1286,12 +1498,20 @@ export interface Order {
   total_cents: number;
   /** Sum of active line items (excludes tip); same as total_cents when no tip */
   subtotal_cents?: number;
+  loyalty_membership_id?: number | null;
+  loyalty_discount_cents?: number;
+  loyalty_units_redeemed?: number;
   tip_percent_applied?: number | null;
   tip_amount_cents?: number | null;
   tip_attributed_user_id?: number | null;
   removed_items_count?: number;
   paid_at?: string | null;
   payment_method?: string | null;
+  /** Split-bill reconciliation (#318) */
+  amount_due_cents?: number;
+  amount_paid_cents?: number;
+  amount_remaining_cents?: number;
+  payments?: OrderPaymentLeg[];
   /** Waiter marked urgent — guest waiting (kitchen/bar). */
   staff_urgent?: boolean;
   /** When set, joined tables label e.g. "T1 + T2" for staff context */
@@ -1303,6 +1523,8 @@ export interface Order {
   courier_user_id?: number | null;
   delivery_integration_id?: number | null;
   external_order_ref?: string | null;
+  hub_fulfillment?: HubFulfillment | null;
+  can_request_hub_fulfillment?: boolean;
 }
 
 /** Staff create first-party Satisfecho Delivery order (no table). */
@@ -1511,6 +1733,12 @@ export interface TenantSettings {
   reservation_dress_code?: string | null;
   reservation_reminder_24h_enabled?: boolean | null;
   reservation_reminder_2h_enabled?: boolean | null;
+  /** Guest birthday on reservations: show field on public book (default true). */
+  guest_birthday_capture_enabled?: boolean | null;
+  /** Allow marketing use of birthday data (default false = capture-only). */
+  guest_birthday_marketing_enabled?: boolean | null;
+  /** GDPR consent copy shown when marketing is enabled. */
+  guest_birthday_consent_text?: string | null;
   public_google_maps_url?: string | null;
   public_openstreetmap_url?: string | null;
   public_terms_of_service_url?: string | null;
@@ -1527,6 +1755,13 @@ export interface TenantSettings {
   fiscal_mode?: 'off' | 'test' | 'live' | string | null;
   fiscal_invoice_series?: string | null;
   fiscal_aeat_api_secret?: string | null;
+  /** Fiscal regime hint (e.g. DE, ES); independent of VeriFactu/TSE mode switches */
+  fiscal_country?: string | null;
+  /** Germany TSE / KassenSichV: off | test | live */
+  tse_mode?: 'off' | 'test' | 'live' | string | null;
+  tse_client_id?: string | null;
+  tse_api_secret?: string | null;
+  tse_serial_number?: string | null;
 }
 
 export interface OrderItemCreate {
@@ -2543,6 +2778,99 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/mark-paid`, body);
   }
 
+  getOrderPayments(orderId: number): Observable<{
+    order_id: number;
+    amount_due_cents: number;
+    amount_paid_cents: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+    paid_at?: string | null;
+  }> {
+    return this.http.get<{
+      order_id: number;
+      amount_due_cents: number;
+      amount_paid_cents: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+      paid_at?: string | null;
+    }>(`${this.apiUrl}/orders/${orderId}/payments`);
+  }
+
+  recordOrderPayment(
+    orderId: number,
+    body: {
+      amount_cents: number;
+      payment_method: string;
+      payer_label?: string | null;
+      tip_amount_cents?: number | null;
+      note?: string | null;
+    }
+  ): Observable<{
+    status: string;
+    order_id: number;
+    payment: OrderPaymentLeg;
+    amount_due_cents: number;
+    amount_paid_cents: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+    paid_at?: string | null;
+    payment_method?: string | null;
+  }> {
+    return this.http.post<{
+      status: string;
+      order_id: number;
+      payment: OrderPaymentLeg;
+      amount_due_cents: number;
+      amount_paid_cents: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+      paid_at?: string | null;
+      payment_method?: string | null;
+    }>(`${this.apiUrl}/orders/${orderId}/payments`, body);
+  }
+
+  voidOrderPayment(orderId: number, paymentId: number): Observable<{
+    status: string;
+    order_id: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+  }> {
+    return this.http.delete<{
+      status: string;
+      order_id: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+    }>(`${this.apiUrl}/orders/${orderId}/payments/${paymentId}`);
+  }
+
+  /** Sync a cash sale queued while offline (idempotent). See docs/0063-offline-capable-client.md. */
+  syncOfflineCashOrder(body: {
+    idempotency_key: string;
+    table_id: number;
+    items: { product_id: number; quantity: number; notes?: string }[];
+    customer_name?: string;
+    notes?: string;
+    client_created_at?: string;
+  }): Observable<{
+    status: string;
+    order_id: number;
+    payment_method: string;
+    paid_at: string | null;
+    table_id: number | null;
+    table_name: string | null;
+    idempotency_key: string;
+  }> {
+    return this.http.post<{
+      status: string;
+      order_id: number;
+      payment_method: string;
+      paid_at: string | null;
+      table_id: number | null;
+      table_name: string | null;
+      idempotency_key: string;
+    }>(`${this.apiUrl}/orders/offline-cash`, body);
+  }
+
   /** Deliver all active items and mark order paid in one request (staff fast checkout). */
   finishOrder(
     orderId: number,
@@ -2597,6 +2925,20 @@ export class ApiService {
 
   getOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
     return this.http.get<FiscalInvoicePublic>(`${this.apiUrl}/orders/${orderId}/fiscal-invoice`);
+  }
+
+  getOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
+    return this.http.get<TseTransactionPublic>(`${this.apiUrl}/orders/${orderId}/tse-transaction`);
+  }
+
+  signOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
+    return this.http.post<TseTransactionPublic>(`${this.apiUrl}/orders/${orderId}/tse-transaction/sign`, {});
+  }
+
+  exportTseDsfinvk(from: string, to: string): Observable<Record<string, unknown>> {
+    return this.http.get<Record<string, unknown>>(`${this.apiUrl}/tenant/tse/dsfinvk-export`, {
+      params: { from, to },
+    });
   }
 
   setOrderStaffUrgent(orderId: number, urgent: boolean): Observable<{ order_id: number; staff_urgent: boolean }> {
@@ -2663,6 +3005,33 @@ export class ApiService {
 
   leaveRestaurantGroup(): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.apiUrl}/restaurant-group/leave`, {});
+  }
+
+  setRestaurantGroupHub(hubTenantId: number | null): Observable<RestaurantGroup> {
+    return this.http.put<RestaurantGroup>(`${this.apiUrl}/restaurant-group/hub`, {
+      hub_tenant_id: hubTenantId,
+    });
+  }
+
+  listHubFulfillments(): Observable<HubFulfillment[]> {
+    return this.http.get<HubFulfillment[]>(`${this.apiUrl}/hub-fulfillments`);
+  }
+
+  createOrderHubFulfillment(orderId: number, notes?: string | null): Observable<HubFulfillment> {
+    return this.http.post<HubFulfillment>(`${this.apiUrl}/orders/${orderId}/hub-fulfillment`, {
+      notes: notes ?? null,
+    });
+  }
+
+  updateHubFulfillment(
+    fulfillmentId: number,
+    status: string,
+    notes?: string | null
+  ): Observable<HubFulfillment> {
+    return this.http.patch<HubFulfillment>(`${this.apiUrl}/hub-fulfillments/${fulfillmentId}`, {
+      status,
+      notes: notes ?? null,
+    });
   }
 
   resetItemStatus(orderId: number, itemId: number): Observable<any> {
@@ -3217,6 +3586,152 @@ export class ApiService {
     );
   }
 
+  getPublicLoyaltyProgram(tenantId: number): Observable<LoyaltyProgramPublic> {
+    return this.http.get<LoyaltyProgramPublic>(
+      `${this.apiUrl}/public/tenants/${tenantId}/loyalty`,
+    );
+  }
+
+  joinPublicLoyalty(
+    tenantId: number,
+    body: { display_name: string; email?: string; phone?: string },
+  ): Observable<{
+    ok: boolean;
+    membership: LoyaltyMembership;
+    wallet?: LoyaltyWalletStatus;
+  }> {
+    return this.http.post<{
+      ok: boolean;
+      membership: LoyaltyMembership;
+      wallet?: LoyaltyWalletStatus;
+    }>(`${this.apiUrl}/public/tenants/${tenantId}/loyalty/join`, body);
+  }
+
+  getPublicLoyaltyBalance(memberToken: string): Observable<{
+    membership: LoyaltyMembership;
+    program: LoyaltyProgram | null;
+    wallet?: LoyaltyWalletStatus;
+  }> {
+    return this.http.get<{
+      membership: LoyaltyMembership;
+      program: LoyaltyProgram | null;
+      wallet?: LoyaltyWalletStatus;
+    }>(`${this.apiUrl}/public/loyalty/members/${encodeURIComponent(memberToken)}`);
+  }
+
+  getLoyaltyProgram(): Observable<LoyaltyProgram> {
+    return this.http.get<LoyaltyProgram>(`${this.apiUrl}/loyalty/program`);
+  }
+
+  updateLoyaltyProgram(body: Partial<LoyaltyProgram>): Observable<LoyaltyProgram> {
+    return this.http.put<LoyaltyProgram>(`${this.apiUrl}/loyalty/program`, body);
+  }
+
+  listPromos(includeDisabled = true): Observable<PricePromotion[]> {
+    let params = new HttpParams().set('include_disabled', String(includeDisabled));
+    return this.http.get<PricePromotion[]>(`${this.apiUrl}/promos`, { params });
+  }
+
+  createPromo(body: Partial<PricePromotion> & {
+    name: string;
+    percent_off: number;
+    category: string;
+  }): Observable<PricePromotion> {
+    return this.http.post<PricePromotion>(`${this.apiUrl}/promos`, body);
+  }
+
+  updatePromo(promoId: number, body: Partial<PricePromotion>): Observable<PricePromotion> {
+    return this.http.put<PricePromotion>(`${this.apiUrl}/promos/${promoId}`, body);
+  }
+
+  deletePromo(promoId: number): Observable<{ ok: boolean; id: number; enabled: boolean }> {
+    return this.http.delete<{ ok: boolean; id: number; enabled: boolean }>(
+      `${this.apiUrl}/promos/${promoId}`,
+    );
+  }
+
+  listLoyaltyMemberships(search?: string): Observable<LoyaltyMembership[]> {
+    let params = new HttpParams();
+    if (search?.trim()) {
+      params = params.set('search', search.trim());
+    }
+    return this.http.get<LoyaltyMembership[]>(`${this.apiUrl}/loyalty/memberships`, {
+      params,
+    });
+  }
+
+  redeemLoyaltyOnOrder(
+    orderId: number,
+    body: { membership_id?: number; member_token?: string },
+  ): Observable<{
+    order_id: number;
+    membership_id: number;
+    units_redeemed: number;
+    discount_cents: number;
+    balance: number;
+  }> {
+    return this.http.post<{
+      order_id: number;
+      membership_id: number;
+      units_redeemed: number;
+      discount_cents: number;
+      balance: number;
+    }>(`${this.apiUrl}/orders/${orderId}/loyalty/redeem`, body);
+  }
+
+  setOrderLoyaltyMembership(
+    orderId: number,
+    loyalty_membership_id: number | null,
+  ): Observable<{
+    order_id: number;
+    loyalty_membership_id: number | null;
+    loyalty_discount_cents: number;
+    loyalty_units_redeemed: number;
+  }> {
+    return this.http.put<{
+      order_id: number;
+      loyalty_membership_id: number | null;
+      loyalty_discount_cents: number;
+      loyalty_units_redeemed: number;
+    }>(`${this.apiUrl}/orders/${orderId}/loyalty-membership`, { loyalty_membership_id });
+  }
+
+  getPrintBridgeStatus(): Observable<PrintBridgeStatus> {
+    return this.http.get<PrintBridgeStatus>(`${this.apiUrl}/print-jobs/status`);
+  }
+
+  createPrintJob(body: {
+    job_type: 'kitchen' | 'receipt';
+    order_id?: number | null;
+    printer_role?: string | null;
+    payload?: Record<string, unknown> | null;
+  }): Observable<PrintJobCreateResponse> {
+    return this.http.post<PrintJobCreateResponse>(`${this.apiUrl}/print-jobs`, body);
+  }
+
+  listPrintJobs(limit = 50, status?: string): Observable<PrintJob[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (status?.trim()) {
+      params = params.set('status', status.trim());
+    }
+    return this.http.get<PrintJob[]>(`${this.apiUrl}/print-jobs`, { params });
+  }
+
+  listPrintAgents(): Observable<PrintAgent[]> {
+    return this.http.get<PrintAgent[]>(`${this.apiUrl}/tenant/print-agents`);
+  }
+
+  createPrintAgent(body: {
+    device_id: string;
+    display_name?: string;
+  }): Observable<PrintAgent> {
+    return this.http.post<PrintAgent>(`${this.apiUrl}/tenant/print-agents`, body);
+  }
+
+  revokePrintAgent(agentId: number): Observable<PrintAgent> {
+    return this.http.delete<PrintAgent>(`${this.apiUrl}/tenant/print-agents/${agentId}`);
+  }
+
   submitPublicWaitingList(
     tenantId: number,
     body: WaitingListEntryCreate,
@@ -3230,6 +3745,23 @@ export class ApiService {
   listGuestFeedback(limit = 200): Observable<GuestFeedback[]> {
     return this.http.get<GuestFeedback[]>(`${this.apiUrl}/tenant/guest-feedback`, {
       params: { limit: String(limit) },
+    });
+  }
+
+  getGuestFeedbackSummary(days = 90): Observable<GuestFeedbackSummary> {
+    return this.http.get<GuestFeedbackSummary>(`${this.apiUrl}/tenant/guest-feedback/summary`, {
+      params: { days: String(days) },
+    });
+  }
+
+  exportGuestFeedbackCsv(days?: number | null): Observable<Blob> {
+    const params: Record<string, string> = {};
+    if (days != null && days > 0) {
+      params['days'] = String(days);
+    }
+    return this.http.get(`${this.apiUrl}/tenant/guest-feedback/export`, {
+      params,
+      responseType: 'blob',
     });
   }
 

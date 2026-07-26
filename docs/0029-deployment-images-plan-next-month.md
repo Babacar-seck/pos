@@ -2,7 +2,7 @@
 
 **Status:** Deferred / not scheduled  
 **Current deploy path:** Build-on-server compose deploy remains as documented in [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) and [0004-deployment.md](0004-deployment.md) (this plan is not an imminent “next month” track).  
-**Related:** [0004-deployment.md](0004-deployment.md), [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md), [0024-deploy-css-fix-amvara9.md](0024-deploy-css-fix-amvara9.md)
+**Related:** [0004-deployment.md](0004-deployment.md), [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md), [0057-deploy-css-fix-amvara9.md](0057-deploy-css-fix-amvara9.md)
 
 ---
 

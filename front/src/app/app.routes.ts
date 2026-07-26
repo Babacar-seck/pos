@@ -13,6 +13,7 @@ export const routes: Routes = [
   // Public routes
   { path: '', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent) },
   { path: 'features', loadComponent: () => import('./features/features.component').then(m => m.FeaturesComponent) },
+  { path: 'pricing', loadComponent: () => import('./pricing/pricing-page.component').then(m => m.PricingPageComponent) },
   { path: 'login', loadComponent: () => import('./auth/login.component').then(m => m.LoginComponent) },
   { path: 'register', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },
   { path: 'signup', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },
@@ -72,6 +73,8 @@ export const routes: Routes = [
   { path: 'book/:tenantId', loadComponent: () => import('./book/book.component').then(m => m.BookComponent) },
   { path: 'waitlist/:tenantId', loadComponent: () => import('./waitlist-public/waitlist-public.component').then(m => m.WaitlistPublicComponent) },
   { path: 'feedback/:tenantId', loadComponent: () => import('./feedback-public/feedback-public.component').then(m => m.FeedbackPublicComponent) },
+  { path: 'loyalty/card/:memberToken', loadComponent: () => import('./loyalty-public/loyalty-card-public.component').then(m => m.LoyaltyCardPublicComponent) },
+  { path: 'loyalty/:tenantId', loadComponent: () => import('./loyalty-public/loyalty-public.component').then(m => m.LoyaltyPublicComponent) },
   // Public take-away / home ordering: list tenants with ordering link
   { path: 'orders', loadComponent: () => import('./orders-public/orders-public.component').then(m => m.OrdersPublicComponent) },
   // Staff reservations (must be before 'reservation' so /reservations matches here, not the public route)
