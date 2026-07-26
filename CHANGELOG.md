@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.98] - 2026-07-26
+
+### Changed
+
+- **Customers / Factura docs (0017):** Documented that **Customers (Invoice)** (`/customers`) lives under **Operations** in the staff sidebar, not under Catalog & inventory, so operators find the page after the #290 nav regroup.
+
 ## [2.1.97] - 2026-07-26
 
 ### Changed
