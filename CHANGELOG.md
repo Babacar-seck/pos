@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.91] - 2026-07-26
+
+### Changed
+
+- **Postgres ad-hoc SQL docs (0033):** Documented restaurant group tables as `restaurant_group` and `restaurant_group_member` (with wrong-name hints and a join example by tenant), so operators inspecting multi-location groups avoid relation errors.
+
 ## [2.1.90] - 2026-07-26
 
 ### Changed
