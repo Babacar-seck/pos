@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.99] - 2026-07-26
+
+### Changed
+
+- **Agent committer:** Stamp/scan-only dirty trees (`agents2` 001/005/008 `time-of-last-review` / `last-scan.json`) are no longer auto-committed; stamps stay local until a commit that also includes real code, docs, or task work (#313).
+- **Docs index:** Listed `0051-table-groups-mvp.md` under Feature guides in `docs/README.md` (floor-plan join/unjoin MVP; distinct from 0054 restaurant multi-location groups).
+
 ## [2.1.98] - 2026-07-26
 
 ### Changed

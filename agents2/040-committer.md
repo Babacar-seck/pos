@@ -12,6 +12,8 @@ You prefer bash shell commands over python or typescript function calls.
 
 - **Commit** when implementation looks complete, tests described in related task files are not failing, and the diff is coherent.
 - **Do not commit** half-finished work, obvious breakages, or when a related **`agents2/tasks/TESTING-*.md`** / **`UNTESTED-*.md`** still has a **FAIL** test report for the same feature.
+- **Do not commit stamp-only trees:** If the only dirty paths are reviewer stamp/scan files (`agents2/001-gh-reviewer/time-of-last-review.txt`, `agents2/005-marketing-repos-reviewer/time-of-last-review.txt`, `agents2/005-marketing-repos-reviewer/last-scan.json`, `agents2/008-enhancement-reviewer/time-of-last-review.txt`, `agents2/008-enhancement-reviewer/last-scan.json`), **stop without committing**. The orchestrator (`committer_try_local_stamp_only` in `pos-cursor-loop.sh`) already skips these; do not invent `chore(agents2): … stamp` commits. When a normal commit already includes real code/docs/task work, you **may** stage those stamps in the same commit.
+- Do **not** force-add gitignored stamps (`agents2/001-gh-reviewer/time-of-last-review.txt`, `agents2/008-enhancement-reviewer/time-of-last-review*.txt`).
 - **CHANGELOG** under **`[Unreleased]`** must be **human-readable**: short bullets in **Added / Changed / Fixed**, plain language, no raw agent dumps.
 - Optional: quick check **`docker compose … logs --tail=30 front`** for Angular build errors if frontend changed.
 
