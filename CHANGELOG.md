@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.107] - 2026-07-26
+
+### Changed
+
+- **Reports guide (0016):** Documented the Overbooking slots summary card (`overbooking_slots_count`, shown when count &gt; 0) and cross-linked to 0025 overbooking detection; updated the docs README 0016 blurb.
+
 ## [2.1.106] - 2026-07-26
 
 ### Changed

@@ -56,7 +56,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`. |
 | [0014-provider-portal.md](0014-provider-portal.md) | Provider (supplier) portal at `/provider` — not the courier portal (`/courier`; see [0053](0053-satisfecho-delivery-order-channel.md)). |
 | [0015-kitchen-display.md](0015-kitchen-display.md) | Kitchen display: full-screen at `/kitchen` (and `/bar`), auto-refresh, WebSocket, optional sound; Satisfecho Delivery cards use table label “Satisfecho Delivery” (not shown once `out_for_delivery`); highlighted order/item comments (#284). |
-| [0016-reports.md](0016-reports.md) | Reports (Sales & Revenue): date range, summary, by product/category/table/waiter, CSV/Excel export. |
+| [0016-reports.md](0016-reports.md) | Reports (Sales & Revenue): date range, summary (incl. overbooking slots when &gt; 0), by product/category/table/waiter, CSV/Excel export. |
 | [0017-billing-customers-factura.md](0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to”. |
 | [0028-tenant-public-branding.md](0028-tenant-public-branding.md) | Tenant public branding: background colour and header image for book, menu, reservation-view. |
 | [0059-platform-operator-portal.md](0059-platform-operator-portal.md) | Platform operator portal: SaaS metrics and tenant oversight. |
