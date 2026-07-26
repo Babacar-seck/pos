@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.90] - 2026-07-26
+
+### Changed
+
+- **Testing docs:** Indexed `npm run debug:working-plan-calendar` in `docs/testing.md` (working-plan §2b and npm scripts table) as a debug inspector for red/staffing days — not a pass/fail smoke; points to `test:working-plan` / `test:working-plan-calendar` for CI checks.
+
 ## [2.1.89] - 2026-07-26
 
 ### Changed
