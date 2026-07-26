@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.59] - 2026-07-26
+
+### Changed
+
+- **Security review (public delivery IDs):** `docs/SECURITY-REVIEW.md` now documents that public Satisfecho Delivery create accepts tenant-scoped `TenantProduct.id` or legacy `Product.id` (#304), with a residual note on the dual ID space and the regression test cite.
+
 ## [2.1.58] - 2026-07-26
 
 ### Added
