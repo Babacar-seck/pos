@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** README Configuration table omitted `SAAS_PAYWALL_ENABLED`, so operators could miss the SaaS hard-paywall flag.
+- **What was done:** Added one Configuration row for `SAAS_PAYWALL_ENABLED` (default `false`, `/paywall` when true) linking `docs/0052-saas-signup-paywall.md`; no product-code or default changes.
+- **What was tested:** Docs-only `rg` checks on README — Configuration hit at L175 with default/`/paywall`/0052 link; commit `d422372e` README-only — **PASS**.
+- **Why closed:** All pass/fail criteria met; tester overall **PASS**.
+- **Closed at (UTC):** 2026-07-26 04:21
+---
+
 # Document SAAS_PAYWALL_ENABLED in README Configuration table
 
 ## GitHub Issues
@@ -47,3 +57,18 @@ Confirm the hit is under the **Configuration** table (near `STRIPE_CURRENCY` / T
 
 - **Pass:** `rg 'SAAS_PAYWALL_ENABLED' README.md` hits under Configuration; description mentions default `false` and `/paywall`; link to 0052 present; no `back/` / `front/` edits required for this task.
 - **Fail:** Flag missing from Configuration, secrets pasted, or unrelated files changed.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26 04:20:53–04:21:00 UTC. Log window: N/A (docs-only; no container exercise).
+2. **Environment:** branch `development` (synced via `./scripts/git-sync-development.sh`); no Docker/`BASE_URL` (README verification only).
+3. **What was tested:** README Configuration row for `SAAS_PAYWALL_ENABLED` (default `false`, `/paywall` behavior, link to `docs/0052-saas-signup-paywall.md`); no unrelated product/config churn.
+4. **Results:**
+   - Configuration lists `SAAS_PAYWALL_ENABLED` after `STRIPE_CURRENCY`: **PASS** — `rg -n 'SAAS_PAYWALL_ENABLED' README.md` → L175 under `## Configuration` (L162).
+   - Default `false` and `/paywall` described: **PASS** — L175 text includes default `false` and “hit `/paywall`”.
+   - Link to 0052: **PASS** — L175 links `docs/0052-saas-signup-paywall.md`; file exists on disk.
+   - No secrets / no `back/`/`front/` edits for this task: **PASS** — commit `d422372e` touches `README.md` (+ task file only); no Stripe secret literals in the new row.
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Operators can now discover the SaaS paywall env flag from the README Configuration table without digging into `config.env.example` or 0052 first. The row matches existing table style and points at the runbook. Features/Access Points mentions of paywall remain separate and correctly out of scope.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts (last section):** N/A — docs-only verification (`rg` on `README.md`; commit `d422372e`).

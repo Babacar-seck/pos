@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.80] - 2026-07-26
+
+### Changed
+
+- **Root README Configuration:** Documented `SAAS_PAYWALL_ENABLED` (default `false`; when `true`, new restaurant signups hit `/paywall`) with a link to `docs/0052-saas-signup-paywall.md`.
+
 ## [2.1.79] - 2026-07-26
 
 ### Fixed
