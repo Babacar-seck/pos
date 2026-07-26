@@ -150,6 +150,7 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **Platform operator login** | http://localhost:4202/platform/login |
 | **Platform operator dashboard** | http://localhost:4202/platform |
 | **Kitchen display** | http://localhost:4202/kitchen |
+| **Bar display** | http://localhost:4202/bar (beverage-station view of the kitchen display) |
 | **Reports (owner/admin)** | http://localhost:4202/reports |
 | **Customers (Factura)** | http://localhost:4202/customers |
 | **Dashboard (staff)** | http://localhost:4202/dashboard |

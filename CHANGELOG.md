@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.77] - 2026-07-26
+
+### Changed
+
+- **Root README Access Points:** Added a Bar display row (`http://localhost:4202/bar`) next to Kitchen, noting it is the beverage-station view of the kitchen display.
+
 ## [2.1.76] - 2026-07-26
 
 ### Changed
