@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.89] - 2026-07-26
+
+### Changed
+
+- **Printing docs:** Marked `docs/PRINTING.md` as design notes / not implemented (no LAN print agent or `/api/print-jobs` yet); clarified that browser and invoice print remain the supported path today.
+
 ## [2.1.88] - 2026-07-26
 
 ### Changed

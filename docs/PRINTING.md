@@ -1,10 +1,13 @@
 # Printing when the backend is outside the restaurant WiFi
 
+> **Status: design notes / not implemented.**  
+> There is no restaurant-LAN print agent, `/api/print-jobs` API, or WebSocket print bridge in the current POS. These pages are **future options** only. **Supported today:** browser and invoice print from the staff UI (and kitchen/bar display for screen tickets — see `docs/0015-kitchen-display.md`). Do not treat this document as a shipped feature plan.
+
 The backend runs in the cloud (or another network) and **cannot reach printers on the restaurant’s local WiFi**. Printers are only on the restaurant LAN. So printing must be done by **something that runs on the restaurant’s WiFi** and talks to those printers.
 
 ---
 
-## Approach: print agent on the restaurant LAN
+## Approach: print agent on the restaurant LAN (design)
 
 Use a small **print agent** that runs on a device **inside** the restaurant’s WiFi (e.g. Raspberry Pi, always-on PC, or a dedicated mini server). That agent:
 
