@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Root ROADMAP.md was hard to scan and lagged the 2026-07-26 shipped product slices.
+- **What was done:** Rewrote ROADMAP into Shipped / In progress / Deferred tables with a recurring refresh cadence; synced docs/0032 #52 statuses and agent-loop / 008 notes; CHANGELOG #332 entry.
+- **What was tested:** Docs-only checks (structure, no stale Missing for today’s CLOSED features, links, cadence, changelog) — all PASS.
+- **Why closed:** All testing criteria passed; docs-only delivery complete.
+- **Closed at (UTC):** 2026-07-26 20:48
+---
+
 # Update roadmap
 
 ## GitHub Issues
@@ -35,3 +45,20 @@ Docs-only verification (no app restart required):
 3. **Links resolve:** From repo root, confirm these paths exist: `docs/0032-github-issues-roadmap.md`, `docs/0020-rate-limiting-production.md`, `docs/0071-split-bill.md`, `docs/0068-price-promotions.md`, `docs/0051-table-groups-mvp.md`, `docs/0066-club-loyalty.md`, `docs/agent-loop.md`, `CHANGELOG.md`.
 4. **Recurring cadence:** `ROADMAP.md` “How to keep this current” mentions CLOSED batches and agent **008**; `docs/agent-loop.md` Related section links `ROADMAP.md`; `agents2/008-enhancement-reviewer.md` “Docs vs code” mentions roadmap drift → queue `FEAT-0-…-update-roadmap.md`.
 5. **Changelog:** `CHANGELOG.md` `[Unreleased]` → Changed contains a Roadmap (#332) line.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26 20:47:06 – 20:47:22 UTC. Log window: same (docs-only; no app exercise).
+2. **Environment:** branch `development` (synced via `./scripts/git-sync-development.sh`). Compose up locally (`docker-compose.yml` + `docker-compose.dev.yml`, HAProxy `http://127.0.0.1:4202`) but **not used** — verification was filesystem/docs only. `BASE_URL`: N/A.
+3. **What was tested:** Testing instructions §1–5 (structure, no stale Missing for 2026-07-26 CLOSED features, required paths exist, recurring cadence notes, CHANGELOG `#332` line).
+4. **Results:**
+   - Structure (sections + no rate-limit strategy blob): **PASS** — `ROADMAP.md` has How to keep this current → Shipped → In progress / next → Deferred → Related; `rg` found no “Recommended Rate Limiting Strategy” / env checklist blob (rate limits pointed at `docs/0020`).
+   - No stale Missing for 2026-07-26 CLOSED features: **PASS** — #316–#327 / #318/#331 / floor-plan join (`docs/0051`) appear under Shipped (or Partial / MVP shipped|started in `docs/0032` #52 table). Only unrelated “Not started” rows remain (#53 kitchen SLAs; Uber Eats under #52).
+   - Links resolve: **PASS** — all required paths exist: `docs/0032-github-issues-roadmap.md`, `docs/0020-rate-limiting-production.md`, `docs/0071-split-bill.md`, `docs/0068-price-promotions.md`, `docs/0051-table-groups-mvp.md`, `docs/0066-club-loyalty.md`, `docs/agent-loop.md`, `CHANGELOG.md`.
+   - Recurring cadence: **PASS** — `ROADMAP.md` “How to keep this current” cites CLOSED batches + agent **008**; `docs/agent-loop.md` Related links `ROADMAP.md`; `agents2/008-enhancement-reviewer.md` Docs vs code queues `FEAT-0-…-update-roadmap.md` on drift.
+   - Changelog: **PASS** — `CHANGELOG.md` `[Unreleased]` → Changed has Roadmap (#332) line.
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Roadmap is now scannable and aligned with today’s CLOSED product slices. Recurring refresh via **008** / CLOSED batches should stop this file from rotting again. No product/runtime risk — docs-only change.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts (last section):** N/A for pass criteria (docs-only). Containers were healthy (`pos-front`/`pos-back` Up); no test-driven API/UI traffic for this task.
+
