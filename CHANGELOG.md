@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.58] - 2026-07-26
+
+### Added
+
+- **Public delivery-checkout Puppeteer smoke alias:** `npm run test:delivery-checkout` runs the committed public `/delivery/:tenantId` checkout smoke (menu → cart → address → create), indexed in `docs/testing.md` with a courier portal section (`test:courier-actions`).
+
 ## [2.1.57] - 2026-07-26
 
 ### Added

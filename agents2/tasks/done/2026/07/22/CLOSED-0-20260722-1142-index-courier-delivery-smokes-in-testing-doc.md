@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** July-22 NEW still described `test-delivery-checkout.mjs` as untracked/WIP-302 while the script and public checkout were already shipped (CLOSED-302 / #304); `test:delivery-checkout` was missing from `package.json`.
+- **What was done:** Superseded by **`WIP/UNTESTED-0-20260723-1801-retarget-delivery-checkout-smoke-index`**, which owns the npm alias + `docs/testing.md` index (courier + delivery checkout). No separate implementation under this file.
+- **What was tested:** N/A for this archive — verification belongs to the retarget task. Overall **PASS** for queue hygiene (single owner).
+- **Why closed:** Duplicate owner removed; work retargeted to the 2026-07-23 NEW.
+- **Closed at (UTC):** 2026-07-26 00:40
+---
+
 # Index courier and delivery smoke scripts in docs/testing.md
 
 ## GitHub Issues
@@ -25,3 +35,7 @@ Recent courier and public Satisfecho Delivery work added Puppeteer/npm smokes, b
 - Avoid duplicating work owned by **WIP-302**; if that task already adds the testing index, close this as superseded
 - Pass criteria: `docs/testing.md` lists courier (and delivery when the script is on the branch); a reader can copy-paste a working command
 - Append **Testing instructions** only if more than docs/npm alias changes are required
+
+## Status
+
+**CLOSED (superseded)** — see Closing summary. Implementation owned by **`UNTESTED-0-20260723-1801-retarget-delivery-checkout-smoke-index`**.

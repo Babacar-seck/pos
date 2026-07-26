@@ -12,7 +12,7 @@
 
 - Weekly sweep 2026-07-23: `rg` on `docs/testing.md` and `front/package.json` — no `platform-operator` / `test:platform` entries
 - Script present: `front/scripts/test-platform-operator.mjs` (defaults `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`; seed via `python -m app.seeds.ensure_platform_operator`)
-- Sibling hygiene already queued for courier/delivery: **`NEW-0-20260722-1142-index-courier-delivery-smokes-in-testing-doc.md`** — do not merge; this task is platform-only
+- Sibling hygiene for courier/delivery checkout: **`UNTESTED/CLOSED-0-20260723-1801-retarget-delivery-checkout-smoke-index`** (supersedes archived 1142) — do not merge; this task is platform-only
 - Related enhancement (separate): **`FEAT-0-20260723-0639-platform-operator-delivery-public-link.md`** may extend the smoke later; indexing the current script should not wait on that FEAT
 
 ## High-level instructions for coder

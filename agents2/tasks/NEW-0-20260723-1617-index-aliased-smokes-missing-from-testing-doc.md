@@ -13,7 +13,7 @@
 - Weekly sweep 2026-07-23: `SIGNAL docs_stale×14` all owned; demo_tables_check=ok; NEW backlog=56 — this is **index-only**, not a bulk docs rewrite
 - `rg` on `docs/testing.md`: no hits for `settings-logo`, `support-access`, `kitchen-timer`, `book-whatsapp`, or `my-shift-clock`
 - Scripts + aliases already exist under `front/scripts/` / `front/package.json`
-- Sibling NEWs own other gaps: **`NEW-0-20260722-1142-index-courier-delivery-smokes-in-testing-doc`** (courier/delivery), **`NEW-0-20260723-0639-index-platform-operator-smoke-testing-doc`** (platform) — do **not** merge; this task is the five aliased orphans only
+- Sibling tasks own other gaps: **`UNTESTED/CLOSED-0-20260723-1801-retarget-delivery-checkout-smoke-index`** (courier/delivery checkout — supersedes archived 1142), **`NEW-0-20260723-0639-index-platform-operator-smoke-testing-doc`** (platform) — do **not** merge; this task is the five aliased orphans only
 
 ## High-level instructions for coder
 

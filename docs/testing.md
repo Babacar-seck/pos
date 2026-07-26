@@ -153,7 +153,7 @@ npm run test:restaurant-groups --prefix front
 
 ### 2a3. Staff Satisfecho Delivery (create + edit)
 
-Smoke for staff **`/staff/orders`**: open **New delivery order**, create a Satisfecho Delivery order (address, phone, one product; optional courier), assert Delivery tab channel badge / address, then **Edit delivery** and save a phone change. Does not cover public checkout (`test-delivery-checkout.mjs`) or courier portal (`test:courier-actions`).
+Smoke for staff **`/staff/orders`**: open **New delivery order**, create a Satisfecho Delivery order (address, phone, one product; optional courier), assert Delivery tab channel badge / address, then **Edit delivery** and save a phone change. Does not cover public checkout (`test:delivery-checkout`) or courier portal (`test:courier-actions`).
 
 ```bash
 npm run test:staff-delivery --prefix front
@@ -165,7 +165,21 @@ npm run test:staff-delivery --prefix front
 
 ---
 
-### 2a3a. Public Satisfecho Delivery track (invalid token)
+### 2a3a. Public Satisfecho Delivery checkout
+
+Smoke for public **`/delivery/:tenantId`** checkout (`docs/0053-satisfecho-delivery-order-channel.md`, shipped CLOSED-302 / #304): menu → cart → address → create order. Script is committed on `development` (`front/scripts/test-delivery-checkout.mjs`). Does not cover staff create/edit (`test:staff-delivery`), track page (`test:delivery-track`), or courier portal (`test:courier-actions`).
+
+```bash
+npm run test:delivery-checkout --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-delivery-checkout.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `HEADLESS`. No login.
+- Leaves one public delivery order per successful run (demo hygiene OK).
+
+---
+
+### 2a3b. Public Satisfecho Delivery track (invalid token)
 
 Smoke for the token-gated customer track page at `/delivery/:tenantId/track` (`docs/0053-satisfecho-delivery-order-channel.md`). Opens the route with a missing/invalid `public_order_token` and asserts an error / not-found state (no raw `DELIVERY_TRACK.*` i18n keys). Does not create a paid order or cover the happy-path track flow.
 
@@ -175,6 +189,20 @@ npm run test:delivery-track --prefix front
 ```
 
 - **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `HEADLESS`. No login.
+
+---
+
+### 2a3c. Courier portal actions
+
+Smoke for the courier dashboard (`/courier`, login at `/courier/login`): open Mine (or Available), open an order, run one available status action, assert status updates. See `docs/0053-satisfecho-delivery-order-channel.md`. Does not cover public checkout or staff delivery create.
+
+```bash
+npm run test:courier-actions --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-courier-actions.mjs
+```
+
+- **Env:** `BASE_URL`, `COURIER_EMAIL` / `COURIER_PASSWORD` (defaults `courier-test-phase1@amvara.de` / `secret`; also in `config.env.example`), `HEADLESS`.
+- Demo seed: `docker compose exec back python -m app.seeds.seed_demo_courier_user` (bootstrap / `reset_demo_data` also run this).
 
 ---
 
@@ -583,6 +611,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
 | `test:order-comments` | `scripts/test-order-comments.mjs` (public Take Away menu: item + order comments → kitchen `.item-notes` / `.order-notes`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions; `COURIER_EMAIL` / `COURIER_PASSWORD`, defaults `courier-test-phase1@amvara.de` / `secret` — also in `config.env.example`) |
+| `test:delivery-checkout` | `scripts/test-delivery-checkout.mjs` (public `/delivery/:tenantId` menu → cart → address → create; no login; see `docs/0053`) |
 | `test:delivery-track` | `scripts/test-delivery-track.mjs` (public `/delivery/:tenantId/track` invalid-token / error-state; see `docs/0053`) |
 | `test:staff-delivery` | `scripts/test-staff-delivery.mjs` (staff `/staff/orders`: create Satisfecho Delivery + edit address/phone; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:api-docs` | `scripts/test-api-docs.mjs` (Swagger `/api/docs` + OpenAPI; no login) |
