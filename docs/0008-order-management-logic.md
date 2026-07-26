@@ -1,13 +1,17 @@
 # Order Management Logic Specification
 
-**Order / item comments (#284):** Optional free-text notes on `Order.notes` and `OrderItem.notes` (public menu **Add comment** + order-level note, staff edit on `/orders`, highlighted on `/kitchen` and `/bar`) are documented in [0015-kitchen-display.md](0015-kitchen-display.md#order-and-item-comments-284). This file remains the session/lifecycle design reference; do not treat comments as a separate schema project.
+> **Status: shipped core / design reference.** Session-scoped orders (`Order.session_id`, per-browser isolation, item `added_by_session`) and the main lifecycle rules are live. Do **not** re-open the original “shared unpaid order on one table token” problem as backlog. Treat remaining edge-case and proposed-enhancement sections as reference, not a todo list — prefer current code and tests for behaviour.
+>
+> **Order / item comments (#284):** Optional free-text notes on `Order.notes` and `OrderItem.notes` (public menu **Add comment** + order-level note, staff edit on `/orders`, highlighted on `/kitchen` and `/bar`) are documented in [0015-kitchen-display.md](0015-kitchen-display.md#order-and-item-comments-284). This file remains the session/lifecycle design reference; do not treat comments as a separate schema project.
 
 ## Problem Statement
 
-Currently, when multiple browsers/devices use the same table link (table token), they all share the same unpaid order. This causes:
+*(Historical framing.)* Originally, when multiple browsers/devices used the same table link (table token), they all shared the same unpaid order. This caused:
 - Orders from different customers/sessions to be mixed together
 - Confusion about which items belong to which customer
 - Payment issues when one customer pays for another's items
+
+*(Core fix shipped: each browser session has its own independent order via `session_id`.)*
 
 ## Desired Behavior
 

@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Enhancement reviewer flagged `docs/0057-deploy-css-fix-amvara9.md` as still reading like an open deploy CSS incident while the fixes were already in the repo.
+- **What was done:** Added a Status (shipped) banner and historical reframing to 0057; marked the docs README deployment index entry as shipped; left deploy scripts/nginx unchanged.
+- **What was tested:** Docs and spot-check greps for deploy `--no-cache` front build and nginx SPA no-cache headers — overall PASS (2026-07-26).
+- **Why closed:** All pass criteria met; docs correctly describe a closed historical incident.
+- **Closed at (UTC):** 2026-07-26 11:57
+---
+
 # Mark 0024 deploy CSS fix as shipped
 
 ## GitHub Issues
@@ -60,3 +70,19 @@ grep -nE 'for your confirmation|After applying \(1\) and \(2\)|What to change' d
 
 - **Pass:** First screenful of 0057 says shipped; README index says shipped; grep confirms deploy script + nginx still implement the fix; no “please confirm these changes” framing.
 - **Fail:** Doc still reads as an open incident, README still implies an unfixed deploy CSS issue, or banner claims disagree with `deploy-amvara9.sh` / `front/nginx.conf`.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26 11:56:25–11:56:29 UTC. Log window: N/A (docs-only verification; no app deploy or browser).
+2. **Environment:** Local repo on branch `development` @ `3d040628`. Compose files `docker-compose.yml` + `docker-compose.dev.yml` (stack up; not exercised for this task). No `BASE_URL`.
+3. **What was tested:** Status (shipped) banner on `docs/0057-deploy-css-fix-amvara9.md`; removal of open-confirmation framing; `docs/README.md` deployment index for 0057; spot-check that `scripts/deploy-amvara9.sh` and `front/nginx.conf` still implement the claimed fixes.
+4. **Results:**
+   - Criterion 1 (Status shipped banner naming deploy script + nginx): **PASS** — `head` shows `**Status (shipped):**` citing `scripts/deploy-amvara9.sh` (`--no-cache`) and `front/nginx.conf` (`Cache-Control: no-cache, no-store, must-revalidate` on SPA document).
+   - Criterion 2 (no open “for your confirmation” / “After applying…” framing): **PASS** — `grep -nE 'for your confirmation|After applying \(1\) and \(2\)|What to change'` returned no matches.
+   - Criterion 3 (`docs/README.md` describes 0057 as shipped): **PASS** — line 36: `**Shipped:** stale front build on deploy — …`.
+   - Criterion 4 (repo matches banner claims): **PASS** — `scripts/deploy-amvara9.sh:82` has `build --no-cache front` (after removing front image); `front/nginx.conf` `location /` has `add_header Cache-Control "no-cache, no-store, must-revalidate";`.
+5. **Overall:** **PASS**
+6. **Product owner feedback:** The 0057 doc correctly reads as a closed historical incident with a clear shipped banner, and the README index matches. Operators should not reopen this as an open deploy CSS fix. No product or deploy behaviour was changed in this task.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts (last section):** N/A — docs/script/nginx grep verification only; no container log evidence required.
+

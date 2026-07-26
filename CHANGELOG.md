@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.124] - 2026-07-26
+
+### Changed
+
+- **Docs (0008):** Marked the order-management logic spec as **shipped core / design reference** (session-scoped orders are live; do not re-open the shared unpaid-order problem as backlog) and aligned the docs README blurb.
+
 ## [2.1.123] - 2026-07-26
 
 ### Added
