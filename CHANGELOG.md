@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Docs (SECURITY-REVIEW):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the security review notes under Quick links and Reference & notes. The index itself shipped in 2.1.103.
 - **Inventory multi-warehouse (#320):** Archived the verified agents2 task after PASS checks (migration `20260726132730`, 6/6 pytest, warehouse CRUD + adjust/receive isolation, Stock Dashboard filter, landing smoke). The feature itself shipped in 2.1.134.
 - **Guest feedback (#325):** Archived the verified agents2 task after PASS checks (12/12 pytest, staff trends + CSV export smoke, public `/feedback/1`, docs 0064, front build). The feature itself shipped in 2.1.134.
 - **Guest birthdays (#324):** Archived the verified agents2 task after PASS checks (migration, 8/8 pytest, public book + staff create/edit/clear, settings capture/marketing consent toggles, front build, landing smoke). The feature itself shipped in 2.1.135.
