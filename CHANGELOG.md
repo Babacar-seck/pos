@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.116] - 2026-07-26
+
+### Changed
+
+- **Docs (0032 / #52 roadmap):** Noted first-party **Satisfecho Delivery** as **Partial / shipped core** (with link to 0053), and clarified that **Uber Eats** remains separate **Not started** aggregator work; short cross-link in the 0050 Issue 10 context.
+
 ## [2.1.115] - 2026-07-26
 
 ### Changed
