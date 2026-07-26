@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.68] - 2026-07-26
+
+### Removed
+
+- **One-off Puppeteer scripts:** Deleted undocumented `front/scripts/review-orders-buttons.mjs` and `capture-reports-screenshot.mjs`. Use `npm run capture-screenshots` and `npm run test:reports` instead.
+
 ## [2.1.67] - 2026-07-26
 
 ### Changed
