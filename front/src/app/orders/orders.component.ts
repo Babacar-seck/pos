@@ -12,6 +12,7 @@ import {
   OrderItemCreate,
   OrderLineModifiers,
   FiscalInvoicePublic,
+  TseTransactionPublic,
   Product,
   User,
   OrderDeliveryUpdate,
@@ -3719,6 +3720,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return m === 'test' || m === 'live';
   }
 
+  private tseEnabled(): boolean {
+    const m = this.tenantSettings()?.tse_mode;
+    return m === 'test' || m === 'live';
+  }
+
   private fiscalIssueErrorMessage(err: { error?: { detail?: unknown } }): string {
     const d = err?.error?.detail;
     if (typeof d === 'string' && d.trim()) return d;
@@ -3747,19 +3753,33 @@ export class OrdersComponent implements OnInit, OnDestroy {
     billingCustomer?: BillingCustomer | null,
     fiscalMeta?: FiscalInvoicePublic | null
   ) {
-    if (order.id != null && !fiscalMeta) {
+    let tseMeta: TseTransactionPublic | null = null;
+    if (order.id != null && this.tseEnabled()) {
+      try {
+        tseMeta = await new Promise<TseTransactionPublic | null>((resolve) => {
+          this.api.getOrderTseTransaction(order.id!).subscribe({
+            next: (row) => resolve(row),
+            error: () => resolve(null),
+          });
+        });
+      } catch {
+        tseMeta = null;
+      }
+    }
+
+    const needBrowserFiscalOrTse = !!(fiscalMeta || tseMeta);
+    if (order.id != null && !needBrowserFiscalOrTse) {
       const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
       if (result.ok) {
         this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
         return;
       }
       this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
-    } else if (order.id != null && fiscalMeta) {
-      // Still enqueue a receipt job when bridge is up; also open browser factura for QR/fiscal text.
+    } else if (order.id != null && needBrowserFiscalOrTse) {
+      // Still enqueue a receipt job when bridge is up; also open browser for QR/fiscal/TSE text.
       const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
       if (result.ok) {
         this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
-        // Continue to browser window so fiscal QR stays visible when needed.
       } else {
         this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
       }
@@ -3860,6 +3880,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
       }
     }
 
+    let tseQrDataUrl = '';
+    if (tseMeta?.qr_content) {
+      try {
+        const QRCode = (await import('qrcode')).default;
+        tseQrDataUrl = await QRCode.toDataURL(tseMeta.qr_content, { width: 180, margin: 1 });
+      } catch (e) {
+        console.warn('TSE QR generation failed', e);
+      }
+    }
+
     const fiscalNumberLine = fiscalMeta
       ? `${this.escapeHtml(this.translate.instant('ORDERS.FISCAL_INVOICE_NUMBER'))}: ${this.escapeHtml(fiscalMeta.full_number)}`
       : '';
@@ -3876,6 +3906,21 @@ export class OrdersComponent implements OnInit, OnDestroy {
   </div>`
         : '';
 
+    const tseBlock =
+      tseMeta != null
+        ? `
+  <div class="tse-kassensichv" style="margin-top: 20px; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc;">
+    <p style="margin: 0 0 10px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #334155;">
+      ${this.escapeHtml(this.translate.instant('ORDERS.TSE_LABEL'))}
+    </p>
+    <p style="margin: 0 0 4px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_SERIAL'))}: ${this.escapeHtml(tseMeta.tse_serial || '')}</p>
+    <p style="margin: 0 0 4px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_COUNTER'))}: ${tseMeta.signature_counter}</p>
+    <p style="margin: 0 0 12px; font-size: 12px;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_TIME'))}: ${this.escapeHtml(tseMeta.time_start || '')}</p>
+    ${tseQrDataUrl ? `<div style="text-align:center;margin:8px 0;"><img src="${tseQrDataUrl}" alt="" width="180" height="180" /></div>` : ''}
+    <p style="margin: 8px 0 0; font-size: 9px; color: #64748b; word-break: break-all;">${this.escapeHtml((tseMeta.signature_value || '').slice(0, 96))}</p>
+    <p style="margin: 8px 0 0; font-size: 9px; color: #94a3b8;">${this.escapeHtml(this.translate.instant('ORDERS.TSE_DISCLAIMER'))}</p>
+  </div>`
+        : '';
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3943,6 +3988,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     </tr>
   </table>
   ${fiscalBlock}
+  ${tseBlock}
   <div class="footer">${this.translate.instant('ORDERS.INVOICE_FOOTER')}</div>
   <div class="invoice-oss">${this.getInvoiceOssLine()}</div>
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>

@@ -269,6 +269,23 @@ class Settings(BaseSettings):
         description="When true and middleware URL set, tenants may select fiscal_mode=live",
     )
 
+    # German TSE / KassenSichV (see docs/0072-tse-fiscal-compliance.md)
+    tse_provider_base_url: str = Field(
+        default="",
+        validation_alias="TSE_PROVIDER_BASE_URL",
+        description="Optional cloud TSE provider base URL; empty = local stub only",
+    )
+    tse_provider_api_key: str = Field(
+        default="",
+        validation_alias="TSE_PROVIDER_API_KEY",
+        description="API key for cloud TSE provider (never commit real values)",
+    )
+    tse_live_unlock: bool = Field(
+        default=False,
+        validation_alias="TSE_LIVE_UNLOCK",
+        description="When true and provider URL set, tenants may select tse_mode=live",
+    )
+
     @model_validator(mode="after")
     def _relax_rate_limits_in_dev(self) -> "Settings":
         """Use higher rate limits when not in production so DEV is less restrictive."""

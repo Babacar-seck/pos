@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.137] - 2026-07-26
+
+### Added
+
+- **German TSE / KassenSichV preparation (#316):** Cloud-TSE ADR and Phase 1 MVP — per-tenant fiscal country and TSE mode (off/test/live, independent of VeriFactu), stub-signed sale/storno on pay and unmark-paid, receipt TSE fields (print-bridge + browser), DSFinV-K date-range export stub, Settings UI and `/features` honesty. Live mode stays gated until provider unlock; not marketed as BSI-certified. See `docs/0072-tse-fiscal-compliance.md`.
+
 ## [2.1.136] - 2026-07-26
 
 ### Added

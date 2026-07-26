@@ -75,6 +75,16 @@ from .fiscal_invoice_service import (
     get_fiscal_alta,
     issue_or_get_fiscal_invoice,
 )
+from .tse_service import (
+    assert_tse_mode_allowed,
+    dsfinvk_export_stub,
+    get_latest_tse,
+    get_sale_tse,
+    issue_or_get_sale as issue_or_get_tse_sale,
+    maybe_sign_sale_after_paid,
+    maybe_sign_storno_after_unmark,
+    tse_transaction_public_dict,
+)
 from .inventory_service import deduct_inventory_for_order
 from . import inventory_models
 from .translation_service import TranslationService
@@ -3680,6 +3690,11 @@ def get_tenant_settings(
         tenant_dict["fiscal_aeat_api_secret"] = (
             f"{sk[:7]}...{sk[-4:]}" if len(sk) > 11 else "***"
         )
+    if tenant_dict.get("tse_api_secret"):
+        sk = tenant_dict["tse_api_secret"]
+        tenant_dict["tse_api_secret"] = (
+            f"{sk[:7]}...{sk[-4:]}" if len(sk) > 11 else "***"
+        )
 
     # Don't expose SMTP password; indicate if configured
     if tenant_dict.get("smtp_password"):
@@ -3892,6 +3907,42 @@ def update_tenant_settings(
     if tenant_update.fiscal_aeat_api_secret is not None:
         if isinstance(tenant_update.fiscal_aeat_api_secret, str) and tenant_update.fiscal_aeat_api_secret.strip():
             tenant.fiscal_aeat_api_secret = tenant_update.fiscal_aeat_api_secret.strip()[:512]
+        # Empty = keep existing
+
+    if tenant_update.fiscal_country is not None:
+        fc = (
+            tenant_update.fiscal_country.strip().upper()
+            if isinstance(tenant_update.fiscal_country, str)
+            else ""
+        )
+        if fc == "":
+            tenant.fiscal_country = None
+        elif len(fc) == 2 and fc.isalpha():
+            tenant.fiscal_country = fc
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="fiscal_country must be a 2-letter ISO code (e.g. DE, ES) or empty",
+            )
+    if tenant_update.tse_mode is not None:
+        tm = tenant_update.tse_mode.strip().lower() if isinstance(tenant_update.tse_mode, str) else ""
+        if tm in ("off", "test", "live"):
+            assert_tse_mode_allowed(tm)
+            tenant.tse_mode = tm
+        elif tm == "":
+            tenant.tse_mode = "off"
+        else:
+            raise HTTPException(status_code=400, detail="tse_mode must be off, test, or live")
+    if tenant_update.tse_client_id is not None:
+        cid = (
+            tenant_update.tse_client_id.strip()
+            if isinstance(tenant_update.tse_client_id, str)
+            else ""
+        )
+        tenant.tse_client_id = cid[:128] if cid else None
+    if tenant_update.tse_api_secret is not None:
+        if isinstance(tenant_update.tse_api_secret, str) and tenant_update.tse_api_secret.strip():
+            tenant.tse_api_secret = tenant_update.tse_api_secret.strip()[:512]
         # Empty = keep existing
 
     # Per-tenant SMTP / email (optional; fallback to global config)
@@ -4196,6 +4247,11 @@ def update_tenant_settings(
     if tenant_dict.get("fiscal_aeat_api_secret"):
         sk = tenant_dict["fiscal_aeat_api_secret"]
         tenant_dict["fiscal_aeat_api_secret"] = (
+            f"{sk[:7]}...{sk[-4:]}" if len(sk) > 11 else "***"
+        )
+    if tenant_dict.get("tse_api_secret"):
+        sk = tenant_dict["tse_api_secret"]
+        tenant_dict["tse_api_secret"] = (
             f"{sk[:7]}...{sk[-4:]}" if len(sk) > 11 else "***"
         )
 
@@ -13734,6 +13790,12 @@ def mark_order_paid(
             "loyalty award failed after mark-paid order_id=%s", order.id
         )
 
+    # German TSE sale signature when tse_mode is test/live (#316)
+    session.refresh(order)
+    if order.status == models.OrderStatus.paid or order.paid_at:
+        maybe_sign_sale_after_paid(session, order)
+        session.refresh(order)
+
     # Publish update
     table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
     publish_order_update(current_user.tenant_id, {
@@ -13961,6 +14023,11 @@ def finish_order(
             "loyalty award failed after finish order_id=%s", order.id
         )
 
+    session.refresh(order)
+    if order.status == models.OrderStatus.paid or order.paid_at:
+        maybe_sign_sale_after_paid(session, order)
+        session.refresh(order)
+
     table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
     publish_order_update(
         current_user.tenant_id,
@@ -14007,6 +14074,10 @@ def unmark_order_paid(
         raise HTTPException(status_code=400, detail="Cannot unmark a cancelled order.")
     if order.status != models.OrderStatus.paid and order.paid_at is None:
         raise HTTPException(status_code=400, detail="Order is not paid.")
+
+    # TSE storno before clearing paid mark (#316)
+    maybe_sign_storno_after_unmark(session, order)
+    session.refresh(order)
 
     # Clear the paid mark only
     order.paid_at = None
@@ -14172,6 +14243,76 @@ def cancel_order_fiscal_invoice(
     session.commit()
     session.refresh(fi)
     return fiscal_invoice_public_dict(fi)
+
+
+@app.get("/orders/{order_id}/tse-transaction")
+def get_order_tse_transaction(
+    order_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Return latest TSE transaction for an order (tenant-scoped). Prefer sale when present."""
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    row = get_sale_tse(session, current_user.tenant_id, order.id) or get_latest_tse(
+        session, current_user.tenant_id, order.id
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="TSE transaction not found")
+    return tse_transaction_public_dict(row)
+
+
+@app.post("/orders/{order_id}/tse-transaction/sign")
+def sign_order_tse_transaction(
+    order_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Issue or return existing TSE sale for a paid order (idempotent). Requires tse_mode test/live."""
+    tenant = session.exec(
+        select(models.Tenant).where(models.Tenant.id == current_user.tenant_id)
+    ).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    mode = (getattr(tenant, "tse_mode", None) or "off").strip().lower()
+    if mode == "off":
+        raise HTTPException(status_code=400, detail="tse_mode is off")
+    row = issue_or_get_tse_sale(session, tenant, order)
+    if not row:
+        raise HTTPException(status_code=400, detail="TSE sale was not created")
+    session.commit()
+    session.refresh(row)
+    return tse_transaction_public_dict(row)
+
+
+@app.get("/tenant/tse/dsfinvk-export")
+def export_tse_dsfinvk(
+    current_user: Annotated[models.User, Depends(require_permission(Permission.SETTINGS_READ))],
+    session: Session = Depends(get_session),
+    from_date: date = Query(..., alias="from", description="Inclusive start date (UTC)"),
+    to_date: date = Query(..., alias="to", description="Inclusive end date (UTC)"),
+) -> dict:
+    """DSFinV-K-oriented stub export for a date range (not a certified ZIP package)."""
+    tenant = session.exec(
+        select(models.Tenant).where(models.Tenant.id == current_user.tenant_id)
+    ).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    return dsfinvk_export_stub(session, tenant, from_date, to_date)
 
 
 @app.put("/orders/{order_id}/staff-urgent")

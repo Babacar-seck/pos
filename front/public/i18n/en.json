@@ -296,7 +296,9 @@
     "FEAT_I18N_TITLE": "Multi-language",
     "FEAT_I18N_DESC": "Guest and staff UI in multiple languages with per-tenant defaults.",
     "FEAT_OPEN_SOURCE_TITLE": "Open source",
-    "FEAT_OPEN_SOURCE_DESC": "Self-host or run in the cloud — inspect, extend, and avoid vendor lock-in."
+    "FEAT_OPEN_SOURCE_DESC": "Self-host or run in the cloud — inspect, extend, and avoid vendor lock-in.",
+    "FEAT_TSE_TITLE": "German TSE (KassenSichV preparation)",
+    "FEAT_TSE_DESC": "Optional per-tenant tse_mode (test/live) with signed transaction stubs, receipt TSE fields, and DSFinV-K date-range export stub. Live mode is locked until a cloud TSE provider is configured — not marketed as BSI-certified yet."
   },
   "PRICING_PAGE": {
     "BADGE": "Simple hosted pricing",
@@ -1104,7 +1106,12 @@
     "RECORD_PARTIAL_PAYMENT": "Record partial payment",
     "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Enter a partial payment amount greater than zero.",
     "PARTIAL_PAYMENT_EXCEEDS": "Partial payment cannot exceed the remaining balance.",
-    "PARTIAL_PAYMENT_RECORDED": "Partial payment recorded."
+    "PARTIAL_PAYMENT_RECORDED": "Partial payment recorded.",
+    "TSE_LABEL": "TSE (KassenSichV preparation)",
+    "TSE_SERIAL": "TSE serial",
+    "TSE_COUNTER": "Signature counter",
+    "TSE_TIME": "TSE timestamp",
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
   },
   "CUSTOMERS": {
     "TITLE": "Customers (Invoice)",
@@ -2278,7 +2285,19 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Requested",
     "RESTAURANT_GROUP_STATUS_PREPARING": "Preparing",
     "RESTAURANT_GROUP_STATUS_PREPARED": "Prepared at HQ",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancelled"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancelled",
+    "TSE_TITLE": "German TSE (KassenSichV preparation)",
+    "TSE_DESC": "Separate from Spain VeriFactu. In test mode, paid orders get a local stub TSE signature; receipts show serial, counter, time, and QR. Live mode stays locked until TSE_LIVE_UNLOCK and a cloud provider URL are set. Not certified by itself.",
+    "FISCAL_COUNTRY": "Fiscal country hint",
+    "FISCAL_COUNTRY_HINT": "Optional ISO code (e.g. DE or ES). Does not auto-enable TSE or VeriFactu.",
+    "TSE_MODE": "TSE mode",
+    "TSE_MODE_OFF": "Off (no TSE signing)",
+    "TSE_MODE_TEST": "Test — local stub signature (not production compliance)",
+    "TSE_MODE_LIVE": "Live — blocked until cloud TSE provider unlock (see docs)",
+    "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
+    "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
+    "TSE_API_SECRET": "TSE API secret (optional)",
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
   },
   "PAYMENTS": {
     "PAYMENT": "Payment",

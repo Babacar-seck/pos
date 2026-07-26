@@ -249,6 +249,14 @@ class Tenant(SQLModel, table=True):
     fiscal_invoice_next_number: int = Field(default=1)
     fiscal_aeat_api_secret: str | None = Field(default=None, max_length=512)
 
+    # Germany TSE / KassenSichV (separate from VeriFactu — see docs/0072-tse-fiscal-compliance.md)
+    fiscal_country: str | None = Field(default=None, max_length=2)  # e.g. DE, ES (UI hint)
+    tse_mode: str = Field(default="off", max_length=16)  # off | test | live
+    tse_client_id: str | None = Field(default=None, max_length=128)
+    tse_api_secret: str | None = Field(default=None, max_length=512)
+    tse_serial_number: str | None = Field(default=None, max_length=128)
+    tse_signature_counter: int = Field(default=1)
+
     # Platform SaaS subscription (Satisfecho paywall — not restaurant guest payments)
     # none | trialing | active | canceled | past_due | grandfathered
     saas_subscription_status: str = Field(default="grandfathered", max_length=32)
@@ -1011,6 +1019,35 @@ class FiscalInvoice(SQLModel, table=True):
     sandbox_submitted_at: datetime | None = Field(default=None)
 
 
+class TseTransaction(SQLModel, table=True):
+    """German TSE signed transaction row (KassenSichV preparation; not a BSI certification claim)."""
+
+    __tablename__ = "tse_transaction"
+
+    id: int | None = Field(default=None, primary_key=True)
+    tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    process_type: str = Field(max_length=16)  # sale | storno | refund
+    mode: str = Field(max_length=16)  # test | live
+    tse_serial: str = Field(default="", max_length=128)
+    signature_counter: int = Field(default=0)
+    signature_value: str = Field(default="", sa_column=Column(Text, nullable=False))
+    qr_content: str = Field(default="", sa_column=Column(Text, nullable=False))
+    process_data: str = Field(default="", sa_column=Column(Text, nullable=False))
+    transaction_number: int = Field(default=0)
+    certificate_serial: str = Field(default="", max_length=128)
+    time_start: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    time_end: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    amount_cents: int = Field(default=0)
+    request_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    response_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    submission_status: str = Field(default="local_stub", max_length=32)
+    storno_of_tse_transaction_id: int | None = Field(
+        default=None, foreign_key="tse_transaction.id"
+    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class Order(TenantMixin, table=True):
     id: int | None = Field(default=None, primary_key=True)
     # Null when soft-deleted and unlinked, or legacy cleanup; active orders always have a table.
@@ -1728,6 +1765,12 @@ class TenantUpdate(SQLModel):
     fiscal_mode: str | None = Field(default=None, max_length=16)
     fiscal_invoice_series: str | None = Field(default=None, max_length=32)
     fiscal_aeat_api_secret: str | None = Field(default=None, max_length=512)
+
+    # Germany TSE (separate from VeriFactu)
+    fiscal_country: str | None = Field(default=None, max_length=2)
+    tse_mode: str | None = Field(default=None, max_length=16)
+    tse_client_id: str | None = Field(default=None, max_length=128)
+    tse_api_secret: str | None = Field(default=None, max_length=512)
 
 
 class TenantProductCreate(SQLModel):

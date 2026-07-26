@@ -1387,6 +1387,56 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
                     />
                     <p class="hint">{{ 'SETTINGS.FISCAL_AEAT_SECRET_HINT' | translate }}</p>
                   </div>
+
+                  <div class="divider"></div>
+                  <h3>{{ 'SETTINGS.TSE_TITLE' | translate }}</h3>
+                  <p class="hint">{{ 'SETTINGS.TSE_DESC' | translate }}</p>
+                  <div class="form-group">
+                    <label for="fiscal_country">{{ 'SETTINGS.FISCAL_COUNTRY' | translate }}</label>
+                    <input
+                      type="text"
+                      id="fiscal_country"
+                      [(ngModel)]="formData.fiscal_country"
+                      name="fiscal_country"
+                      maxlength="2"
+                      class="input-small"
+                      placeholder="DE"
+                    />
+                    <p class="hint">{{ 'SETTINGS.FISCAL_COUNTRY_HINT' | translate }}</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_mode">{{ 'SETTINGS.TSE_MODE' | translate }}</label>
+                    <select id="tse_mode" class="form-select" [(ngModel)]="formData.tse_mode" name="tse_mode">
+                      <option value="off">{{ 'SETTINGS.TSE_MODE_OFF' | translate }}</option>
+                      <option value="test">{{ 'SETTINGS.TSE_MODE_TEST' | translate }}</option>
+                      <option value="live">{{ 'SETTINGS.TSE_MODE_LIVE' | translate }}</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_client_id">{{ 'SETTINGS.TSE_CLIENT_ID' | translate }}</label>
+                    <input
+                      type="text"
+                      id="tse_client_id"
+                      [(ngModel)]="formData.tse_client_id"
+                      name="tse_client_id"
+                      maxlength="128"
+                      class="input-medium"
+                      autocomplete="off"
+                    />
+                    <p class="hint">{{ 'SETTINGS.TSE_CLIENT_ID_HINT' | translate }}</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="tse_api_secret">{{ 'SETTINGS.TSE_API_SECRET' | translate }}</label>
+                    <input
+                      type="password"
+                      id="tse_api_secret"
+                      [(ngModel)]="formData.tse_api_secret"
+                      name="tse_api_secret"
+                      placeholder="••••••••••••••••"
+                      autocomplete="off"
+                    />
+                    <p class="hint">{{ 'SETTINGS.TSE_API_SECRET_HINT' | translate }}</p>
+                  </div>
                   
                   <div class="form-group checkbox-row">
                     <label class="switch">
@@ -3253,6 +3303,10 @@ export class SettingsComponent implements OnInit, OnDestroy {
     fiscal_mode: 'off' as 'off' | 'test' | 'live',
     fiscal_invoice_series: 'VF',
     fiscal_aeat_api_secret: null as string | null,
+    fiscal_country: null as string | null,
+    tse_mode: 'off' as 'off' | 'test' | 'live',
+    tse_client_id: null as string | null,
+    tse_api_secret: null as string | null,
   };
 
   allTimezones: string[] = [];
@@ -3383,6 +3437,11 @@ export class SettingsComponent implements OnInit, OnDestroy {
               : 'off',
           fiscal_invoice_series: settings.fiscal_invoice_series?.trim() || 'VF',
           fiscal_aeat_api_secret: null,
+          fiscal_country: settings.fiscal_country?.trim()?.toUpperCase() || null,
+          tse_mode:
+            settings.tse_mode === 'test' || settings.tse_mode === 'live' ? settings.tse_mode : 'off',
+          tse_client_id: settings.tse_client_id?.trim() || null,
+          tse_api_secret: null,
         };
         this.clockQrLastToken.set(null);
         this.clockQrTokenLoading.set(false);
@@ -4352,6 +4411,14 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
     if (updateData.fiscal_aeat_api_secret === '' || updateData.fiscal_aeat_api_secret == null) {
       delete updateData.fiscal_aeat_api_secret;
+    }
+    if (updateData.tse_api_secret === '' || updateData.tse_api_secret == null) {
+      delete updateData.tse_api_secret;
+    }
+    const fc = (updateData.fiscal_country || '').toString().trim().toUpperCase();
+    updateData.fiscal_country = fc.length === 2 ? fc : null;
+    if (!updateData.tse_client_id) {
+      updateData.tse_client_id = null;
     }
 
     this.api.updateTenantSettings(updateData).subscribe({

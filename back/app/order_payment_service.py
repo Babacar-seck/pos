@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -175,6 +176,18 @@ def record_payment(
     session.commit()
     session.refresh(row)
     session.refresh(order)
+
+    if order.status == models.OrderStatus.paid or order.paid_at:
+        try:
+            from app.tse_service import maybe_sign_sale_after_paid
+
+            maybe_sign_sale_after_paid(session, order)
+            session.refresh(order)
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "TSE sale after payment failed order_id=%s", order.id
+            )
+
     return row, reconciliation_dict(session, order)
 
 

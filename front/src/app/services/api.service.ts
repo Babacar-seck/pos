@@ -1394,6 +1394,26 @@ export interface FiscalInvoicePublic {
   verification_text: string;
 }
 
+/** German TSE transaction metadata (KassenSichV preparation — not a certification claim). */
+export interface TseTransactionPublic {
+  id: number;
+  order_id: number;
+  process_type: string;
+  mode: string;
+  tse_serial: string;
+  signature_counter: number;
+  signature_value: string;
+  qr_content: string;
+  process_data?: string;
+  transaction_number: number;
+  certificate_serial?: string;
+  time_start: string | null;
+  time_end: string | null;
+  amount_cents: number;
+  submission_status?: string;
+  disclaimer?: string;
+}
+
 /** Billing customer for Factura (tax invoice) */
 export interface BillingCustomer {
   id: number;
@@ -1735,6 +1755,13 @@ export interface TenantSettings {
   fiscal_mode?: 'off' | 'test' | 'live' | string | null;
   fiscal_invoice_series?: string | null;
   fiscal_aeat_api_secret?: string | null;
+  /** Fiscal regime hint (e.g. DE, ES); independent of VeriFactu/TSE mode switches */
+  fiscal_country?: string | null;
+  /** Germany TSE / KassenSichV: off | test | live */
+  tse_mode?: 'off' | 'test' | 'live' | string | null;
+  tse_client_id?: string | null;
+  tse_api_secret?: string | null;
+  tse_serial_number?: string | null;
 }
 
 export interface OrderItemCreate {
@@ -2898,6 +2925,20 @@ export class ApiService {
 
   getOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
     return this.http.get<FiscalInvoicePublic>(`${this.apiUrl}/orders/${orderId}/fiscal-invoice`);
+  }
+
+  getOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
+    return this.http.get<TseTransactionPublic>(`${this.apiUrl}/orders/${orderId}/tse-transaction`);
+  }
+
+  signOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
+    return this.http.post<TseTransactionPublic>(`${this.apiUrl}/orders/${orderId}/tse-transaction/sign`, {});
+  }
+
+  exportTseDsfinvk(from: string, to: string): Observable<Record<string, unknown>> {
+    return this.http.get<Record<string, unknown>>(`${this.apiUrl}/tenant/tse/dsfinvk-export`, {
+      params: { from, to },
+    });
   }
 
   setOrderStaffUrgent(orderId: number, urgent: boolean): Observable<{ order_id: number; staff_urgent: boolean }> {

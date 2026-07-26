@@ -93,6 +93,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0063-offline-capable-client.md](0063-offline-capable-client.md) | Offline POS client (#319): ADR + threat model; MVP staff cash sale queue + idempotent sync. |
 | [0064-guest-feedback-analytics.md](0064-guest-feedback-analytics.md) | Guest feedback staff trends + CSV export; receipt QR link format (#325). |
 | [0065-verifactu-production.md](0065-verifactu-production.md) | VeriFactu production path: Phase 0 build-vs-buy ADR (prefer certified middleware), certification status, live-mode gate, QR/hash/sandbox notes (#326). |
+| [0072-tse-fiscal-compliance.md](0072-tse-fiscal-compliance.md) | German TSE / KassenSichV: Phase 0 cloud-TSE ADR, `tse_mode`, stub signing, receipt fields, DSFinV-K stub; separate from VeriFactu (#316). |
 | [0066-club-loyalty.md](0066-club-loyalty.md) | Club loyalty MVP (#327): points/stamps, earn on paid, redeem at checkout, public join; Apple/Google Wallet certs as operational deps. |
 | [0071-split-bill.md](0071-split-bill.md) | Split bill / partial payments (#318): amount-based payment legs, reconciliation API, one fiscal invoice per settled order. |
 | [0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md) | GitHub **#52** (CLOSED): **historical** child-issue drafts / phases — do not re-file without review; prefer **0032** + shipped feature docs. |

@@ -984,7 +984,12 @@
     "RECORD_PARTIAL_PAYMENT": "Teilzahlung erfassen",
     "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Bitte einen Teilzahlungsbetrag größer als null eingeben.",
     "PARTIAL_PAYMENT_EXCEEDS": "Die Teilzahlung darf den Restbetrag nicht überschreiten.",
-    "PARTIAL_PAYMENT_RECORDED": "Teilzahlung erfasst."
+    "PARTIAL_PAYMENT_RECORDED": "Teilzahlung erfasst.",
+    "TSE_LABEL": "TSE (KassenSichV-Vorbereitung)",
+    "TSE_SERIAL": "TSE-Seriennummer",
+    "TSE_COUNTER": "Signaturzähler",
+    "TSE_TIME": "TSE-Zeitstempel",
+    "TSE_DISCLAIMER": "Test-/Stub-TSE-Datensatz — keine Aussage über BSI-TR-03153-Zertifizierung."
   },
   "CUSTOMERS": {
     "TITLE": "Kunden (Rechnung)",
@@ -2124,7 +2129,19 @@
     "PRINTING_REVOKED": "Widerrufen",
     "PRINTING_REVOKE": "Widerrufen",
     "PRINTING_REFRESH": "Aktualisieren",
-    "PRINTING_DOCS_HINT": "Anleitung: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
+    "PRINTING_DOCS_HINT": "Anleitung: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py",
+    "TSE_TITLE": "Deutsche TSE (KassenSichV-Vorbereitung)",
+    "TSE_DESC": "Getrennt von VeriFactu (Spanien). Im Testmodus erhalten bezahlte Bestellungen eine lokale Stub-TSE-Signatur; Belege zeigen Seriennummer, Zähler, Zeit und QR. Live bleibt gesperrt, bis TSE_LIVE_UNLOCK und eine Provider-URL gesetzt sind.",
+    "FISCAL_COUNTRY": "Fiscal-Länderhinweis",
+    "FISCAL_COUNTRY_HINT": "Optionaler ISO-Code (z. B. DE oder ES). Aktiviert TSE oder VeriFactu nicht automatisch.",
+    "TSE_MODE": "TSE-Modus",
+    "TSE_MODE_OFF": "Aus (keine TSE-Signatur)",
+    "TSE_MODE_TEST": "Test — lokale Stub-Signatur (keine Produktions-Compliance)",
+    "TSE_MODE_LIVE": "Live — gesperrt bis Cloud-TSE-Freigabe (siehe Docs)",
+    "TSE_CLIENT_ID": "TSE-Client-/TSS-ID (optional)",
+    "TSE_CLIENT_ID_HINT": "Anbieter-Client-ID bei Cloud-TSE.",
+    "TSE_API_SECRET": "TSE-API-Geheimnis (optional)",
+    "TSE_API_SECRET_HINT": "Leer lassen, um den aktuellen Wert zu behalten. Niemals echte Secrets committen."
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",
@@ -2683,7 +2700,9 @@
     "FEAT_I18N_TITLE": "Mehrsprachigkeit",
     "FEAT_I18N_DESC": "Gäste- und Team-Oberfläche in mehreren Sprachen.",
     "FEAT_OPEN_SOURCE_TITLE": "Open Source",
-    "FEAT_OPEN_SOURCE_DESC": "Self-Hosting oder Cloud — ohne Vendor Lock-in."
+    "FEAT_OPEN_SOURCE_DESC": "Self-Hosting oder Cloud — ohne Vendor Lock-in.",
+    "FEAT_TSE_TITLE": "Deutsche TSE (KassenSichV-Vorbereitung)",
+    "FEAT_TSE_DESC": "Optionaler Mandanten-Modus tse_mode (test/live) mit Stub-Signaturen, TSE-Belegfeldern und DSFinV-K-Export-Stub. Live bleibt gesperrt, bis ein Cloud-TSE-Anbieter konfiguriert ist — noch nicht als BSI-zertifiziert vermarktet."
   },
   "PRICING_PAGE": {
     "BADGE": "Einfache Hosted-Preise",

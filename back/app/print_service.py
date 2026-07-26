@@ -226,8 +226,26 @@ def _build_order_payload(session: Session, order: models.Order, job_type: str) -
     if job_type == "receipt":
         plain_lines.append("-" * 32)
         plain_lines.append(f"TOTAL: {total_cents / 100:.2f}")
+        try:
+            from app.tse_service import get_sale_tse, receipt_fields_dict
+
+            tse_row = get_sale_tse(session, order.tenant_id, order.id)  # type: ignore[arg-type]
+            tse_fields = receipt_fields_dict(tse_row)
+            if tse_fields:
+                plain_lines.append("-" * 32)
+                plain_lines.append("TSE (KassenSichV)")
+                plain_lines.append(f"Serial: {tse_fields.get('tse_serial') or '—'}")
+                plain_lines.append(f"SigCounter: {tse_fields.get('signature_counter')}")
+                plain_lines.append(f"Time: {tse_fields.get('time_start') or '—'}")
+                sig = (tse_fields.get("signature_value") or "")[:32]
+                if sig:
+                    plain_lines.append(f"Sig: {sig}…")
+        except Exception:
+            tse_fields = None
+    else:
+        tse_fields = None
     plain_lines.append("")
-    return {
+    out: dict[str, Any] = {
         "title": title,
         "order_id": order.id,
         "table_name": table_name,
@@ -236,6 +254,9 @@ def _build_order_payload(session: Session, order: models.Order, job_type: str) -
         "lines": lines,
         "plain_text": "\n".join(plain_lines),
     }
+    if job_type == "receipt" and tse_fields:
+        out["tse"] = tse_fields
+    return out
 
 
 def create_job(
