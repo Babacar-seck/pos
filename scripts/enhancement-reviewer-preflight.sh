@@ -268,8 +268,16 @@ untested_n=$(count_root_tasks "UNTESTED-")
 testing_n=$(count_root_tasks "TESTING-")
 closed_n=$(count_root_tasks "CLOSED-")
 emit "NEW=${new_n} FEAT=${feat_n} WIP=${wip_n} UNTESTED=${untested_n} TESTING=${testing_n} CLOSED=${closed_n}"
+# Soft hint when NEW is elevated but still at/under the pause threshold (no SIGNAL).
+if (( new_n > 0 && new_n <= NEW_BACKLOG_MAX )); then
+  emit "hint new_queue NEW=${new_n} (prefer drain NEW before more FEAT/doc tasks; SIGNAL/PAUSE at >${NEW_BACKLOG_MAX})"
+fi
+# Deep NEW pile: SIGNAL (wakes digest counters) + PAUSE (008 creates 0 tasks until drain).
+# Threshold override: ENHANCEMENT_NEW_BACKLOG_MAX (default 20).
 if (( new_n > NEW_BACKLOG_MAX )); then
+  G008_TASK_SIGNALS=$((G008_TASK_SIGNALS + 1))
   G008_NEW_BACKLOG_PAUSE=1
+  emit "SIGNAL task_backlog new=${new_n} (prefer drain NEW before more FEAT/doc tasks)"
   emit "PAUSE new_backlog NEW=${new_n} (threshold=${NEW_BACKLOG_MAX}; create 0 NEW/FEAT until drain — main coder 002)"
 fi
 if (( wip_n + testing_n > 8 )); then

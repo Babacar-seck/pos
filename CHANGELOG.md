@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.65] - 2026-07-26
+
+### Changed
+
+- **Enhancement preflight (deep NEW backlog):** When root `NEW-*` tasks exceed the pause threshold (default 20), preflight now emits `SIGNAL task_backlog new=…` and increments `G008_TASK_SIGNALS` (in addition to the existing `PAUSE new_backlog`), so the agent loop can stop piling more FEAT/doc tasks until the queue drains. Below the threshold it prints a soft `hint new_queue` only.
+
 ## [2.1.64] - 2026-07-26
 
 ### Changed
