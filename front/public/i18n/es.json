@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "No pudimos completar la solicitud. Inténtelo de nuevo.",
     "ENTER_FULLSCREEN": "Pantalla completa",
     "EXIT_FULLSCREEN": "Salir de pantalla completa",
-    "IMAGE_FILE_TOO_LARGE": "El archivo debe ser menor de {{maxMb}} MB."
+    "IMAGE_FILE_TOO_LARGE": "El archivo debe ser menor de {{maxMb}} MB.",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "Restaurante no encontrado.",
@@ -961,7 +962,11 @@
     "DELIVERY_CREATED": "Pedido a domicilio creado",
     "DELIVERY_CREATE_FAILED": "No se pudo crear el pedido a domicilio",
     "DELIVERY_UPDATED": "Datos de entrega actualizados",
-    "DELIVERY_UPDATE_FAILED": "No se pudieron actualizar los datos de entrega"
+    "DELIVERY_UPDATE_FAILED": "No se pudieron actualizar los datos de entrega",
+    "LOYALTY_DISCOUNT": "Descuento fidelidad",
+    "LOYALTY_MEMBER_TOKEN": "Token de miembro",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Pega el token del enlace de alta / tarjeta",
+    "LOYALTY_REDEEM": "Canjear recompensa"
   },
   "CUSTOMERS": {
     "TITLE": "Clientes (Factura)",
@@ -1390,7 +1395,21 @@
     "QR_CARD_HINT": "Los clientes escanean para abrir el formulario público. Usa «Imprimir QR» para una página limpia en mesas o caja.",
     "COPY_FEEDBACK_URL": "Copiar enlace",
     "PRINT_QR": "Imprimir QR",
-    "URL_COPIED": "Enlace copiado al portapapeles."
+    "URL_COPIED": "Enlace copiado al portapapeles.",
+    "EXPORT_CSV": "Exportar CSV",
+    "EXPORTING": "Exportando…",
+    "ANALYTICS_TITLE": "Tendencias",
+    "LOOKBACK": "Periodo",
+    "DAYS_30": "30 días",
+    "DAYS_90": "90 días",
+    "DAYS_365": "12 meses",
+    "STAT_TOTAL": "Respuestas",
+    "STAT_AVERAGE": "Valoración media",
+    "STAT_WITH_COMMENT": "Con comentario",
+    "STAT_WITH_CONTACT": "Con contacto",
+    "RATING_DISTRIBUTION": "Distribución de valoraciones",
+    "DAILY_TREND": "Volumen diario (últimos 14 días del periodo)",
+    "TREND_EMPTY": "Sin envíos en este periodo."
   },
   "RESERVATIONS": {
     "TITLE": "Reservaciones",
@@ -1828,11 +1847,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API Secret",
     "REVOLUT_MERCHANT_SECRET_HINT": "Clave secreta de Revolut Business. Dejar en blanco para mantener. Activa Pagar con Revolut en el menú.",
     "FISCAL_INVOICING_TITLE": "Facturación fiscal (España / preparación VeriFactu)",
-    "FISCAL_INVOICING_DESC": "Si está activo, al imprimir Factura se registra en el servidor un documento fiscal y se añaden código QR y texto legal. No se envía a la AEAT hasta integrar según la documentación oficial.",
+    "FISCAL_INVOICING_DESC": "En modo prueba, al imprimir Factura se emite un registro fiscal con cadena hash, URL ValidarQR de la AEAT y envío sandbox. El modo producción permanece bloqueado hasta configurar middleware certificado. No se inventa SOAP AEAT en la app.",
     "FISCAL_MODE": "Modo fiscal",
     "FISCAL_MODE_OFF": "Desactivado (solo factura en navegador)",
-    "FISCAL_MODE_TEST": "Prueba — emisión simulada, sin llamada HTTP a la AEAT",
-    "FISCAL_MODE_LIVE": "Producción — numeración interna (integración AEAT aparte)",
+    "FISCAL_MODE_TEST": "Prueba — cadena hash + envío sandbox (no es presentación AEAT de producción)",
+    "FISCAL_MODE_LIVE": "Producción — bloqueado hasta desbloquear middleware certificado (ver docs)",
     "FISCAL_SERIES": "Prefijo de serie",
     "FISCAL_SERIES_HINT": "Prefijo para la numeración fiscal (p. ej. VF). El siguiente número lo asigna el servidor al emitir.",
     "FISCAL_AEAT_SECRET": "Secreto API AEAT (opcional)",
@@ -2031,7 +2050,22 @@
     "DELIVERY_RADIUS_HINT": "Opcional. Usa latitud/longitud del restaurante. 0 para desactivar. El cliente debe compartir ubicación.",
     "DELIVERY_POSTAL_CODES": "Códigos postales permitidos",
     "DELIVERY_POSTAL_CODES_PH": "28001\n28002\n28003",
-    "DELIVERY_POSTAL_CODES_HINT": "Un código por línea (o separados por comas). Vacío = cualquier código. Si se define, el cliente debe indicar uno válido."
+    "DELIVERY_POSTAL_CODES_HINT": "Un código por línea (o separados por comas). Vacío = cualquier código. Si se define, el cliente debe indicar uno válido.",
+    "LOYALTY_TAB": "Club de fidelidad",
+    "LOYALTY_TITLE": "Club de fidelidad",
+    "LOYALTY_SUBTITLE": "Puntos o sellos al pagar. Los clientes se unen con un enlace público; el personal canjea en caja.",
+    "LOYALTY_ENABLED": "Activar programa de fidelidad",
+    "LOYALTY_PROGRAM_NAME": "Nombre del programa",
+    "LOYALTY_MODE": "Modo",
+    "LOYALTY_MODE_POINTS": "Puntos",
+    "LOYALTY_MODE_STAMPS": "Sellos",
+    "LOYALTY_EARN": "Unidades por pedido pagado",
+    "LOYALTY_THRESHOLD": "Unidades para canjear",
+    "LOYALTY_REWARD_CENTS": "Descuento de recompensa (céntimos)",
+    "LOYALTY_JOIN_URL": "URL pública de alta",
+    "LOYALTY_MEMBERS": "Miembros",
+    "LOYALTY_MEMBERS_EMPTY": "Aún no hay miembros.",
+    "LOYALTY_BALANCE": "Saldo"
   },
   "PAYMENTS": {
     "PAYMENT": "Pago",
@@ -2534,7 +2568,7 @@
     "FEAT_INVENTORY_TITLE": "Inventario",
     "FEAT_INVENTORY_DESC": "Stock, proveedores y órdenes de compra.",
     "FEAT_INVOICING_TITLE": "Clientes de facturación",
-    "FEAT_INVOICING_DESC": "Datos de clientes y facturas fiscales.",
+    "FEAT_INVOICING_DESC": "Clientes de facturación y preparación VeriFactu (modo prueba, cadena hash, QR). El envío AEAT en vivo requiere middleware certificado — aún no se reivindica como certificado.",
     "FEAT_CONTRACTS_TITLE": "Contratos de personal",
     "FEAT_CONTRACTS_DESC": "Contratos y plantillas del equipo.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "Grupos de restaurantes",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "Modo sin conexión — las ventas en efectivo se pueden encolar y sincronizar después.",
     "BANNER_DEGRADED": "No se puede alcanzar el servidor — modo sin conexión; las ventas en cola se sincronizarán al volver.",
     "BANNER_PENDING": "{{count}} venta(s) sin conexión pendientes de sincronizar…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Club de fidelidad",
+    "INVALID_TENANT": "Enlace de restaurante no válido.",
+    "NOT_ENABLED": "Este restaurante aún no tiene club de fidelidad.",
+    "LEDE": "Gana {{earn}} {{mode}} por visita pagada. Canjea a {{threshold}} por una recompensa.",
+    "NAME": "Tu nombre",
+    "EMAIL": "Email",
+    "PHONE": "Teléfono",
+    "CONTACT_HINT": "Indica email o teléfono para encontrar tu membresía la próxima vez.",
+    "JOIN": "Unirme al club",
+    "JOINED": "Bienvenido — ya formas parte del club.",
+    "BALANCE": "Saldo",
+    "KEEP_LINK": "Guarda este enlace para ver tu saldo:",
+    "CARD_NOT_FOUND": "Membresía no encontrada."
   }
 }

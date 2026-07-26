@@ -54,12 +54,12 @@ This folder contains deployment guides, feature documentation, implementation pl
 
 | Doc | Description |
 |-----|-------------|
-| [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`; public waiting list at `/waitlist/:tenantId` and staff Waiting list tab. |
+| [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`; public waiting list at `/waitlist/:tenantId` and staff Waiting list tab. Guest feedback trends/CSV: [0064](0064-guest-feedback-analytics.md). |
 | [0014-provider-portal.md](0014-provider-portal.md) | Provider (supplier) portal at `/provider` — not the courier portal (`/courier`; see [0053](0053-satisfecho-delivery-order-channel.md)). |
 | [0015-kitchen-display.md](0015-kitchen-display.md) | Kitchen display: full-screen at `/kitchen` (and `/bar`), auto-refresh, WebSocket, optional sound; Satisfecho Delivery cards use table label “Satisfecho Delivery” (not shown once `out_for_delivery`); highlighted order/item comments (#284). |
 | [0016-reports.md](0016-reports.md) | Reports (Sales & Revenue): date range, summary (incl. overbooking slots when &gt; 0), by product/category/table/waiter, CSV/Excel export. |
-| [0017-billing-customers-factura.md](0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to”. See also VeriFactu [0018](0018-verifactu-fiscal-invoicing.md). |
-| [0018-verifactu-fiscal-invoicing.md](0018-verifactu-fiscal-invoicing.md) | VeriFactu-oriented fiscal invoicing: tenant `fiscal_mode` (off/test/live), server-issued fiscal stub (series/number), Factura QR/disclaimer; **no production AEAT submission yet**. |
+| [0017-billing-customers-factura.md](0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to”. See also VeriFactu [0018](0018-verifactu-fiscal-invoicing.md). Club loyalty builds on customer identity: [0066](0066-club-loyalty.md). |
+| [0018-verifactu-fiscal-invoicing.md](0018-verifactu-fiscal-invoicing.md) | VeriFactu-oriented fiscal invoicing: tenant `fiscal_mode` (off/test/live), hash chain, ValidarQR URL, sandbox submit, immutability + anulación; **no invented production AEAT SOAP**. See also [0065](0065-verifactu-production.md). |
 | [0028-tenant-public-branding.md](0028-tenant-public-branding.md) | Tenant public branding (shipped): background colour and header image for book, menu, reservation-view, waitlist, and guest feedback. |
 | [0059-platform-operator-portal.md](0059-platform-operator-portal.md) | Platform operator portal: SaaS metrics and tenant oversight. |
 | [0051-table-groups-mvp.md](0051-table-groups-mvp.md) | Floor-plan table join/unjoin (**shipped** reference): combined seats and reservation pool for joined tables — not restaurant multi-location groups ([0054](0054-restaurant-groups.md)). |
@@ -90,6 +90,9 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0061-multi-warehouse-inventory.md](0061-multi-warehouse-inventory.md) | Multi-warehouse inventory MVP (#320): warehouses, receive/adjust attribution, stock filter. |
 | [0062-pos-migration-import.md](0062-pos-migration-import.md) | Import from existing POS (#321): products/categories CSV CLI, dry-run/apply, cutover runbook. |
 | [0063-offline-capable-client.md](0063-offline-capable-client.md) | Offline POS client (#319): ADR + threat model; MVP staff cash sale queue + idempotent sync. |
+| [0064-guest-feedback-analytics.md](0064-guest-feedback-analytics.md) | Guest feedback staff trends + CSV export; receipt QR link format (#325). |
+| [0065-verifactu-production.md](0065-verifactu-production.md) | VeriFactu production path: Phase 0 build-vs-buy ADR (prefer certified middleware), certification status, live-mode gate, QR/hash/sandbox notes (#326). |
+| [0066-club-loyalty.md](0066-club-loyalty.md) | Club loyalty MVP (#327): points/stamps, earn on paid, redeem at checkout, public join; Apple/Google Wallet certs as operational deps. |
 | [0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md) | GitHub **#52** (CLOSED): **historical** child-issue drafts / phases — do not re-file without review; prefer **0032** + shipped feature docs. |
 
 ---

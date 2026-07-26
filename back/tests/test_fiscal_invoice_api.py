@@ -1,12 +1,14 @@
-"""Fiscal invoice issuance: tenant isolation, paid-only, idempotency."""
+"""Fiscal invoice issuance: hash chain, sandbox, immutability, anulación."""
 from __future__ import annotations
 
 import unittest
 from datetime import timedelta
+from unittest import mock
 
 from pg_client_mixin import PgClientTestCase
 
 from app import models, security
+from app.fiscal_invoice_service import HASH_SCHEMA, compute_record_hash
 
 
 def _bearer_headers(user: models.User) -> dict[str, str]:
@@ -23,7 +25,12 @@ def _bearer_headers(user: models.User) -> dict[str, str]:
 class TestFiscalInvoiceApi(PgClientTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.tenant = models.Tenant(name="Fiscal Tenant", fiscal_mode="test", fiscal_invoice_series="T")
+        self.tenant = models.Tenant(
+            name="Fiscal Tenant",
+            fiscal_mode="test",
+            fiscal_invoice_series="T",
+            tax_id="B12345678",
+        )
         self.session.add(self.tenant)
         self.session.commit()
         self.session.refresh(self.tenant)
@@ -61,6 +68,7 @@ class TestFiscalInvoiceApi(PgClientTestCase):
         self.session.add(table)
         self.session.commit()
         self.session.refresh(table)
+        self.table = table
 
         self.order_paid = models.Order(
             tenant_id=self.tenant.id,
@@ -72,11 +80,39 @@ class TestFiscalInvoiceApi(PgClientTestCase):
             table_id=table.id,
             status=models.OrderStatus.pending,
         )
+        self.order_paid2 = models.Order(
+            tenant_id=self.tenant.id,
+            table_id=table.id,
+            status=models.OrderStatus.paid,
+        )
         self.session.add(self.order_paid)
         self.session.add(self.order_pending)
+        self.session.add(self.order_paid2)
         self.session.commit()
         self.session.refresh(self.order_paid)
         self.session.refresh(self.order_pending)
+        self.session.refresh(self.order_paid2)
+
+        product = models.Product(
+            name="Fiscal Dish",
+            price_cents=1000,
+            tenant_id=self.tenant.id,
+        )
+        self.session.add(product)
+        self.session.commit()
+        self.session.refresh(product)
+
+        item = models.OrderItem(
+            order_id=self.order_paid.id,
+            product_id=product.id,
+            product_name="Fiscal Dish",
+            quantity=2,
+            price_cents=1000,
+            status=models.OrderItemStatus.delivered,
+        )
+        self.session.add(item)
+        self.session.commit()
+        self.item = item
 
         self.t_other = models.Tenant(name="Other")
         self.session.add(self.t_other)
@@ -101,10 +137,94 @@ class TestFiscalInvoiceApi(PgClientTestCase):
         body1 = r1.json()
         self.assertIn("full_number", body1)
         fn = body1["full_number"]
+        self.assertTrue(body1.get("record_hash"))
+        self.assertEqual(body1.get("record_type"), "alta")
+        self.assertIn("ValidarQR", body1.get("verification_qr_content", ""))
+        self.assertIn("nif=B12345678", body1.get("verification_qr_content", ""))
+        self.assertIsNotNone(body1.get("sandbox_submitted_at"))
+        self.assertIn(body1.get("submission_status"), ("sandbox_recorded", "middleware_accepted", "middleware_unreachable", "middleware_error"))
         r2 = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/issue", headers=h)
         self.assertEqual(r2.status_code, 200, r2.text)
         body2 = r2.json()
         self.assertEqual(body2["full_number"], fn)
+        self.assertEqual(body2["record_hash"], body1["record_hash"])
+
+    def test_hash_chain_links_consecutive_invoices(self) -> None:
+        h = _bearer_headers(self.owner)
+        r1 = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/issue", headers=h)
+        self.assertEqual(r1.status_code, 200, r1.text)
+        first = r1.json()
+        r2 = self.client.post(f"/orders/{self.order_paid2.id}/fiscal-invoice/issue", headers=h)
+        self.assertEqual(r2.status_code, 200, r2.text)
+        second = r2.json()
+        self.assertEqual(second["previous_hash"], first["record_hash"])
+        self.assertNotEqual(second["record_hash"], first["record_hash"])
+        self.assertEqual(HASH_SCHEMA, "pos.fiscal.hash.v1")
+        # Recompute expected hash for second alta
+        from datetime import datetime
+
+        issued = datetime.fromisoformat(second["issued_at"].replace("Z", "+00:00"))
+        expected = compute_record_hash(
+            tenant_id=self.tenant.id,
+            record_type="alta",
+            full_number=second["full_number"],
+            amount_cents=second["amount_cents"],
+            issuer_nif="B12345678",
+            issued_at=issued,
+            previous_hash=second["previous_hash"],
+            order_id=self.order_paid2.id,
+        )
+        self.assertEqual(second["record_hash"], expected)
+
+    def test_immutability_blocks_delete_and_item_edit(self) -> None:
+        h = _bearer_headers(self.owner)
+        r = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/issue", headers=h)
+        self.assertEqual(r.status_code, 200, r.text)
+        d = self.client.delete(f"/orders/{self.order_paid.id}", headers=h)
+        self.assertEqual(d.status_code, 409, d.text)
+        u = self.client.put(
+            f"/orders/{self.order_paid.id}/items/{self.item.id}",
+            headers=h,
+            json={"quantity": 1},
+        )
+        self.assertEqual(u.status_code, 409, u.text)
+
+    def test_cancel_anulacion_then_delete_allowed(self) -> None:
+        h = _bearer_headers(self.owner)
+        r = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/issue", headers=h)
+        self.assertEqual(r.status_code, 200, r.text)
+        alta_hash = r.json()["record_hash"]
+        c = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/cancel", headers=h)
+        self.assertEqual(c.status_code, 200, c.text)
+        body = c.json()
+        self.assertEqual(body["record_type"], "anulacion")
+        self.assertEqual(body["previous_hash"], alta_hash)
+        self.assertTrue(body["full_number"].startswith("T-C"))
+        c2 = self.client.post(f"/orders/{self.order_paid.id}/fiscal-invoice/cancel", headers=h)
+        self.assertEqual(c2.status_code, 200, c2.text)
+        self.assertEqual(c2.json()["id"], body["id"])
+        d = self.client.delete(f"/orders/{self.order_paid.id}", headers=h)
+        self.assertEqual(d.status_code, 200, d.text)
+
+    def test_live_mode_blocked_without_unlock(self) -> None:
+        from fastapi import HTTPException
+
+        from app.fiscal_invoice_service import assert_fiscal_mode_allowed
+
+        with mock.patch("app.fiscal_invoice_service.settings") as s:
+            s.fiscal_live_unlock = False
+            s.fiscal_middleware_base_url = ""
+            with self.assertRaises(HTTPException) as ctx:
+                assert_fiscal_mode_allowed("live")
+            self.assertEqual(ctx.exception.status_code, 400)
+
+        h = _bearer_headers(self.owner)
+        r = self.client.put(
+            "/tenant/settings",
+            headers=h,
+            json={"fiscal_mode": "live"},
+        )
+        self.assertEqual(r.status_code, 400, r.text)
 
     def test_issue_pending_order_400(self) -> None:
         h = _bearer_headers(self.owner)

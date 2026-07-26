@@ -15,7 +15,8 @@ from datetime import date, timedelta, datetime, time, timezone
 
 import requests
 from zoneinfo import ZoneInfo
-from io import BytesIO
+import csv
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import Annotated, Any, Dict, List, Tuple
 from urllib.parse import quote
@@ -65,7 +66,14 @@ from .clock_qr_util import (
     generate_clock_qr_token,
     hash_clock_qr_token,
 )
-from .fiscal_invoice_service import fiscal_invoice_public_dict, issue_or_get_fiscal_invoice
+from .fiscal_invoice_service import (
+    assert_fiscal_mode_allowed,
+    assert_order_fiscally_mutable,
+    cancel_fiscal_invoice,
+    fiscal_invoice_public_dict,
+    get_fiscal_alta,
+    issue_or_get_fiscal_invoice,
+)
 from .inventory_service import deduct_inventory_for_order
 from . import inventory_models
 from .translation_service import TranslationService
@@ -86,6 +94,7 @@ from .tenant_currency import (
     sync_tenant_currency_symbol_from_code,
 )
 from . import restaurant_groups as rg
+from . import loyalty_service as loyalty_svc
 from .tenant_ui_modules import (
     merge_tenant_ui_modules_patch,
     new_tenant_ui_modules_stored,
@@ -980,8 +989,9 @@ def _guest_order_payable_total_cents(session: Session, order: models.Order) -> i
     if _order_channel_value(order) == models.OrderChannel.satisfecho_delivery.value:
         from app.delivery_order_service import order_delivery_fee_cents
 
-        return subtotal + order_delivery_fee_cents(order)
-    return subtotal
+        subtotal = subtotal + order_delivery_fee_cents(order)
+    discount = max(0, int(getattr(order, "loyalty_discount_cents", 0) or 0))
+    return max(0, subtotal - discount)
 
 
 def _take_away_table_token(session: Session, tenant_id: int) -> str | None:
@@ -1678,6 +1688,459 @@ def list_tenant_guest_feedback(
         .limit(limit)
     ).all()
     return [_guest_feedback_to_dict(session, gf) for gf in rows]
+
+
+def _guest_feedback_cutoff(days: int | None) -> datetime | None:
+    """UTC lower bound for created_at when days is set; None means all time."""
+    if days is None:
+        return None
+    return datetime.now(timezone.utc) - timedelta(days=int(days))
+
+
+def _guest_feedback_rows_for_tenant(
+    session: Session,
+    tenant_id: int,
+    *,
+    days: int | None = None,
+    limit: int | None = None,
+) -> list[models.GuestFeedback]:
+    q = select(models.GuestFeedback).where(models.GuestFeedback.tenant_id == tenant_id)
+    cutoff = _guest_feedback_cutoff(days)
+    if cutoff is not None:
+        q = q.where(models.GuestFeedback.created_at >= cutoff)
+    q = q.order_by(models.GuestFeedback.created_at.desc())
+    if limit is not None:
+        q = q.limit(limit)
+    return list(session.exec(q).all())
+
+
+def _guest_feedback_summary_payload(rows: list[models.GuestFeedback], days: int | None) -> dict:
+    """Aggregate counts / averages / daily trend from in-memory rows (tenant-scoped)."""
+    rating_counts = {str(i): 0 for i in range(1, 6)}
+    total = len(rows)
+    rating_sum = 0
+    with_comment = 0
+    with_contact = 0
+    by_day_map: dict[str, list[int]] = {}
+
+    for gf in rows:
+        r = int(gf.rating)
+        if 1 <= r <= 5:
+            rating_counts[str(r)] = rating_counts.get(str(r), 0) + 1
+            rating_sum += r
+        if gf.comment and str(gf.comment).strip():
+            with_comment += 1
+        if gf.contact_name or gf.contact_email or gf.contact_phone:
+            with_contact += 1
+        if gf.created_at:
+            day_key = gf.created_at.astimezone(timezone.utc).date().isoformat()
+            by_day_map.setdefault(day_key, []).append(r)
+
+    by_day = [
+        {
+            "date": day,
+            "count": len(ratings),
+            "average_rating": round(sum(ratings) / len(ratings), 2) if ratings else None,
+        }
+        for day, ratings in sorted(by_day_map.items())
+    ]
+
+    return {
+        "days": days,
+        "total_count": total,
+        "average_rating": round(rating_sum / total, 2) if total else None,
+        "rating_counts": rating_counts,
+        "with_comment_count": with_comment,
+        "with_contact_count": with_contact,
+        "by_day": by_day,
+    }
+
+
+@app.get("/tenant/guest-feedback/summary")
+@limiter.limit(
+    f"{getattr(settings, 'rate_limit_admin_per_minute', 30)}/minute",
+    key_func=_rate_limit_key_user,
+)
+def guest_feedback_summary(
+    request: Request,
+    response: Response,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.RESERVATION_READ))],
+    session: Session = Depends(get_session),
+    days: int = Query(90, ge=1, le=730, description="Lookback window in days (UTC)"),
+) -> dict:
+    """Staff analytics: averages, star histogram, and daily counts for the lookback window."""
+    if current_user.tenant_id is None:
+        raise HTTPException(status_code=403, detail="Tenant required")
+    rows = _guest_feedback_rows_for_tenant(session, current_user.tenant_id, days=days)
+    return _guest_feedback_summary_payload(rows, days)
+
+
+@app.get("/tenant/guest-feedback/export")
+@limiter.limit(
+    f"{getattr(settings, 'rate_limit_admin_per_minute', 30)}/minute",
+    key_func=_rate_limit_key_user,
+)
+def export_tenant_guest_feedback(
+    request: Request,
+    response: Response,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.RESERVATION_READ))],
+    session: Session = Depends(get_session),
+    days: int | None = Query(
+        None,
+        ge=1,
+        le=730,
+        description="Optional lookback window in days (UTC). Omit for all rows (capped).",
+    ),
+    limit: int = Query(5000, ge=1, le=10000),
+) -> StreamingResponse:
+    """CSV export of guest feedback for the current tenant (UTF-8 BOM for Excel)."""
+    if current_user.tenant_id is None:
+        raise HTTPException(status_code=403, detail="Tenant required")
+    rows = _guest_feedback_rows_for_tenant(
+        session, current_user.tenant_id, days=days, limit=limit
+    )
+    # Oldest first for readable exports
+    rows = list(reversed(rows))
+
+    keys = [
+        "id",
+        "created_at",
+        "rating",
+        "comment",
+        "contact_name",
+        "contact_email",
+        "contact_phone",
+        "reservation_id",
+        "reservation_date",
+        "reservation_time",
+        "reservation_customer_name",
+    ]
+    header = [
+        "id",
+        "created_at",
+        "rating",
+        "comment",
+        "contact_name",
+        "contact_email",
+        "contact_phone",
+        "reservation_id",
+        "reservation_date",
+        "reservation_time",
+        "reservation_customer_name",
+    ]
+    buf = StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(header)
+    for gf in rows:
+        d = _guest_feedback_to_dict(session, gf)
+        writer.writerow([d.get(k) if d.get(k) is not None else "" for k in keys])
+
+    payload = buf.getvalue().encode("utf-8-sig")
+    fn = f"guest-feedback-{current_user.tenant_id}.csv"
+    return StreamingResponse(
+        iter([payload]),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{fn}"'},
+    )
+
+
+# ============ CLUB LOYALTY (#327) ============
+
+
+@app.get("/public/tenants/{tenant_id}/loyalty")
+@limiter.limit(public_menu_ip_limit)
+def public_loyalty_program_info(
+    request: Request,
+    tenant_id: int,
+    session: Session = Depends(get_session),
+) -> dict:
+    """Public program summary when enabled (join page)."""
+    tenant = session.get(models.Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    program = loyalty_svc.get_program(session, tenant_id)
+    if not program or not program.enabled:
+        raise HTTPException(status_code=404, detail="Loyalty program is not enabled")
+    return {
+        "tenant_id": tenant_id,
+        "tenant_name": tenant.name,
+        "program_name": program.program_name,
+        "mode": program.mode,
+        "earn_units_per_order": program.earn_units_per_order,
+        "redemption_threshold": program.redemption_threshold,
+        "reward_discount_cents": program.reward_discount_cents,
+        "wallet": loyalty_svc.wallet_pass_status(),
+    }
+
+
+@app.post("/public/tenants/{tenant_id}/loyalty/join")
+@limiter.limit(
+    f"{getattr(settings, 'rate_limit_loyalty_join_per_hour', 20)}/hour",
+    key_func=_rate_limit_key,
+)
+def public_loyalty_join(
+    request: Request,
+    tenant_id: int,
+    body: models.LoyaltyJoinCreate,
+    session: Session = Depends(get_session),
+) -> dict:
+    tenant = session.get(models.Tenant, tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    email = normalize_email_address(body.email) if body.email else None
+    phone = None
+    if body.phone:
+        try:
+            phone = normalize_phone_e164(body.phone, settings.default_phone_country)
+        except ValueError:
+            phone = body.phone.strip()[:40] or None
+    membership = loyalty_svc.join_program(
+        session,
+        tenant_id=tenant_id,
+        display_name=body.display_name,
+        email=email,
+        phone=phone,
+    )
+    session.commit()
+    session.refresh(membership)
+    return {
+        "ok": True,
+        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "wallet": loyalty_svc.wallet_pass_status(),
+    }
+
+
+@app.get("/public/loyalty/members/{member_token}")
+@limiter.limit(public_menu_ip_limit)
+def public_loyalty_balance(
+    request: Request,
+    member_token: str,
+    session: Session = Depends(get_session),
+) -> dict:
+    membership = session.exec(
+        select(models.LoyaltyMembership).where(
+            models.LoyaltyMembership.member_token == member_token
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    program = session.get(models.LoyaltyProgram, membership.program_id)
+    return {
+        "membership": loyalty_svc.membership_to_dict(membership, include_token=False),
+        "program": loyalty_svc.program_to_dict(program) if program else None,
+        "wallet": loyalty_svc.wallet_pass_status(),
+    }
+
+
+@app.get("/public/loyalty/members/{member_token}/wallet")
+@limiter.limit(public_menu_ip_limit)
+def public_loyalty_wallet_status(
+    request: Request,
+    member_token: str,
+    session: Session = Depends(get_session),
+) -> dict:
+    membership = session.exec(
+        select(models.LoyaltyMembership).where(
+            models.LoyaltyMembership.member_token == member_token
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    status_payload = loyalty_svc.wallet_pass_status()
+    status_payload["membership_id"] = membership.id
+    return status_payload
+
+
+@app.get("/loyalty/program")
+def get_loyalty_program(
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    program = loyalty_svc.get_or_create_program(session, current_user.tenant_id)
+    session.commit()
+    session.refresh(program)
+    return {
+        **loyalty_svc.program_to_dict(program),
+        "wallet": loyalty_svc.wallet_pass_status(),
+        "join_path": f"/loyalty/{current_user.tenant_id}",
+    }
+
+
+@app.put("/loyalty/program")
+def update_loyalty_program(
+    body: models.LoyaltyProgramUpdate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_WRITE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    program = loyalty_svc.get_or_create_program(session, current_user.tenant_id)
+    if body.enabled is not None:
+        program.enabled = body.enabled
+    if body.program_name is not None:
+        name = body.program_name.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="program_name cannot be empty")
+        program.program_name = name[:120]
+    if body.mode is not None:
+        mode = body.mode.strip().lower()
+        if mode not in ("points", "stamps"):
+            raise HTTPException(status_code=400, detail="mode must be points or stamps")
+        program.mode = mode
+    if body.earn_units_per_order is not None:
+        program.earn_units_per_order = body.earn_units_per_order
+    if body.redemption_threshold is not None:
+        program.redemption_threshold = body.redemption_threshold
+    if body.reward_discount_cents is not None:
+        program.reward_discount_cents = body.reward_discount_cents
+    program.updated_at = datetime.now(timezone.utc)
+    session.add(program)
+    session.commit()
+    session.refresh(program)
+    return loyalty_svc.program_to_dict(program)
+
+
+@app.get("/loyalty/memberships")
+def list_loyalty_memberships(
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_READ))],
+    session: Session = Depends(get_session),
+    search: str | None = None,
+    limit: int = Query(default=100, ge=1, le=500),
+) -> list[dict]:
+    q = select(models.LoyaltyMembership).where(
+        models.LoyaltyMembership.tenant_id == current_user.tenant_id
+    )
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        q = q.where(
+            (models.LoyaltyMembership.display_name.ilike(term))
+            | (models.LoyaltyMembership.email.ilike(term))
+            | (models.LoyaltyMembership.phone.ilike(term))
+        )
+    q = q.order_by(models.LoyaltyMembership.joined_at.desc()).limit(limit)
+    rows = session.exec(q).all()
+    return [loyalty_svc.membership_to_dict(m, include_token=True) for m in rows]
+
+
+@app.get("/loyalty/memberships/{membership_id}")
+def get_loyalty_membership(
+    membership_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    membership = session.get(models.LoyaltyMembership, membership_id)
+    if not membership or membership.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    entries = session.exec(
+        select(models.LoyaltyLedgerEntry)
+        .where(models.LoyaltyLedgerEntry.membership_id == membership_id)
+        .order_by(models.LoyaltyLedgerEntry.created_at.desc())
+        .limit(50)
+    ).all()
+    return {
+        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "ledger": [loyalty_svc.ledger_to_dict(e) for e in entries],
+    }
+
+
+@app.post("/loyalty/memberships/{membership_id}/adjust")
+def adjust_loyalty_membership(
+    membership_id: int,
+    body: models.LoyaltyAdjustCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_WRITE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    membership = session.get(models.LoyaltyMembership, membership_id)
+    if not membership or membership.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    entry = loyalty_svc.adjust_balance(
+        session,
+        membership=membership,
+        delta_units=body.delta_units,
+        note=body.note,
+        created_by_user_id=current_user.id,  # type: ignore[arg-type]
+    )
+    session.commit()
+    session.refresh(membership)
+    return {
+        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "entry": loyalty_svc.ledger_to_dict(entry),
+    }
+
+
+@app.put("/orders/{order_id}/loyalty-membership")
+def set_order_loyalty_membership(
+    order_id: int,
+    body: models.OrderLoyaltyMembershipSet,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_REDEEM))],
+    session: Session = Depends(get_session),
+) -> dict:
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.paid_at or order.status == models.OrderStatus.paid:
+        raise HTTPException(status_code=400, detail="Cannot change loyalty member on a paid order")
+    mid = body.loyalty_membership_id
+    if mid is not None:
+        membership = session.get(models.LoyaltyMembership, mid)
+        if not membership or membership.tenant_id != current_user.tenant_id:
+            raise HTTPException(status_code=404, detail="Membership not found")
+        order.loyalty_membership_id = mid
+    else:
+        order.loyalty_membership_id = None
+    session.add(order)
+    session.commit()
+    return {
+        "order_id": order.id,
+        "loyalty_membership_id": order.loyalty_membership_id,
+        "loyalty_discount_cents": order.loyalty_discount_cents,
+        "loyalty_units_redeemed": order.loyalty_units_redeemed,
+    }
+
+
+@app.post("/orders/{order_id}/loyalty/redeem")
+def redeem_loyalty_on_order(
+    order_id: int,
+    body: models.LoyaltyRedeemCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.LOYALTY_REDEEM))],
+    session: Session = Depends(get_session),
+) -> dict:
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    membership: models.LoyaltyMembership | None = None
+    if body.membership_id is not None:
+        membership = session.get(models.LoyaltyMembership, body.membership_id)
+    elif body.member_token:
+        membership = session.exec(
+            select(models.LoyaltyMembership).where(
+                models.LoyaltyMembership.member_token == body.member_token,
+                models.LoyaltyMembership.tenant_id == current_user.tenant_id,
+            )
+        ).first()
+    elif order.loyalty_membership_id:
+        membership = session.get(models.LoyaltyMembership, order.loyalty_membership_id)
+
+    if not membership or membership.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Membership not found")
+
+    result = loyalty_svc.redeem_on_order(
+        session,
+        order=order,
+        membership=membership,
+        created_by_user_id=current_user.id,
+    )
+    session.commit()
+    return result
 
 
 # ============ AUTH ============
@@ -3320,6 +3783,7 @@ def update_tenant_settings(
     if tenant_update.fiscal_mode is not None:
         fm = tenant_update.fiscal_mode.strip().lower() if isinstance(tenant_update.fiscal_mode, str) else ""
         if fm in ("off", "test", "live"):
+            assert_fiscal_mode_allowed(fm)
             tenant.fiscal_mode = fm
         elif fm == "":
             tenant.fiscal_mode = "off"
@@ -12745,7 +13209,8 @@ def list_orders(
             continue
         subtotal_cents = sum(item.price_cents * item.quantity for item in active_items)
         tip_amt = int(order.tip_amount_cents or 0)
-        total_cents = subtotal_cents + tip_amt
+        loyalty_discount = max(0, int(getattr(order, "loyalty_discount_cents", 0) or 0))
+        total_cents = max(0, subtotal_cents - loyalty_discount) + tip_amt
 
         # Product categories for kitchen/bar display filtering (one query per order)
         product_ids = list({i.product_id for i in items})
@@ -12840,6 +13305,9 @@ def list_orders(
             "external_order_ref": getattr(order, "external_order_ref", None),
             "items": order_items_json,
             "subtotal_cents": subtotal_cents,
+            "loyalty_membership_id": getattr(order, "loyalty_membership_id", None),
+            "loyalty_discount_cents": loyalty_discount,
+            "loyalty_units_redeemed": int(getattr(order, "loyalty_units_redeemed", 0) or 0),
             "tip_percent_applied": getattr(order, "tip_percent_applied", None),
             "tip_amount_cents": getattr(order, "tip_amount_cents", None),
             "tip_attributed_user_id": getattr(order, "tip_attributed_user_id", None),
@@ -12871,6 +13339,9 @@ def update_order_status(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    if status_update.status == models.OrderStatus.cancelled:
+        assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
 
     # Update order status
     order.status = status_update.status
@@ -12962,6 +13433,16 @@ def mark_order_paid(
     session.add(order)
     session.commit()
 
+    # Club loyalty: earn once per paid order when membership linked (#327)
+    try:
+        session.refresh(order)
+        if loyalty_svc.award_on_order_paid(session, order):
+            session.commit()
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "loyalty award failed after mark-paid order_id=%s", order.id
+        )
+
     # Publish update
     table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
     publish_order_update(current_user.tenant_id, {
@@ -13037,6 +13518,15 @@ def finish_order(
 
     session.add(order)
     session.commit()
+
+    try:
+        session.refresh(order)
+        if loyalty_svc.award_on_order_paid(session, order):
+            session.commit()
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "loyalty award failed after finish order_id=%s", order.id
+        )
 
     table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
     publish_order_update(
@@ -13125,6 +13615,7 @@ def delete_order(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.deleted_at is not None:
         raise HTTPException(status_code=400, detail="Order is already deleted")
+    assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
 
     order.deleted_at = datetime.now(timezone.utc)
     order.deleted_by_user_id = current_user.id
@@ -13162,6 +13653,7 @@ def set_order_billing_customer(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Order not found")
+    assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
     customer_id = body.billing_customer_id
     if customer_id is not None:
         customer = session.get(models.BillingCustomer, customer_id)
@@ -13188,12 +13680,7 @@ def get_order_fiscal_invoice(
     ).first()
     if not order or order.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Order not found")
-    fi = session.exec(
-        select(models.FiscalInvoice).where(
-            models.FiscalInvoice.tenant_id == current_user.tenant_id,
-            models.FiscalInvoice.order_id == order.id,
-        )
-    ).first()
+    fi = get_fiscal_alta(session, current_user.tenant_id, order.id)
     if not fi:
         raise HTTPException(status_code=404, detail="Fiscal invoice not found")
     return fiscal_invoice_public_dict(fi)
@@ -13220,6 +13707,32 @@ def issue_order_fiscal_invoice(
     if not order or order.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Order not found")
     fi = issue_or_get_fiscal_invoice(session, tenant, order)
+    session.commit()
+    session.refresh(fi)
+    return fiscal_invoice_public_dict(fi)
+
+
+@app.post("/orders/{order_id}/fiscal-invoice/cancel")
+def cancel_order_fiscal_invoice(
+    order_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Issue anulación (credit-note cancel) for the order's fiscal alta; idempotent once cancelled."""
+    tenant = session.exec(
+        select(models.Tenant).where(models.Tenant.id == current_user.tenant_id)
+    ).first()
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    fi = cancel_fiscal_invoice(session, tenant, order)
     session.commit()
     session.refresh(fi)
     return fiscal_invoice_public_dict(fi)
@@ -13651,7 +14164,8 @@ def cancel_order_item_staff(
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    
+    assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
+
     item = session.exec(
         select(models.OrderItem).where(
             models.OrderItem.id == item_id,
@@ -13732,6 +14246,7 @@ def update_order_item_staff(
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
     
     item = session.exec(
         select(models.OrderItem).where(
@@ -13824,7 +14339,8 @@ def remove_order_item_staff(
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    
+    assert_order_fiscally_mutable(session, current_user.tenant_id, order.id)
+
     item = session.exec(
         select(models.OrderItem).where(
             models.OrderItem.id == item_id,
@@ -14361,6 +14877,15 @@ def confirm_payment(
         session.add(order)
         session.commit()
 
+        try:
+            session.refresh(order)
+            if loyalty_svc.award_on_order_paid(session, order):
+                session.commit()
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "loyalty award failed after stripe confirm order_id=%s", order.id
+            )
+
         if (
             was_unpaid
             and table is None
@@ -14563,6 +15088,15 @@ def confirm_revolut_payment(
     order.notes = f"{order.notes or ''}\n[PAID: Revolut {order.revolut_order_id}]".strip()
     session.add(order)
     session.commit()
+
+    try:
+        session.refresh(order)
+        if loyalty_svc.award_on_order_paid(session, order):
+            session.commit()
+    except Exception:
+        logging.getLogger(__name__).exception(
+            "loyalty award failed after revolut confirm order_id=%s", order.id
+        )
 
     if (
         was_unpaid

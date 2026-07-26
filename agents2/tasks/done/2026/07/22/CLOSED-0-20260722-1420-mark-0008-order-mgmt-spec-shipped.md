@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Docs task to mark `docs/0008-order-management-logic.md` as shipped design reference so agents stop treating it as open backlog.
+- **What was done:** Added shipped-core / design-reference banner and historical Problem Statement framing; updated `docs/README.md` 0008 index row; no product code changes.
+- **What was tested:** Docs checks (banner, framing, README cue, no back/front scope, no bulk rewrite) — overall **PASS**.
+- **Why closed:** All pass/fail criteria met; tester handed off as CLOSED.
+- **Closed at (UTC):** 2026-07-26 14:36
+---
+
 # Mark 0008 order-management spec as shipped design
 
 ## GitHub Issues
@@ -62,3 +72,21 @@ Docs-only; no compose / Puppeteer required.
 | README 0008 row has shipped / design-reference cue | Yes |
 | No `back/` or `front/` diffs | Yes |
 | Spec body not bulk-rewritten | Yes |
+
+---
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26 14:36:11 UTC start; finished ~14:37 UTC. Log window N/A (docs-only).
+2. **Environment:** branch `development` (synced via `./scripts/git-sync-development.sh`); no compose / BASE_URL (docs-only verification).
+3. **What was tested:** Banner + historical framing in `docs/0008-order-management-logic.md`; README index cue; no product-code scope for this task; no bulk rewrite of the ~1.4k-line body.
+4. **Results:**
+   - Banner present in first screenful — **PASS** — `head -n 20` shows `Status: shipped core / design reference` with live `session_id` / `added_by_session` and “do not re-open … as backlog”.
+   - Shared-order problem framed as historical / not backlog — **PASS** — Problem Statement marked *(Historical framing.)* plus *(Core fix shipped: … via `session_id`.)*.
+   - README 0008 row has shipped / design-reference cue — **PASS** — `docs/README.md` line 80: “**shipped** session rules / design reference … — not an open backlog.”
+   - No `back/` / `front/` diffs for this change — **PASS** — commit `e846f0d3` (*Release 2.1.124: mark 0008…*) touches `docs/0008-…`, `docs/README.md`, changelog/version only; no app logic. Unrelated uncommitted `back/`/`front/` WIP from other issues (#325/#326/#327) is out of scope for this docs task.
+   - Spec body not bulk-rewritten — **PASS** — still 1438 lines; commit diff for `docs/0008-order-management-logic.md` is +8/− few lines (banner + framing only).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** The 0008 spec now clearly reads as shipped design reference rather than open backlog, which should stop agents from re-litigating session isolation. README index matches. No further work needed on this task.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts:** N/A — docs-only; evidence from `head`/`rg` and `git show e846f0d3 --stat`.

@@ -70,6 +70,11 @@ class Permission(str, Enum):
     BILLING_CUSTOMER_READ = "billing_customer:read"
     BILLING_CUSTOMER_WRITE = "billing_customer:write"
 
+    # Club loyalty (#327)
+    LOYALTY_READ = "loyalty:read"
+    LOYALTY_WRITE = "loyalty:write"  # program config + manual adjust (owner/admin)
+    LOYALTY_REDEEM = "loyalty:redeem"  # apply reward at checkout (waiter+)
+
     # Working plan (shift schedule for kitchen, bar, waiters)
     SCHEDULE_READ = "schedule:read"
     SCHEDULE_WRITE = "schedule:write"
@@ -117,6 +122,10 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
         Permission.ORDER_DELETE,
         Permission.BILLING_CUSTOMER_READ,
         Permission.BILLING_CUSTOMER_WRITE,
+        # Club loyalty
+        Permission.LOYALTY_READ,
+        Permission.LOYALTY_WRITE,
+        Permission.LOYALTY_REDEEM,
         # Inventory
         Permission.INVENTORY_READ,
         Permission.INVENTORY_WRITE,
@@ -178,6 +187,8 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
         Permission.ORDER_REMOVE_ITEM,
         Permission.BILLING_CUSTOMER_READ,
         Permission.BILLING_CUSTOMER_WRITE,
+        Permission.LOYALTY_READ,
+        Permission.LOYALTY_REDEEM,
         # Working plan (add/edit shifts)
         Permission.SCHEDULE_READ,
         Permission.SCHEDULE_WRITE,
@@ -198,6 +209,7 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
         # Orders (view only)
         Permission.ORDER_READ,
         Permission.BILLING_CUSTOMER_READ,
+        Permission.LOYALTY_READ,
         # Working plan (add/edit shifts)
         Permission.SCHEDULE_READ,
         Permission.SCHEDULE_WRITE,

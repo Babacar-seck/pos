@@ -314,6 +314,15 @@ def delete_tenant_cascade(session: Session, tenant_id: int) -> list[str]:
     )
 
     session.exec(delete(models.GuestFeedback).where(models.GuestFeedback.tenant_id == tenant_id))
+    session.exec(
+        delete(models.LoyaltyLedgerEntry).where(models.LoyaltyLedgerEntry.tenant_id == tenant_id)
+    )
+    session.exec(
+        delete(models.LoyaltyMembership).where(models.LoyaltyMembership.tenant_id == tenant_id)
+    )
+    session.exec(
+        delete(models.LoyaltyProgram).where(models.LoyaltyProgram.tenant_id == tenant_id)
+    )
     session.exec(delete(models.Reservation).where(models.Reservation.tenant_id == tenant_id))
     session.exec(delete(models.Shift).where(models.Shift.tenant_id == tenant_id))
     session.exec(delete(models.WorkSession).where(models.WorkSession.tenant_id == tenant_id))

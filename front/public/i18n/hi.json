@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "अनुरोध पूरा नहीं हो सका। कृपया पुनः प्रयास करें।",
     "ENTER_FULLSCREEN": "पूर्ण स्क्रीन",
     "EXIT_FULLSCREEN": "पूर्ण स्क्रीन से बाहर निकलें",
-    "IMAGE_FILE_TOO_LARGE": "फ़ाइल {{maxMb}} MB से छोटी होनी चाहिए।"
+    "IMAGE_FILE_TOO_LARGE": "फ़ाइल {{maxMb}} MB से छोटी होनी चाहिए।",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "रेस्तरां नहीं मिला।",
@@ -272,7 +273,7 @@
     "FEAT_INVENTORY_TITLE": "Inventory",
     "FEAT_INVENTORY_DESC": "Track stock, suppliers, purchase orders, and inventory reports.",
     "FEAT_INVOICING_TITLE": "Invoice customers",
-    "FEAT_INVOICING_DESC": "Billing customers and tax invoice data for B2B or fiscal workflows.",
+    "FEAT_INVOICING_DESC": "Billing customers plus Spain VeriFactu preparation (test mode, hash chain, QR). Live AEAT filing requires certified middleware — not claimed as certified yet.",
     "FEAT_CONTRACTS_TITLE": "Staff contracts",
     "FEAT_CONTRACTS_DESC": "Store and manage staff employment contracts and templates.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "रेस्तराँ समूह",
@@ -1058,7 +1059,11 @@
     "DELIVERY_CREATED": "डिलीवरी ऑर्डर बन गया",
     "DELIVERY_CREATE_FAILED": "डिलीवरी ऑर्डर नहीं बन सका",
     "DELIVERY_UPDATED": "डिलीवरी विवरण अपडेट हुए",
-    "DELIVERY_UPDATE_FAILED": "डिलीवरी विवरण अपडेट नहीं हो सके"
+    "DELIVERY_UPDATE_FAILED": "डिलीवरी विवरण अपडेट नहीं हो सके",
+    "LOYALTY_DISCOUNT": "Loyalty discount",
+    "LOYALTY_MEMBER_TOKEN": "Loyalty member token",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Paste member token from join / card link",
+    "LOYALTY_REDEEM": "Redeem loyalty reward"
   },
   "CUSTOMERS": {
     "TITLE": "ग्राहक (इनवॉइस)",
@@ -1487,7 +1492,21 @@
     "QR_CARD_HINT": "मेहमान सार्वजनिक फॉर्म खोने के लिए स्कैन करें। टेबल/काउंटर के लिए «QR प्रिंट करें» से साफ़ पृष्ठ।",
     "COPY_FEEDBACK_URL": "लिंक कॉपी करें",
     "PRINT_QR": "QR प्रिंट करें",
-    "URL_COPIED": "लिंक क्लिपबोर्ड पर कॉपी हो गया।"
+    "URL_COPIED": "लिंक क्लिपबोर्ड पर कॉपी हो गया।",
+    "EXPORT_CSV": "CSV निर्यात",
+    "EXPORTING": "निर्यात हो रहा है…",
+    "ANALYTICS_TITLE": "रुझान",
+    "LOOKBACK": "अवधि",
+    "DAYS_30": "30 दिन",
+    "DAYS_90": "90 दिन",
+    "DAYS_365": "12 महीने",
+    "STAT_TOTAL": "प्रतिक्रियाएँ",
+    "STAT_AVERAGE": "औसत रेटिंग",
+    "STAT_WITH_COMMENT": "टिप्पणी सहित",
+    "STAT_WITH_CONTACT": "संपर्क सहित",
+    "RATING_DISTRIBUTION": "रेटिंग वितरण",
+    "DAILY_TREND": "दैनिक मात्रा (अवधि के अंतिम 14 दिन)",
+    "TREND_EMPTY": "इस अवधि में कोई सबमिशन नहीं।"
   },
   "RESERVATIONS": {
     "TITLE": "आरक्षण",
@@ -1989,11 +2008,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API Secret",
     "REVOLUT_MERCHANT_SECRET_HINT": "Revolut Business से मर्चेंट सीक्रेट। वर्तमान रखने के लिए खाली छोड़ें। ग्राहक मेनू पर Pay with Revolut सक्षम करता है।",
     "FISCAL_INVOICING_TITLE": "Fiscal invoicing (Spain / VeriFactu preparation)",
-    "FISCAL_INVOICING_DESC": "When enabled, printing a Factura requests a server-issued fiscal record and adds QR code and disclaimer text. AEAT submission is not performed until wired per official technical documentation.",
+    "FISCAL_INVOICING_DESC": "When enabled (test), printing a Factura issues a server fiscal record with hash chain, AEAT ValidarQR URL, and sandbox submit. Live mode stays locked until certified middleware is configured.",
     "FISCAL_MODE": "Fiscal mode",
     "FISCAL_MODE_OFF": "Off (browser invoice only)",
-    "FISCAL_MODE_TEST": "Test — stub issuance, no AEAT HTTP call",
-    "FISCAL_MODE_LIVE": "Live — internal series/numbering (AEAT integration separate)",
+    "FISCAL_MODE_TEST": "Test — hash chain + sandbox submit (not production AEAT filing)",
+    "FISCAL_MODE_LIVE": "Live — blocked until certified middleware unlock (see docs)",
     "FISCAL_SERIES": "Invoice series prefix",
     "FISCAL_SERIES_HINT": "Prefix for sequential fiscal numbers (e.g. VF). The next number is allocated on the server when an invoice is issued.",
     "FISCAL_AEAT_SECRET": "AEAT API secret (optional)",
@@ -2128,7 +2147,22 @@
     "RESERVATION_CONFIRMATION_SUBJECT_PLACEHOLDER": "उदा. हमने आपके लिए एक टेबल आरक्षित की है",
     "RESERVATION_CONFIRMATION_BODY": "ईमेल मुख्य भाग",
     "RESERVATION_CONFIRMATION_BODY_HINT": "अनुमत नाम (प्रत्येक दोहरी कर्ली ब्रेस में): restaurant_name, customer_name, date, time, party_size, reservation_url, reservation_link_block_html (HTML ईमेल में क्लिक करने योग्य लिंक; यदि सेल्फ-सर्विस लिंक नहीं तो खाली), cancellation_policy, prepayment_text, prepayment_notice, dress_code, arrival_note, restaurant_phone, restaurant_email, restaurant_contact_block_html (HTML में tel/mailto के साथ फ़ोन व ईमेल ब्लॉक; टेक्स्ट में पंक्तियाँ; दोनों न हों तो खाली), google_maps_link_block_html, openstreetmap_link_block_html (संपर्क जानकारी में मानचित्र URL सेट होने पर HTML लिंक; अन्यथा खाली)। cancellation_policy आदि से आरक्षण सेटिंग्स का टेक्स्ट लें।",
-    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID."
+    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID.",
+    "LOYALTY_TAB": "Loyalty club",
+    "LOYALTY_TITLE": "Club loyalty",
+    "LOYALTY_SUBTITLE": "Points or stamps earned on paid orders. Guests join via a public link; staff redeem rewards at checkout.",
+    "LOYALTY_ENABLED": "Enable loyalty program",
+    "LOYALTY_PROGRAM_NAME": "Program name",
+    "LOYALTY_MODE": "Mode",
+    "LOYALTY_MODE_POINTS": "Points",
+    "LOYALTY_MODE_STAMPS": "Stamps",
+    "LOYALTY_EARN": "Units earned per paid order",
+    "LOYALTY_THRESHOLD": "Units needed to redeem",
+    "LOYALTY_REWARD_CENTS": "Reward discount (cents)",
+    "LOYALTY_JOIN_URL": "Public join URL",
+    "LOYALTY_MEMBERS": "Members",
+    "LOYALTY_MEMBERS_EMPTY": "No members yet.",
+    "LOYALTY_BALANCE": "Balance"
   },
   "PAYMENTS": {
     "PAYMENT": "भुगतान",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Loyalty club",
+    "INVALID_TENANT": "Invalid restaurant link.",
+    "NOT_ENABLED": "This restaurant has not enabled a loyalty club yet.",
+    "LEDE": "Earn {{earn}} {{mode}} per paid visit. Redeem at {{threshold}} for a reward.",
+    "NAME": "Your name",
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "CONTACT_HINT": "Provide email or phone so we can find your membership next time.",
+    "JOIN": "Join the club",
+    "JOINED": "Welcome — you are in the club.",
+    "BALANCE": "Balance",
+    "KEEP_LINK": "Save this card link to check your balance:",
+    "CARD_NOT_FOUND": "Membership not found."
   }
 }

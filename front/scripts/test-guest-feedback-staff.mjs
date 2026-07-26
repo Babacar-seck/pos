@@ -129,6 +129,14 @@ async function main() {
     const listPromise = page.waitForResponse(
       (res) =>
         res.url().includes('/tenant/guest-feedback') &&
+        !res.url().includes('/summary') &&
+        !res.url().includes('/export') &&
+        res.request().method() === 'GET',
+      { timeout: 20000 },
+    );
+    const summaryPromise = page.waitForResponse(
+      (res) =>
+        res.url().includes('/tenant/guest-feedback/summary') &&
         res.request().method() === 'GET',
       { timeout: 20000 },
     );
@@ -153,6 +161,15 @@ async function main() {
       console.log('   List GET OK:', listRes.status());
     }
 
+    const summaryRes = await summaryPromise.catch(() => null);
+    if (!summaryRes) {
+      hardFails.push('Staff guest-feedback summary GET missing');
+    } else if (summaryRes.status() >= 400) {
+      hardFails.push(`Staff guest-feedback summary GET failed: HTTP ${summaryRes.status()}`);
+    } else {
+      console.log('   Summary GET OK:', summaryRes.status());
+    }
+
     await page.waitForSelector('app-guest-feedback h1, .page-header h1', { timeout: 15000 });
     await sleep(500);
 
@@ -168,8 +185,21 @@ async function main() {
       const hasQrCard = !!document.querySelector('.feedback-qr-card, #feedback-qr-heading');
       const hasTable = !!document.querySelector('table.feedback-table');
       const hasEmpty = !!document.querySelector('.empty-state');
+      const hasAnalytics = !!document.querySelector('[data-testid="feedback-analytics"]');
+      const hasExport = !!document.querySelector('[data-testid="feedback-export-csv"]');
       const hasLoadError = /\bFEEDBACK\.LOAD_FAILED\b/.test(t);
-      return { h1, hasRawKeys, titleOk, hasQrCard, hasTable, hasEmpty, hasLoadError, textSample: t.slice(0, 200) };
+      return {
+        h1,
+        hasRawKeys,
+        titleOk,
+        hasQrCard,
+        hasTable,
+        hasEmpty,
+        hasAnalytics,
+        hasExport,
+        hasLoadError,
+        textSample: t.slice(0, 200),
+      };
     });
 
     if (shell.hasRawKeys || shell.hasLoadError) {
@@ -179,6 +209,16 @@ async function main() {
       hardFails.push(`Staff heading missing or unexpected: ${shell.h1 || '(empty)'}`);
     } else {
       console.log('   Heading:', shell.h1);
+    }
+    if (!shell.hasAnalytics) {
+      hardFails.push('Expected feedback analytics / trends panel');
+    } else {
+      console.log('   Analytics panel OK');
+    }
+    if (!shell.hasExport) {
+      hardFails.push('Expected Export CSV button');
+    } else {
+      console.log('   Export CSV button OK');
     }
     if (!shell.hasQrCard && !shell.hasTable && !shell.hasEmpty) {
       hardFails.push('Expected QR card, feedback table, or empty state');

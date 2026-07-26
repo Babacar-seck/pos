@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "无法完成请求，请重试。",
     "ENTER_FULLSCREEN": "全屏",
     "EXIT_FULLSCREEN": "退出全屏",
-    "IMAGE_FILE_TOO_LARGE": "文件必须小于 {{maxMb}} MB。"
+    "IMAGE_FILE_TOO_LARGE": "文件必须小于 {{maxMb}} MB。",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "未找到餐厅。",
@@ -272,7 +273,7 @@
     "FEAT_INVENTORY_TITLE": "Inventory",
     "FEAT_INVENTORY_DESC": "Track stock, suppliers, purchase orders, and inventory reports.",
     "FEAT_INVOICING_TITLE": "Invoice customers",
-    "FEAT_INVOICING_DESC": "Billing customers and tax invoice data for B2B or fiscal workflows.",
+    "FEAT_INVOICING_DESC": "开票客户与西班牙 VeriFactu 准备（测试模式、哈希链、二维码）。正式 AEAT 报送需经认证中间件——目前不宣称已认证。",
     "FEAT_CONTRACTS_TITLE": "Staff contracts",
     "FEAT_CONTRACTS_DESC": "Store and manage staff employment contracts and templates.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "餐厅集团",
@@ -1058,7 +1059,11 @@
     "DELIVERY_CREATED": "外卖订单已创建",
     "DELIVERY_CREATE_FAILED": "无法创建外卖订单",
     "DELIVERY_UPDATED": "外卖信息已更新",
-    "DELIVERY_UPDATE_FAILED": "无法更新外卖信息"
+    "DELIVERY_UPDATE_FAILED": "无法更新外卖信息",
+    "LOYALTY_DISCOUNT": "Loyalty discount",
+    "LOYALTY_MEMBER_TOKEN": "Loyalty member token",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Paste member token from join / card link",
+    "LOYALTY_REDEEM": "Redeem loyalty reward"
   },
   "CUSTOMERS": {
     "TITLE": "客户（发票）",
@@ -1487,7 +1492,21 @@
     "QR_CARD_HINT": "顾客扫码打开公开反馈表。使用「打印二维码」可得到适合桌贴或收银台的简洁页面。",
     "COPY_FEEDBACK_URL": "复制链接",
     "PRINT_QR": "打印二维码",
-    "URL_COPIED": "链接已复制到剪贴板。"
+    "URL_COPIED": "链接已复制到剪贴板。",
+    "EXPORT_CSV": "导出 CSV",
+    "EXPORTING": "正在导出…",
+    "ANALYTICS_TITLE": "趋势",
+    "LOOKBACK": "时间范围",
+    "DAYS_30": "30 天",
+    "DAYS_90": "90 天",
+    "DAYS_365": "12 个月",
+    "STAT_TOTAL": "回复数",
+    "STAT_AVERAGE": "平均评分",
+    "STAT_WITH_COMMENT": "含评论",
+    "STAT_WITH_CONTACT": "含联系方式",
+    "RATING_DISTRIBUTION": "评分分布",
+    "DAILY_TREND": "每日量（范围内最近 14 天）",
+    "TREND_EMPTY": "此期间暂无提交。"
   },
   "RESERVATIONS": {
     "TITLE": "预订管理",
@@ -1989,11 +2008,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API Secret",
     "REVOLUT_MERCHANT_SECRET_HINT": "来自 Revolut Business 的商户密钥。留空则保留当前值。启用后顾客菜单可使用 Revolut 支付。",
     "FISCAL_INVOICING_TITLE": "财务发票（西班牙 / VeriFactu 前置准备）",
-    "FISCAL_INVOICING_DESC": "启用后，打印 Factura 时由服务器记录并附加二维码与声明文本。按官方文档完成 AEAT 集成前不会提交。",
+    "FISCAL_INVOICING_DESC": "测试模式下，打印 Factura 会生成带哈希链、AEAT ValidarQR URL 与沙箱提交的服务器财政记录。未配置认证中间件前，生产模式保持锁定。应用内不编造 AEAT SOAP。",
     "FISCAL_MODE": "财务模式",
     "FISCAL_MODE_OFF": "关（仅浏览器发票）",
-    "FISCAL_MODE_TEST": "测试 — 模拟开具，无 AEAT HTTP 调用",
-    "FISCAL_MODE_LIVE": "生产 — 内部编号（AEAT 单独集成）",
+    "FISCAL_MODE_TEST": "测试 — 哈希链 + 沙箱提交（非生产 AEAT 报送）",
+    "FISCAL_MODE_LIVE": "生产 — 在认证中间件解锁前不可用（见文档）",
     "FISCAL_SERIES": "发票序列前缀",
     "FISCAL_SERIES_HINT": "连续编号的前缀（如 VF）。下一个号由服务器在开具时分配。",
     "FISCAL_AEAT_SECRET": "AEAT API 密钥（可选）",
@@ -2128,7 +2147,22 @@
     "RESERVATION_CONFIRMATION_SUBJECT_PLACEHOLDER": "例如：我们已为您预留餐桌",
     "RESERVATION_CONFIRMATION_BODY": "邮件正文",
     "RESERVATION_CONFIRMATION_BODY_HINT": "允许的名称（每个用双花括号包裹）：restaurant_name、customer_name、date、time、party_size、reservation_url、reservation_link_block_html（HTML 邮件中的可点击链接；无自助链接时为空）、cancellation_policy、prepayment_text、prepayment_notice、dress_code、arrival_note、restaurant_phone、restaurant_email、restaurant_contact_block_html（电话与邮箱块：HTML 含 tel/mailto，纯文本为多行；两者皆空则为空）、google_maps_link_block_html、openstreetmap_link_block_html（在联系信息中配置了对应地图链接时输出 HTML 链接；否则为空）。可使用 cancellation_policy 等从「预订」设置段落引用文案。",
-    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID."
+    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID.",
+    "LOYALTY_TAB": "Loyalty club",
+    "LOYALTY_TITLE": "Club loyalty",
+    "LOYALTY_SUBTITLE": "Points or stamps earned on paid orders. Guests join via a public link; staff redeem rewards at checkout.",
+    "LOYALTY_ENABLED": "Enable loyalty program",
+    "LOYALTY_PROGRAM_NAME": "Program name",
+    "LOYALTY_MODE": "Mode",
+    "LOYALTY_MODE_POINTS": "Points",
+    "LOYALTY_MODE_STAMPS": "Stamps",
+    "LOYALTY_EARN": "Units earned per paid order",
+    "LOYALTY_THRESHOLD": "Units needed to redeem",
+    "LOYALTY_REWARD_CENTS": "Reward discount (cents)",
+    "LOYALTY_JOIN_URL": "Public join URL",
+    "LOYALTY_MEMBERS": "Members",
+    "LOYALTY_MEMBERS_EMPTY": "No members yet.",
+    "LOYALTY_BALANCE": "Balance"
   },
   "PAYMENTS": {
     "PAYMENT": "支付",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "离线模式 — 可排队现金销售，稍后同步。",
     "BANNER_DEGRADED": "无法连接服务器 — 离线工作；排队销售将在恢复后同步。",
     "BANNER_PENDING": "{{count}} 笔离线销售等待同步…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Loyalty club",
+    "INVALID_TENANT": "Invalid restaurant link.",
+    "NOT_ENABLED": "This restaurant has not enabled a loyalty club yet.",
+    "LEDE": "Earn {{earn}} {{mode}} per paid visit. Redeem at {{threshold}} for a reward.",
+    "NAME": "Your name",
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "CONTACT_HINT": "Provide email or phone so we can find your membership next time.",
+    "JOIN": "Join the club",
+    "JOINED": "Welcome — you are in the club.",
+    "BALANCE": "Balance",
+    "KEEP_LINK": "Save this card link to check your balance:",
+    "CARD_NOT_FOUND": "Membership not found."
   }
 }

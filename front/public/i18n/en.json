@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "We could not complete the request. Please try again.",
     "ENTER_FULLSCREEN": "Full screen",
     "EXIT_FULLSCREEN": "Exit full screen",
-    "IMAGE_FILE_TOO_LARGE": "File must be smaller than {{maxMb}} MB."
+    "IMAGE_FILE_TOO_LARGE": "File must be smaller than {{maxMb}} MB.",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "Restaurant not found.",
@@ -272,7 +273,7 @@
     "FEAT_INVENTORY_TITLE": "Inventory",
     "FEAT_INVENTORY_DESC": "Track stock, suppliers, purchase orders, and inventory reports.",
     "FEAT_INVOICING_TITLE": "Invoice customers",
-    "FEAT_INVOICING_DESC": "Billing customers and tax invoice data for B2B or fiscal workflows.",
+    "FEAT_INVOICING_DESC": "Billing customers plus Spain VeriFactu preparation (test mode, hash chain, QR). Live AEAT filing requires certified middleware — not claimed as certified yet.",
     "FEAT_CONTRACTS_TITLE": "Staff contracts",
     "FEAT_CONTRACTS_DESC": "Store and manage staff employment contracts and templates.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "Restaurant groups",
@@ -1058,7 +1059,11 @@
     "DELIVERY_CREATED": "Delivery order created",
     "DELIVERY_CREATE_FAILED": "Could not create delivery order",
     "DELIVERY_UPDATED": "Delivery details updated",
-    "DELIVERY_UPDATE_FAILED": "Could not update delivery details"
+    "DELIVERY_UPDATE_FAILED": "Could not update delivery details",
+    "LOYALTY_DISCOUNT": "Loyalty discount",
+    "LOYALTY_MEMBER_TOKEN": "Loyalty member token",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Paste member token from join / card link",
+    "LOYALTY_REDEEM": "Redeem loyalty reward"
   },
   "CUSTOMERS": {
     "TITLE": "Customers (Invoice)",
@@ -1487,7 +1492,21 @@
     "QR_CARD_HINT": "Guests scan this code to open your public feedback form. Use Print QR for a clean page to put on tables or near the register.",
     "COPY_FEEDBACK_URL": "Copy link",
     "PRINT_QR": "Print QR",
-    "URL_COPIED": "Link copied to clipboard."
+    "URL_COPIED": "Link copied to clipboard.",
+    "EXPORT_CSV": "Export CSV",
+    "EXPORTING": "Exporting…",
+    "ANALYTICS_TITLE": "Trends",
+    "LOOKBACK": "Lookback period",
+    "DAYS_30": "30 days",
+    "DAYS_90": "90 days",
+    "DAYS_365": "12 months",
+    "STAT_TOTAL": "Responses",
+    "STAT_AVERAGE": "Average rating",
+    "STAT_WITH_COMMENT": "With comment",
+    "STAT_WITH_CONTACT": "With contact",
+    "RATING_DISTRIBUTION": "Rating distribution",
+    "DAILY_TREND": "Daily volume (last 14 days in range)",
+    "TREND_EMPTY": "No submissions in this period."
   },
   "RESERVATIONS": {
     "TITLE": "Reservations",
@@ -1989,11 +2008,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API Secret",
     "REVOLUT_MERCHANT_SECRET_HINT": "Merchant secret from Revolut Business. Leave blank to keep current. Enables Pay with Revolut on the customer menu.",
     "FISCAL_INVOICING_TITLE": "Fiscal invoicing (Spain / VeriFactu preparation)",
-    "FISCAL_INVOICING_DESC": "When enabled, printing a Factura requests a server-issued fiscal record and adds QR code and mandatory disclaimer text. AEAT submission is not performed until wired per official technical documentation.",
+    "FISCAL_INVOICING_DESC": "When enabled (test), printing a Factura issues a server fiscal record with hash chain, AEAT ValidarQR URL, and sandbox submit. Live mode stays locked until certified middleware is configured. Direct AEAT SOAP is not invented in-app.",
     "FISCAL_MODE": "Fiscal mode",
     "FISCAL_MODE_OFF": "Off (browser invoice only)",
-    "FISCAL_MODE_TEST": "Test — stub issuance, no AEAT HTTP call",
-    "FISCAL_MODE_LIVE": "Live — internal series/numbering (AEAT integration separate)",
+    "FISCAL_MODE_TEST": "Test — hash chain + sandbox submit (not production AEAT filing)",
+    "FISCAL_MODE_LIVE": "Live — blocked until certified middleware unlock (see docs)",
     "FISCAL_SERIES": "Invoice series prefix",
     "FISCAL_SERIES_HINT": "Prefix for sequential fiscal numbers (e.g. VF). The next number is allocated on the server when an invoice is issued.",
     "FISCAL_AEAT_SECRET": "AEAT API secret (optional)",
@@ -2128,7 +2147,22 @@
     "RESERVATION_CONFIRMATION_SUBJECT_PLACEHOLDER": "e.g. We have reserved a table for you",
     "RESERVATION_CONFIRMATION_BODY": "Email body",
     "RESERVATION_CONFIRMATION_BODY_HINT": "Allowed names (wrap each in double curly braces): restaurant_name, customer_name, date, time, party_size, reservation_url, reservation_link_block_html (clickable link in HTML emails; empty if there is no self-service link), cancellation_policy, prepayment_text, prepayment_notice, dress_code, arrival_note, restaurant_phone, restaurant_email, restaurant_contact_block_html (phone and email block with tel/mailto in HTML and plain lines in text; empty if both phone and email are unset), google_maps_link_block_html, openstreetmap_link_block_html (map links when those URLs are set in Contact info; empty otherwise). Use cancellation_policy and similar to pull text from the Reservations settings section.",
-    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID."
+    "PUBLIC_GOOGLE_REVIEW_URL_HINT": "Paste the Google Place ID (e.g., 0x...) from Google Place ID Finder: https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder . The app will auto-generate your review URL: https://search.google.com/local/writereview?placeid=YOUR-ID.",
+    "LOYALTY_TAB": "Loyalty club",
+    "LOYALTY_TITLE": "Club loyalty",
+    "LOYALTY_SUBTITLE": "Points or stamps earned on paid orders. Guests join via a public link; staff redeem rewards at checkout.",
+    "LOYALTY_ENABLED": "Enable loyalty program",
+    "LOYALTY_PROGRAM_NAME": "Program name",
+    "LOYALTY_MODE": "Mode",
+    "LOYALTY_MODE_POINTS": "Points",
+    "LOYALTY_MODE_STAMPS": "Stamps",
+    "LOYALTY_EARN": "Units earned per paid order",
+    "LOYALTY_THRESHOLD": "Units needed to redeem",
+    "LOYALTY_REWARD_CENTS": "Reward discount (cents)",
+    "LOYALTY_JOIN_URL": "Public join URL",
+    "LOYALTY_MEMBERS": "Members",
+    "LOYALTY_MEMBERS_EMPTY": "No members yet.",
+    "LOYALTY_BALANCE": "Balance"
   },
   "PAYMENTS": {
     "PAYMENT": "Payment",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Loyalty club",
+    "INVALID_TENANT": "Invalid restaurant link.",
+    "NOT_ENABLED": "This restaurant has not enabled a loyalty club yet.",
+    "LEDE": "Earn {{earn}} {{mode}} per paid visit. Redeem at {{threshold}} for a reward.",
+    "NAME": "Your name",
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "CONTACT_HINT": "Provide email or phone so we can find your membership next time.",
+    "JOIN": "Join the club",
+    "JOINED": "Welcome — you are in the club.",
+    "BALANCE": "Balance",
+    "KEEP_LINK": "Save this card link to check your balance:",
+    "CARD_NOT_FOUND": "Membership not found."
   }
 }

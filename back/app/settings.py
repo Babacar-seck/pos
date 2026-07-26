@@ -213,6 +213,11 @@ class Settings(BaseSettings):
         validation_alias="RATE_LIMIT_GUEST_FEEDBACK_PER_HOUR",
         description="Max guest feedback submissions per IP per hour (public form)",
     )
+    rate_limit_loyalty_join_per_hour: int = Field(
+        default=20,
+        validation_alias="RATE_LIMIT_LOYALTY_JOIN_PER_HOUR",
+        description="Max loyalty join submissions per IP per hour (public form)",
+    )
     rate_limit_waiting_list_per_hour: int = Field(
         default=10,
         validation_alias="RATE_LIMIT_WAITING_LIST_PER_HOUR",
@@ -222,6 +227,46 @@ class Settings(BaseSettings):
         default=5,
         validation_alias="RATE_LIMIT_PASSWORD_RESET_PER_HOUR",
         description="Max password-reset email requests per IP per hour",
+    )
+
+    # Club loyalty wallet (optional; see docs/0066-club-loyalty.md — PassKit / Google Wallet)
+    loyalty_apple_pass_type_id: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_PASS_TYPE_ID"
+    )
+    loyalty_apple_team_id: str = Field(default="", validation_alias="LOYALTY_APPLE_TEAM_ID")
+    loyalty_apple_pass_cert_path: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_PASS_CERT_PATH"
+    )
+    loyalty_apple_pass_key_path: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_PASS_KEY_PATH"
+    )
+    loyalty_apple_wwdr_cert_path: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_WWDR_CERT_PATH"
+    )
+    loyalty_google_issuer_id: str = Field(
+        default="", validation_alias="LOYALTY_GOOGLE_ISSUER_ID"
+    )
+    loyalty_google_service_account_json: str = Field(
+        default="",
+        validation_alias="LOYALTY_GOOGLE_SERVICE_ACCOUNT_JSON",
+        description="Path to Google service-account JSON (never commit real keys)",
+    )
+
+    # VeriFactu / fiscal middleware (see docs/0065-verifactu-production.md)
+    fiscal_middleware_base_url: str = Field(
+        default="",
+        validation_alias="FISCAL_MIDDLEWARE_BASE_URL",
+        description="Optional certified middleware base URL; empty = local sandbox only",
+    )
+    fiscal_middleware_api_key: str = Field(
+        default="",
+        validation_alias="FISCAL_MIDDLEWARE_API_KEY",
+        description="API key / bearer for fiscal middleware (never commit real values)",
+    )
+    fiscal_live_unlock: bool = Field(
+        default=False,
+        validation_alias="FISCAL_LIVE_UNLOCK",
+        description="When true and middleware URL set, tenants may select fiscal_mode=live",
     )
 
     @model_validator(mode="after")
@@ -238,6 +283,7 @@ class Settings(BaseSettings):
             self.rate_limit_payment_per_order_per_hour = 100
             self.rate_limit_reservation_delay_per_hour = 200
             self.rate_limit_guest_feedback_per_hour = 200
+            self.rate_limit_loyalty_join_per_hour = 200
             self.rate_limit_waiting_list_per_hour = 200
             self.rate_limit_password_reset_per_hour = 100
         return self

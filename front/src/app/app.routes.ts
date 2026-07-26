@@ -72,6 +72,8 @@ export const routes: Routes = [
   { path: 'book/:tenantId', loadComponent: () => import('./book/book.component').then(m => m.BookComponent) },
   { path: 'waitlist/:tenantId', loadComponent: () => import('./waitlist-public/waitlist-public.component').then(m => m.WaitlistPublicComponent) },
   { path: 'feedback/:tenantId', loadComponent: () => import('./feedback-public/feedback-public.component').then(m => m.FeedbackPublicComponent) },
+  { path: 'loyalty/card/:memberToken', loadComponent: () => import('./loyalty-public/loyalty-card-public.component').then(m => m.LoyaltyCardPublicComponent) },
+  { path: 'loyalty/:tenantId', loadComponent: () => import('./loyalty-public/loyalty-public.component').then(m => m.LoyaltyPublicComponent) },
   // Public take-away / home ordering: list tenants with ordering link
   { path: 'orders', loadComponent: () => import('./orders-public/orders-public.component').then(m => m.OrdersPublicComponent) },
   // Staff reservations (must be before 'reservation' so /reservations matches here, not the public route)

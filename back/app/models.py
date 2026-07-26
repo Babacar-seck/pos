@@ -800,6 +800,58 @@ class GuestFeedback(TenantMixin, table=True):
     client_user_agent: str | None = Field(default=None, max_length=512)
 
 
+class LoyaltyProgram(TenantMixin, table=True):
+    """Per-tenant club loyalty config (points or stamps). One row per tenant (#327)."""
+
+    __tablename__ = "loyalty_program"
+    __table_args__ = (UniqueConstraint("tenant_id", name="uq_loyalty_program_tenant"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    enabled: bool = Field(default=False)
+    program_name: str = Field(default="Club", max_length=120)
+    mode: str = Field(default="points", max_length=16)  # points | stamps
+    earn_units_per_order: int = Field(default=1, ge=0)
+    redemption_threshold: int = Field(default=10, ge=1)
+    reward_discount_cents: int = Field(default=500, ge=0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyMembership(TenantMixin, table=True):
+    """Customer membership in a tenant loyalty program."""
+
+    __tablename__ = "loyalty_membership"
+
+    id: int | None = Field(default=None, primary_key=True)
+    program_id: int = Field(foreign_key="loyalty_program.id", index=True)
+    billing_customer_id: int | None = Field(
+        default=None, foreign_key="billing_customer.id", index=True
+    )
+    display_name: str = Field(max_length=200)
+    email: str | None = Field(default=None, max_length=320, index=True)
+    phone: str | None = Field(default=None, max_length=40, index=True)
+    member_token: str = Field(max_length=64, unique=True, index=True)
+    balance: int = Field(default=0, ge=0)
+    joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyLedgerEntry(TenantMixin, table=True):
+    """Append-only earn/redeem/adjust ledger. Balance never goes negative."""
+
+    __tablename__ = "loyalty_ledger_entry"
+
+    id: int | None = Field(default=None, primary_key=True)
+    membership_id: int = Field(foreign_key="loyalty_membership.id", index=True)
+    entry_type: str = Field(max_length=16)  # earn | redeem | adjust
+    units: int  # signed: earn +, redeem -
+    balance_after: int = Field(ge=0)
+    order_id: int | None = Field(default=None, foreign_key="order.id", index=True)
+    note: str | None = Field(default=None, max_length=500)
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class BillingCustomer(TenantMixin, table=True):
     """Customer registered for tax invoicing (Factura). Company details for printing invoices."""
     __tablename__ = "billing_customer"
@@ -873,6 +925,14 @@ class FiscalInvoice(SQLModel, table=True):
     response_payload: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     verification_qr_content: str = Field(default="", sa_column=Column(Text, nullable=False))
     verification_text: str = Field(default="", sa_column=Column(Text, nullable=False))
+    # alta | anulacion — see docs/0065-verifactu-production.md
+    record_type: str = Field(default="alta", max_length=16)
+    previous_hash: str = Field(default="", max_length=64)
+    record_hash: str = Field(default="", max_length=64)
+    cancels_fiscal_invoice_id: int | None = Field(default=None, foreign_key="fiscal_invoice.id")
+    amount_cents: int = Field(default=0)
+    submission_status: str = Field(default="local_only", max_length=32)
+    sandbox_submitted_at: datetime | None = Field(default=None)
 
 
 class Order(TenantMixin, table=True):
@@ -926,6 +986,13 @@ class Order(TenantMixin, table=True):
     customer_phone: str | None = Field(default=None, max_length=40)
     courier_user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
     delivery_fee_cents: int = Field(default=0)  # Snapshot of tenant delivery fee at create
+
+    # Club loyalty (#327): link member + pending redemption discount (pre-#322 promo engine)
+    loyalty_membership_id: int | None = Field(
+        default=None, foreign_key="loyalty_membership.id", index=True
+    )
+    loyalty_discount_cents: int = Field(default=0, ge=0)
+    loyalty_units_redeemed: int = Field(default=0, ge=0)
 
     items: list["OrderItem"] = Relationship(back_populates="order")
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
@@ -1140,6 +1207,45 @@ class GuestFeedbackCreate(SQLModel):
     contact_email: str | None = Field(default=None, max_length=320)
     contact_phone: str | None = Field(default=None, max_length=40)
     reservation_token: str | None = Field(default=None, max_length=128)
+
+
+class LoyaltyProgramUpdate(SQLModel):
+    """Staff PUT body for loyalty program settings."""
+
+    enabled: bool | None = None
+    program_name: str | None = Field(default=None, max_length=120)
+    mode: str | None = Field(default=None, max_length=16)
+    earn_units_per_order: int | None = Field(default=None, ge=0)
+    redemption_threshold: int | None = Field(default=None, ge=1)
+    reward_discount_cents: int | None = Field(default=None, ge=0)
+
+
+class LoyaltyJoinCreate(SQLModel):
+    """Public join body for /public/tenants/{id}/loyalty/join."""
+
+    display_name: str = Field(max_length=200)
+    email: str | None = Field(default=None, max_length=320)
+    phone: str | None = Field(default=None, max_length=40)
+
+
+class LoyaltyAdjustCreate(SQLModel):
+    """Staff manual balance adjustment (owner/admin)."""
+
+    delta_units: int
+    note: str | None = Field(default=None, max_length=500)
+
+
+class LoyaltyRedeemCreate(SQLModel):
+    """Staff redeem one reward onto an unpaid order."""
+
+    membership_id: int | None = None
+    member_token: str | None = Field(default=None, max_length=64)
+
+
+class OrderLoyaltyMembershipSet(SQLModel):
+    """Link or clear a loyalty membership on an unpaid order (for earn-on-paid)."""
+
+    loyalty_membership_id: int | None = None
 
 
 class PublicReservationCreate(SQLModel):

@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "Заявката не можа да бъде завършена. Моля, опитайте отново.",
     "ENTER_FULLSCREEN": "Цял екран",
     "EXIT_FULLSCREEN": "Изход от цял екран",
-    "IMAGE_FILE_TOO_LARGE": "Файлът трябва да е по-малък от {{maxMb}} MB."
+    "IMAGE_FILE_TOO_LARGE": "Файлът трябва да е по-малък от {{maxMb}} MB.",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "Обектът не е намерен.",
@@ -961,7 +962,11 @@
     "DELIVERY_CREATED": "Поръчката за доставка е създадена",
     "DELIVERY_CREATE_FAILED": "Неуспешно създаване на поръчка за доставка",
     "DELIVERY_UPDATED": "Данните за доставка са обновени",
-    "DELIVERY_UPDATE_FAILED": "Неуспешно обновяване на данните за доставка"
+    "DELIVERY_UPDATE_FAILED": "Неуспешно обновяване на данните за доставка",
+    "LOYALTY_DISCOUNT": "Loyalty discount",
+    "LOYALTY_MEMBER_TOKEN": "Loyalty member token",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Paste member token from join / card link",
+    "LOYALTY_REDEEM": "Redeem loyalty reward"
   },
   "CUSTOMERS": {
     "TITLE": "Клиенти (фактура)",
@@ -1390,7 +1395,21 @@
     "QR_CARD_HINT": "Гостите сканират кода за публична форма за обратна връзка. „Печат QR“ дава чиста страница за маси или каса.",
     "COPY_FEEDBACK_URL": "Копиране на връзка",
     "PRINT_QR": "Отпечатване на QR",
-    "URL_COPIED": "Връзката е копирана в клипборда"
+    "URL_COPIED": "Връзката е копирана в клипборда",
+    "EXPORT_CSV": "Експорт CSV",
+    "EXPORTING": "Експортиране…",
+    "ANALYTICS_TITLE": "Тенденции",
+    "LOOKBACK": "Период",
+    "DAYS_30": "30 дни",
+    "DAYS_90": "90 дни",
+    "DAYS_365": "12 месеца",
+    "STAT_TOTAL": "Отговори",
+    "STAT_AVERAGE": "Средна оценка",
+    "STAT_WITH_COMMENT": "С коментар",
+    "STAT_WITH_CONTACT": "С контакт",
+    "RATING_DISTRIBUTION": "Разпределение на оценките",
+    "DAILY_TREND": "Дневен обем (последните 14 дни в периода)",
+    "TREND_EMPTY": "Няма изпращания в този период."
   },
   "RESERVATIONS": {
     "TITLE": "Резерви",
@@ -1892,11 +1911,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API Secret",
     "REVOLUT_MERCHANT_SECRET_HINT": "Таен ключ от Revolut Business. Празно = запазва текущия. Включва „Плати с Revolut“ в клиентското меню.",
     "FISCAL_INVOICING_TITLE": "Fiscal invoicing (Spain / VeriFactu preparation)",
-    "FISCAL_INVOICING_DESC": "When enabled, printing a Factura requests a server-issued fiscal record and adds QR code and disclaimer text. AEAT submission is not performed until wired per official technical documentation.",
+    "FISCAL_INVOICING_DESC": "When enabled (test), printing a Factura issues a server fiscal record with hash chain, AEAT ValidarQR URL, and sandbox submit. Live mode stays locked until certified middleware is configured.",
     "FISCAL_MODE": "Fiscal mode",
     "FISCAL_MODE_OFF": "Off (browser invoice only)",
-    "FISCAL_MODE_TEST": "Test — stub issuance, no AEAT HTTP call",
-    "FISCAL_MODE_LIVE": "Live — internal series/numbering (AEAT integration separate)",
+    "FISCAL_MODE_TEST": "Test — hash chain + sandbox submit (not production AEAT filing)",
+    "FISCAL_MODE_LIVE": "Live — blocked until certified middleware unlock (see docs)",
     "FISCAL_SERIES": "Invoice series prefix",
     "FISCAL_SERIES_HINT": "Prefix for sequential fiscal numbers (e.g. VF). The next number is allocated on the server when an invoice is issued.",
     "FISCAL_AEAT_SECRET": "AEAT API secret (optional)",
@@ -2031,7 +2050,22 @@
     "DELIVERY_RADIUS_HINT": "Optional. Uses restaurant latitude/longitude from location settings. Set 0 to disable. Guests must share location at checkout.",
     "DELIVERY_POSTAL_CODES": "Allowed postal codes",
     "DELIVERY_POSTAL_CODES_PH": "28001\n28002\n28003",
-    "DELIVERY_POSTAL_CODES_HINT": "One code per line (or comma-separated). Leave empty to allow any postal code. When set, guests must enter a matching code."
+    "DELIVERY_POSTAL_CODES_HINT": "One code per line (or comma-separated). Leave empty to allow any postal code. When set, guests must enter a matching code.",
+    "LOYALTY_TAB": "Loyalty club",
+    "LOYALTY_TITLE": "Club loyalty",
+    "LOYALTY_SUBTITLE": "Points or stamps earned on paid orders. Guests join via a public link; staff redeem rewards at checkout.",
+    "LOYALTY_ENABLED": "Enable loyalty program",
+    "LOYALTY_PROGRAM_NAME": "Program name",
+    "LOYALTY_MODE": "Mode",
+    "LOYALTY_MODE_POINTS": "Points",
+    "LOYALTY_MODE_STAMPS": "Stamps",
+    "LOYALTY_EARN": "Units earned per paid order",
+    "LOYALTY_THRESHOLD": "Units needed to redeem",
+    "LOYALTY_REWARD_CENTS": "Reward discount (cents)",
+    "LOYALTY_JOIN_URL": "Public join URL",
+    "LOYALTY_MEMBERS": "Members",
+    "LOYALTY_MEMBERS_EMPTY": "No members yet.",
+    "LOYALTY_BALANCE": "Balance"
   },
   "PAYMENTS": {
     "PAYMENT": "Плащане:",
@@ -2534,7 +2568,7 @@
     "FEAT_INVENTORY_TITLE": "Inventory",
     "FEAT_INVENTORY_DESC": "Track stock, suppliers, purchase orders, and inventory reports.",
     "FEAT_INVOICING_TITLE": "Invoice customers",
-    "FEAT_INVOICING_DESC": "Billing customers and tax invoice data for B2B or fiscal workflows.",
+    "FEAT_INVOICING_DESC": "Billing customers plus Spain VeriFactu preparation (test mode, hash chain, QR). Live AEAT filing requires certified middleware — not claimed as certified yet.",
     "FEAT_CONTRACTS_TITLE": "Staff contracts",
     "FEAT_CONTRACTS_DESC": "Store and manage staff employment contracts and templates.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "Групи ресторанти",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Loyalty club",
+    "INVALID_TENANT": "Invalid restaurant link.",
+    "NOT_ENABLED": "This restaurant has not enabled a loyalty club yet.",
+    "LEDE": "Earn {{earn}} {{mode}} per paid visit. Redeem at {{threshold}} for a reward.",
+    "NAME": "Your name",
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "CONTACT_HINT": "Provide email or phone so we can find your membership next time.",
+    "JOIN": "Join the club",
+    "JOINED": "Welcome — you are in the club.",
+    "BALANCE": "Balance",
+    "KEEP_LINK": "Save this card link to check your balance:",
+    "CARD_NOT_FOUND": "Membership not found."
   }
 }

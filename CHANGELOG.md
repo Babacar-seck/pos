@@ -8,8 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.134] - 2026-07-26
+
 ### Added
 
+- **Club loyalty (#327):** Tenant points/stamps program — Settings tab, public join `/loyalty/{tenantId}` + balance card, auto-earn once per paid order, staff redeem at checkout (`loyalty_discount_cents` until #322 promos), append-only ledger; Apple/Google Wallet issuance gated on certs (`docs/0066-club-loyalty.md`).
+- **VeriFactu (#326):** Production-path prep — Phase 0 build-vs-buy ADR (`docs/0065-verifactu-production.md`), internal hash chain, AEAT ValidarQR URL shape, test-mode sandbox submission, order immutability after fiscal issue, anulación (credit-note cancel) endpoint; `fiscal_mode: live` gated until middleware unlock. Official AEAT SOAP/huella still via certified middleware (not invented in-app).
+- **Guest feedback (#325):** Staff trends dashboard (averages, star distribution, daily volume) and CSV export on `/guest-feedback`; APIs `GET /tenant/guest-feedback/summary` and `GET /tenant/guest-feedback/export` (`docs/0064-guest-feedback-analytics.md`).
 - **Migration (#321):** CSV cutover toolkit for products + categories — sample CSV, idempotent CLI (`--dry-run` / `--apply`), validation report that refuses writes on bad rows, and cutover runbook (`docs/0062-pos-migration-import.md`).
 - **Inventory (#320):** Multi-warehouse (almacenes) MVP — tenant-scoped warehouses, per-location stock on receive/adjust, warehouse CRUD under Inventory, and stock dashboard filter by location.
 

@@ -222,7 +222,7 @@ npm run test:platform-operator --prefix front
 
 ### 2a4. Staff guest feedback
 
-Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), that `GET /tenant/guest-feedback` does not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
+Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), trends analytics panel, Export CSV control, that `GET /tenant/guest-feedback` and `GET /tenant/guest-feedback/summary` do not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
 
 ```bash
 npm run test:guest-feedback-staff --prefix front

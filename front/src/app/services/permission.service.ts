@@ -49,6 +49,10 @@ export type Permission =
   // Billing customers (Factura)
   | 'billing_customer:read'
   | 'billing_customer:write'
+  // Club loyalty
+  | 'loyalty:read'
+  | 'loyalty:write'
+  | 'loyalty:redeem'
   // Working plan (schedule)
   | 'schedule:read'
   | 'schedule:write'
@@ -73,6 +77,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission | '*'>> = {
     'order:read', 'order:update_status', 'order:item_status',
     'order:mark_paid', 'order:cancel', 'order:remove_item', 'order:delete',
     'billing_customer:read', 'billing_customer:write',
+    'loyalty:read', 'loyalty:write', 'loyalty:redeem',
     'inventory:read', 'inventory:write',
     'translation:read', 'translation:write',
     'report:read',
@@ -105,6 +110,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission | '*'>> = {
     'order:read', 'order:update_status', 'order:item_status',
     'order:mark_paid', 'order:remove_item',
     'billing_customer:read', 'billing_customer:write',
+    'loyalty:read', 'loyalty:redeem',
     'schedule:read', 'schedule:write',
     'staff_contract:read',
   ]),
@@ -117,6 +123,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission | '*'>> = {
     'floor:read',
     'order:read',
     'billing_customer:read',
+    'loyalty:read',
     'schedule:read', 'schedule:write',
     'staff_contract:read',
   ]),

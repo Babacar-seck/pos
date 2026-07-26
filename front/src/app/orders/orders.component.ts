@@ -1170,6 +1170,37 @@ ModuleRegistry.registerModules([
                 <p class="payment-amount-line">
                   {{ 'ORDERS.SUBTOTAL' | translate }}: {{ formatPrice(orderPaymentSubtotal(orderToMarkPaid()!)) }}
                 </p>
+                @if ((orderToMarkPaid()!.loyalty_discount_cents || 0) > 0) {
+                  <p class="payment-amount-line" data-testid="loyalty-discount-line">
+                    {{ 'ORDERS.LOYALTY_DISCOUNT' | translate }}:
+                    −{{ formatPrice(orderToMarkPaid()!.loyalty_discount_cents || 0) }}
+                  </p>
+                }
+                @if (canRedeemLoyalty() && !(orderToMarkPaid()!.loyalty_units_redeemed)) {
+                  <div class="form-group" data-testid="loyalty-redeem-block">
+                    <label for="loyalty-member-token">{{ 'ORDERS.LOYALTY_MEMBER_TOKEN' | translate }}</label>
+                    <input
+                      id="loyalty-member-token"
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="loyaltyRedeemToken"
+                      name="loyaltyRedeemToken"
+                      [placeholder]="'ORDERS.LOYALTY_MEMBER_TOKEN_HINT' | translate"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      style="margin-top: 0.5rem"
+                      [disabled]="!loyaltyRedeemToken.trim() || loyaltyRedeeming()"
+                      (click)="redeemLoyaltyForPaymentOrder()"
+                    >
+                      {{ 'ORDERS.LOYALTY_REDEEM' | translate }}
+                    </button>
+                    @if (loyaltyRedeemError()) {
+                      <p class="modal-hint" style="color:#b00020">{{ loyaltyRedeemError() }}</p>
+                    }
+                  </div>
+                }
                 @if (tipEntryModeOverpayment()) {
                   <p class="modal-hint">{{ 'ORDERS.OVERPAYMENT_PAYMENT_HINT' | translate }}</p>
                   <div class="form-group">
@@ -2316,6 +2347,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
   canUpdateStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status'));
   canUpdateItemStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:item_status'));
   canMarkPaid = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid'));
+  canRedeemLoyalty = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'loyalty:redeem'),
+  );
   /** Finish (deliver all + pay) needs both status updates and mark-paid (same as backend). */
   canFinishOrder = computed(() =>
     this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status') &&
@@ -2374,6 +2408,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
   paymentMethod = 'cash';
   /** Selected POS tip preset percent; 0 = no tip */
   paymentTipPercent = 0;
+  loyaltyRedeemToken = '';
+  loyaltyRedeeming = signal(false);
+  loyaltyRedeemError = signal('');
   /** When tip_entry_mode is overpayment: amount charged on card/terminal (major units, locale decimal) */
   paymentAmountPaidInput = '';
   /** Editable tip in major units (defaults from amount − subtotal) */
@@ -4202,13 +4239,44 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   paymentGrandTotalCents(order: Order | null | undefined): number {
     if (!order) return 0;
-    return this.orderPaymentSubtotal(order) + this.paymentTipPreviewCents(order);
+    const discount = Math.max(0, order.loyalty_discount_cents || 0);
+    return Math.max(0, this.orderPaymentSubtotal(order) - discount) + this.paymentTipPreviewCents(order);
   }
 
   paymentOverpaymentGrandTotalCents(): number {
     const order = this.orderToMarkPaid();
     if (!order) return 0;
-    return this.orderPaymentSubtotal(order) + this.parseMoneyMajorToCents(this.paymentTipAmountInput);
+    const discount = Math.max(0, order.loyalty_discount_cents || 0);
+    return (
+      Math.max(0, this.orderPaymentSubtotal(order) - discount) +
+      this.parseMoneyMajorToCents(this.paymentTipAmountInput)
+    );
+  }
+
+  redeemLoyaltyForPaymentOrder(): void {
+    const order = this.orderToMarkPaid();
+    const token = this.loyaltyRedeemToken.trim();
+    if (!order || !token || this.loyaltyRedeeming()) return;
+    this.loyaltyRedeeming.set(true);
+    this.loyaltyRedeemError.set('');
+    this.api.redeemLoyaltyOnOrder(order.id, { member_token: token }).subscribe({
+      next: (res) => {
+        this.loyaltyRedeeming.set(false);
+        order.loyalty_discount_cents = res.discount_cents;
+        order.loyalty_units_redeemed = res.units_redeemed;
+        order.loyalty_membership_id = res.membership_id;
+        order.total_cents = Math.max(
+          0,
+          this.orderPaymentSubtotal(order) - (res.discount_cents || 0),
+        ) + (order.tip_amount_cents || 0);
+        this.loyaltyRedeemToken = '';
+        this.orderToMarkPaid.set({ ...order });
+      },
+      error: (err) => {
+        this.loyaltyRedeeming.set(false);
+        this.loyaltyRedeemError.set(err?.error?.detail || 'Redeem failed');
+      },
+    });
   }
 
   confirmMarkAsPaid() {

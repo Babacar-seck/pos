@@ -15,7 +15,7 @@ Umbrella list. **This table is the source of truth** for “is it done?” until
 | **Join tables** | Not started | Physical merge of tables + one or many bills: see `docs/0008-order-management-logic.md` (sessions per device already). |
 | **Offline operation** | MVP started | ADR + staff cash sale queue/idempotent sync (#319); SW/full write queue later — see [0063](0063-offline-capable-client.md). |
 | **Migrate from existing system** | MVP shipped (#321) | Products + categories CSV CLI + cutover runbook ([0062](0062-pos-migration-import.md)); tables/customers/orders still open. |
-| **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, **Settings → Google review URL**, thank-you step — see [#54](https://github.com/satisfecho/pos/issues/54), `CHANGELOG.md`. |
+| **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, **Settings → Google review URL**, thank-you step; staff trends + CSV (#325 / `docs/0064`) — see [#54](https://github.com/satisfecho/pos/issues/54), `CHANGELOG.md`. NPS / post-visit email-SMS still open. |
 | **Birthdays (“cumpleaños”)** | **Partial** | Optional **`birth_date`** on **billing customers** (Customers / Factura CRM); not on reservations yet. Automated campaigns → [#54](https://github.com/satisfecho/pos/issues/54). |
 | **Marketing / special offers** | Not started | Promotions / pricing rules — overlaps [#54](https://github.com/satisfecho/pos/issues/54). |
 | **Central kitchen → branches** | Not started | Cross-tenant or multi-site supply; out of scope of current schema. |

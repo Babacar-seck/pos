@@ -175,8 +175,9 @@ class TestGuestFeedback(PgClientTestCase):
         )
         self.assertEqual(r.status_code, 400, r.text)
         detail = r.json().get("detail")
-        self.assertIsInstance(detail, str)
-        self.assertIn("Reservierungslink", detail)
+        msg = detail.get("message") if isinstance(detail, dict) else detail
+        self.assertIsInstance(msg, str)
+        self.assertIn("Reservierungslink", msg)
 
     def test_get_public_tenant_404_localized_de(self):
         missing_id = self.tenant_id + 9_999_999
@@ -186,8 +187,101 @@ class TestGuestFeedback(PgClientTestCase):
         )
         self.assertEqual(r.status_code, 404, r.text)
         detail = r.json().get("detail")
-        self.assertIsInstance(detail, str)
-        self.assertIn("Mandant", detail)
+        msg = detail.get("message") if isinstance(detail, dict) else detail
+        self.assertIsInstance(msg, str)
+        self.assertIn("Mandant", msg)
+
+
+def _bearer_headers(user: models.User) -> dict[str, str]:
+    from datetime import timedelta
+
+    from app import security
+
+    data = {
+        "sub": user.email,
+        "tenant_id": user.tenant_id,
+        "provider_id": getattr(user, "provider_id", None),
+        "token_version": user.token_version,
+    }
+    token = security.create_access_token(data, expires_delta=timedelta(minutes=30))
+    return {"Authorization": f"Bearer {token}"}
+
+
+class TestGuestFeedbackStaffAnalytics(PgClientTestCase):
+    def setUp(self):
+        super().setUp()
+        from app import security
+
+        tenant = models.Tenant(name="FB Analytics")
+        self.session.add(tenant)
+        self.session.commit()
+        self.session.refresh(tenant)
+        self.tenant_id = tenant.id
+
+        other = models.Tenant(name="Other tenant FB")
+        self.session.add(other)
+        self.session.commit()
+        self.session.refresh(other)
+        self.other_tenant_id = other.id
+
+        self.admin = models.User(
+            email="fb-analytics-admin@test.local",
+            hashed_password=security.get_password_hash("secret"),
+            full_name="FB Admin",
+            tenant_id=self.tenant_id,
+            role=models.UserRole.admin,
+        )
+        self.session.add(self.admin)
+        self.session.commit()
+        self.session.refresh(self.admin)
+
+        for rating, comment in ((5, "Great"), (4, None), (2, "Slow")):
+            self.session.add(
+                models.GuestFeedback(
+                    tenant_id=self.tenant_id,
+                    rating=rating,
+                    comment=comment,
+                    contact_email="guest@amvara.de" if rating == 5 else None,
+                )
+            )
+        self.session.add(
+            models.GuestFeedback(tenant_id=self.other_tenant_id, rating=1, comment="Other")
+        )
+        self.session.commit()
+
+    def test_summary_aggregates_tenant_only(self):
+        r = self.client.get(
+            "/tenant/guest-feedback/summary",
+            params={"days": 90},
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        data = r.json()
+        self.assertEqual(data["total_count"], 3)
+        self.assertEqual(data["average_rating"], 3.67)
+        self.assertEqual(data["rating_counts"]["5"], 1)
+        self.assertEqual(data["rating_counts"]["4"], 1)
+        self.assertEqual(data["rating_counts"]["2"], 1)
+        self.assertEqual(data["rating_counts"]["1"], 0)
+        self.assertEqual(data["with_comment_count"], 2)
+        self.assertEqual(data["with_contact_count"], 1)
+        self.assertTrue(isinstance(data["by_day"], list))
+        self.assertGreaterEqual(len(data["by_day"]), 1)
+
+    def test_export_csv_tenant_scoped(self):
+        r = self.client.get(
+            "/tenant/guest-feedback/export",
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertIn("text/csv", r.headers.get("content-type", ""))
+        text = r.content.decode("utf-8-sig")
+        lines = [ln for ln in text.strip().splitlines() if ln.strip()]
+        self.assertTrue(lines[0].startswith("id,created_at,rating,"))
+        # header + 3 tenant rows (not the other-tenant row)
+        self.assertEqual(len(lines), 4)
+        self.assertNotIn("Other", text)
+        self.assertIn("Great", text)
 
 
 if __name__ == "__main__":

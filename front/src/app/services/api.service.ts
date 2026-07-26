@@ -766,6 +766,67 @@ export interface GuestFeedback {
   client_user_agent?: string | null;
 }
 
+/** Staff analytics from GET /tenant/guest-feedback/summary. */
+export interface GuestFeedbackSummary {
+  days: number;
+  total_count: number;
+  average_rating: number | null;
+  rating_counts: Record<string, number>;
+  with_comment_count: number;
+  with_contact_count: number;
+  by_day: Array<{ date: string; count: number; average_rating: number | null }>;
+}
+
+/** Club loyalty (#327) */
+export interface LoyaltyWalletStatus {
+  apple_wallet_configured?: boolean;
+  google_wallet_configured?: boolean;
+  apple_wallet_available?: boolean;
+  google_wallet_available?: boolean;
+  detail?: string;
+  membership_id?: number;
+}
+
+export interface LoyaltyProgram {
+  id: number;
+  tenant_id: number;
+  enabled: boolean;
+  program_name: string;
+  mode: 'points' | 'stamps' | string;
+  earn_units_per_order: number;
+  redemption_threshold: number;
+  reward_discount_cents: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+  wallet?: LoyaltyWalletStatus;
+  join_path?: string;
+}
+
+export interface LoyaltyProgramPublic {
+  tenant_id: number;
+  tenant_name: string;
+  program_name: string;
+  mode: string;
+  earn_units_per_order: number;
+  redemption_threshold: number;
+  reward_discount_cents: number;
+  wallet?: LoyaltyWalletStatus;
+}
+
+export interface LoyaltyMembership {
+  id: number;
+  tenant_id: number;
+  program_id: number;
+  billing_customer_id?: number | null;
+  display_name: string;
+  email?: string | null;
+  phone?: string | null;
+  balance: number;
+  member_token?: string;
+  joined_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface Product {
   id?: number;
   name: string;
@@ -1288,6 +1349,9 @@ export interface Order {
   total_cents: number;
   /** Sum of active line items (excludes tip); same as total_cents when no tip */
   subtotal_cents?: number;
+  loyalty_membership_id?: number | null;
+  loyalty_discount_cents?: number;
+  loyalty_units_redeemed?: number;
   tip_percent_applied?: number | null;
   tip_amount_cents?: number | null;
   tip_attributed_user_id?: number | null;
@@ -3247,6 +3311,93 @@ export class ApiService {
     );
   }
 
+  getPublicLoyaltyProgram(tenantId: number): Observable<LoyaltyProgramPublic> {
+    return this.http.get<LoyaltyProgramPublic>(
+      `${this.apiUrl}/public/tenants/${tenantId}/loyalty`,
+    );
+  }
+
+  joinPublicLoyalty(
+    tenantId: number,
+    body: { display_name: string; email?: string; phone?: string },
+  ): Observable<{
+    ok: boolean;
+    membership: LoyaltyMembership;
+    wallet?: LoyaltyWalletStatus;
+  }> {
+    return this.http.post<{
+      ok: boolean;
+      membership: LoyaltyMembership;
+      wallet?: LoyaltyWalletStatus;
+    }>(`${this.apiUrl}/public/tenants/${tenantId}/loyalty/join`, body);
+  }
+
+  getPublicLoyaltyBalance(memberToken: string): Observable<{
+    membership: LoyaltyMembership;
+    program: LoyaltyProgram | null;
+    wallet?: LoyaltyWalletStatus;
+  }> {
+    return this.http.get<{
+      membership: LoyaltyMembership;
+      program: LoyaltyProgram | null;
+      wallet?: LoyaltyWalletStatus;
+    }>(`${this.apiUrl}/public/loyalty/members/${encodeURIComponent(memberToken)}`);
+  }
+
+  getLoyaltyProgram(): Observable<LoyaltyProgram> {
+    return this.http.get<LoyaltyProgram>(`${this.apiUrl}/loyalty/program`);
+  }
+
+  updateLoyaltyProgram(body: Partial<LoyaltyProgram>): Observable<LoyaltyProgram> {
+    return this.http.put<LoyaltyProgram>(`${this.apiUrl}/loyalty/program`, body);
+  }
+
+  listLoyaltyMemberships(search?: string): Observable<LoyaltyMembership[]> {
+    let params = new HttpParams();
+    if (search?.trim()) {
+      params = params.set('search', search.trim());
+    }
+    return this.http.get<LoyaltyMembership[]>(`${this.apiUrl}/loyalty/memberships`, {
+      params,
+    });
+  }
+
+  redeemLoyaltyOnOrder(
+    orderId: number,
+    body: { membership_id?: number; member_token?: string },
+  ): Observable<{
+    order_id: number;
+    membership_id: number;
+    units_redeemed: number;
+    discount_cents: number;
+    balance: number;
+  }> {
+    return this.http.post<{
+      order_id: number;
+      membership_id: number;
+      units_redeemed: number;
+      discount_cents: number;
+      balance: number;
+    }>(`${this.apiUrl}/orders/${orderId}/loyalty/redeem`, body);
+  }
+
+  setOrderLoyaltyMembership(
+    orderId: number,
+    loyalty_membership_id: number | null,
+  ): Observable<{
+    order_id: number;
+    loyalty_membership_id: number | null;
+    loyalty_discount_cents: number;
+    loyalty_units_redeemed: number;
+  }> {
+    return this.http.put<{
+      order_id: number;
+      loyalty_membership_id: number | null;
+      loyalty_discount_cents: number;
+      loyalty_units_redeemed: number;
+    }>(`${this.apiUrl}/orders/${orderId}/loyalty-membership`, { loyalty_membership_id });
+  }
+
   submitPublicWaitingList(
     tenantId: number,
     body: WaitingListEntryCreate,
@@ -3260,6 +3411,23 @@ export class ApiService {
   listGuestFeedback(limit = 200): Observable<GuestFeedback[]> {
     return this.http.get<GuestFeedback[]>(`${this.apiUrl}/tenant/guest-feedback`, {
       params: { limit: String(limit) },
+    });
+  }
+
+  getGuestFeedbackSummary(days = 90): Observable<GuestFeedbackSummary> {
+    return this.http.get<GuestFeedbackSummary>(`${this.apiUrl}/tenant/guest-feedback/summary`, {
+      params: { days: String(days) },
+    });
+  }
+
+  exportGuestFeedbackCsv(days?: number | null): Observable<Blob> {
+    const params: Record<string, string> = {};
+    if (days != null && days > 0) {
+      params['days'] = String(days);
+    }
+    return this.http.get(`${this.apiUrl}/tenant/guest-feedback/export`, {
+      params,
+      responseType: 'blob',
     });
   }
 

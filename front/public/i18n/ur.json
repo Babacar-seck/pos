@@ -38,7 +38,8 @@
     "API_REQUEST_FAILED": "ہم درخواست مکمل نہ کر سکے۔ براہ کرم دوبارہ کوشش کریں۔",
     "ENTER_FULLSCREEN": "پوری اسکرین",
     "EXIT_FULLSCREEN": "پوری اسکرین سے باہر",
-    "IMAGE_FILE_TOO_LARGE": "فائل {{maxMb}} MB سے چھوٹی ہونی چاہیے۔"
+    "IMAGE_FILE_TOO_LARGE": "فائل {{maxMb}} MB سے چھوٹی ہونی چاہیے۔",
+    "EMAIL": "Email"
   },
   "API_ERRORS": {
     "TENANT_NOT_FOUND": "ریستوران نہیں ملا۔",
@@ -961,7 +962,11 @@
     "DELIVERY_CREATED": "ڈیلیوری آرڈر بن گیا",
     "DELIVERY_CREATE_FAILED": "ڈیلیوری آرڈر نہیں بن سکا",
     "DELIVERY_UPDATED": "ڈیلیوری تفصیلات اپ ڈیٹ ہو گئیں",
-    "DELIVERY_UPDATE_FAILED": "ڈیلیوری تفصیلات اپ ڈیٹ نہیں ہو سکیں"
+    "DELIVERY_UPDATE_FAILED": "ڈیلیوری تفصیلات اپ ڈیٹ نہیں ہو سکیں",
+    "LOYALTY_DISCOUNT": "Loyalty discount",
+    "LOYALTY_MEMBER_TOKEN": "Loyalty member token",
+    "LOYALTY_MEMBER_TOKEN_HINT": "Paste member token from join / card link",
+    "LOYALTY_REDEEM": "Redeem loyalty reward"
   },
   "CUSTOMERS": {
     "TITLE": "گاہک (انوائس)",
@@ -1390,7 +1395,21 @@
     "QR_CARD_HINT": "گیسٹس اسکین کریں یہ کوڈ کو کھولیں آپ کا عوامی رائے فارم. استعمال کریں پرنٹ QR کے لیے clean صفحہ کو put پر میزیں یا قریب رجسٹر.",
     "COPY_FEEDBACK_URL": "لنک کاپی کریں",
     "PRINT_QR": "QR پرنٹ کریں",
-    "URL_COPIED": "لنک کاپی کر دیا گیا کو clipboard."
+    "URL_COPIED": "لنک کاپی کر دیا گیا کو clipboard.",
+    "EXPORT_CSV": "CSV برآمد کریں",
+    "EXPORTING": "برآمد ہو رہا ہے…",
+    "ANALYTICS_TITLE": "رجحانات",
+    "LOOKBACK": "مدت",
+    "DAYS_30": "30 دن",
+    "DAYS_90": "90 دن",
+    "DAYS_365": "12 مہینے",
+    "STAT_TOTAL": "جوابات",
+    "STAT_AVERAGE": "اوسط درجہ بندی",
+    "STAT_WITH_COMMENT": "تبصرے کے ساتھ",
+    "STAT_WITH_CONTACT": "رابطے کے ساتھ",
+    "RATING_DISTRIBUTION": "درجہ بندی کی تقسیم",
+    "DAILY_TREND": "روزانہ حجم (مدت کے آخری 14 دن)",
+    "TREND_EMPTY": "اس مدت میں کوئی جمع نہیں۔"
   },
   "RESERVATIONS": {
     "TITLE": "بکنگ",
@@ -1892,11 +1911,11 @@
     "REVOLUT_MERCHANT_SECRET": "Revolut Merchant API راز",
     "REVOLUT_MERCHANT_SECRET_HINT": "مرچنٹ خفیہ سے Revolut کاروبار. چھوڑیں خالی کو رکھیں موجودہ. Enables ادا کریں کے ساتھ Revolut پر گاہک مینو.",
     "FISCAL_INVOICING_TITLE": "مالیاتی انوائسنگ (اسپین / VeriFactu تیاری)",
-    "FISCAL_INVOICING_DESC": "جب فعال, پرنٹنگ Factura درخواستیں server-issued مالیاتی ریکارڈ اور adds QR کوڈ اور لازمی disclaimer متن. AEAT submission ہے نہیں performed تک wired فی official تکنیکی دستاویزات.",
+    "FISCAL_INVOICING_DESC": "When enabled (test), printing a Factura issues a server fiscal record with hash chain, AEAT ValidarQR URL, and sandbox submit. Live mode stays locked until certified middleware is configured.",
     "FISCAL_MODE": "مالیاتی موڈ",
     "FISCAL_MODE_OFF": "بند (براؤزر انوائس صرف)",
-    "FISCAL_MODE_TEST": "ٹیسٹ — stub issuance, نہیں AEAT HTTP کال کریں",
-    "FISCAL_MODE_LIVE": "لائیو — اندرونی series/numbering (AEAT انضمام separate)",
+    "FISCAL_MODE_TEST": "Test — hash chain + sandbox submit (not production AEAT filing)",
+    "FISCAL_MODE_LIVE": "Live — blocked until certified middleware unlock (see docs)",
     "FISCAL_SERIES": "انوائس series prefix",
     "FISCAL_SERIES_HINT": "Prefix کے لیے sequential مالیاتی نمبر (مثلاً VF). اگلا نمبر ہے allocated پر سرور جب انوائس ہے issued.",
     "FISCAL_AEAT_SECRET": "AEAT API خفیہ (اختیاری)",
@@ -2031,7 +2050,22 @@
     "DELIVERY_RADIUS_HINT": "Optional. Uses restaurant latitude/longitude from location settings. Set 0 to disable. Guests must share location at checkout.",
     "DELIVERY_POSTAL_CODES": "Allowed postal codes",
     "DELIVERY_POSTAL_CODES_PH": "28001\n28002\n28003",
-    "DELIVERY_POSTAL_CODES_HINT": "One code per line (or comma-separated). Leave empty to allow any postal code. When set, guests must enter a matching code."
+    "DELIVERY_POSTAL_CODES_HINT": "One code per line (or comma-separated). Leave empty to allow any postal code. When set, guests must enter a matching code.",
+    "LOYALTY_TAB": "Loyalty club",
+    "LOYALTY_TITLE": "Club loyalty",
+    "LOYALTY_SUBTITLE": "Points or stamps earned on paid orders. Guests join via a public link; staff redeem rewards at checkout.",
+    "LOYALTY_ENABLED": "Enable loyalty program",
+    "LOYALTY_PROGRAM_NAME": "Program name",
+    "LOYALTY_MODE": "Mode",
+    "LOYALTY_MODE_POINTS": "Points",
+    "LOYALTY_MODE_STAMPS": "Stamps",
+    "LOYALTY_EARN": "Units earned per paid order",
+    "LOYALTY_THRESHOLD": "Units needed to redeem",
+    "LOYALTY_REWARD_CENTS": "Reward discount (cents)",
+    "LOYALTY_JOIN_URL": "Public join URL",
+    "LOYALTY_MEMBERS": "Members",
+    "LOYALTY_MEMBERS_EMPTY": "No members yet.",
+    "LOYALTY_BALANCE": "Balance"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",
@@ -2534,7 +2568,7 @@
     "FEAT_INVENTORY_TITLE": "Inventory",
     "FEAT_INVENTORY_DESC": "Track stock, suppliers, purchase orders, and inventory reports.",
     "FEAT_INVOICING_TITLE": "Invoice customers",
-    "FEAT_INVOICING_DESC": "Billing customers and tax invoice data for B2B or fiscal workflows.",
+    "FEAT_INVOICING_DESC": "Billing customers plus Spain VeriFactu preparation (test mode, hash chain, QR). Live AEAT filing requires certified middleware — not claimed as certified yet.",
     "FEAT_CONTRACTS_TITLE": "Staff contracts",
     "FEAT_CONTRACTS_DESC": "Store and manage staff employment contracts and templates.",
     "FEAT_RESTAURANT_GROUPS_TITLE": "ریستوران گروپس",
@@ -2620,5 +2654,20 @@
     "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
+  },
+  "LOYALTY_PUBLIC": {
+    "TITLE": "Loyalty club",
+    "INVALID_TENANT": "Invalid restaurant link.",
+    "NOT_ENABLED": "This restaurant has not enabled a loyalty club yet.",
+    "LEDE": "Earn {{earn}} {{mode}} per paid visit. Redeem at {{threshold}} for a reward.",
+    "NAME": "Your name",
+    "EMAIL": "Email",
+    "PHONE": "Phone",
+    "CONTACT_HINT": "Provide email or phone so we can find your membership next time.",
+    "JOIN": "Join the club",
+    "JOINED": "Welcome — you are in the club.",
+    "BALANCE": "Balance",
+    "KEEP_LINK": "Save this card link to check your balance:",
+    "CARD_NOT_FOUND": "Membership not found."
   }
 }

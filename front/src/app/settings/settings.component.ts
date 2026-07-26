@@ -21,6 +21,7 @@ import { SidebarComponent } from '../shared/sidebar.component';
 import { FocusFirstInputDirective } from '../shared/focus-first-input.directive';
 import { TranslationsComponent } from '../translations/translations.component';
 import { KitchenStationsSettingsComponent } from './kitchen-stations-settings.component';
+import { LoyaltySettingsComponent } from './loyalty-settings.component';
 import { RestaurantGroupSettingsComponent } from './restaurant-group-settings.component';
 import { DeliveryIntegrationsSettingsComponent } from './delivery-integrations-settings.component';
 import { SocialPostsSettingsComponent } from './social-posts-settings.component';
@@ -40,6 +41,7 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
     TranslateModule,
     TranslationsComponent,
     KitchenStationsSettingsComponent,
+    LoyaltySettingsComponent,
     RestaurantGroupSettingsComponent,
     DeliveryIntegrationsSettingsComponent,
     ContractTemplatesSettingsComponent,
@@ -177,6 +179,17 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
             <span>{{ 'SETTINGS.KITCHEN_STATIONS_TAB' | translate }}</span>
           </button>
           }
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-loyalty-tab"
+            [class.active]="activeSection() === 'loyalty'"
+            (click)="activeSection.set('loyalty')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/>
+            </svg>
+            <span>{{ 'SETTINGS.LOYALTY_TAB' | translate }}</span>
+          </button>
           <button
             type="button"
             class="tab"
@@ -546,6 +559,8 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
           <app-restaurant-group-settings />
         } @else if (activeSection() === 'kitchen-stations') {
           <app-kitchen-stations-settings />
+        } @else if (activeSection() === 'loyalty') {
+          <app-loyalty-settings />
         } @else if (activeSection() === 'delivery-integrations') {
           <app-delivery-integrations-settings />
         } @else if (activeSection() === 'social-posts') {
@@ -2944,6 +2959,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     | 'reservations'
     | 'taxes'
     | 'kitchen-stations'
+    | 'loyalty'
     | 'restaurant-group'
     | 'delivery-integrations'
     | 'social-posts'
