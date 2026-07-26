@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.82] - 2026-07-26
+
+### Changed
+
+- **AGENTS.md Key URLs:** Listed public booking, waiting list, Satisfecho Delivery, marketing features, courier portal, and platform operator entry points so agents can find Jul guest/ops routes without hunting feature docs.
+
 ## [2.1.81] - 2026-07-26
 
 ### Changed
