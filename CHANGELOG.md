@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.74] - 2026-07-26
+
+### Changed
+
+- **SaaS signup docs:** Documented the guided restaurant signup wizard (`/register` / `/signup`) in `docs/0052-saas-signup-paywall.md` — steps 0–4, paywall vs dashboard finish destinations, 402-exempt priming paths, and a link to the platform operator portal — with a matching `docs/README.md` index blurb.
+
 ## [2.1.73] - 2026-07-26
 
 ### Changed
