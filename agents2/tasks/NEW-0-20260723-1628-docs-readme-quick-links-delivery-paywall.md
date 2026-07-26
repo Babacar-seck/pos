@@ -20,6 +20,6 @@
 - In **`docs/README.md`** Quick links only, add rows such as:
   - Guest / staff Satisfecho Delivery → `0053-satisfecho-delivery-order-channel.md`
   - Enable or understand SaaS signup paywall → `0052-saas-signup-paywall.md` (note keep-off until runbook)
-  - Optional: platform operator oversight → `0015-platform-operator-portal.md`
+  - Optional: platform operator oversight → `0059-platform-operator-portal.md`
 - Do not rewrite Feature guides, Deployment tables, or other docs
 - Pass/fail: Quick links table links resolve; `rg` finds `0052` and `0053` under the Quick links section; no product code

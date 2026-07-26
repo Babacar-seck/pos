@@ -62,7 +62,7 @@ Signing secret → `SAAS_STRIPE_WEBHOOK_SECRET`. Checkout and Subscription metad
 
 ## Guided restaurant signup wizard
 
-Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new restaurant before the hard paywall or staff dashboard. Distinct from **provider** signup (`/provider/register`) and from **platform operator** oversight ([0015-platform-operator-portal.md](0015-platform-operator-portal.md)).
+Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new restaurant before the hard paywall or staff dashboard. Distinct from **provider** signup (`/provider/register`) and from **platform operator** oversight ([0059-platform-operator-portal.md](0059-platform-operator-portal.md)).
 
 ### Guest path
 
@@ -76,7 +76,7 @@ Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new 
    | 3 | Photos / price tweak | Authenticated `PATCH`/`upload` on `/products/*` for those starter rows (optional images). |
    | 4 | Done (QR + public menu link) | Finish CTA: **`/paywall`** when `SAAS_PAYWALL_ENABLED=true`, else **`/dashboard`**. |
 3. When paywall is on: trial or Stripe Checkout on `/paywall` unlocks the staff app (see **Flow** and **API** above).
-4. Platform operators can later review the new tenant under `/platform` (signups metric, tenant detail) — see [0015-platform-operator-portal.md](0015-platform-operator-portal.md).
+4. Platform operators can later review the new tenant under `/platform` (signups metric, tenant detail) — see [0059-platform-operator-portal.md](0059-platform-operator-portal.md).
 
 ### Priming vs 402 middleware
 

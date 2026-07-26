@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.102] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (platform operator):** Kept kitchen display as `0015-kitchen-display.md`; moved the platform operator portal guide to `0059-platform-operator-portal.md`. Updated Feature guides, root README, ROADMAP, testing, screenshots, and SaaS paywall cross-links.
+
 ## [2.1.101] - 2026-07-26
 
 ### Changed

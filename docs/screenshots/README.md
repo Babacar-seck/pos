@@ -97,7 +97,7 @@ Courier home after `/courier/login` (Available / Mine / Completed). See [docs/00
 
 ### Platform operator
 
-Operator dashboard at `/platform`. See [docs/0015-platform-operator-portal.md](../0015-platform-operator-portal.md).
+Operator dashboard at `/platform`. See [docs/0059-platform-operator-portal.md](../0059-platform-operator-portal.md).
 
 ![Platform operator dashboard](platform.png)
 
@@ -118,4 +118,4 @@ Operator dashboard at `/platform`. See [docs/0015-platform-operator-portal.md](.
 | `delivery.png` | docs/0053-satisfecho-delivery-order-channel.md (optional) |
 | `waitlist.png` | docs/0011-table-reservation-user-guide.md (optional) |
 | `courier.png` | docs/0053-satisfecho-delivery-order-channel.md (optional) |
-| `platform.png` | docs/0015-platform-operator-portal.md (optional) |
+| `platform.png` | docs/0059-platform-operator-portal.md (optional) |

@@ -29,7 +29,7 @@
 - **Waiting list**: Public join at `/waitlist/{tenantId}`; staff manage from Reservations → Waitlist. See `docs/0011-table-reservation-user-guide.md`.
 - **Restaurant groups**: Multi-location join codes; optional shared billing customers/products. See `docs/0054-restaurant-groups.md`.
 - **SaaS signup paywall**: Hard paywall for restaurant signups (trial/subscribe before staff app); flag default off. See `docs/0052-saas-signup-paywall.md`.
-- **Platform operator portal**: SaaS metrics and tenant oversight at `/platform`. See `docs/0015-platform-operator-portal.md`.
+- **Platform operator portal**: SaaS metrics and tenant oversight at `/platform`. See `docs/0059-platform-operator-portal.md`.
 - **Order / item comments**: Guests can add notes on Take Away / menu orders; kitchen display shows item and order notes. See `docs/0015-kitchen-display.md` (smoke: `test:order-comments`).
 
 ### ❌ Missing Features / To Be Implemented
@@ -39,7 +39,7 @@
 - **Large multi-topic tracks ([#52](https://github.com/satisfecho/pos/issues/52)–[#54](https://github.com/satisfecho/pos/issues/54))**: Per-theme status in `docs/0032-github-issues-roadmap.md` (#52: warehouses, split bills, join tables, offline, etc.; **partial**: guest feedback + Google review, billing-customer **birth date**). #53–#54: kitchen SLAs, marketing/comms — open slices as smaller issues when building.
 
 ### Documentation reference
-- **`docs/`**: `0008-order-management-logic.md`, `0007-implementation-verification.md`, `0010-table-reservation-implementation-plan.md`, `0011-table-reservation-user-guide.md`, `0009-table-pin-security.md`, `0012-translation-implementation.md`, `0004-deployment.md`, `0002-customer-features-plan.md`, `0005-email-sending-options.md`, `0013-verification-alternatives.md`, `0015-kitchen-display.md`, `0015-platform-operator-portal.md`, `0016-reports.md`, `0014-provider-portal.md`, `0020-rate-limiting-production.md`, `0031-order-customizations-plan.md`, `0032-github-issues-roadmap.md`, `0052-saas-signup-paywall.md`, `0053-satisfecho-delivery-order-channel.md`, `0054-restaurant-groups.md`.
+- **`docs/`**: `0008-order-management-logic.md`, `0007-implementation-verification.md`, `0010-table-reservation-implementation-plan.md`, `0011-table-reservation-user-guide.md`, `0009-table-pin-security.md`, `0012-translation-implementation.md`, `0004-deployment.md`, `0002-customer-features-plan.md`, `0005-email-sending-options.md`, `0013-verification-alternatives.md`, `0015-kitchen-display.md`, `0059-platform-operator-portal.md`, `0016-reports.md`, `0014-provider-portal.md`, `0020-rate-limiting-production.md`, `0031-order-customizations-plan.md`, `0032-github-issues-roadmap.md`, `0052-saas-signup-paywall.md`, `0053-satisfecho-delivery-order-channel.md`, `0054-restaurant-groups.md`.
 - **`CHANGELOG.md`**: Tracks unreleased and released changes (reservations, order history, WebSocket, fixes).
 
 ---

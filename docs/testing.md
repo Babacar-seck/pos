@@ -208,7 +208,7 @@ npm run test:courier-actions --prefix front
 
 ### 2a3d. Platform operator portal
 
-Smoke for the SaaS platform operator dashboard (`/platform`, login at `/platform/login`): log in, assert metric cards on the dashboard, open a tenant detail page, and confirm the public Satisfecho Delivery link for that tenant. See `docs/0015-platform-operator-portal.md`. Does not cover tenant staff login, paywall (`test:paywall`), or courier portal (`test:courier-actions`).
+Smoke for the SaaS platform operator dashboard (`/platform`, login at `/platform/login`): log in, assert metric cards on the dashboard, open a tenant detail page, and confirm the public Satisfecho Delivery link for that tenant. See `docs/0059-platform-operator-portal.md`. Does not cover tenant staff login, paywall (`test:paywall`), or courier portal (`test:courier-actions`).
 
 ```bash
 npm run test:platform-operator --prefix front
@@ -818,7 +818,7 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Staff menu link** | `test:staff-menu-link` | Open menu from staff orders skips PIN. |
 | **Rate limiting** | `test-rate-limit.mjs`, `test-rate-limit-puppeteer.mjs` | API: 429 after limit; Puppeteer: login page shows error banner (e.g. "Too many login attempts") when rate limited. See `docs/0020-rate-limiting-production.md` for all limits (login, register, payment, public menu, upload, admin). |
 | **SaaS signup paywall** | `test-paywall.mjs` | Requires `SAAS_PAYWALL_ENABLED=true` (see `docs/0052-saas-signup-paywall.md`). Registers a new tenant, asserts `/paywall` + localized copy (no raw `PAYWALL.*`), starts free trial, confirms `/dashboard` unlocks. Skips with exit 0 when paywall is off; set `REQUIRE_PAYWALL=1` to fail instead. |
-| **Platform operator** | `test-platform-operator.mjs` | `/platform/login` → dashboard metrics → tenant detail + `/delivery/{id}` link (`docs/0015-platform-operator-portal.md`). Seed with `ensure_platform_operator`; `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`. |
+| **Platform operator** | `test-platform-operator.mjs` | `/platform/login` → dashboard metrics → tenant detail + `/delivery/{id}` link (`docs/0059-platform-operator-portal.md`). Seed with `ensure_platform_operator`; `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`. |
 
 **Not covered (or partial):** No automated cleanup of test-created data (e.g. provider/restaurant registration leaves DB entries). No Puppeteer tests for settings, inventory, or tables canvas. Unit tests (Karma/Jasmine) are separate; see `npm test` in front.
 

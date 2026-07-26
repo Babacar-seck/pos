@@ -18,7 +18,7 @@ Two living files share **`0021-`**: **`docs/0021-working-plan.md`** (current gui
 ## High-level instructions for coder
 
 - Keep **`docs/0021-working-plan.md`** as the living **0021** guide
-- Renumber **`docs/0021-working-plan-implementation-plan.md`** to the next free `005x`/`006x` id (**0059+** — **0056–0058** used by gmail / deploy-css / overbooking-scenario renumber; **0055** is public-seo; platform **0015** renumber still open and must pick another free id)
+- Renumber **`docs/0021-working-plan-implementation-plan.md`** to the next free `006x` id (**0060+** — **0055** public-seo; **0056–0058** gmail / deploy-css / overbooking-scenario; **0059** platform-operator portal)
 - Update **`docs/README.md`** Implementation plans row and any in-repo links (`rg` under `docs/`, `AGENTS.md`, open `agents2/tasks/NEW-0-*` that cite the old path)
 - Preserve / finish the historical banner from the mark-0021 NEW if still open (one short top callout pointing at living 0021)
 - No product code changes
