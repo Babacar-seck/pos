@@ -102,8 +102,8 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0012-translation-implementation.md](0012-translation-implementation.md) | Translation (i18n): frontend, backend, DB content. |
 | [0013-verification-alternatives.md](0013-verification-alternatives.md) | **Research only** — customer verification alternatives (SMS, OAuth, etc.); not a shipping decision; app uses email/password. |
 | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) | Rate limiting: limits (login, register, payment, public menu, upload, admin), Redis, X-Forwarded-For, tests. |
-| [0022-oauth-social-login-notes.md](0022-oauth-social-login-notes.md) | OAuth / social login (Google, Microsoft, etc.): notes and recommendation. |
-| [0023-prioritisation-019-022.md](0023-prioritisation-019-022.md) | Prioritisation: docs 0019–0022 — **0021 done**; next open item **0022 (OAuth)**. |
+| [0022-oauth-social-login-notes.md](0022-oauth-social-login-notes.md) | OAuth / social login (Google, Microsoft, etc.): **research notes (not shipped)**; auth remains email/password. |
+| [0023-prioritisation-019-022.md](0023-prioritisation-019-022.md) | Prioritisation: docs 0019–0022 — **0021 done**; **0022** is research/deferred (not an active sprint item). |
 | [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md) | WhatsApp reservation reminder: **shipped** Twilio channel (env + send-reminder); historical design notes. |
 | [0033-postgres-adhoc-sql-table-names.md](0033-postgres-adhoc-sql-table-names.md) | Ad-hoc SQL: no `restaurantorder` table; use `"order"` / `orderitem`, quoting reserved names. |
 | [PRINTING.md](PRINTING.md) | Restaurant LAN / kitchen ticket printing design notes (**not implemented**); browser and invoice print from staff UI are supported today. |

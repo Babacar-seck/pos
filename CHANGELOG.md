@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.129] - 2026-07-26
+
+### Changed
+
+- **Docs (0022):** Marked OAuth / social-login notes as **research / deferred** (auth remains email/password; do not queue implementation from this doc) and aligned README plus the 0019–0022 prioritisation guide.
+
 ## [2.1.128] - 2026-07-26
 
 ### Changed
