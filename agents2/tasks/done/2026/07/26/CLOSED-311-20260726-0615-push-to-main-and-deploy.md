@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Production promote for #311 merged `development` → `master` through **2.1.92** and deployed to amvara9.
+- **What was done:** Merge **`522369e2`** pushed to `master`; GitHub release **v2.1.92** published; Deploy run **30190831248** succeeded (marketing fetch + smoke green); no version bump needed (`[Unreleased]` empty).
+- **What was tested:** Tester **PASS** — release notes, merge ancestry, deploy success, and production `/` + `/api/health` healthy (live tip later advanced to **2.1.97** via #312; #311 intent still satisfied).
+- **Why closed:** All acceptance criteria passed for the 2.1.92 promote.
+- **Closed at (UTC):** 2026-07-26 13:09
+---
+
 # Push to main and deploy
 
 ## GitHub Issues
@@ -41,3 +51,44 @@ See **`docs/0001-ci-cd-amvara9.md`**, **`.cursor/rules/commit-changelog-version.
    - `curl -sS https://www.satisfecho.de/api/health` → `{"status":"ok"}` **200**
    - Landing meta `app-version` content **`2.1.92`**; footer short hash **`522369e2`**
 5. On amvara9: `cd /development/pos && git rev-parse --short HEAD` → **`522369e2`**; `front/package.json` version **2.1.92**.
+
+## Test report
+
+- **Date/time (UTC):** 2026-07-26T13:07:35Z start → 2026-07-26T13:08:30Z end (log/evidence window ≈ that interval).
+- **Environment:** branch `development` (local tip `0a40073d`); verification target production / `origin/master` / amvara9; `BASE_URL=https://www.satisfecho.de`. No local compose product changes (release/ops task).
+- **What was tested:** GitHub release `v2.1.92`, merge commit `522369e2` on `master`, Deploy run 30190831248, production `/` + `/api/health` + landing version, amvara9 HEAD + `front/package.json`.
+
+### Results
+
+1. **Release v2.1.92 notes match changelog 2.1.92 — PASS.** Tag points at `522369e26707f7610a6a93d8ce3974b1df79ddc7`; release body includes WhatsApp reminder docs (0024) bullet and merge SHA `522369e2` (matches `CHANGELOG.md` `## [2.1.92] - 2026-07-26`). URL: https://github.com/satisfecho/pos/releases/tag/v2.1.92
+2. **Merge `522369e2` on `master` — PASS (tip superseded).** `git merge-base --is-ancestor 522369e2 origin/master` succeeds; commit subject `Merge development: release through 2.1.92 docs and Jul feature updates.` Current `origin/master` tip is later merge `f2c58558` (`… through 2.1.97`, #312) — expected after subsequent promotes; does not undo #311.
+3. **Deploy run 30190831248 — PASS.** `conclusion=success`, `headSha=522369e2…`; steps including Fetch marketing, Build/restart, Smoke test all green. https://github.com/satisfecho/pos/actions/runs/30190831248
+4. **Production smoke — PASS (version superseded).** `/` HTTP 200; `/api/health` `{"status":"ok"}` HTTP 200; meta `app-version` = `2.1.97`; Puppeteer landing footer text `2.1.97 f2c58558` (live stack advanced past `2.1.92` / `522369e2` via later deploy; health + version surface OK).
+5. **amvara9 checkout — PASS (version superseded).** `git rev-parse --short HEAD` → `f2c58558`; `front/package.json` → `2.1.97` (contains #311 history; current checkout matches later 2.1.97 promote).
+
+### Overall: **PASS**
+
+No failed criteria for the #311 promote intent. Literal tip/version pins to `522369e2` / `2.1.92` no longer match live tip because a later successful promote (#312 / 2.1.97) replaced them; release, ancestry, and historical deploy remain valid.
+
+### Product owner feedback
+
+Production received the 2.1.92 promote as intended: release published, merge on `master`, and Deploy to amvara9 succeeded with green marketing fetch and smoke. Live satisfecho.de is healthy on a newer cut (2.1.97), so operators should treat #311 as done rather than expecting the old footer hash forever.
+
+### URLs tested
+
+1. https://github.com/satisfecho/pos/releases/tag/v2.1.92
+2. https://github.com/satisfecho/pos/actions/runs/30190831248
+3. https://www.satisfecho.de/
+4. https://www.satisfecho.de/api/health
+
+### Relevant log excerpts (last section)
+
+```text
+# gh release view v2.1.92 → tagName=v2.1.92, object sha=522369e2…
+# gh run view 30190831248 → conclusion=success, headSha=522369e2…
+# curl https://www.satisfecho.de/ → HTTP 200; meta app-version=2.1.97
+# curl https://www.satisfecho.de/api/health → {"status":"ok"} HTTP 200
+# npm run test:landing-version BASE_URL=https://www.satisfecho.de
+#   Version element text: 2.1.97 f2c58558 …
+# ssh amvara9: SHORT=f2c58558 PKG=2.1.97
+```

@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.131] - 2026-07-26
+
+### Changed
+
+- **Ops (#311):** Closed the verified production promote task for release **2.1.92** (merge to `master`, GitHub release, Deploy to amvara9, and production smoke already green).
+
 ## [2.1.130] - 2026-07-26
 
 ### Changed
