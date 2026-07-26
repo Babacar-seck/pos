@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.96] - 2026-07-26
+
+### Changed
+
+- **Docs index:** Listed `agent-cursor-rules.md` under Reference & notes in `docs/README.md` (categorized Cursor/agent stack rules; also linked from `AGENTS.md`), next to `agent-loop.md`.
+
 ## [2.1.95] - 2026-07-26
 
 ### Fixed

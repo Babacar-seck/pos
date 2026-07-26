@@ -35,6 +35,10 @@ Related ops/seeds: `seed_demo_products`, `link_demo_products_to_catalog`, `clear
 - Docs: `docs/testing.md`, `docs/0027-amvara9-menu-images-troubleshooting.md`.
 - Tests: `back/tests/test_public_tenant_menu.py` (missing vs existing file).
 
+## Handoff log
+
+- **Handoff (`012-feature-coder-handoff.md`, 2026-07-26 06:58 UTC, Cursor):** `./scripts/git-sync-development.sh` (OK). **#312** **OPEN**, labels **`agent:planned`**, **`agent:wip`**. Fix is on **`origin/development`** @ **`01538ff8`** (Release **2.1.95**); **`01538ff8` not on `origin/master`** (tip still **`522369e2`** / **2.1.92**); latest **Deploy to amvara9** predates this fix; production landing still **2.1.92**. Embedded **Test report** **Overall: FAIL** (criterion **#4** production images). **Remain WIP** — **no** `WIP-312-…` → `UNTESTED-*`; **no** `gh issue edit 312 --add-label "agent:untested"`. Deploy-blocker per **012** / **`docs/agent-loop.md`**: feature coder must promote **`development` → `master`** + green **Deploy to amvara9**, then re-hand off (or archive per Deploy-blocker archive if cycling continues).
+
 ## Testing instructions
 
 1. **Local smoke (required):**
