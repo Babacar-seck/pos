@@ -9,7 +9,7 @@ Tenant-scoped loyalty distinct from pricing promos (**#322**):
 - Guests join via public URL `/loyalty/{tenantId}`
 - Staff enable rules under **Settings → Loyalty club**
 - Units (points or stamps) earn **once per paid order** when the order is linked to a membership
-- Staff redeem a reward at checkout → `order.loyalty_discount_cents` (temporary discount field until #322’s promo/audit path exists)
+- Staff redeem a reward at checkout → `order.loyalty_discount_cents` (order-level discount via `order_discounts.order_level_discount_cents`, shared with #322)
 - Balance never goes negative (ledger + check)
 
 ## Data model
@@ -37,7 +37,7 @@ Migration: `back/migrations/20260726162500_club_loyalty.sql`.
 
 ## Interaction with #322 (price promos)
 
-#322 is **not** implemented yet. Loyalty redemption uses `order.loyalty_discount_cents` and subtracts it from payable totals. When #322 lands, fold this into the same discount/audit mechanism (do not invent a second parallel system). Factura / tax lines should treat the loyalty discount like other order-level discounts once that path exists.
+Line-level category % promos reduce `OrderItem.price_cents` and store a promo audit snapshot (`docs/0068-price-promotions.md`). Loyalty redemption remains an **order-level** discount on `loyalty_discount_cents`, subtracted through `order_discounts.order_level_discount_cents` for guest checkout, staff totals, and fiscal amount. Do not invent a parallel order-level discount column.
 
 ## Wallet: Apple PassKit & Google Wallet
 

@@ -38,6 +38,10 @@ Open **Settings → Restaurant group** (`settings-restaurant-group-section`).
 
 Defaults on create: both share flags are **off** unless checked in the UI.
 
+### Hub kitchen (central prep for branches)
+
+Optional: designate one **member** as the **hub kitchen** (`hub_tenant_id`). Sibling branches can create a **hub fulfillment** on an order; the hub marks it **prepared at HQ**. Stock locations remain **warehouses within a tenant** ([0061](0061-multi-warehouse-inventory.md)) — do not confuse warehouses with branches. Full guide: [0069](0069-branch-hub-fulfillment.md).
+
 ### `share_customers`
 
 When **on**, list/search of billing customers (`GET /billing-customers`) includes customers owned by sibling tenants. Shared customers are **read-only** for siblings: updates from another location return **404** (ownership stays with the owning tenant). Non-members never see group data.
@@ -58,6 +62,7 @@ When **on**, tenant product lists (`GET /tenant-products` and related catalog pa
 | `GET` | `/restaurant-group` | Current group detail, or `null` |
 | `POST` | `/restaurant-group` | Create (`name`, `share_products`, `share_customers`) |
 | `PUT` | `/restaurant-group` | Update name / share flags |
+| `PUT` | `/restaurant-group/hub` | Set or clear `hub_tenant_id` (central kitchen) |
 | `POST` | `/restaurant-group/join` | Join by `join_code` |
 | `POST` | `/restaurant-group/leave` | Leave; deletes empty groups |
 

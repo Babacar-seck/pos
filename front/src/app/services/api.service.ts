@@ -576,6 +576,10 @@ export interface PublicTenantMenuProduct {
   name: string;
   price_cents: number;
   price_formatted: string;
+  list_price_cents?: number | null;
+  list_price_formatted?: string | null;
+  promo_label?: string | null;
+  promo_percent_off?: number | null;
   description: string | null;
   category: string | null;
   subcategory: string | null;
@@ -637,6 +641,10 @@ export interface TenantSummary {
   timezone?: string | null;
   /** Optional max guests per time slot (tenant cap); for book UI limits */
   reservation_max_guests_per_slot?: number | null;
+  /** Guest birthday capture on public book (month/day only). */
+  guest_birthday_capture_enabled?: boolean;
+  guest_birthday_marketing_enabled?: boolean;
+  guest_birthday_consent_text?: string | null;
 }
 
 /** Planned opening-hours baselines and date overrides (issue #194). */
@@ -787,6 +795,26 @@ export interface LoyaltyWalletStatus {
   membership_id?: number;
 }
 
+/** Price promotions (#322) */
+export interface PricePromotion {
+  id: number;
+  tenant_id: number;
+  name: string;
+  promo_type: string;
+  percent_off: number;
+  category: string;
+  channels?: string[] | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  days_of_week?: number[] | null;
+  start_time_local?: string | null;
+  end_time_local?: string | null;
+  stackable: boolean;
+  enabled: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface LoyaltyProgram {
   id: number;
   tenant_id: number;
@@ -862,6 +890,10 @@ export interface Product {
   questions?: ProductQuestion[];
   /** Prep station for KDS (/kitchen vs /bar); null = use tenant default by category */
   kitchen_station_id?: number | null;
+  /** Live promo pricing (#322) from public/QR menu */
+  list_price_cents?: number | null;
+  promo_label?: string | null;
+  promo_percent_off?: number | null;
 }
 
 /** Kitchen / bar prep station (owner-defined; filters KDS by station). */
@@ -1172,6 +1204,10 @@ export interface Reservation {
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
   preferred_floor_name?: string | null;
+  /** Month 1–12 (no year); optional guest birthday */
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean;
   /** Present only for staff responses */
   client_ip?: string | null;
   client_user_agent?: string | null;
@@ -1198,6 +1234,9 @@ export interface ReservationCreate {
   allergies_has?: boolean | null;
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean | null;
 }
 
 export interface ReservationUpdate {
@@ -1216,6 +1255,9 @@ export interface ReservationUpdate {
   allergies_has?: boolean | null;
   allergies_detail?: string | null;
   preferred_floor_id?: number | null;
+  guest_birthday_month?: number | null;
+  guest_birthday_day?: number | null;
+  guest_birthday_marketing_consent?: boolean | null;
 }
 
 /** Public update by token: delay notice, reservation notes, customer notes. */
@@ -1321,6 +1363,7 @@ export interface RestaurantGroupMember {
   tenant_name: string;
   joined_at: string;
   is_current: boolean;
+  is_hub?: boolean;
 }
 
 export interface RestaurantGroup {
@@ -1329,8 +1372,27 @@ export interface RestaurantGroup {
   join_code: string;
   share_products: boolean;
   share_customers: boolean;
+  hub_tenant_id?: number | null;
+  is_hub?: boolean;
   created_at: string;
   members: RestaurantGroupMember[];
+}
+
+export interface HubFulfillment {
+  id: number;
+  group_id: number;
+  order_id: number;
+  branch_tenant_id: number;
+  hub_tenant_id: number;
+  status: 'requested' | 'preparing' | 'prepared_at_hq' | 'cancelled' | string;
+  notes?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  prepared_at?: string | null;
+  created_by_user_id?: number | null;
+  prepared_by_user_id?: number | null;
+  order_status?: string;
+  order_customer_name?: string | null;
 }
 
 export interface Order {
@@ -1369,6 +1431,8 @@ export interface Order {
   courier_user_id?: number | null;
   delivery_integration_id?: number | null;
   external_order_ref?: string | null;
+  hub_fulfillment?: HubFulfillment | null;
+  can_request_hub_fulfillment?: boolean;
 }
 
 /** Staff create first-party Satisfecho Delivery order (no table). */
@@ -1577,6 +1641,12 @@ export interface TenantSettings {
   reservation_dress_code?: string | null;
   reservation_reminder_24h_enabled?: boolean | null;
   reservation_reminder_2h_enabled?: boolean | null;
+  /** Guest birthday on reservations: show field on public book (default true). */
+  guest_birthday_capture_enabled?: boolean | null;
+  /** Allow marketing use of birthday data (default false = capture-only). */
+  guest_birthday_marketing_enabled?: boolean | null;
+  /** GDPR consent copy shown when marketing is enabled. */
+  guest_birthday_consent_text?: string | null;
   public_google_maps_url?: string | null;
   public_openstreetmap_url?: string | null;
   public_terms_of_service_url?: string | null;
@@ -2759,6 +2829,33 @@ export class ApiService {
     return this.http.post<{ status: string }>(`${this.apiUrl}/restaurant-group/leave`, {});
   }
 
+  setRestaurantGroupHub(hubTenantId: number | null): Observable<RestaurantGroup> {
+    return this.http.put<RestaurantGroup>(`${this.apiUrl}/restaurant-group/hub`, {
+      hub_tenant_id: hubTenantId,
+    });
+  }
+
+  listHubFulfillments(): Observable<HubFulfillment[]> {
+    return this.http.get<HubFulfillment[]>(`${this.apiUrl}/hub-fulfillments`);
+  }
+
+  createOrderHubFulfillment(orderId: number, notes?: string | null): Observable<HubFulfillment> {
+    return this.http.post<HubFulfillment>(`${this.apiUrl}/orders/${orderId}/hub-fulfillment`, {
+      notes: notes ?? null,
+    });
+  }
+
+  updateHubFulfillment(
+    fulfillmentId: number,
+    status: string,
+    notes?: string | null
+  ): Observable<HubFulfillment> {
+    return this.http.patch<HubFulfillment>(`${this.apiUrl}/hub-fulfillments/${fulfillmentId}`, {
+      status,
+      notes: notes ?? null,
+    });
+  }
+
   resetItemStatus(orderId: number, itemId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/items/${itemId}/reset-status`, {});
   }
@@ -3350,6 +3447,29 @@ export class ApiService {
 
   updateLoyaltyProgram(body: Partial<LoyaltyProgram>): Observable<LoyaltyProgram> {
     return this.http.put<LoyaltyProgram>(`${this.apiUrl}/loyalty/program`, body);
+  }
+
+  listPromos(includeDisabled = true): Observable<PricePromotion[]> {
+    let params = new HttpParams().set('include_disabled', String(includeDisabled));
+    return this.http.get<PricePromotion[]>(`${this.apiUrl}/promos`, { params });
+  }
+
+  createPromo(body: Partial<PricePromotion> & {
+    name: string;
+    percent_off: number;
+    category: string;
+  }): Observable<PricePromotion> {
+    return this.http.post<PricePromotion>(`${this.apiUrl}/promos`, body);
+  }
+
+  updatePromo(promoId: number, body: Partial<PricePromotion>): Observable<PricePromotion> {
+    return this.http.put<PricePromotion>(`${this.apiUrl}/promos/${promoId}`, body);
+  }
+
+  deletePromo(promoId: number): Observable<{ ok: boolean; id: number; enabled: boolean }> {
+    return this.http.delete<{ ok: boolean; id: number; enabled: boolean }>(
+      `${this.apiUrl}/promos/${promoId}`,
+    );
   }
 
   listLoyaltyMemberships(search?: string): Observable<LoyaltyMembership[]> {

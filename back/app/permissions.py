@@ -70,10 +70,14 @@ class Permission(str, Enum):
     BILLING_CUSTOMER_READ = "billing_customer:read"
     BILLING_CUSTOMER_WRITE = "billing_customer:write"
 
-    # Club loyalty (#327)
+    # Club loyalty
     LOYALTY_READ = "loyalty:read"
     LOYALTY_WRITE = "loyalty:write"  # program config + manual adjust (owner/admin)
     LOYALTY_REDEEM = "loyalty:redeem"  # apply reward at checkout (waiter+)
+
+    # Price promotions (#322)
+    PROMO_READ = "promo:read"
+    PROMO_WRITE = "promo:write"
 
     # Working plan (shift schedule for kitchen, bar, waiters)
     SCHEDULE_READ = "schedule:read"
@@ -126,6 +130,9 @@ ROLE_PERMISSIONS: dict[UserRole, set[Permission]] = {
         Permission.LOYALTY_READ,
         Permission.LOYALTY_WRITE,
         Permission.LOYALTY_REDEEM,
+        # Price promotions
+        Permission.PROMO_READ,
+        Permission.PROMO_WRITE,
         # Inventory
         Permission.INVENTORY_READ,
         Permission.INVENTORY_WRITE,

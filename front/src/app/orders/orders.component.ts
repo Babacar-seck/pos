@@ -154,6 +154,11 @@ ModuleRegistry.registerModules([
                         @if (order.staff_urgent) {
                           <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
                         }
+                        @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                          <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                        } @else if (order.hub_fulfillment) {
+                          <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
+                        }
                         <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                       </div>
                     </div>
@@ -288,6 +293,16 @@ ModuleRegistry.registerModules([
                         @if (canUpdateStatus() && order.status !== 'cancelled') {
                           <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
                             {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
+                          </button>
+                        }
+                        @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            data-testid="request-hub-fulfillment"
+                            (click)="requestHubFulfillment(order)"
+                          >
+                            {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
                           </button>
                         }
                         <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
@@ -462,6 +477,11 @@ ModuleRegistry.registerModules([
                           @if (order.staff_urgent) {
                             <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
                           }
+                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                          } @else if (order.hub_fulfillment) {
+                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
+                          }
                           <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                         </div>
                       </div>
@@ -592,6 +612,16 @@ ModuleRegistry.registerModules([
                           @if (canUpdateStatus() && order.status !== 'cancelled') {
                             <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
                               {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
+                            </button>
+                          }
+                          @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
+                            <button
+                              type="button"
+                              class="btn btn-secondary"
+                              data-testid="request-hub-fulfillment"
+                              (click)="requestHubFulfillment(order)"
+                            >
+                              {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
                             </button>
                           }
                           <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
@@ -762,6 +792,11 @@ ModuleRegistry.registerModules([
                           }
                           @if (order.staff_urgent) {
                             <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
+                          }
+                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                          } @else if (order.hub_fulfillment) {
+                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
                           }
                           <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
                         </div>
@@ -1552,6 +1587,14 @@ ModuleRegistry.registerModules([
       font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
       color: #b91c1c; background: rgba(220, 38, 38, 0.1);
       padding: 2px 8px; border-radius: 6px; width: fit-content;
+    }
+    .order-hub-badge {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
+      color: #1e40af; background: rgba(37, 99, 235, 0.1);
+      padding: 2px 8px; border-radius: 6px; width: fit-content;
+    }
+    .order-hub-badge.prepared {
+      color: #166534; background: rgba(22, 163, 74, 0.12);
     }
     .btn-delete-order {
       display: inline-flex; align-items: center; gap: var(--space-2);
@@ -3988,6 +4031,34 @@ export class OrdersComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.orders.update((list) =>
           list.map((o) => (o.id === order.id ? { ...o, staff_urgent: res.staff_urgent } : o))
+        );
+      },
+    });
+  }
+
+  hubFulfillmentLabel(status: string): string {
+    switch (status) {
+      case 'prepared_at_hq':
+        return 'ORDERS.HUB_PREPARED_BADGE';
+      case 'preparing':
+        return 'ORDERS.HUB_PREPARING_BADGE';
+      case 'cancelled':
+        return 'ORDERS.HUB_CANCELLED_BADGE';
+      default:
+        return 'ORDERS.HUB_REQUESTED_BADGE';
+    }
+  }
+
+  requestHubFulfillment(order: Order): void {
+    if (!this.canUpdateStatus() || !order.can_request_hub_fulfillment) return;
+    this.api.createOrderHubFulfillment(order.id).subscribe({
+      next: (ff) => {
+        this.orders.update((list) =>
+          list.map((o) =>
+            o.id === order.id
+              ? { ...o, hub_fulfillment: ff, can_request_hub_fulfillment: false }
+              : o
+          )
         );
       },
     });

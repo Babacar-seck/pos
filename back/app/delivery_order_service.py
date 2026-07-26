@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlmodel import Session
 
 from app import models
+from app import promo_service as promo_svc
 from app.order_notes import normalize_order_note
 
 # Marks guest checkout creates (notify_kitchen=False) for TTL unpaid cleanup.
@@ -281,12 +282,24 @@ def _add_order_items(
     resolved_lines: list[tuple[models.Product, int, str | None]],
     order_date: date,
 ) -> None:
+    channel = getattr(order, "order_channel", None)
+    channel_val = channel.value if hasattr(channel, "value") else (channel or models.OrderChannel.satisfecho_delivery.value)
+    eligible = promo_svc.eligible_promos(session, tenant_id=tenant_id, channel=str(channel_val))
     for product, qty, notes in resolved_lines:
         product_tax_id = getattr(product, "tax_id", None)
         effective_tax = _effective_tax(session, tenant_id, product_tax_id, order_date)
         tax_id = effective_tax.id if effective_tax else None
         tax_rate = effective_tax.rate_percent if effective_tax else 0
-        price_cents = product.price_cents or 0
+        list_price = product.price_cents or 0
+        applied = promo_svc.resolve_line_price(
+            session,
+            tenant_id=tenant_id,
+            list_price_cents=list_price,
+            product_category=getattr(product, "category", None),
+            channel=str(channel_val),
+            eligible=eligible,
+        )
+        price_cents = applied["price_cents"]
         line_tax_cents = (
             _tax_amount_cents_inclusive(price_cents, qty, tax_rate) if effective_tax else 0
         )
@@ -302,6 +315,10 @@ def _add_order_items(
             tax_id=tax_id,
             tax_rate_percent=tax_rate if effective_tax else None,
             tax_amount_cents=line_tax_cents if effective_tax else None,
+            list_price_cents=applied["list_price_cents"],
+            discount_cents=applied["discount_cents"],
+            promo_id=applied["promo_id"],
+            promo_snapshot=applied["promo_snapshot"],
         )
         session.add(oi)
 

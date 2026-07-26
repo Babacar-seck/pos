@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from sqlmodel import Session, select
 
 from . import models
+from . import promo_service as promo_svc
 from .category_codes import get_public_category_display_label
 from .tenant_currency import normalize_tenant_currency_fields
 from .translation_service import TranslationService
@@ -272,6 +273,25 @@ def _load_flat_products(
                 "available": True,
             }
         )
+
+    eligible = promo_svc.eligible_promos(
+        session,
+        tenant_id=tenant_id,
+        channel=models.OrderChannel.table.value,
+    )
+    for product in products:
+        promo_svc.decorate_menu_product(
+            session,
+            tenant_id=tenant_id,
+            product=product,
+            channel=models.OrderChannel.table.value,
+            eligible=eligible,
+        )
+        if product.get("list_price_cents") is not None:
+            product["price_formatted"] = format_public_price(product["price_cents"], lang)
+            product["list_price_formatted"] = format_public_price(
+                product["list_price_cents"], lang
+            )
 
     return products
 

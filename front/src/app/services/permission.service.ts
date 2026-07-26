@@ -53,6 +53,9 @@ export type Permission =
   | 'loyalty:read'
   | 'loyalty:write'
   | 'loyalty:redeem'
+  // Price promotions
+  | 'promo:read'
+  | 'promo:write'
   // Working plan (schedule)
   | 'schedule:read'
   | 'schedule:write'
@@ -78,6 +81,7 @@ const ROLE_PERMISSIONS: Record<UserRole, Set<Permission | '*'>> = {
     'order:mark_paid', 'order:cancel', 'order:remove_item', 'order:delete',
     'billing_customer:read', 'billing_customer:write',
     'loyalty:read', 'loyalty:write', 'loyalty:redeem',
+    'promo:read', 'promo:write',
     'inventory:read', 'inventory:write',
     'translation:read', 'translation:write',
     'report:read',

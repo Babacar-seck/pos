@@ -18,7 +18,7 @@ Umbrella list. **This table is the source of truth** for “is it done?” until
 | **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, **Settings → Google review URL**, thank-you step; staff trends + CSV (#325 / `docs/0064`) — see [#54](https://github.com/satisfecho/pos/issues/54), `CHANGELOG.md`. NPS / post-visit email-SMS still open. |
 | **Birthdays (“cumpleaños”)** | **Partial** | Optional **`birth_date`** on **billing customers** (Customers / Factura CRM); not on reservations yet. Automated campaigns → [#54](https://github.com/satisfecho/pos/issues/54). |
 | **Marketing / special offers** | Not started | Promotions / pricing rules — overlaps [#54](https://github.com/satisfecho/pos/issues/54). |
-| **Central kitchen → branches** | Not started | Cross-tenant or multi-site supply; out of scope of current schema. |
+| **Central kitchen → branches** | MVP started (#323) | Linked tenants via restaurant groups + hub kitchen; fulfillment record with prepared-at-HQ. See [0069](0069-branch-hub-fulfillment.md). |
 | **Satisfecho Delivery (first-party)** | **Partial / shipped core** | Own-channel delivery (API + staff UI + courier Mine/actions + public `/delivery/{tenantId}` checkout). See [0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md). Not the same as aggregator integrations below. |
 | **Uber Eats interface** | Not started | Aggregator menu sync / orders — see `docs/0031-order-customizations-plan.md` (delivery integrations). Distinct from first-party Satisfecho Delivery. |
 

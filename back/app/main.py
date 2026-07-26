@@ -94,7 +94,10 @@ from .tenant_currency import (
     sync_tenant_currency_symbol_from_code,
 )
 from . import restaurant_groups as rg
+from . import branch_fulfillment as hub_ff
 from . import loyalty_service as loyalty_svc
+from . import promo_service as promo_svc
+from .order_discounts import order_level_discount_cents
 from .tenant_ui_modules import (
     merge_tenant_ui_modules_patch,
     new_tenant_ui_modules_stored,
@@ -827,6 +830,10 @@ class TenantSummary(_BaseModel):
     timezone: str | None = None
     # Optional cap on guests per slot (for UI max party hint)
     reservation_max_guests_per_slot: int | None = None
+    # Guest birthday capture (public book): show optional month/day + marketing consent when enabled
+    guest_birthday_capture_enabled: bool = True
+    guest_birthday_marketing_enabled: bool = False
+    guest_birthday_consent_text: str | None = None
 
 
 TAKE_AWAY_TABLE_NAMES = ("take away", "home ordering", "takeaway", "take-away")
@@ -990,7 +997,7 @@ def _guest_order_payable_total_cents(session: Session, order: models.Order) -> i
         from app.delivery_order_service import order_delivery_fee_cents
 
         subtotal = subtotal + order_delivery_fee_cents(order)
-    discount = max(0, int(getattr(order, "loyalty_discount_cents", 0) or 0))
+    discount = order_level_discount_cents(order)
     return max(0, subtotal - discount)
 
 
@@ -1076,6 +1083,13 @@ def _tenant_to_summary(t: models.Tenant, session: Session) -> TenantSummary:
         privacy_policy_url=priv,
         timezone=t.timezone,
         reservation_max_guests_per_slot=t.reservation_max_guests_per_slot,
+        guest_birthday_capture_enabled=bool(
+            getattr(t, "guest_birthday_capture_enabled", True)
+        ),
+        guest_birthday_marketing_enabled=bool(
+            getattr(t, "guest_birthday_marketing_enabled", False)
+        ),
+        guest_birthday_consent_text=getattr(t, "guest_birthday_consent_text", None),
     )
 
 
@@ -1162,6 +1176,9 @@ def get_public_tenant(
         "privacy_policy_url": summary.privacy_policy_url,
         "timezone": summary.timezone,
         "reservation_max_guests_per_slot": summary.reservation_max_guests_per_slot,
+        "guest_birthday_capture_enabled": summary.guest_birthday_capture_enabled,
+        "guest_birthday_marketing_enabled": summary.guest_birthday_marketing_enabled,
+        "guest_birthday_consent_text": summary.guest_birthday_consent_text,
     }
     return JSONResponse(content=body)
 
@@ -2141,6 +2158,77 @@ def redeem_loyalty_on_order(
     )
     session.commit()
     return result
+
+
+# ============ PRICE PROMOTIONS (#322) ============
+
+
+@app.get("/promos")
+def list_promos(
+    current_user: Annotated[models.User, Depends(require_permission(Permission.PROMO_READ))],
+    session: Session = Depends(get_session),
+    include_disabled: bool = Query(default=True),
+) -> list[dict]:
+    q = select(models.PricePromotion).where(
+        models.PricePromotion.tenant_id == current_user.tenant_id
+    )
+    if not include_disabled:
+        q = q.where(models.PricePromotion.enabled == True)  # noqa: E712
+    rows = session.exec(q.order_by(models.PricePromotion.id.desc())).all()
+    return [promo_svc.promo_to_dict(p) for p in rows]
+
+
+@app.post("/promos")
+def create_promo(
+    body: models.PricePromotionCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.PROMO_WRITE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    promo = models.PricePromotion(
+        tenant_id=current_user.tenant_id,
+        name="",
+        percent_off=1,
+        category="",
+    )
+    promo_svc.validate_and_apply_body(promo, body, creating=True)
+    session.add(promo)
+    session.commit()
+    session.refresh(promo)
+    return promo_svc.promo_to_dict(promo)
+
+
+@app.put("/promos/{promo_id}")
+def update_promo(
+    promo_id: int,
+    body: models.PricePromotionUpdate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.PROMO_WRITE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    promo = session.get(models.PricePromotion, promo_id)
+    if not promo or promo.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Promo not found")
+    promo_svc.validate_and_apply_body(promo, body, creating=False)
+    session.add(promo)
+    session.commit()
+    session.refresh(promo)
+    return promo_svc.promo_to_dict(promo)
+
+
+@app.delete("/promos/{promo_id}")
+def delete_promo(
+    promo_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.PROMO_WRITE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    promo = session.get(models.PricePromotion, promo_id)
+    if not promo or promo.tenant_id != current_user.tenant_id:
+        raise HTTPException(status_code=404, detail="Promo not found")
+    # Soft-disable so order_item.promo_id FK stays valid
+    promo.enabled = False
+    promo.updated_at = datetime.now(timezone.utc)
+    session.add(promo)
+    session.commit()
+    return {"ok": True, "id": promo_id, "enabled": False}
 
 
 # ============ AUTH ============
@@ -3957,6 +4045,21 @@ def update_tenant_settings(
         tenant.reservation_reminder_24h_enabled = tenant_update.reservation_reminder_24h_enabled
     if tenant_update.reservation_reminder_2h_enabled is not None:
         tenant.reservation_reminder_2h_enabled = tenant_update.reservation_reminder_2h_enabled
+    if tenant_update.guest_birthday_capture_enabled is not None:
+        tenant.guest_birthday_capture_enabled = bool(
+            tenant_update.guest_birthday_capture_enabled
+        )
+    if tenant_update.guest_birthday_marketing_enabled is not None:
+        tenant.guest_birthday_marketing_enabled = bool(
+            tenant_update.guest_birthday_marketing_enabled
+        )
+    if tenant_update.guest_birthday_consent_text is not None:
+        raw_consent = tenant_update.guest_birthday_consent_text
+        if isinstance(raw_consent, str):
+            stripped = raw_consent.strip()
+            tenant.guest_birthday_consent_text = stripped or None
+        else:
+            tenant.guest_birthday_consent_text = None
 
     # Satisfecho Delivery fee + coverage
     if tenant_update.delivery_fee_cents is not None:
@@ -9171,6 +9274,11 @@ def _reservation_to_dict(
         "allergies_detail": getattr(r, "allergies_detail", None),
         "preferred_floor_id": getattr(r, "preferred_floor_id", None),
         "locale": getattr(r, "locale", None),
+        "guest_birthday_month": getattr(r, "guest_birthday_month", None),
+        "guest_birthday_day": getattr(r, "guest_birthday_day", None),
+        "guest_birthday_marketing_consent": bool(
+            getattr(r, "guest_birthday_marketing_consent", False)
+        ),
     }
     pfid = getattr(r, "preferred_floor_id", None)
     if pfid is not None and session:
@@ -9640,6 +9748,44 @@ def _normalize_allergies_for_booking(
     return (True, detail)
 
 
+def _normalize_guest_birthday(
+    month: int | None,
+    day: int | None,
+    *,
+    lang: str,
+) -> tuple[int | None, int | None]:
+    """Validate optional month/day pair (no year). Empty = clear. Both required when either set."""
+    if month is None and day is None:
+        return None, None
+    if month is None or day is None:
+        raise HTTPException(
+            status_code=400,
+            detail=api_error_payload("invalid_guest_birthday", lang),
+        )
+    try:
+        m = int(month)
+        d = int(day)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=400,
+            detail=api_error_payload("invalid_guest_birthday", lang),
+        )
+    if m < 1 or m > 12 or d < 1 or d > 31:
+        raise HTTPException(
+            status_code=400,
+            detail=api_error_payload("invalid_guest_birthday", lang),
+        )
+    try:
+        # Leap year so 29 Feb is allowed without collecting year of birth.
+        date(2000, m, d)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=api_error_payload("invalid_guest_birthday", lang),
+        )
+    return m, d
+
+
 @app.get("/reservations/slot-capacity")
 def get_slot_capacity(
     current_user: Annotated[models.User, Depends(require_permission(Permission.RESERVATION_READ))],
@@ -9916,6 +10062,20 @@ def create_reservation(
     ah_raw = getattr(data, "allergies_has", None)
     ad_raw = getattr(data, "allergies_detail", None)
     allergies_has, allergies_detail = _normalize_allergies_for_booking(ah_raw, ad_raw)
+    bday_month: int | None = None
+    bday_day: int | None = None
+    bday_consent = False
+    allow_public_birthday = current_user is not None or bool(
+        getattr(tenant, "guest_birthday_capture_enabled", True)
+    )
+    if allow_public_birthday:
+        raw_bm = getattr(data, "guest_birthday_month", None)
+        raw_bd = getattr(data, "guest_birthday_day", None)
+        if raw_bm is not None or raw_bd is not None:
+            bday_month, bday_day = _normalize_guest_birthday(raw_bm, raw_bd, lang=lang)
+        raw_consent = getattr(data, "guest_birthday_marketing_consent", None)
+        marketing_on = bool(getattr(tenant, "guest_birthday_marketing_enabled", False))
+        bday_consent = bool(raw_consent) if marketing_on and bday_month is not None else False
     _raise_if_reservation_time_invalid_for_opening_hours(
         session, tenant, res_date, res_time, service_type
     )
@@ -10002,6 +10162,9 @@ def create_reservation(
         allergies_detail=allergies_detail,
         preferred_floor_id=eff_floor,
         locale=lang,
+        guest_birthday_month=bday_month,
+        guest_birthday_day=bday_day,
+        guest_birthday_marketing_consent=bday_consent,
     )
     session.add(reservation)
     session.commit()
@@ -10695,6 +10858,44 @@ def update_reservation(
                 raise HTTPException(status_code=400, detail=api_error_payload("floor_not_found", lang))
             _validate_floor_seating_pair_or_raise(fl, reservation.seating_preference, lang)
             reservation.preferred_floor_id = body.preferred_floor_id
+    if (
+        "guest_birthday_month" in upd
+        or "guest_birthday_day" in upd
+        or "guest_birthday_marketing_consent" in upd
+    ):
+        bm = (
+            body.guest_birthday_month
+            if "guest_birthday_month" in upd
+            else reservation.guest_birthday_month
+        )
+        bd = (
+            body.guest_birthday_day
+            if "guest_birthday_day" in upd
+            else reservation.guest_birthday_day
+        )
+        if "guest_birthday_month" in upd and "guest_birthday_day" in upd:
+            bm, bd = body.guest_birthday_month, body.guest_birthday_day
+        elif "guest_birthday_month" in upd and body.guest_birthday_month is None:
+            bm, bd = None, None
+        elif "guest_birthday_day" in upd and body.guest_birthday_day is None:
+            bm, bd = None, None
+        nm, nd = _normalize_guest_birthday(bm, bd, lang=lang)
+        reservation.guest_birthday_month = nm
+        reservation.guest_birthday_day = nd
+        tenant_for_bday = session.get(models.Tenant, reservation.tenant_id)
+        marketing_on = bool(
+            getattr(tenant_for_bday, "guest_birthday_marketing_enabled", False)
+            if tenant_for_bday
+            else False
+        )
+        if "guest_birthday_marketing_consent" in upd:
+            reservation.guest_birthday_marketing_consent = (
+                bool(body.guest_birthday_marketing_consent)
+                if marketing_on and nm is not None
+                else False
+            )
+        elif not marketing_on or nm is None:
+            reservation.guest_birthday_marketing_consent = False
     ah_ok, ad_ok = _normalize_allergies_for_booking(
         reservation.allergies_has, reservation.allergies_detail
     )
@@ -11820,6 +12021,21 @@ def get_menu(
 
         products_list.append(product_data)
 
+    # Live promo prices for QR menu (#322)
+    eligible_promos = promo_svc.eligible_promos(
+        session,
+        tenant_id=table.tenant_id,
+        channel=models.OrderChannel.table.value,
+    )
+    for product_data in products_list:
+        promo_svc.decorate_menu_product(
+            session,
+            tenant_id=table.tenant_id,
+            product=product_data,
+            channel=models.OrderChannel.table.value,
+            eligible=eligible_promos,
+        )
+
     # Build tenant response data
     tenant_data = {
         "table_name": table.name,
@@ -12509,6 +12725,28 @@ def create_order(
             product_name=product_name,
         )
 
+        # Apply eligible line promo (#322) — discount tax-inclusive list price, recompute tax
+        product_category = None
+        eff_product = session.get(models.Product, effective_product_id)
+        if eff_product and eff_product.category:
+            product_category = eff_product.category
+        elif line_tenant_product is not None:
+            catalog_item = session.get(models.ProductCatalog, line_tenant_product.catalog_id)
+            if catalog_item and catalog_item.category:
+                product_category = catalog_item.category
+        promo_applied = promo_svc.resolve_line_price(
+            session,
+            tenant_id=table.tenant_id,
+            list_price_cents=price_cents,
+            product_category=product_category,
+            channel=models.OrderChannel.table.value,
+        )
+        list_price_cents = promo_applied["list_price_cents"]
+        unit_discount_cents = promo_applied["discount_cents"]
+        promo_id = promo_applied["promo_id"]
+        promo_snapshot = promo_applied["promo_snapshot"]
+        price_cents = promo_applied["price_cents"]
+
         # Resolve tax for this line (product override or tenant default)
         effective_tax = _get_effective_tax(session, table.tenant_id, product_tax_id, order_date)
         tax_id = effective_tax.id if effective_tax else None
@@ -12539,6 +12777,8 @@ def create_order(
                 customization_dicts_equal(ei_answers, item_answers or {})
                 and line_modifiers_equal(getattr(ei, "line_modifiers", None), norm_modifiers)
                 and order_notes_equal(ei.notes, item_note)
+                and (getattr(ei, "promo_id", None) == promo_id)
+                and (getattr(ei, "price_cents", None) == price_cents)
             ):
                 existing_item = ei
                 break
@@ -12573,6 +12813,10 @@ def create_order(
                 tax_id=tax_id,
                 tax_rate_percent=tax_rate if effective_tax else None,
                 tax_amount_cents=line_tax_cents if effective_tax else None,
+                list_price_cents=list_price_cents,
+                discount_cents=unit_discount_cents,
+                promo_id=promo_id,
+                promo_snapshot=promo_snapshot,
             )
             session.add(order_item)
     
@@ -13169,6 +13413,16 @@ def list_orders(
     ).all()
     station_by_id = {s.id: s for s in station_rows if s.id is not None}
 
+    hub_by_order = hub_ff.fulfillments_by_order_ids(
+        session, [o.id for o in orders if o.id is not None]
+    )
+    group_for_user = rg.get_group_for_tenant(session, current_user.tenant_id)
+    can_request_hub = bool(
+        group_for_user
+        and group_for_user.hub_tenant_id
+        and group_for_user.hub_tenant_id != current_user.tenant_id
+    )
+
     result = []
     for order in orders:
         table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
@@ -13209,7 +13463,7 @@ def list_orders(
             continue
         subtotal_cents = sum(item.price_cents * item.quantity for item in active_items)
         tip_amt = int(order.tip_amount_cents or 0)
-        loyalty_discount = max(0, int(getattr(order, "loyalty_discount_cents", 0) or 0))
+        loyalty_discount = order_level_discount_cents(order)
         total_cents = max(0, subtotal_cents - loyalty_discount) + tip_amt
 
         # Product categories for kitchen/bar display filtering (one query per order)
@@ -13312,10 +13566,14 @@ def list_orders(
             "tip_amount_cents": getattr(order, "tip_amount_cents", None),
             "tip_attributed_user_id": getattr(order, "tip_attributed_user_id", None),
             "total_cents": total_cents,
-            "removed_items_count": len([item for item in all_items if item.removed_by_customer])
+            "removed_items_count": len([item for item in all_items if item.removed_by_customer]),
+            "can_request_hub_fulfillment": can_request_hub and order.id not in hub_by_order,
         }
         if tg_label:
             row_out["table_group_label"] = tg_label
+        ff = hub_by_order.get(order.id) if order.id is not None else None
+        if ff:
+            row_out["hub_fulfillment"] = hub_ff.fulfillment_to_dict(ff)
         result.append(row_out)
     
     return result
@@ -13879,6 +14137,78 @@ def leave_restaurant_group(
     rg.require_owner_or_admin(current_user)
     rg.leave_group(session, current_user.tenant_id)
     return {"status": "left"}
+
+
+@app.put("/restaurant-group/hub")
+def set_restaurant_group_hub(
+    body: models.RestaurantGroupHubUpdate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.SETTINGS_UPDATE))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Designate (or clear) the central kitchen hub for the restaurant group (#323)."""
+    rg.require_owner_or_admin(current_user)
+    hub_ff.set_hub_tenant(
+        session, tenant_id=current_user.tenant_id, hub_tenant_id=body.hub_tenant_id
+    )
+    detail = rg.group_detail(session, current_user.tenant_id)
+    assert detail is not None
+    return detail
+
+
+@app.get("/hub-fulfillments")
+def list_hub_fulfillments(
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_READ))],
+    session: Session = Depends(get_session),
+) -> list[dict]:
+    """Branch: own fulfillments. Hub: all fulfillments targeting this kitchen."""
+    rows = hub_ff.list_fulfillments(session, tenant_id=current_user.tenant_id)
+    out: list[dict] = []
+    for row in rows:
+        d = hub_ff.fulfillment_to_dict(row)
+        order = session.get(models.Order, row.order_id)
+        if order:
+            d["order_status"] = (
+                order.status.value if hasattr(order.status, "value") else str(order.status)
+            )
+            d["order_customer_name"] = order.customer_name
+            d["branch_tenant_id"] = row.branch_tenant_id
+        out.append(d)
+    return out
+
+
+@app.post("/orders/{order_id}/hub-fulfillment")
+def create_order_hub_fulfillment(
+    order_id: int,
+    body: models.HubFulfillmentCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_UPDATE_STATUS))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Branch requests hub kitchen prep for an order (creates transfer-style record)."""
+    order = session.get(models.Order, order_id)
+    if not order or order.tenant_id != current_user.tenant_id or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    row = hub_ff.create_fulfillment(
+        session, order=order, user=current_user, notes=body.notes
+    )
+    return hub_ff.fulfillment_to_dict(row)
+
+
+@app.patch("/hub-fulfillments/{fulfillment_id}")
+def update_hub_fulfillment(
+    fulfillment_id: int,
+    body: models.HubFulfillmentStatusUpdate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_UPDATE_STATUS))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Hub advances prep status (incl. prepared_at_hq); branch or hub may cancel."""
+    row = hub_ff.update_fulfillment_status(
+        session,
+        fulfillment_id=fulfillment_id,
+        user=current_user,
+        new_status=body.status,
+        notes=body.notes,
+    )
+    return hub_ff.fulfillment_to_dict(row)
 
 
 # ---------- Billing customers (Factura) ----------

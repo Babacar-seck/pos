@@ -8,6 +8,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.135] - 2026-07-26
+
+### Added
+
+- **Branch hub fulfillment (#323):** ADR chooses linked tenants via restaurant groups (not a parallel site hierarchy); warehouses stay same-tenant stock bins. Designate a group **hub kitchen**, branch staff can request HQ prep (fulfillment record), hub marks **prepared at HQ**; Orders show the state. See `docs/0069-branch-hub-fulfillment.md`.
+- **Price promotions (#322):** Tenant %-off category engine (time window + channel eligibility), Settings → Promotions, live QR/public menu prices, order-line promo audit snapshot, shared order-level discount helper for loyalty (`docs/0068-price-promotions.md`).
+- **Guest birthdays (#324):** Optional month/day on reservations (public `/book` + staff create/edit), staff visibility, tenant settings for capture vs marketing consent (capture-only by default; no outbound messages). See `docs/0067-guest-birthday.md`.
+
 ## [2.1.134] - 2026-07-26
 
 ### Added

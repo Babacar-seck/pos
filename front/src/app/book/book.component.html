@@ -262,11 +262,41 @@
               <label for="book-email">{{ 'RESERVATIONS.CUSTOMER_EMAIL' | translate }}</label>
               <input type="email" id="book-email" [(ngModel)]="formEmail" name="email" placeholder="your@email.com" autocomplete="email" />
             </div>
-            <div class="form-group">
-              <label for="book-notes">{{ 'RESERVATIONS.RESERVATION_NOTES' | translate }}</label>
-              <textarea id="book-notes" [(ngModel)]="formClientNotes" name="clientNotes" rows="2" [placeholder]="'RESERVATIONS.RESERVATION_NOTES_PLACEHOLDER' | translate"></textarea>
-            </div>
-            @if (error()) {
+              <div class="form-group">
+                <label for="book-notes">{{ 'RESERVATIONS.RESERVATION_NOTES' | translate }}</label>
+                <textarea id="book-notes" [(ngModel)]="formClientNotes" name="clientNotes" rows="2" [placeholder]="'RESERVATIONS.RESERVATION_NOTES_PLACEHOLDER' | translate"></textarea>
+              </div>
+              @if (tenant()?.guest_birthday_capture_enabled !== false) {
+                <div class="form-group form-row-birthday">
+                  <span class="label-block">{{ 'BOOK.BIRTHDAY_OPTIONAL' | translate }}</span>
+                  <div class="birthday-selects">
+                    <label class="sr-only" for="book-bday-month">{{ 'BOOK.BIRTHDAY_MONTH' | translate }}</label>
+                    <select id="book-bday-month" [(ngModel)]="formBirthdayMonth" name="bdayMonth">
+                      <option [ngValue]="null">{{ 'BOOK.BIRTHDAY_MONTH' | translate }}</option>
+                      @for (m of birthdayMonths; track m.value) {
+                        <option [ngValue]="m.value">{{ m.labelKey | translate }}</option>
+                      }
+                    </select>
+                    <label class="sr-only" for="book-bday-day">{{ 'BOOK.BIRTHDAY_DAY' | translate }}</label>
+                    <select id="book-bday-day" [(ngModel)]="formBirthdayDay" name="bdayDay">
+                      <option [ngValue]="null">{{ 'BOOK.BIRTHDAY_DAY' | translate }}</option>
+                      @for (d of birthdayDays; track d) {
+                        <option [ngValue]="d">{{ d }}</option>
+                      }
+                    </select>
+                  </div>
+                  <small class="field-hint">{{ 'BOOK.BIRTHDAY_HINT' | translate }}</small>
+                </div>
+                @if (tenant()?.guest_birthday_marketing_enabled) {
+                  <div class="form-group checkbox-row">
+                    <label class="check-label">
+                      <input type="checkbox" [(ngModel)]="formBirthdayMarketingConsent" name="bdayConsent" />
+                      {{ tenant()?.guest_birthday_consent_text || ('BOOK.BIRTHDAY_CONSENT_DEFAULT' | translate) }}
+                    </label>
+                  </div>
+                }
+              }
+              @if (error()) {
               <div class="form-error">{{ error() }}</div>
             }
             <button type="submit" class="btn btn-primary" [disabled]="submitting()">

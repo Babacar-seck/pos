@@ -212,7 +212,7 @@ def redeem_on_order(
     membership: models.LoyaltyMembership,
     created_by_user_id: int | None = None,
 ) -> dict:
-    """Redeem one reward on an unpaid order. Sets loyalty_discount_cents (pre-#322 discount path)."""
+    """Redeem one reward on an unpaid order. Sets loyalty_discount_cents (order-level via #322 helper)."""
     if order.tenant_id != membership.tenant_id:
         raise HTTPException(status_code=404, detail="Membership not found")
     if order.paid_at or order.status == models.OrderStatus.paid:

@@ -22,6 +22,7 @@ import { FocusFirstInputDirective } from '../shared/focus-first-input.directive'
 import { TranslationsComponent } from '../translations/translations.component';
 import { KitchenStationsSettingsComponent } from './kitchen-stations-settings.component';
 import { LoyaltySettingsComponent } from './loyalty-settings.component';
+import { PromoSettingsComponent } from './promo-settings.component';
 import { RestaurantGroupSettingsComponent } from './restaurant-group-settings.component';
 import { DeliveryIntegrationsSettingsComponent } from './delivery-integrations-settings.component';
 import { SocialPostsSettingsComponent } from './social-posts-settings.component';
@@ -42,6 +43,7 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
     TranslationsComponent,
     KitchenStationsSettingsComponent,
     LoyaltySettingsComponent,
+    PromoSettingsComponent,
     RestaurantGroupSettingsComponent,
     DeliveryIntegrationsSettingsComponent,
     ContractTemplatesSettingsComponent,
@@ -189,6 +191,18 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
               <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/>
             </svg>
             <span>{{ 'SETTINGS.LOYALTY_TAB' | translate }}</span>
+          </button>
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-promos-tab"
+            [class.active]="activeSection() === 'promos'"
+            (click)="activeSection.set('promos')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
+              <line x1="7" y1="7" x2="7.01" y2="7"/>
+            </svg>
+            <span>{{ 'SETTINGS.PROMOS_TAB' | translate }}</span>
           </button>
           <button
             type="button"
@@ -561,6 +575,8 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
           <app-kitchen-stations-settings />
         } @else if (activeSection() === 'loyalty') {
           <app-loyalty-settings />
+        } @else if (activeSection() === 'promos') {
+          <app-promo-settings />
         } @else if (activeSection() === 'delivery-integrations') {
           <app-delivery-integrations-settings />
         } @else if (activeSection() === 'social-posts') {
@@ -1615,6 +1631,41 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
                       <p class="hint">{{ 'SETTINGS.RESERVATION_REMINDER_2H_HINT' | translate }}</p>
                     </div>
                   </div>
+                  <h3 class="subsection-title">{{ 'SETTINGS.GUEST_BIRTHDAY' | translate }}</h3>
+                  <p class="subsection-desc">{{ 'SETTINGS.GUEST_BIRTHDAY_DESC' | translate }}</p>
+                  <div class="form-group checkbox-row">
+                    <label class="switch">
+                      <input type="checkbox" [(ngModel)]="formData.guest_birthday_capture_enabled" name="guest_birthday_capture_enabled">
+                      <span class="slider round"></span>
+                    </label>
+                    <div>
+                      <label class="check-label">{{ 'SETTINGS.GUEST_BIRTHDAY_CAPTURE' | translate }}</label>
+                      <p class="hint">{{ 'SETTINGS.GUEST_BIRTHDAY_CAPTURE_HINT' | translate }}</p>
+                    </div>
+                  </div>
+                  <div class="form-group checkbox-row">
+                    <label class="switch">
+                      <input type="checkbox" [(ngModel)]="formData.guest_birthday_marketing_enabled" name="guest_birthday_marketing_enabled">
+                      <span class="slider round"></span>
+                    </label>
+                    <div>
+                      <label class="check-label">{{ 'SETTINGS.GUEST_BIRTHDAY_MARKETING' | translate }}</label>
+                      <p class="hint">{{ 'SETTINGS.GUEST_BIRTHDAY_MARKETING_HINT' | translate }}</p>
+                    </div>
+                  </div>
+                  @if (formData.guest_birthday_marketing_enabled) {
+                    <div class="form-group">
+                      <label for="guest_birthday_consent_text">{{ 'SETTINGS.GUEST_BIRTHDAY_CONSENT_TEXT' | translate }}</label>
+                      <textarea
+                        id="guest_birthday_consent_text"
+                        [(ngModel)]="formData.guest_birthday_consent_text"
+                        name="guest_birthday_consent_text"
+                        rows="2"
+                        [placeholder]="'SETTINGS.GUEST_BIRTHDAY_CONSENT_PLACEHOLDER' | translate"
+                      ></textarea>
+                      <small class="field-hint">{{ 'SETTINGS.GUEST_BIRTHDAY_CONSENT_HINT' | translate }}</small>
+                    </div>
+                  }
                 </div>
               }
 
@@ -2960,6 +3011,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     | 'taxes'
     | 'kitchen-stations'
     | 'loyalty'
+    | 'promos'
     | 'restaurant-group'
     | 'delivery-integrations'
     | 'social-posts'
@@ -3164,6 +3216,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     reservation_dress_code: null,
     reservation_reminder_24h_enabled: false,
     reservation_reminder_2h_enabled: false,
+    guest_birthday_capture_enabled: true,
+    guest_birthday_marketing_enabled: false,
+    guest_birthday_consent_text: null,
     delivery_fee_cents: 0,
     delivery_radius_meters: null,
     delivery_postal_codes: null,
@@ -3283,6 +3338,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
           reservation_dress_code: settings.reservation_dress_code ?? null,
           reservation_reminder_24h_enabled: settings.reservation_reminder_24h_enabled ?? false,
           reservation_reminder_2h_enabled: settings.reservation_reminder_2h_enabled ?? false,
+          guest_birthday_capture_enabled: settings.guest_birthday_capture_enabled ?? true,
+          guest_birthday_marketing_enabled: settings.guest_birthday_marketing_enabled ?? false,
+          guest_birthday_consent_text: settings.guest_birthday_consent_text ?? null,
           delivery_fee_cents: settings.delivery_fee_cents ?? 0,
           delivery_radius_meters: settings.delivery_radius_meters ?? null,
           delivery_postal_codes: this.formatDeliveryPostalCodesForForm(settings.delivery_postal_codes),
@@ -4235,6 +4293,9 @@ export class SettingsComponent implements OnInit, OnDestroy {
     // Always send reminder options so they are persisted (default false if unset)
     updateData.reservation_reminder_24h_enabled = this.formData.reservation_reminder_24h_enabled ?? false;
     updateData.reservation_reminder_2h_enabled = this.formData.reservation_reminder_2h_enabled ?? false;
+    updateData.guest_birthday_capture_enabled = this.formData.guest_birthday_capture_enabled ?? true;
+    updateData.guest_birthday_marketing_enabled = this.formData.guest_birthday_marketing_enabled ?? false;
+    updateData.guest_birthday_consent_text = (this.formData.guest_birthday_consent_text || '').trim() || null;
 
     const seen = new Set<number>();
     const tipPresets: number[] = [];

@@ -183,6 +183,11 @@ class Tenant(SQLModel, table=True):
     reservation_reminder_24h_enabled: bool = Field(default=False)
     reservation_reminder_2h_enabled: bool = Field(default=False)
 
+    # Guest birthday capture (reservations): default capture-only, no marketing outbound
+    guest_birthday_capture_enabled: bool = Field(default=True)
+    guest_birthday_marketing_enabled: bool = Field(default=False)
+    guest_birthday_consent_text: str | None = Field(default=None)  # GDPR copy when marketing enabled
+
     # Satisfecho Delivery: flat fee + coverage (postal list and/or radius from lat/lng)
     delivery_fee_cents: int = Field(default=0)
     delivery_radius_meters: int | None = Field(default=None)
@@ -758,6 +763,10 @@ class Reservation(TenantMixin, table=True):
     preferred_floor_id: int | None = Field(default=None, foreign_key="floor.id")
     # BCP 47-ish tag from booking request (?lang= / Accept-Language); overrides tenant default_language for emails
     locale: str | None = Field(default=None, max_length=16)
+    # Guest birthday: month/day only (no year) for privacy; optional marketing consent
+    guest_birthday_month: int | None = Field(default=None)  # 1–12
+    guest_birthday_day: int | None = Field(default=None)  # 1–31
+    guest_birthday_marketing_consent: bool = Field(default=False)
 
 
 class WaitingListStatus(str, Enum):
@@ -798,6 +807,28 @@ class GuestFeedback(TenantMixin, table=True):
     reservation_id: int | None = Field(default=None, foreign_key="reservation.id")
     client_ip: str | None = Field(default=None, max_length=45)
     client_user_agent: str | None = Field(default=None, max_length=512)
+
+
+class PricePromotion(TenantMixin, table=True):
+    """Tenant-scoped pricing promo (#322). MVP: percent_off_category."""
+
+    __tablename__ = "price_promotion"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(max_length=120)
+    promo_type: str = Field(default="percent_off_category", max_length=32)
+    percent_off: int = Field(ge=1, le=100)
+    category: str = Field(max_length=120)
+    channels: list | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    starts_at: datetime | None = Field(default=None)
+    ends_at: datetime | None = Field(default=None)
+    days_of_week: list | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool = Field(default=False)
+    enabled: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class LoyaltyProgram(TenantMixin, table=True):
@@ -878,6 +909,8 @@ class RestaurantGroup(SQLModel, table=True):
     join_code: str = Field(max_length=32, unique=True, index=True)
     share_products: bool = Field(default=False)
     share_customers: bool = Field(default=False)
+    # Central kitchen member for branch fulfillment (#323); null = no hub designated
+    hub_tenant_id: int | None = Field(default=None, foreign_key="tenant.id", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -905,6 +938,49 @@ class RestaurantGroupUpdate(SQLModel):
 
 class RestaurantGroupJoin(SQLModel):
     join_code: str = Field(max_length=32)
+
+
+class RestaurantGroupHubUpdate(SQLModel):
+    """Set or clear the group's central kitchen (hub) tenant."""
+
+    hub_tenant_id: int | None = None
+
+
+class HubFulfillmentStatus(str, Enum):
+    requested = "requested"
+    preparing = "preparing"
+    prepared_at_hq = "prepared_at_hq"
+    cancelled = "cancelled"
+
+
+class BranchHubFulfillment(SQLModel, table=True):
+    """Transfer-style record: branch order prepared / fulfilled at group hub kitchen (#323)."""
+
+    __tablename__ = "branch_hub_fulfillment"
+
+    id: int | None = Field(default=None, primary_key=True)
+    group_id: int = Field(foreign_key="restaurant_group.id", index=True)
+    order_id: int = Field(foreign_key="order.id", unique=True, index=True)
+    branch_tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    hub_tenant_id: int = Field(foreign_key="tenant.id", index=True)
+    status: HubFulfillmentStatus = Field(
+        default=HubFulfillmentStatus.requested, max_length=32, index=True
+    )
+    notes: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    prepared_at: datetime | None = None
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    prepared_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+
+
+class HubFulfillmentCreate(SQLModel):
+    notes: str | None = None
+
+
+class HubFulfillmentStatusUpdate(SQLModel):
+    status: HubFulfillmentStatus
+    notes: str | None = None
 
 
 class FiscalInvoice(SQLModel, table=True):
@@ -987,7 +1063,7 @@ class Order(TenantMixin, table=True):
     courier_user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
     delivery_fee_cents: int = Field(default=0)  # Snapshot of tenant delivery fee at create
 
-    # Club loyalty (#327): link member + pending redemption discount (pre-#322 promo engine)
+    # Club loyalty (#327): order-level discount via order_discounts.order_level_discount_cents (#322)
     loyalty_membership_id: int | None = Field(
         default=None, foreign_key="loyalty_membership.id", index=True
     )
@@ -1030,7 +1106,7 @@ class OrderItem(SQLModel, table=True):
     product_id: int = Field(foreign_key="product.id")
     product_name: str  # Snapshot of product name at order time
     quantity: int
-    price_cents: int  # Snapshot of price at order time (tax-inclusive)
+    price_cents: int  # Snapshot of price at order time (tax-inclusive; after promo)
     cost_cents: int | None = None  # Snapshot of cost at order time for profit
     notes: str | None = None  # Item-specific notes (e.g., "no onions")
     # Structured answers to product questions: {"question_id": value} (value: str for choice/text, int for scale, list[str] for multi choice)
@@ -1040,6 +1116,11 @@ class OrderItem(SQLModel, table=True):
     # Pizza-style modifiers: {"remove": [...], "add": [...], "substitute": [{"from","to"}, ...]}
     line_modifiers: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     line_modifiers_summary: str | None = Field(default=None, max_length=1024)
+    # Price promo audit (#322): list price before discount; unit discount; promo snapshot
+    list_price_cents: int | None = None
+    discount_cents: int = Field(default=0, ge=0)
+    promo_id: int | None = Field(default=None, foreign_key="price_promotion.id", index=True)
+    promo_snapshot: dict | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     # Tax snapshot at order time for invoice breakdown
     tax_id: int | None = Field(default=None, foreign_key="tax.id", index=True)
     tax_rate_percent: int | None = None  # e.g. 10, 21, 0
@@ -1159,6 +1240,9 @@ class ReservationCreate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None  # 1–12; pair with day or both omit
+    guest_birthday_day: int | None = None  # 1–31
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class ReservationUpdate(SQLModel):
@@ -1177,6 +1261,9 @@ class ReservationUpdate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None
+    guest_birthday_day: int | None = None
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class ReservationStatusUpdate(SQLModel):
@@ -1207,6 +1294,39 @@ class GuestFeedbackCreate(SQLModel):
     contact_email: str | None = Field(default=None, max_length=320)
     contact_phone: str | None = Field(default=None, max_length=40)
     reservation_token: str | None = Field(default=None, max_length=128)
+
+
+class PricePromotionCreate(SQLModel):
+    """Staff create body for a price promotion (#322)."""
+
+    name: str = Field(max_length=120)
+    promo_type: str = Field(default="percent_off_category", max_length=32)
+    percent_off: int = Field(ge=1, le=100)
+    category: str = Field(max_length=120)
+    channels: list[str] | None = None
+    starts_at: datetime | str | None = None
+    ends_at: datetime | str | None = None
+    days_of_week: list[int] | None = None
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool = False
+    enabled: bool = True
+
+
+class PricePromotionUpdate(SQLModel):
+    """Staff PATCH/PUT body for a price promotion (#322)."""
+
+    name: str | None = Field(default=None, max_length=120)
+    percent_off: int | None = Field(default=None, ge=1, le=100)
+    category: str | None = Field(default=None, max_length=120)
+    channels: list[str] | None = None
+    starts_at: datetime | str | None = None
+    ends_at: datetime | str | None = None
+    days_of_week: list[int] | None = None
+    start_time_local: str | None = Field(default=None, max_length=5)
+    end_time_local: str | None = Field(default=None, max_length=5)
+    stackable: bool | None = None
+    enabled: bool | None = None
 
 
 class LoyaltyProgramUpdate(SQLModel):
@@ -1267,6 +1387,9 @@ class PublicReservationCreate(SQLModel):
     allergies_has: bool | None = None
     allergies_detail: str | None = None
     preferred_floor_id: int | None = None
+    guest_birthday_month: int | None = None
+    guest_birthday_day: int | None = None
+    guest_birthday_marketing_consent: bool | None = None
 
 
 class PublicReservationUpdate(SQLModel):
@@ -1542,6 +1665,10 @@ class TenantUpdate(SQLModel):
     reservation_dress_code: str | None = None
     reservation_reminder_24h_enabled: bool | None = None
     reservation_reminder_2h_enabled: bool | None = None
+
+    guest_birthday_capture_enabled: bool | None = None
+    guest_birthday_marketing_enabled: bool | None = None
+    guest_birthday_consent_text: str | None = None
 
     # Satisfecho Delivery fee + coverage
     delivery_fee_cents: int | None = None

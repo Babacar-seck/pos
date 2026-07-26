@@ -19,6 +19,7 @@ from fastapi import HTTPException
 from sqlmodel import Session, col, select
 
 from app import models
+from app.order_discounts import order_level_discount_cents
 from app.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -52,7 +53,8 @@ def order_fiscal_amount_cents(session: Session, order: models.Order) -> int:
     subtotal = sum(i.price_cents * i.quantity for i in active)
     tip = int(order.tip_amount_cents or 0)
     fee = int(getattr(order, "delivery_fee_cents", 0) or 0)
-    return max(0, subtotal + tip + fee)
+    discount = order_level_discount_cents(order)
+    return max(0, subtotal - discount + tip + fee)
 
 
 def _canonical_hash_payload(

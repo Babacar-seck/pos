@@ -88,6 +88,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0031-order-customizations-plan.md](0031-order-customizations-plan.md) | GitHub **#50**: pizza-style order modifiers — **core shipped** (staff config, public answers, kitchen/invoice summary, multi-select); optional per-option price deltas not shipped. |
 | [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella roadmap (warehouses, kitchen SLAs, marketing/comms). |
 | [0061-multi-warehouse-inventory.md](0061-multi-warehouse-inventory.md) | Multi-warehouse inventory MVP (#320): warehouses, receive/adjust attribution, stock filter. |
+| [0069-branch-hub-fulfillment.md](0069-branch-hub-fulfillment.md) | Central kitchen → branches (#323): ADR (linked tenants + hub) + hub fulfillment / prepared-at-HQ MVP. |
 | [0062-pos-migration-import.md](0062-pos-migration-import.md) | Import from existing POS (#321): products/categories CSV CLI, dry-run/apply, cutover runbook. |
 | [0063-offline-capable-client.md](0063-offline-capable-client.md) | Offline POS client (#319): ADR + threat model; MVP staff cash sale queue + idempotent sync. |
 | [0064-guest-feedback-analytics.md](0064-guest-feedback-analytics.md) | Guest feedback staff trends + CSV export; receipt QR link format (#325). |
