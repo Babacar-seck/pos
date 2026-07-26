@@ -49,6 +49,22 @@ async function main() {
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   const page = await browser.newPage();
+  /** Bare /uploads/... (no /api) hits front and 404s — regression for FEAT-312. */
+  const bareUpload404s = [];
+  page.on('response', (res) => {
+    const u = res.url();
+    if (!u.includes('/uploads/')) return;
+    if (res.status() !== 404) return;
+    try {
+      const path = new URL(u).pathname;
+      if (path.startsWith('/uploads/') && !path.startsWith('/api/')) {
+        bareUpload404s.push(path);
+      }
+    } catch {
+      /* ignore bad URLs */
+    }
+  });
+
   const url = `${BASE_URL}/delivery/${TENANT_ID}`;
   console.log('Open', url);
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
@@ -77,6 +93,37 @@ async function main() {
   if (/Restaurant not found|Invalid restaurant|Tenant not found/i.test(text) && !/Add|cart|menu/i.test(text)) {
     console.warn('Tenant may be missing in this env; page still rendered error state OK');
   } else {
+    // Product images must go through /api/uploads/... (HAProxy → back), not bare /uploads/...
+    const imageCheck = await page.evaluate(() => {
+      const imgs = [...document.querySelectorAll('img.delivery-product-image')];
+      const srcs = imgs.map((img) => img.getAttribute('src') || '');
+      const bad = srcs.filter(
+        (s) => s.includes('/uploads/') && !s.includes('/api/uploads/'),
+      );
+      const viaApi = srcs.filter((s) => s.includes('/api/uploads/'));
+      return { count: imgs.length, viaApi: viaApi.length, bad };
+    });
+    if (imageCheck.bad.length) {
+      throw new Error(
+        `Delivery product images missing /api prefix (would 404 on HAProxy front): ${imageCheck.bad.slice(0, 3).join(', ')}`,
+      );
+    }
+    if (imageCheck.count > 0 && imageCheck.viaApi === 0) {
+      throw new Error('Expected at least one delivery product image via /api/uploads/');
+    }
+    if (bareUpload404s.length) {
+      throw new Error(
+        `Bare /uploads/ 404s (missing /api): ${[...new Set(bareUpload404s)].slice(0, 5).join(', ')}`,
+      );
+    }
+    if (imageCheck.count > 0) {
+      console.log(
+        `Product images OK (${imageCheck.viaApi} via /api/uploads/, no bare-/uploads 404s)`,
+      );
+    } else {
+      console.log('No product images in menu (placeholders only); URL routing check skipped');
+    }
+
     const addBtn = await page.$('button.delivery-add-btn');
     if (addBtn) {
       await addBtn.click();
@@ -95,6 +142,11 @@ async function main() {
       await page.waitForSelector('form.delivery-form', { timeout: 10000 });
       await page.type('input[name="phone"]', '+34600111222');
       await page.type('textarea[name="address"]', 'Calle Smoke Test 1, Madrid');
+      const postal = await page.$('input[name="postal"]');
+      if (postal) {
+        await postal.click({ clickCount: 3 });
+        await postal.type('28001');
+      }
 
       const createRespPromise = page.waitForResponse(
         (res) =>

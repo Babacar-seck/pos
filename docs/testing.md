@@ -167,7 +167,7 @@ npm run test:staff-delivery --prefix front
 
 ### 2a3a. Public Satisfecho Delivery checkout
 
-Smoke for public **`/delivery/:tenantId`** checkout (`docs/0053-satisfecho-delivery-order-channel.md`, shipped CLOSED-302 / #304): menu → cart → address → create order. Script is committed on `development` (`front/scripts/test-delivery-checkout.mjs`). Does not cover staff create/edit (`test:staff-delivery`), track page (`test:delivery-track`), or courier portal (`test:courier-actions`).
+Smoke for public **`/delivery/:tenantId`** checkout (`docs/0053-satisfecho-delivery-order-channel.md`, shipped CLOSED-302 / #304): menu → cart → address → create order. Also asserts product `<img>` src uses **`/api/uploads/...`** (not bare `/uploads/...`, which 404s on HAProxy front — FEAT-312 / #312). Script is committed on `development` (`front/scripts/test-delivery-checkout.mjs`). Does not cover staff create/edit (`test:staff-delivery`), track page (`test:delivery-track`), or courier portal (`test:courier-actions`).
 
 ```bash
 npm run test:delivery-checkout --prefix front

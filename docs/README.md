@@ -29,7 +29,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0004-deployment.md](0004-deployment.md) | Deployment guide: configuration (API_URL, WS_URL, CORS), deploy steps (git pull, compose, migrations, seeds, optional demo reset). |
 | [0024-deploy-css-fix-amvara9.md](0024-deploy-css-fix-amvara9.md) | Fix for stale front build on deploy (force front image rebuild, Cache-Control for index.html). |
 | [0026-haproxy-ssl-amvara9.md](0026-haproxy-ssl-amvara9.md) | HAProxy SSL on amvara9: durable cert path (certbot/haproxy-certs), reload without overwriting certs. |
-| [0029-deployment-images-plan-next-month.md](0029-deployment-images-plan-next-month.md) | **Todo (next month):** Deploy via images (CI build → registry → pull on server), two-slot so production stays up, CI production build to catch errors. |
+| [0029-deployment-images-plan-next-month.md](0029-deployment-images-plan-next-month.md) | **Deferred / not scheduled:** Future deploy-via-images plan (CI → registry → pull, two-slot). Current production path remains [0001](0001-ci-cd-amvara9.md) / [0004](0004-deployment.md). |
 
 ---
 
@@ -85,6 +85,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Doc | Description |
 |-----|-------------|
 | [agent-loop.md](agent-loop.md) | Multi-agent workflow (task statuses, roles, `agents/` layout); modeled on mac-stats-reviewer; links to **`go-ahead-loop.sh`** and testing smokes. |
+| [agent-cursor-rules.md](agent-cursor-rules.md) | Categorized index of **`.cursor/rules/*.mdc`** for agents (Angular, FastAPI/SQLModel, Docker/HAProxy, security, i18n, smoke tests); also linked from **`AGENTS.md`**. |
 | [0007-implementation-verification.md](0007-implementation-verification.md) | Implementation verification: what’s done vs Phase 4 (batch, audit, etc.). |
 | [0012-translation-implementation.md](0012-translation-implementation.md) | Translation (i18n): frontend, backend, DB content. |
 | [0013-verification-alternatives.md](0013-verification-alternatives.md) | Customer verification alternatives (SMS, etc.). |
@@ -93,6 +94,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0023-prioritisation-019-022.md](0023-prioritisation-019-022.md) | Prioritisation: docs 0019–0022 (what to do first). |
 | [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md) | WhatsApp reservation reminder: **shipped** Twilio channel (env + send-reminder); historical design notes. |
 | [0033-postgres-adhoc-sql-table-names.md](0033-postgres-adhoc-sql-table-names.md) | Ad-hoc SQL: no `restaurantorder` table; use `"order"` / `orderitem`, quoting reserved names. |
+| [PRINTING.md](PRINTING.md) | Restaurant LAN / kitchen ticket printing design notes (**not implemented**); browser and invoice print from staff UI are supported today. |
 
 ---
 

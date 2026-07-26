@@ -71,4 +71,5 @@ If the script prints “OK: explicit upload route is active” but the browser s
 3. Ensure `back/uploads` on the host has the files (tenant and catalog imports write there); see AGENTS.md “Demo tables” and “Catalog on deploy”.
 4. **Orphan DB refs:** If `ProviderProduct.image_filename` points at a file that is not on disk, catalog/API used to emit `/uploads/providers/...` URLs that 404. Clear those refs with:
    `docker compose exec back python -m app.seeds.clear_orphan_provider_product_images`
-   Catalog and provider list endpoints also omit `image_url` when the file is missing (UI shows the placeholder).
+   Catalog and provider list endpoints also omit `image_url` when the file is missing (UI shows the placeholder). Public tenant menu (`GET /public/tenants/{id}/menu`, used by `/delivery/{id}` and `/public-menu/{id}`) likewise omits `image_url` when the file is missing.
+5. **Frontend `/api` prefix:** API returns paths like `/uploads/...`. Public menu already prefixes `environment.apiUrl` (`/api`). Delivery checkout must do the same — if `<img src>` is bare `/uploads/...`, HAProxy sends the request to the front container and you get 404 spam without ever hitting the back upload routes (FEAT-312 / #312).

@@ -39,20 +39,29 @@ Step-by-step guide to use Gmail for sending transactional emails (e.g. reservati
 
 ---
 
-## 5. Enter Gmail and password in POS
+## 5. Enter SMTP settings in POS
 
 - Log in to the POS app as owner or admin.
 - Go to **Settings** → **Email (SMTP)** (or **Mail**).
-- Enter:
-  - **Gmail address:** the Gmail account from step 1 (e.g. `your-restaurant@gmail.com`).
-  - **SMTP password:** the 16-character App Password from step 4 (not your normal Gmail password).
-- Optionally set **From email** and **From name** (e.g. your restaurant name).
-- Save. Emails sent by POS will use this account; if you leave these fields empty, the server’s global SMTP config is used instead.
+- Fill every SMTP field to match Gmail:
+
+  | Settings field | Value for Gmail |
+  |----------------|-----------------|
+  | **SMTP host** | `smtp.gmail.com` |
+  | **SMTP port** | `587` |
+  | **Use TLS** | On (checked) |
+  | **SMTP username / email** | the Gmail account from step 1 (e.g. `your-restaurant@gmail.com`) |
+  | **SMTP password** | the 16-character App Password from step 4 (not your normal Gmail password) |
+  | **From email address** (optional) | usually the same Gmail address, or leave blank to use the username |
+  | **From name** (optional) | e.g. your restaurant name |
+
+- Save. Emails sent by POS will use this account; if you leave the SMTP fields empty, the server’s global SMTP config (`config.env`) is used instead.
 
 ---
 
 ## Notes
 
 - **App Password only:** Use the App Password from step 4. Do not use your normal Gmail password; it will be rejected.
+- **Host / port / TLS required:** Leaving **SMTP host** or **SMTP port** empty (even with user and App Password set) will fail to send. Use `smtp.gmail.com`, `587`, and TLS on as in the table above.
 - **Password with special characters:** If you store the same password in `config.env`, put it in double quotes, e.g. `SMTP_PASSWORD="your16charapppassword"`.
 - **Testing:** Use **Settings → Email (SMTP)** or the debug script (`back/scripts/debug_smtp.py`) to test the connection and send a test email.
