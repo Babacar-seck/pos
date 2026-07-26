@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.119] - 2026-07-26
+
+### Changed
+
+- **Docs (0013):** Marked customer verification alternatives as **research only** (not a shipping decision; app uses email/password), softened SMS “recommended” framing to research-relative language, and aligned the docs README Reference blurb.
+
 ## [2.1.118] - 2026-07-26
 
 ### Changed

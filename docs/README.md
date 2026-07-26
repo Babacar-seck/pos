@@ -100,7 +100,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) | Structured security pass (uploads, auth, tenant isolation, public/payment surfaces) — **not a penetration test**; repeat after major releases. |
 | [0007-implementation-verification.md](0007-implementation-verification.md) | **Historical** (2026-01-13) verification snapshot vs 0008 — not live line refs; prefer code/tests + 0008 for current order behaviour. |
 | [0012-translation-implementation.md](0012-translation-implementation.md) | Translation (i18n): frontend, backend, DB content. |
-| [0013-verification-alternatives.md](0013-verification-alternatives.md) | Customer verification alternatives (SMS, etc.). |
+| [0013-verification-alternatives.md](0013-verification-alternatives.md) | **Research only** — customer verification alternatives (SMS, OAuth, etc.); not a shipping decision; app uses email/password. |
 | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) | Rate limiting: limits (login, register, payment, public menu, upload, admin), Redis, X-Forwarded-For, tests. |
 | [0022-oauth-social-login-notes.md](0022-oauth-social-login-notes.md) | OAuth / social login (Google, Microsoft, etc.): notes and recommendation. |
 | [0023-prioritisation-019-022.md](0023-prioritisation-019-022.md) | Prioritisation: docs 0019–0022 — **0021 done**; next open item **0022 (OAuth)**. |
