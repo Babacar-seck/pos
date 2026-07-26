@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.114] - 2026-07-26
+
+### Changed
+
+- **Docs (0007):** Marked the January 2026 implementation verification report as a **historical** snapshot (stale `main.py` line refs are not current truth) and clarified the docs README index to point readers to 0008 / live code / tests for order behaviour.
+
 ## [2.1.113] - 2026-07-26
 
 ### Changed
