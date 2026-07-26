@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.125] - 2026-07-26
+
+### Changed
+
+- **Docs (0051):** Marked floor-plan table join/unjoin as a **shipped** behavioural reference (canvas join/unjoin, combined seats, reservation pool, per-table QR tokens) and aligned the docs README Feature guides blurb.
+
 ## [2.1.124] - 2026-07-26
 
 ### Changed

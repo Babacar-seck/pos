@@ -1,4 +1,6 @@
-# Table groups (join / unjoin) — MVP behaviour
+# Table groups (join / unjoin) — behaviour
+
+**Status (shipped):** Floor-plan **join / unjoin** on `/tables/canvas`, combined seat counts for seating, reservation pool capacity for joined sets, and **per-table QR tokens** (unchanged by join) are live. Treat this doc as the behavioural / operator reference — not an unfinished MVP plan. Distinct from restaurant multi-location groups ([0054-restaurant-groups.md](0054-restaurant-groups.md)).
 
 ## Staff
 
@@ -13,4 +15,4 @@
 ## Customer menu / QR (`/menu/...`)
 
 - Each physical table still has its **own** `table_token` and `table_id`. Joining does **not** merge customer sessions or orders across tokens.
-- **MVP:** Prefer directing guests to a **single** table’s QR for ordering. If guests use two different table links, they get **separate** `(table_id, session_id)` orders per `docs/0008-order-management-logic.md` — staff see both under the same party only by context, not by automatic merging.
+- Prefer directing guests to a **single** table’s QR for ordering. If guests use two different table links, they get **separate** `(table_id, session_id)` orders per `docs/0008-order-management-logic.md` — staff see both under the same party only by context, not by automatic merging. (No automatic cross-token order merge — by design, not a gap.)
