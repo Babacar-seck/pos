@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.84] - 2026-07-26
+
+### Changed
+
+- **Deployment ops docs:** Indexed the hourly unpaid public Satisfecho Delivery cleanup cron (all tenants) in `docs/README.md` (0001 Deployment blurb) and `docs/0004-deployment.md` (deploy steps + summary), with links to `docs/0001` and `scripts/cleanup-unpaid-public-delivery-on-server.sh`, so operators scanning indexes see it beside the tenant-1 demo reset.
+
 ## [2.1.83] - 2026-07-26
 
 ### Changed
