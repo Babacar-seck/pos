@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.63] - 2026-07-26
+
+### Changed
+
+- **Kitchen display docs (order comments):** `docs/0015-kitchen-display.md` now documents optional order/item comments (#284) — public menu Add comment and order-level note, staff edit on `/orders`, highlighted full text on `/kitchen` and `/bar` — with a short pointer in `docs/0008-order-management-logic.md` and a `docs/README.md` index cue.
+
 ## [2.1.62] - 2026-07-26
 
 ### Changed

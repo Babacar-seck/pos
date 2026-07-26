@@ -47,7 +47,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 |-----|-------------|
 | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`. |
 | [0014-provider-portal.md](0014-provider-portal.md) | Provider portal: register, login, catalog at `/provider` (tile/list, add/edit/delete products). |
-| [0015-kitchen-display.md](0015-kitchen-display.md) | Kitchen display: full-screen at `/kitchen`, auto-refresh, WebSocket, optional sound. |
+| [0015-kitchen-display.md](0015-kitchen-display.md) | Kitchen display: full-screen at `/kitchen` (and `/bar`), auto-refresh, WebSocket, optional sound; highlighted order/item comments (#284). |
 | [0016-reports.md](0016-reports.md) | Reports (Sales & Revenue): date range, summary, by product/category/table/waiter, CSV/Excel export. |
 | [0017-billing-customers-factura.md](0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to”. |
 | [0028-tenant-public-branding.md](0028-tenant-public-branding.md) | Tenant public branding: background colour and header image for book, menu, reservation-view. |

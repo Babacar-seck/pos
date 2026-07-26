@@ -1,5 +1,7 @@
 # Order Management Logic Specification
 
+**Order / item comments (#284):** Optional free-text notes on `Order.notes` and `OrderItem.notes` (public menu **Add comment** + order-level note, staff edit on `/orders`, highlighted on `/kitchen` and `/bar`) are documented in [0015-kitchen-display.md](0015-kitchen-display.md#order-and-item-comments-284). This file remains the session/lifecycle design reference; do not treat comments as a separate schema project.
+
 ## Problem Statement
 
 Currently, when multiple browsers/devices use the same table link (table token), they all share the same unpaid order. This causes:

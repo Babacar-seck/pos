@@ -18,6 +18,18 @@ The **kitchen display** is a dedicated full-screen view for the kitchen: large, 
 - **Auto-refresh** — Polling every 15 seconds plus live updates via WebSocket when order data changes.
 - **Optional sound** — Toggle “Sound on” / “Sound off”. When on, a short double beep plays on WebSocket events `new_order` and `items_added`. Preference is stored in `localStorage` (`kitchen-display-sound`).
 
+## Order and item comments (#284)
+
+Optional free-text comments on line items and the whole order (GitHub **#284**). Stored in existing `OrderItem.notes` and `Order.notes`; trimmed and capped at **500** characters (`back/app/order_notes.py`). Comments never block checkout.
+
+| Surface | Behaviour |
+|---------|-----------|
+| **Public menu** (table / take-away cart) | Per-line **Add comment** toggle + optional order-level notes textarea. Empty comments are omitted. |
+| **Staff Orders** (`/orders`) | Same fields visible on order cards; staff can edit item notes (and delivery order notes) when editing an order. |
+| **Kitchen / Bar** (`/kitchen`, `/bar`) | Item comments show as a highlighted amber block with a **Comment:** label (full text, no truncation). Order-level notes appear in a matching banner on the card. |
+
+Smoke: `npm run test:order-comments` from `front/` (see `docs/testing.md`). Unit helpers: `back/tests/test_order_notes.py`.
+
 ## Navigation
 
 - Sidebar: link **“Kitchen display”** (same nav block as Orders). Opens `/kitchen`.
