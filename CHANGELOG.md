@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.106] - 2026-07-26
+
+### Changed
+
+- **Docs index (Deployment):** Listed `0027-amvara9-menu-images-troubleshooting.md` under Deployment & operations in `docs/README.md`, with short see-also links from the 0004 and 0026 blurbs, so operators find the uploads-404 runbook next to HAProxy/deploy docs.
+
 ## [2.1.105] - 2026-07-26
 
 ### Changed
