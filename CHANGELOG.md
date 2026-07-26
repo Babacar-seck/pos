@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.92] - 2026-07-26
+
+### Changed
+
+- **WhatsApp reminder docs (0024):** Marked reservation reminders as shipped via Twilio (email and/or WhatsApp on Send reminder), documented `TWILIO_*` / `DEFAULT_PHONE_COUNTRY`, and reframed older sections as historical design notes; updated the `docs/README.md` Reference blurb.
+
 ## [2.1.91] - 2026-07-26
 
 ### Changed
