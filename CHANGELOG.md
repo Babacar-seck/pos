@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.79] - 2026-07-26
+
+### Fixed
+
+- **Overbooking scenario docs (0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0025-test-scenario-one-empty-table.md`, and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
+
 ## [2.1.78] - 2026-07-26
 
 ### Changed
