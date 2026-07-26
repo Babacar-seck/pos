@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Guest feedback (#325):** Archived the verified agents2 task after PASS checks (12/12 pytest, staff trends + CSV export smoke, public `/feedback/1`, docs 0064, front build). The feature itself shipped in 2.1.134.
 - **Guest birthdays (#324):** Archived the verified agents2 task after PASS checks (migration, 8/8 pytest, public book + staff create/edit/clear, settings capture/marketing consent toggles, front build, landing smoke). The feature itself shipped in 2.1.135.
 - **Docs (0030):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the reservation confirmation email troubleshooting runbook under Email & SMTP and Quick links. The index itself shipped with the 0030 refresh in 2.1.100.
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
