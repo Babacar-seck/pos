@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.117] - 2026-07-26
+
+### Changed
+
+- **Ops docs (0027):** Clarified that amvara9 upload routes are already shipped; JSON `Image not found` means a missing file or orphan DB ref (not a StaticFiles redeploy), and aligned orphan-clear compose paths plus the docs README blurb.
+
 ## [2.1.116] - 2026-07-26
 
 ### Changed
