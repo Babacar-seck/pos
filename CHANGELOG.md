@@ -22,6 +22,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
 - **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
 
+## [2.1.138] - 2026-07-26
+
+### Fixed
+
+- **Club loyalty (#327):** Public join, balance, and wallet endpoints no longer return 500 under live SlowAPI — correct `@public_menu_ip_limit()` usage and inject `response: Response` like other public menu routes.
+
+### Changed
+
+- **Club loyalty (#327):** Archived the verified agents2 task after PASS checks (live public APIs under SlowAPI, UI join + card, 5 pytest, landing smoke, docs 0066). The MVP itself shipped in 2.1.134.
+
 ## [2.1.137] - 2026-07-26
 
 ### Added

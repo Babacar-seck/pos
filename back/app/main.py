@@ -1879,9 +1879,10 @@ def export_tenant_guest_feedback(
 
 
 @app.get("/public/tenants/{tenant_id}/loyalty")
-@limiter.limit(public_menu_ip_limit)
+@public_menu_ip_limit()
 def public_loyalty_program_info(
     request: Request,
+    response: Response,
     tenant_id: int,
     session: Session = Depends(get_session),
 ) -> dict:
@@ -1911,6 +1912,7 @@ def public_loyalty_program_info(
 )
 def public_loyalty_join(
     request: Request,
+    response: Response,
     tenant_id: int,
     body: models.LoyaltyJoinCreate,
     session: Session = Depends(get_session),
@@ -1942,9 +1944,10 @@ def public_loyalty_join(
 
 
 @app.get("/public/loyalty/members/{member_token}")
-@limiter.limit(public_menu_ip_limit)
+@public_menu_ip_limit()
 def public_loyalty_balance(
     request: Request,
+    response: Response,
     member_token: str,
     session: Session = Depends(get_session),
 ) -> dict:
@@ -1964,9 +1967,10 @@ def public_loyalty_balance(
 
 
 @app.get("/public/loyalty/members/{member_token}/wallet")
-@limiter.limit(public_menu_ip_limit)
+@public_menu_ip_limit()
 def public_loyalty_wallet_status(
     request: Request,
+    response: Response,
     member_token: str,
     session: Session = Depends(get_session),
 ) -> dict:

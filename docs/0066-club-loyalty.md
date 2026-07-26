@@ -35,6 +35,8 @@ Migration: `back/migrations/20260726162500_club_loyalty.sql`.
 - Public: `GET/POST /public/tenants/{id}/loyalty`, `GET /public/loyalty/members/{token}`, wallet status endpoint
 - Staff: `GET/PUT /loyalty/program`, memberships list/detail/adjust, order link + redeem
 
+Public loyalty GETs use `@public_menu_ip_limit()` (not `@limiter.limit(public_menu_ip_limit)` — that passes the helper function instead of a rate string and 500s under live SlowAPI). Join uses a dedicated per-hour limit. All SlowAPI-wrapped handlers take `request: Request` and `response: Response` so rate-limit headers inject correctly.
+
 ## Interaction with #322 (price promos)
 
 Line-level category % promos reduce `OrderItem.price_cents` and store a promo audit snapshot (`docs/0068-price-promotions.md`). Loyalty redemption remains an **order-level** discount on `loyalty_discount_cents`, subtracted through `order_discounts.order_level_discount_cents` for guest checkout, staff totals, and fiscal amount. Do not invent a parallel order-level discount column.
