@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Migration (#321):** Archived the verified agents2 task after PASS checks (17 pytest, CLI dry-run on sample CSV, invalid apply refused with no writes, docs 0062, landing smoke). The CSV cutover toolkit itself shipped in 2.1.134.
 - **Docs (0051):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` Feature guides lists the floor-plan table join/unjoin MVP (distinct from 0054 restaurant groups). The index itself shipped in 2.1.99.
 - **Docs (SECURITY-REVIEW):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the security review notes under Quick links and Reference & notes. The index itself shipped in 2.1.103.
 - **Inventory multi-warehouse (#320):** Archived the verified agents2 task after PASS checks (migration `20260726132730`, 6/6 pytest, warehouse CRUD + adjust/receive isolation, Stock Dashboard filter, landing smoke). The feature itself shipped in 2.1.134.
