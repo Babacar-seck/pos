@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.97] - 2026-07-26
+
+### Changed
+
+- **Root ROADMAP:** Listed shipped Jul areas under Completed Features — Satisfecho Delivery, waiting list, restaurant groups, SaaS signup paywall, platform operator portal, and order/item comments — with links to `docs/0052`–`0054`, platform operator, kitchen display, and reservation guides.
+
 ## [2.1.96] - 2026-07-26
 
 ### Changed

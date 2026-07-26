@@ -25,6 +25,12 @@
 - **Billing customers (Factura)**: Register customers that need a tax invoice with company details. **Customers** at `/customers`: list, search, add, edit, delete. From Orders (any tab): **Print Factura** lets staff select a billing customer and print an invoice with “Bill to” block; optional link to save customer on the order. See `docs/0017-billing-customers-factura.md`.
 - **Customer accounts**: End-customer registration, login, email verification, MFA, account-based order history, and customer-facing invoice generation. See `docs/0002-customer-features-plan.md` for scope and API summary.
 - **Rate limiting**: Global (100/min), login (5/15min), register (3/hour), payment (10/min + 3/order/hour) per IP; public menu 30/min per IP; uploads 10/hour per user; admin/management 30/min per user; Redis storage, X-Forwarded-For, 429 logging. See `docs/0020-rate-limiting-production.md`.
+- **Satisfecho Delivery**: Staff Delivery tab / courier portal (`/courier`), public checkout at `/delivery/{tenantId}`, guest track, fee/postal/radius coverage. See `docs/0053-satisfecho-delivery-order-channel.md`.
+- **Waiting list**: Public join at `/waitlist/{tenantId}`; staff manage from Reservations → Waitlist. See `docs/0011-table-reservation-user-guide.md`.
+- **Restaurant groups**: Multi-location join codes; optional shared billing customers/products. See `docs/0054-restaurant-groups.md`.
+- **SaaS signup paywall**: Hard paywall for restaurant signups (trial/subscribe before staff app); flag default off. See `docs/0052-saas-signup-paywall.md`.
+- **Platform operator portal**: SaaS metrics and tenant oversight at `/platform`. See `docs/0015-platform-operator-portal.md`.
+- **Order / item comments**: Guests can add notes on Take Away / menu orders; kitchen display shows item and order notes. See `docs/0015-kitchen-display.md` (smoke: `test:order-comments`).
 
 ### ❌ Missing Features / To Be Implemented
 - **Order management Phase 4 (advanced)**: Batch status updates, status/audit history, item replacement, modification after payment/refund, analytics. See `docs/0007-implementation-verification.md` § "NOT IMPLEMENTED (Phase 4)".
@@ -33,7 +39,7 @@
 - **Large multi-topic tracks ([#52](https://github.com/satisfecho/pos/issues/52)–[#54](https://github.com/satisfecho/pos/issues/54))**: Per-theme status in `docs/0032-github-issues-roadmap.md` (#52: warehouses, split bills, join tables, offline, etc.; **partial**: guest feedback + Google review, billing-customer **birth date**). #53–#54: kitchen SLAs, marketing/comms — open slices as smaller issues when building.
 
 ### Documentation reference
-- **`docs/`**: `0008-order-management-logic.md`, `0007-implementation-verification.md`, `0010-table-reservation-implementation-plan.md`, `0011-table-reservation-user-guide.md`, `0009-table-pin-security.md`, `0012-translation-implementation.md`, `0004-deployment.md`, `0002-customer-features-plan.md`, `0005-email-sending-options.md`, `0013-verification-alternatives.md`, `0015-kitchen-display.md`, `0016-reports.md`, `0014-provider-portal.md`, `0020-rate-limiting-production.md`, `0031-order-customizations-plan.md`, `0032-github-issues-roadmap.md`.
+- **`docs/`**: `0008-order-management-logic.md`, `0007-implementation-verification.md`, `0010-table-reservation-implementation-plan.md`, `0011-table-reservation-user-guide.md`, `0009-table-pin-security.md`, `0012-translation-implementation.md`, `0004-deployment.md`, `0002-customer-features-plan.md`, `0005-email-sending-options.md`, `0013-verification-alternatives.md`, `0015-kitchen-display.md`, `0015-platform-operator-portal.md`, `0016-reports.md`, `0014-provider-portal.md`, `0020-rate-limiting-production.md`, `0031-order-customizations-plan.md`, `0032-github-issues-roadmap.md`, `0052-saas-signup-paywall.md`, `0053-satisfecho-delivery-order-channel.md`, `0054-restaurant-groups.md`.
 - **`CHANGELOG.md`**: Tracks unreleased and released changes (reservations, order history, WebSocket, fixes).
 
 ---

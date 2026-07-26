@@ -27,3 +27,35 @@ Root **`ROADMAP.md`** (last substantive touch ~2026-06-01) still omits major shi
 - Optionally add one line under Documentation reference for `0052` / `0053` / `0054` / platform portal
 - Do **not** rewrite Missing Features / rate-limit roadmap sections; do not edit `docs/0032` here
 - Pass/fail: `rg -i 'delivery|waiting list|restaurant group|paywall|platform operator' ROADMAP.md` hits the new bullets; no product code changes
+
+## Implementation notes (coder)
+
+- Edited **`ROADMAP.md` only** (no product code).
+- § Completed Features: added bullets for Satisfecho Delivery (`0053`), waiting list (`0011`), restaurant groups (`0054`), SaaS signup paywall (`0052`), platform operator portal (`0015-platform-operator-portal.md`), order/item comments (`0015-kitchen-display.md` + `test:order-comments`).
+- § Documentation reference: appended `0015-platform-operator-portal.md`, `0052`, `0053`, `0054`.
+- Left Missing Features / rate-limit sections untouched; did not edit `docs/0032`.
+
+## Testing instructions
+
+### What to verify
+- Root **`ROADMAP.md`** Completed Features lists the Jul shipped areas with correct doc links.
+- Documentation reference includes `0052` / `0053` / `0054` and the platform operator doc.
+- No product / `back/` / `front/` code changes in this task.
+
+### How to test
+```bash
+# From repo root
+rg -ni 'delivery|waiting list|restaurant group|paywall|platform operator' ROADMAP.md
+rg -n '0052-saas-signup-paywall|0053-satisfecho-delivery|0054-restaurant-groups|0015-platform-operator' ROADMAP.md
+# Linked files exist
+test -f docs/0052-saas-signup-paywall.md \
+  && test -f docs/0053-satisfecho-delivery-order-channel.md \
+  && test -f docs/0054-restaurant-groups.md \
+  && test -f docs/0015-platform-operator-portal.md \
+  && test -f docs/0011-table-reservation-user-guide.md \
+  && test -f docs/0015-kitchen-display.md
+```
+
+### Pass/fail criteria
+- **Pass:** `rg` hits the new Completed Feature bullets (not only incidental “delivery” in older order-status wording); doc paths resolve on disk; `git diff --stat` shows only `ROADMAP.md` (+ this task file rename).
+- **Fail:** Missing any of the six feature bullets, broken doc filenames, or unrelated product edits.
