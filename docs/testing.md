@@ -432,10 +432,11 @@ npm run test:catalog --prefix front
 Restaurant logo (e.g. Cobalto SVG) on customer menu page `/menu/{tableToken}`.
 
 ```bash
-node front/scripts/test-menu-logo.mjs
+npm run test:menu-logo --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-menu-logo.mjs
 ```
 
-- **Env:** `BASE_URL`, `TABLE_TOKEN` (optional; default: fetched via API after login), `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root if vars unset. No npm script; run with `node` from repo root.
+- **Env:** `BASE_URL`, `TABLE_TOKEN` (optional; default: fetched via API after login), `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root if vars unset.
 
 ---
 
@@ -444,11 +445,63 @@ node front/scripts/test-menu-logo.mjs
 WebSocket connectivity after owner login (e.g. on `/orders`). Requires full stack including ws-bridge.
 
 ```bash
-node front/scripts/test-websocket.mjs
-# With stack: BASE_URL=http://localhost:4202 node front/scripts/test-websocket.mjs
+npm run test:websocket --prefix front
+# With stack: BASE_URL=http://localhost:4202 npm run test:websocket --prefix front
 ```
 
-- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root. No npm script; run with `node` from repo root.
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root. Needs HAProxy + `ws-bridge`.
+
+---
+
+### 11b. API docs (`/api/docs`)
+
+Swagger UI and OpenAPI spec load at `/api/docs` (no login).
+
+```bash
+npm run test:api-docs --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 npm run test:api-docs --prefix front
+```
+
+- **Env:** `BASE_URL` (auto-detect 4203/4202/4200), `HEADLESS`.
+
+---
+
+### 11c. amvara9 production smoke
+
+Landing, login page, public book page, and `/api/health` against production. **Default `BASE_URL` is `https://www.satisfecho.de`** — set an explicit local `BASE_URL` if you do not intend to hit prod.
+
+```bash
+npm run test:amvara9-smoke --prefix front
+# Local override: BASE_URL=http://127.0.0.1:4202 npm run test:amvara9-smoke --prefix front
+```
+
+- **Env:** `BASE_URL` (default production), `HEADLESS`. No login credentials.
+
+---
+
+### 11d. Settings → Contact default tax dropdown
+
+Login, open Settings → Contact information, assert the default tax select has at least one IVA option (not an empty wrapper).
+
+```bash
+npm run test:settings-contact-tax --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 npm run test:settings-contact-tax --prefix front
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*`, `TENANT_ID` (default `1`), `HEADLESS`.
+
+---
+
+### 11e. Staff “Open menu” link (skip PIN)
+
+Login, open `/staff/orders`, click **Open menu** on the first order, add a product and place order; asserts the PIN modal does **not** appear.
+
+```bash
+npm run test:staff-menu-link --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-staff-menu-link-puppeteer.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*` (tenant 1), `HEADLESS`. Needs an open order on staff orders.
 
 ---
 
@@ -532,8 +585,14 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions; `COURIER_EMAIL` / `COURIER_PASSWORD`, defaults `courier-test-phase1@amvara.de` / `secret` — also in `config.env.example`) |
 | `test:delivery-track` | `scripts/test-delivery-track.mjs` (public `/delivery/:tenantId/track` invalid-token / error-state; see `docs/0053`) |
 | `test:staff-delivery` | `scripts/test-staff-delivery.mjs` (staff `/staff/orders`: create Satisfecho Delivery + edit address/phone; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:api-docs` | `scripts/test-api-docs.mjs` (Swagger `/api/docs` + OpenAPI; no login) |
+| `test:websocket` | `scripts/test-websocket.mjs` (post-login WS on `/orders`; needs ws-bridge + `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:amvara9-smoke` | `scripts/test-amvara9-smoke.mjs` (prod smoke: landing/login/book + `/api/health`; **default `BASE_URL=https://www.satisfecho.de`**) |
+| `test:menu-logo` | `scripts/test-menu-logo.mjs` (customer `/menu/:token` shows restaurant logo; needs `LOGIN_*` or `TABLE_TOKEN`) |
+| `test:settings-contact-tax` | `scripts/test-settings-contact-tax-dropdown.mjs` (Settings → Contact default tax IVA options; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:staff-menu-link` | `scripts/test-staff-menu-link-puppeteer.mjs` (staff Open menu → place order without PIN modal; needs open order + `LOGIN_*`) |
 
-`test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.
+`review-order-edit-puppeteer` has no npm script; run via `node front/scripts/review-order-edit-puppeteer.mjs`.
 
 ---
 
@@ -627,8 +686,12 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Users / Bartender role** | `test-bartender-role.mjs` | Admin/owner: /users → Add user → role dropdown includes Bartender. |
 | **Kitchen / Bar display** | `test-kitchen-status-dropdown.mjs`, `test-bar-display.mjs`, `test-order-comments.mjs` | Status dropdown on `/kitchen`; `/bar` route + chrome + Bar title; guest item/order comments highlighted. |
 | **Catalog** | `test-catalog.mjs` | Cards and image placeholders. |
-| **Menu (customer)** | `test-menu-logo.mjs`, `test-order-comments.mjs` | Logo on `/menu/:token`; Take Away comments → kitchen. |
-| **WebSocket** | `test-websocket.mjs` | Post-login WS (ws-bridge required). |
+| **Menu (customer)** | `test:menu-logo`, `test:order-comments` | Logo on `/menu/:token`; Take Away comments → kitchen. |
+| **WebSocket** | `test:websocket` | Post-login WS (ws-bridge required). |
+| **API docs** | `test:api-docs` | `/api/docs` Swagger + OpenAPI (no login). |
+| **amvara9 prod smoke** | `test:amvara9-smoke` | Default BASE_URL is production (`www.satisfecho.de`). |
+| **Settings contact tax** | `test:settings-contact-tax` | Default tax dropdown has IVA options. |
+| **Staff menu link** | `test:staff-menu-link` | Open menu from staff orders skips PIN. |
 | **Rate limiting** | `test-rate-limit.mjs`, `test-rate-limit-puppeteer.mjs` | API: 429 after limit; Puppeteer: login page shows error banner (e.g. "Too many login attempts") when rate limited. See `docs/0020-rate-limiting-production.md` for all limits (login, register, payment, public menu, upload, admin). |
 | **SaaS signup paywall** | `test-paywall.mjs` | Requires `SAAS_PAYWALL_ENABLED=true` (see `docs/0052-saas-signup-paywall.md`). Registers a new tenant, asserts `/paywall` + localized copy (no raw `PAYWALL.*`), starts free trial, confirms `/dashboard` unlocks. Skips with exit 0 when paywall is off; set `REQUIRE_PAYWALL=1` to fail instead. |
 

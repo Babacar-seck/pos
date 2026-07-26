@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.56] - 2026-07-26
+
+### Added
+
+- **Puppeteer smoke aliases:** `test:api-docs`, `test:websocket`, `test:amvara9-smoke`, `test:menu-logo`, `test:settings-contact-tax`, and `test:staff-menu-link` in `front/package.json`, indexed in `docs/testing.md` (amvara9 smoke documents its production default `BASE_URL`).
+
 ### Fixed
 
 - **Enhancement preflight cadence:** `last_review_iso` now uses the latest agent stamp (`| FEAT:` / `| NEW:`) from the append-only review log instead of the first line, so weekly cadence no longer stays due after a same-week 008 run.

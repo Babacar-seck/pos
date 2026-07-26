@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.55",
+  "version": "2.1.56",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -53,6 +53,12 @@
     "test:waiting-list": "node scripts/test-waiting-list.mjs",
     "test:restaurant-groups": "node scripts/test-restaurant-groups.mjs",
     "test:order-comments": "node scripts/test-order-comments.mjs",
+    "test:api-docs": "node scripts/test-api-docs.mjs",
+    "test:websocket": "node scripts/test-websocket.mjs",
+    "test:amvara9-smoke": "node scripts/test-amvara9-smoke.mjs",
+    "test:menu-logo": "node scripts/test-menu-logo.mjs",
+    "test:settings-contact-tax": "node scripts/test-settings-contact-tax-dropdown.mjs",
+    "test:staff-menu-link": "node scripts/test-staff-menu-link-puppeteer.mjs",
     "capture-screenshots": "node scripts/capture-screenshots.mjs"
   },
   "prettier": {
