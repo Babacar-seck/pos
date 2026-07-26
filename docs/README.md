@@ -15,7 +15,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Set up CI/CD (amvara9) | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) |
 | Configure Gmail for email | [0056-gmail-setup.md](0056-gmail-setup.md) |
 | Troubleshoot missing reservation confirmation email | [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) |
-| Understand reservations (staff + public) | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) |
+| Understand reservations / waiting list (staff + public) | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) |
 | Guest / staff Satisfecho Delivery (checkout, courier, track) | [0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md) |
 | Enable or understand SaaS signup paywall (keep off until runbook) | [0052-saas-signup-paywall.md](0052-saas-signup-paywall.md) |
 | Platform operator oversight (`/platform`) | [0059-platform-operator-portal.md](0059-platform-operator-portal.md) |
@@ -53,7 +53,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 
 | Doc | Description |
 |-----|-------------|
-| [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`. |
+| [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | Table reservations: staff flows, public booking at `/book/:tenantId`, view/cancel at `/reservation?token=...`; public waiting list at `/waitlist/:tenantId` and staff Waiting list tab. |
 | [0014-provider-portal.md](0014-provider-portal.md) | Provider (supplier) portal at `/provider` — not the courier portal (`/courier`; see [0053](0053-satisfecho-delivery-order-channel.md)). |
 | [0015-kitchen-display.md](0015-kitchen-display.md) | Kitchen display: full-screen at `/kitchen` (and `/bar`), auto-refresh, WebSocket, optional sound; Satisfecho Delivery cards use table label “Satisfecho Delivery” (not shown once `out_for_delivery`); highlighted order/item comments (#284). |
 | [0016-reports.md](0016-reports.md) | Reports (Sales & Revenue): date range, summary (incl. overbooking slots when &gt; 0), by product/category/table/waiter, CSV/Excel export. |

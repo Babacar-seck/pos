@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.109] - 2026-07-26
+
+### Changed
+
+- **Docs index (reservations):** Feature guides and Quick links now mention the public waiting list (`/waitlist/:tenantId`) and staff Waiting list tab alongside booking in the 0011 blurbs.
+
 ## [2.1.108] - 2026-07-26
 
 ### Changed
