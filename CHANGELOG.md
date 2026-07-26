@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.132] - 2026-07-26
+
+### Changed
+
+- **Docs (0060 / 0021):** Confirmed the working-plan implementation plan is marked **historical / pre-build** (use the living 0021 guide) and archived the verification task.
+
 ## [2.1.131] - 2026-07-26
 
 ### Changed
