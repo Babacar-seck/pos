@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Docs index task to list `0030` reservation email troubleshooting in `docs/README.md` Email & SMTP.
+- **What was done:** Goal already satisfied on `development` via sibling 0658 refresh (Quick links + Email & SMTP); coder confirmed no further README or product edits needed.
+- **What was tested:** `rg` hits for 0030 under Email & SMTP and Quick links; on-disk runbook exists — overall **PASS**.
+- **Why closed:** All pass/fail criteria met; docs-only index work already landed.
+- **Closed at (UTC):** 2026-07-26 16:29
+---
+
 # Index 0030 reservation email troubleshooting in docs/README
 
 ## GitHub Issues
@@ -48,3 +58,22 @@ test -f docs/0030-reservation-confirmation-email-troubleshooting.md && echo OK
 
 - **Pass:** `rg` hits Email & SMTP (and Quick links); `docs/0030-reservation-confirmation-email-troubleshooting.md` exists; no product code required for this task.
 - **Fail:** 0030 missing from Email & SMTP table, or link target missing.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26T16:28:40Z – 2026-07-26T16:28:42Z (log window N/A — docs-only).
+2. **Environment:** repo root on branch `development` @ `7add5c3d`; no Docker/BASE_URL (documentation index check only).
+3. **What was tested:** `docs/README.md` indexes **0030** under Email & SMTP and Quick links; on-disk runbook exists.
+4. **Results:**
+   - Email & SMTP lists 0030 — **PASS** (`docs/README.md:49` ops row; also cross-ref at L47).
+   - Quick links lists 0030 — **PASS** (`docs/README.md:17`).
+   - Link target exists — **PASS** (`test -f` → `OK_FILE`).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Operators scanning the docs index can now find the reservation confirmation email troubleshooting runbook from both Quick links and Email & SMTP. No product code was required; the index work already landed with the sibling 0658 refresh.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts (last section):** N/A — no containers involved. Verification output:
+   ```
+   17:| Troubleshoot missing reservation confirmation email | [0030-…](0030-…) |
+   49:| [0030-reservation-confirmation-email-troubleshooting.md](…) | **Ops:** …
+   OK_FILE
+   ```
