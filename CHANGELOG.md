@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.127] - 2026-07-26
+
+### Changed
+
+- **Docs (0002):** Clarified the customer features plan as **partial** — staff Billing Customers (Factura) and fiscal invoices are shipped; end-user accounts, MFA, and self-serve history are not — and aligned README indexes plus ROADMAP.
+
 ## [2.1.126] - 2026-07-26
 
 ### Changed

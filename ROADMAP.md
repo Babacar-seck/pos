@@ -23,7 +23,6 @@
 - **Settings – Tax ID / CIF**: Tenant settings (Contact tab at `/settings`) include **Tax ID / VAT** and **CIF / NIF** fields; stored in DB (migration `20260316120000_add_tenant_tax_id_cif.sql`), shown on printed invoices.
 - **Orders – Print invoice**: Each order card on `/orders` has a **Print invoice** button; opens a print-optimized invoice (business name, logo, address, Tax ID, CIF, order lines, total) and the browser print dialog for customer handover.
 - **Billing customers (Factura)**: Register customers that need a tax invoice with company details. **Customers** at `/customers`: list, search, add, edit, delete. From Orders (any tab): **Print Factura** lets staff select a billing customer and print an invoice with “Bill to” block; optional link to save customer on the order. See `docs/0017-billing-customers-factura.md`.
-- **Customer accounts**: End-customer registration, login, email verification, MFA, account-based order history, and customer-facing invoice generation. See `docs/0002-customer-features-plan.md` for scope and API summary.
 - **Rate limiting**: Global (100/min), login (5/15min), register (3/hour), payment (10/min + 3/order/hour) per IP; public menu 30/min per IP; uploads 10/hour per user; admin/management 30/min per user; Redis storage, X-Forwarded-For, 429 logging. See `docs/0020-rate-limiting-production.md`.
 - **Satisfecho Delivery**: Staff Delivery tab / courier portal (`/courier`), public checkout at `/delivery/{tenantId}`, guest track, fee/postal/radius coverage. See `docs/0053-satisfecho-delivery-order-channel.md`.
 - **Waiting list**: Public join at `/waitlist/{tenantId}`; staff manage from Reservations → Waitlist. See `docs/0011-table-reservation-user-guide.md`.
@@ -33,6 +32,7 @@
 - **Order / item comments**: Guests can add notes on Take Away / menu orders; kitchen display shows item and order notes. See `docs/0015-kitchen-display.md` (smoke: `test:order-comments`).
 
 ### ❌ Missing Features / To Be Implemented
+- **Customer accounts (end-user)**: Registration, login, email verification, MFA, account-based order history, and customer-facing self-serve invoices — **not shipped** (staff Factura CRM is separate; see Completed). Design notes: `docs/0002-customer-features-plan.md`.
 - **Order management Phase 4 (advanced)**: Batch status updates, status/audit history, item replacement, modification after payment/refund, analytics. See `docs/0007-implementation-verification.md` § "NOT IMPLEMENTED (Phase 4)".
 - **Stricter “immediate payment” (optional)**: Today the menu auto-opens payment after place order; customers can still close the modal. A strict “cannot place another order or proceed without paying” flow is not enforced.
 - **Order customizations (GitHub [#50](https://github.com/satisfecho/pos/issues/50))**: **Phase 1 done** — staff configure questions on **`/products`** (edit product); customer menu already collects answers. **Still open:** pizza-style swap/add toppings, multi-select, priced modifiers — see `docs/0031-order-customizations-plan.md`.

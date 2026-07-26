@@ -1,5 +1,7 @@
 # Customer Features Implementation Plan
 
+> **Status: partial.** **Shipped:** staff **Billing Customers** (Factura CRM at `/customers`) and fiscal invoice issue/get on orders. **Not shipped:** end-user customer accounts, email verification, MFA, customer order history, or self-serve tax invoices as specified below. Treat detailed sections as historical design notes — do not confuse this plan with the live staff Factura flow.
+
 ## Overview
 Add customer-facing features: customer accounts, order history, email verification, MFA, and invoice generation for tax deduction.
 

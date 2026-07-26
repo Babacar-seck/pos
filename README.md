@@ -204,7 +204,7 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | [docs/0009-table-pin-security.md](docs/0009-table-pin-security.md) | Table activation and PIN validation |
 | [docs/0012-translation-implementation.md](docs/0012-translation-implementation.md) | i18n (frontend + backend + DB content) |
 | [docs/0004-deployment.md](docs/0004-deployment.md) | Domain/IP deployment and env vars |
-| [docs/0002-customer-features-plan.md](docs/0002-customer-features-plan.md) | Customer accounts: registration, login, MFA, order history, invoices |
+| [docs/0002-customer-features-plan.md](docs/0002-customer-features-plan.md) | Customer features plan (**partial**): staff Factura customers shipped; end-user accounts/MFA not shipped |
 | [docs/0005-email-sending-options.md](docs/0005-email-sending-options.md) | Email configuration options |
 | [docs/0013-verification-alternatives.md](docs/0013-verification-alternatives.md) | Verification flow alternatives |
 | [docs/0014-provider-portal.md](docs/0014-provider-portal.md) | Provider registration, login, and catalog management |
