@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.73] - 2026-07-26
+
+### Changed
+
+- **Security review docs:** Documented public waiting-list signup (PII, per-IP rate limit, no public status page) and restaurant groups (`join_code` capability secret, share flags) in `docs/SECURITY-REVIEW.md`, with links to `docs/0011`, `docs/0020`, and `docs/0054`.
+
 ## [2.1.72] - 2026-07-26
 
 ### Fixed
