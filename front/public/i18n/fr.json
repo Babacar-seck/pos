@@ -362,6 +362,8 @@
     "LOGOUT": "Se déconnecter",
     "TENANT_COUNT": "Locataires (clients)",
     "SIGNUPS_30D": "Inscriptions (30 jours)",
+    "LOGINS_TOTAL": "Connexions (total)",
+    "LAST_LOGIN": "Dernière connexion",
     "LOGINS_24H": "Connexions (24 h)",
     "LOGINS_7D": "Connexions (7 jours)",
     "RECENT_TENANTS": "Locataires récents",

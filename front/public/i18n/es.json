@@ -362,6 +362,8 @@
     "LOGOUT": "Cerrar sesión",
     "TENANT_COUNT": "Inquilinos (clientes)",
     "SIGNUPS_30D": "Registros (30 días)",
+    "LOGINS_TOTAL": "Inicios de sesión (total)",
+    "LAST_LOGIN": "Último inicio de sesión",
     "LOGINS_24H": "Inicios de sesión (24 h)",
     "LOGINS_7D": "Inicios de sesión (7 días)",
     "RECENT_TENANTS": "Inquilinos recientes",

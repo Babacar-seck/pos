@@ -447,6 +447,8 @@
     "LOGOUT": "退出登录",
     "TENANT_COUNT": "租户（客户）",
     "SIGNUPS_30D": "注册（30 天）",
+    "LOGINS_TOTAL": "登录（总计）",
+    "LAST_LOGIN": "最近登录",
     "LOGINS_24H": "登录（24 小时）",
     "LOGINS_7D": "登录（7 天）",
     "RECENT_TENANTS": "最近租户",

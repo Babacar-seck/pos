@@ -39,8 +39,17 @@ async function main() {
     const title = await page.$eval('h1', (el) => el.textContent?.trim() || '');
     if (!title) throw new Error('Dashboard title missing');
     const metrics = await page.$$('.metric-card');
-    if (metrics.length < 4) throw new Error(`Expected 4 metric cards, got ${metrics.length}`);
+    if (metrics.length < 6) throw new Error(`Expected at least 6 metric cards, got ${metrics.length}`);
+    for (const key of ['logins_total', 'last_login', 'logins_24h', 'logins_7d']) {
+      const el = await page.$(`[data-metric="${key}"]`);
+      if (!el) throw new Error(`Missing metric card: ${key}`);
+      const label = await el.$eval('h2', (h) => h.textContent?.trim() || '');
+      if (!label || label.includes('PLATFORM_DASHBOARD.')) {
+        throw new Error(`Metric ${key} label missing or untranslated: ${label}`);
+      }
+    }
     console.log('OK: platform operator login and dashboard');
+    console.log('OK: login metrics visible (total, last, 24h, 7d)');
 
     await page.waitForSelector('a.tenant-link', { timeout: 10000 });
     await page.click('a.tenant-link');

@@ -447,6 +447,8 @@
     "LOGOUT": "Log out",
     "TENANT_COUNT": "Tenants (clients)",
     "SIGNUPS_30D": "Sign-ups (30 days)",
+    "LOGINS_TOTAL": "Logins (total)",
+    "LAST_LOGIN": "Last login",
     "LOGINS_24H": "Logins (24 hours)",
     "LOGINS_7D": "Logins (7 days)",
     "RECENT_TENANTS": "Recent tenants",

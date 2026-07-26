@@ -411,8 +411,10 @@ export interface PlatformLoginSummary {
 export interface PlatformMetrics {
   tenant_count: number;
   signups_last_30_days: number;
+  logins_total: number;
   logins_last_24_hours: number;
   logins_last_7_days: number;
+  last_login_at?: string | null;
   recent_tenants: PlatformTenantSummary[];
   recent_logins: PlatformLoginSummary[];
 }

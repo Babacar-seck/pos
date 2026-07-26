@@ -447,6 +447,8 @@
     "LOGOUT": "Tancar sessió",
     "TENANT_COUNT": "Inquilins (clients)",
     "SIGNUPS_30D": "Registres (30 dies)",
+    "LOGINS_TOTAL": "Inicis de sessió (total)",
+    "LAST_LOGIN": "Darrer inici de sessió",
     "LOGINS_24H": "Inicis de sessió (24 h)",
     "LOGINS_7D": "Inicis de sessió (7 dies)",
     "RECENT_TENANTS": "Inquilins recents",

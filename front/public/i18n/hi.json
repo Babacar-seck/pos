@@ -447,6 +447,8 @@
     "LOGOUT": "लॉग आउट",
     "TENANT_COUNT": "टेनants (ग्राहक)",
     "SIGNUPS_30D": "साइन-अप (30 दिन)",
+    "LOGINS_TOTAL": "लॉगिन (कुल)",
+    "LAST_LOGIN": "अंतिम लॉगिन",
     "LOGINS_24H": "लॉगिन (24 घंटे)",
     "LOGINS_7D": "लॉगिन (7 दिन)",
     "RECENT_TENANTS": "हाल के टेनants",

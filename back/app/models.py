@@ -374,8 +374,10 @@ class PlatformLoginSummary(SQLModel):
 class PlatformMetricsResponse(SQLModel):
     tenant_count: int
     signups_last_30_days: int
+    logins_total: int
     logins_last_24_hours: int
     logins_last_7_days: int
+    last_login_at: datetime | None = None
     recent_tenants: list[PlatformTenantSummary]
     recent_logins: list[PlatformLoginSummary]
 

@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.123] - 2026-07-26
+
+### Added
+
+- **Platform operator dashboard (#315):** Show all-time login count and last-login time on `/platform` (API `logins_total` / `last_login_at`, metric cards, i18n, smoke coverage).
+
+### Changed
+
+- **Docs (0057):** Marked the amvara9 deploy/CSS stale-build guide as **shipped** (`deploy-amvara9.sh` `--no-cache` front + SPA `index.html` no-cache headers) and aligned the docs README blurb.
+
 ## [2.1.122] - 2026-07-26
 
 ### Changed

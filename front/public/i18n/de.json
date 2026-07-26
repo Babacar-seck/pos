@@ -362,6 +362,8 @@
     "LOGOUT": "Abmelden",
     "TENANT_COUNT": "Mandanten (Kunden)",
     "SIGNUPS_30D": "Registrierungen (30 Tage)",
+    "LOGINS_TOTAL": "Anmeldungen (gesamt)",
+    "LAST_LOGIN": "Letzte Anmeldung",
     "LOGINS_24H": "Anmeldungen (24 Stunden)",
     "LOGINS_7D": "Anmeldungen (7 Tage)",
     "RECENT_TENANTS": "Neueste Mandanten",

@@ -190,6 +190,9 @@ def platform_metrics(
         .limit(10)
     ).all()
 
+    logins_total = session.exec(
+        select(func.count()).select_from(models.LoginEvent)
+    ).one()
     logins_last_24_hours = session.exec(
         select(func.count())
         .select_from(models.LoginEvent)
@@ -206,12 +209,15 @@ def platform_metrics(
         .order_by(models.LoginEvent.logged_in_at.desc())  # type: ignore[arg-type]
         .limit(20)
     ).all()
+    last_login_at = recent_login_rows[0].logged_in_at if recent_login_rows else None
 
     return models.PlatformMetricsResponse(
         tenant_count=int(tenant_count or 0),
         signups_last_30_days=int(signups_last_30_days or 0),
+        logins_total=int(logins_total or 0),
         logins_last_24_hours=int(logins_last_24_hours or 0),
         logins_last_7_days=int(logins_last_7_days or 0),
+        last_login_at=last_login_at,
         recent_tenants=[
             _tenant_summary(session, t) for t in recent_tenants if t.id is not None
         ],

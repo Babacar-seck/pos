@@ -12,7 +12,7 @@ Platform operators can:
 - View a **dashboard** at `/platform` with:
   - Total tenant (client) count
   - New tenant sign-ups in the last 30 days
-  - Login activity (last 24 hours / 7 days)
+  - Login activity (total count, last login time, last 24 hours / 7 days)
   - **All tenants** with owner contact email, product count, and links
   - Recent login events (who logged in, which tenant, scope)
 - Open a **tenant detail** page at `/platform/tenants/{id}` with:
