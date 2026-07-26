@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.111] - 2026-07-26
+
+### Changed
+
+- **Docs Quick links:** Added multi-location restaurant groups (`0054-restaurant-groups.md`) so operators can open that guide from the docs index without digging into Feature guides.
+
 ## [2.1.110] - 2026-07-26
 
 ### Changed
