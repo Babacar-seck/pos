@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.115] - 2026-07-26
+
+### Changed
+
+- **Docs (0023):** Refreshed prioritisation for docs 0019–0022 so **0021 (working plan)** is treated as shipped background and the next open item is **0022 (OAuth)**, with optional **0020** rate-limit follow-ups as non-blocking hardening; aligned the docs README index blurb.
+
 ## [2.1.114] - 2026-07-26
 
 ### Changed
