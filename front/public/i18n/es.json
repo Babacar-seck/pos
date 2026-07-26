@@ -989,7 +989,10 @@
     "TSE_SERIAL": "TSE serial",
     "TSE_COUNTER": "Signature counter",
     "TSE_TIME": "TSE timestamp",
-    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification.",
+    "SPLIT_BY_LINE": "O pagar líneas seleccionadas",
+    "SPLIT_BY_LINE_HINT": "Seleccione artículos para este pagador. El importe se calcula de las líneas (o introduzca un importe abajo).",
+    "SPLIT_LINE_TOTAL": "Total de líneas seleccionadas"
   },
   "CUSTOMERS": {
     "TITLE": "Clientes (Factura)",
@@ -2175,7 +2178,9 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_BIRTHDAY_BONUS": "Unidades de bonus de cumpleaños",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Unidades extra una vez al año cuando un miembro paga en su cumpleaños (0 = desactivado)."
   },
   "PAYMENTS": {
     "PAYMENT": "Pago",
@@ -2803,6 +2808,9 @@
     "JOINED": "Bienvenido — ya formas parte del club.",
     "BALANCE": "Saldo",
     "KEEP_LINK": "Guarda este enlace para ver tu saldo:",
-    "CARD_NOT_FOUND": "Membresía no encontrada."
+    "CARD_NOT_FOUND": "Membresía no encontrada.",
+    "BIRTHDAY_MONTH": "Mes de cumpleaños (opcional)",
+    "BIRTHDAY_DAY": "Día de cumpleaños (opcional)",
+    "BIRTHDAY_HINT": "Mes y día opcionales para que el restaurante pueda otorgar un bonus de cumpleaños."
   }
 }

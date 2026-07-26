@@ -852,6 +852,8 @@ class LoyaltyProgram(TenantMixin, table=True):
     earn_units_per_order: int = Field(default=1, ge=0)
     redemption_threshold: int = Field(default=10, ge=1)
     reward_discount_cents: int = Field(default=500, ge=0)
+    # Extra units once per year when member pays on their birthday (0 = disabled).
+    birthday_bonus_units: int = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -871,6 +873,9 @@ class LoyaltyMembership(TenantMixin, table=True):
     phone: str | None = Field(default=None, max_length=40, index=True)
     member_token: str = Field(max_length=64, unique=True, index=True)
     balance: int = Field(default=0, ge=0)
+    birthday_month: int | None = Field(default=None)  # 1–12
+    birthday_day: int | None = Field(default=None)  # 1–31
+    birthday_bonus_year: int | None = Field(default=None)  # last calendar year bonus awarded
     joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -1127,6 +1132,17 @@ class OrderPayment(TenantMixin, table=True):
     paid_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     voided_at: datetime | None = None
     note: str | None = Field(default=None, max_length=500)
+
+
+class OrderPaymentItem(TenantMixin, table=True):
+    """Line allocation for a split-by-line payment leg (#318 / #331)."""
+
+    __tablename__ = "order_payment_item"
+
+    id: int | None = Field(default=None, primary_key=True)
+    order_payment_id: int = Field(foreign_key="order_payment.id", index=True)
+    order_item_id: int = Field(foreign_key="orderitem.id", index=True)
+    amount_cents: int = Field(ge=1)
 
 
 class OfflineOrderIdempotency(TenantMixin, table=True):
@@ -1393,6 +1409,7 @@ class LoyaltyProgramUpdate(SQLModel):
     earn_units_per_order: int | None = Field(default=None, ge=0)
     redemption_threshold: int | None = Field(default=None, ge=1)
     reward_discount_cents: int | None = Field(default=None, ge=0)
+    birthday_bonus_units: int | None = Field(default=None, ge=0)
 
 
 class LoyaltyJoinCreate(SQLModel):
@@ -1401,6 +1418,8 @@ class LoyaltyJoinCreate(SQLModel):
     display_name: str = Field(max_length=200)
     email: str | None = Field(default=None, max_length=320)
     phone: str | None = Field(default=None, max_length=40)
+    birthday_month: int | None = Field(default=None, ge=1, le=12)
+    birthday_day: int | None = Field(default=None, ge=1, le=31)
 
 
 class LoyaltyAdjustCreate(SQLModel):
@@ -1606,13 +1625,18 @@ class OrderMarkPaid(SQLModel):
 
 
 class OrderPaymentCreate(SQLModel):
-    """Staff records a partial or settling payment leg (#318)."""
+    """Staff records a partial or settling payment leg (#318).
 
-    amount_cents: int = Field(ge=1)
+    Provide either ``amount_cents`` (split by amount) or non-empty ``order_item_ids``
+    (split by line; amount is derived from those lines).
+    """
+
+    amount_cents: int | None = Field(default=None, ge=1)
     payment_method: str = "cash"
     payer_label: str | None = Field(default=None, max_length=120)
     tip_amount_cents: int | None = Field(default=None, ge=0)
     note: str | None = Field(default=None, max_length=500)
+    order_item_ids: list[int] | None = None
 
 
 class OfflineCashOrderCreate(SQLModel):

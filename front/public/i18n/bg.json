@@ -989,7 +989,10 @@
     "TSE_SERIAL": "TSE serial",
     "TSE_COUNTER": "Signature counter",
     "TSE_TIME": "TSE timestamp",
-    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification.",
+    "SPLIT_BY_LINE": "Или платете избрани редове",
+    "SPLIT_BY_LINE_HINT": "Изберете артикули за този платец. Сумата се изчислява от редовете (или въведете сума по-долу).",
+    "SPLIT_LINE_TOTAL": "Общо за избраните редове"
   },
   "CUSTOMERS": {
     "TITLE": "Клиенти (фактура)",
@@ -2175,7 +2178,9 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_BIRTHDAY_BONUS": "Бонус единици за рожден ден",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Допълнителни единици веднъж годишно, когато член плати на рождения си ден (0 = изкл.)."
   },
   "PAYMENTS": {
     "PAYMENT": "Плащане:",
@@ -2803,6 +2808,9 @@
     "JOINED": "Welcome — you are in the club.",
     "BALANCE": "Balance",
     "KEEP_LINK": "Save this card link to check your balance:",
-    "CARD_NOT_FOUND": "Membership not found."
+    "CARD_NOT_FOUND": "Membership not found.",
+    "BIRTHDAY_MONTH": "Месец на раждане (по избор)",
+    "BIRTHDAY_DAY": "Ден на раждане (по избор)",
+    "BIRTHDAY_HINT": "По избор месец и ден, за да може ресторантът да даде бонус за рожден ден."
   }
 }

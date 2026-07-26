@@ -989,7 +989,10 @@
     "TSE_SERIAL": "TSE serial",
     "TSE_COUNTER": "Signature counter",
     "TSE_TIME": "TSE timestamp",
-    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification.",
+    "SPLIT_BY_LINE": "یا منتخب لائنوں کی ادائیگی",
+    "SPLIT_BY_LINE_HINT": "اس ادائیگی کنندہ کے لیے آئٹمز منتخب کریں۔ رقم لائنوں سے نکلتی ہے (یا نیچے رقم درج کریں)۔",
+    "SPLIT_LINE_TOTAL": "منتخب لائنوں کا کل"
   },
   "CUSTOMERS": {
     "TITLE": "گاہک (انوائس)",
@@ -2175,7 +2178,9 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_BIRTHDAY_BONUS": "سالگرہ بونس یونٹس",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "سال میں ایک بار اضافی یونٹس جب رکن اپنی سالگرہ پر ادائیگی کرے (0 = بند)۔"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",
@@ -2803,6 +2808,9 @@
     "JOINED": "Welcome — you are in the club.",
     "BALANCE": "Balance",
     "KEEP_LINK": "Save this card link to check your balance:",
-    "CARD_NOT_FOUND": "Membership not found."
+    "CARD_NOT_FOUND": "Membership not found.",
+    "BIRTHDAY_MONTH": "سالگرہ کا مہینہ (اختیاری)",
+    "BIRTHDAY_DAY": "سالگرہ کا دن (اختیاری)",
+    "BIRTHDAY_HINT": "اختیاری مہینہ اور دن تاکہ ریستوراں سالگرہ بونس دے سکے۔"
   }
 }

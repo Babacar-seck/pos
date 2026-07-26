@@ -24,6 +24,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
 - **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
 
+## [2.1.139] - 2026-07-26
+
+### Added
+
+- **Overnight completeness (#331):** Split bill **by line** (pick order items in the payment modal; tracked via `order_payment_item`), loyalty **birthday bonus** units (program setting + optional birthday on join; awarded once per year on a paid order), and German **TSE auto-sign** when offline-cash sales sync (plus a payment audit leg). See `docs/0071-split-bill.md`, `docs/0066-club-loyalty.md`, `docs/0072-tse-fiscal-compliance.md`.
+
+### Changed
+
+- **Roadmap (#332):** Rewrote root `ROADMAP.md` into short Shipped / In progress / Deferred tables (links to `docs/` + issues); removed the inline rate-limit strategy draft (still in `docs/0020`); synced `docs/0032` #52 statuses for split bill, promos, join tables, and birthdays; documented recurring refresh with agent **008** / `docs/agent-loop.md`.
+
 ## [2.1.138] - 2026-07-26
 
 ### Fixed

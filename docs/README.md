@@ -86,7 +86,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0025-reservation-overbooking-detection.md](0025-reservation-overbooking-detection.md) | Reservation overbooking: **shipped** (slot capacity, overbooking report, 400 on over capacity); historical design notes + [0058](0058-test-scenario-one-empty-table.md) scenario. |
 | [0058-test-scenario-one-empty-table.md](0058-test-scenario-one-empty-table.md) | Test scenario: all tables seated except one empty (maps 0025 overbooking requirements to this case). |
 | [0031-order-customizations-plan.md](0031-order-customizations-plan.md) | GitHub **#50**: pizza-style order modifiers — **core shipped** (staff config, public answers, kitchen/invoice summary, multi-select); optional per-option price deltas not shipped. |
-| [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella roadmap (warehouses, kitchen SLAs, marketing/comms). |
+| [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella theme table (keep aligned with root [ROADMAP.md](../ROADMAP.md)). |
 | [0061-multi-warehouse-inventory.md](0061-multi-warehouse-inventory.md) | Multi-warehouse inventory MVP (#320): warehouses, receive/adjust attribution, stock filter. |
 | [0069-branch-hub-fulfillment.md](0069-branch-hub-fulfillment.md) | Central kitchen → branches (#323): ADR (linked tenants + hub) + hub fulfillment / prepared-at-HQ MVP. |
 | [0062-pos-migration-import.md](0062-pos-migration-import.md) | Import from existing POS (#321): products/categories CSV CLI, dry-run/apply, cutover runbook. |

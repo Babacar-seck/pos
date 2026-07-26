@@ -2,6 +2,8 @@
 
 This file **summarizes** large, multi-track items that are tracked on GitHub. It is not a commitment order; use it for planning and to split work into smaller issues.
 
+**Keep in sync with** root [`ROADMAP.md`](../ROADMAP.md): after a batch of product **`CLOSED-*`** tasks (or on the weekly **008** enhancement pass), update this table so “Status in product” matches what actually shipped. Do not leave shipped MVPs listed as “Not started”.
+
 ---
 
 ## [#52 — Various topics to enhance](https://github.com/satisfecho/pos/issues/52)
@@ -10,16 +12,16 @@ Umbrella list. **This table is the source of truth** for “is it done?” until
 
 | Theme | Status in product | Docs / notes |
 |--------|-------------------|--------------|
-| **Multiple warehouses (“almacenes”)** | MVP shipped (#320) | Named warehouses per tenant; receive/adjust + stock filter by location. Transfers / WMS picking still open. |
-| **Split invoice** | Not started | Partial payments / multi-payer bills: orders, Stripe, Factura printing. |
-| **Join tables** | Not started | Physical merge of tables + one or many bills: see `docs/0008-order-management-logic.md` (sessions per device already). |
-| **Offline operation** | MVP started | ADR + staff cash sale queue/idempotent sync (#319); SW/full write queue later — see [0063](0063-offline-capable-client.md). |
+| **Multiple warehouses (“almacenes”)** | MVP shipped (#320) | Named warehouses per tenant; receive/adjust + stock filter by location. Transfers / WMS picking still open — [0061](0061-multi-warehouse-inventory.md). |
+| **Split invoice** | MVP shipped (#318, by-line #331) | Partial payments by amount and by order line; remaining balance; one Factura/VeriFactu alta when settled — [0071](0071-split-bill.md). |
+| **Join tables** | Floor-plan MVP shipped | Join/unjoin on `/tables/canvas` — [0051](0051-table-groups-mvp.md). Deeper multi-bill merge UX may still grow. |
+| **Offline operation** | MVP started (#319) | ADR + staff cash sale queue/idempotent sync; TSE auto-sign on sync (#331). SW/full write queue later — [0063](0063-offline-capable-client.md). |
 | **Migrate from existing system** | MVP shipped (#321) | Products + categories CSV CLI + cutover runbook ([0062](0062-pos-migration-import.md)); tables/customers/orders still open. |
-| **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, **Settings → Google review URL**, thank-you step; staff trends + CSV (#325 / `docs/0064`) — see [#54](https://github.com/satisfecho/pos/issues/54), `CHANGELOG.md`. NPS / post-visit email-SMS still open. |
-| **Birthdays (“cumpleaños”)** | **Partial** | Optional **`birth_date`** on **billing customers** (Customers / Factura CRM); not on reservations yet. Automated campaigns → [#54](https://github.com/satisfecho/pos/issues/54). |
-| **Marketing / special offers** | Not started | Promotions / pricing rules — overlaps [#54](https://github.com/satisfecho/pos/issues/54). |
-| **Central kitchen → branches** | MVP started (#323) | Linked tenants via restaurant groups + hub kitchen; fulfillment record with prepared-at-HQ. See [0069](0069-branch-hub-fulfillment.md). |
-| **Satisfecho Delivery (first-party)** | **Partial / shipped core** | Own-channel delivery (API + staff UI + courier Mine/actions + public `/delivery/{tenantId}` checkout). See [0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md). Not the same as aggregator integrations below. |
+| **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, Google review URL, staff trends + CSV (#325 / [0064](0064-guest-feedback-analytics.md)). NPS / post-visit email-SMS still open → [#54](https://github.com/satisfecho/pos/issues/54). |
+| **Birthdays (“cumpleaños”)** | **Partial** | Reservation month/day (#324 / [0067](0067-guest-birthday.md)); billing-customer `birth_date`; loyalty birthday bonus once/year (#331 / [0066](0066-club-loyalty.md)). Automated outbound campaigns → [#54](https://github.com/satisfecho/pos/issues/54). |
+| **Marketing / special offers** | MVP shipped (#322) | Category %-off promotions — [0068](0068-price-promotions.md). Broader campaign automation → [#54](https://github.com/satisfecho/pos/issues/54). |
+| **Central kitchen → branches** | MVP started (#323) | Linked tenants via restaurant groups + hub kitchen; fulfillment record with prepared-at-HQ — [0069](0069-branch-hub-fulfillment.md). |
+| **Satisfecho Delivery (first-party)** | **Partial / shipped core** | Own-channel delivery (API + staff UI + courier + public `/delivery/{tenantId}`). See [0053](0053-satisfecho-delivery-order-channel.md). Not the same as aggregator integrations below. |
 | **Uber Eats interface** | Not started | Aggregator menu sync / orders — see `docs/0031-order-customizations-plan.md` (delivery integrations). Distinct from first-party Satisfecho Delivery. |
 
 **Dedicated issues & phased plan:** Specs (copy-paste titles/bodies), dependency graph, and filing instructions are in **[0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md)**. After creating the GitHub issues, add their numbers in a comment on [#52](https://github.com/satisfecho/pos/issues/52) and optionally add an **Issue** column to the table above.
@@ -60,5 +62,5 @@ Umbrella list. **This table is the source of truth** for “is it done?” until
 ## Related
 
 - [#50](https://github.com/satisfecho/pos/issues/50) — order customizations: [0031-order-customizations-plan.md](0031-order-customizations-plan.md)
-- [ROADMAP.md](../ROADMAP.md) — high-level product status
+- [ROADMAP.md](../ROADMAP.md) — high-level product status (refresh cadence documented there)
 - [All issues](https://github.com/satisfecho/pos/issues)

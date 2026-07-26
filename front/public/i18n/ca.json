@@ -1111,7 +1111,10 @@
     "TSE_SERIAL": "TSE serial",
     "TSE_COUNTER": "Signature counter",
     "TSE_TIME": "TSE timestamp",
-    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification.",
+    "SPLIT_BY_LINE": "O pagar línies seleccionades",
+    "SPLIT_BY_LINE_HINT": "Seleccioneu articles per a aquest pagador. L’import es calcula a partir de les línies (o introduïu un import a sota).",
+    "SPLIT_LINE_TOTAL": "Total de línies seleccionades"
   },
   "CUSTOMERS": {
     "TITLE": "Clients (Factura)",
@@ -2297,7 +2300,9 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_BIRTHDAY_BONUS": "Unitats de bonus d’aniversari",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Unitats extra un cop l’any quan un membre paga el dia del seu aniversari (0 = desactivat)."
   },
   "PAYMENTS": {
     "PAYMENT": "Pagament",
@@ -2803,6 +2808,9 @@
     "JOINED": "Welcome — you are in the club.",
     "BALANCE": "Balance",
     "KEEP_LINK": "Save this card link to check your balance:",
-    "CARD_NOT_FOUND": "Membership not found."
+    "CARD_NOT_FOUND": "Membership not found.",
+    "BIRTHDAY_MONTH": "Mes d’aniversari (opcional)",
+    "BIRTHDAY_DAY": "Dia d’aniversari (opcional)",
+    "BIRTHDAY_HINT": "Mes i dia opcionals perquè el restaurant pugui atorgar un bonus d’aniversari."
   }
 }

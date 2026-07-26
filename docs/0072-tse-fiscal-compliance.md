@@ -51,7 +51,7 @@ Configure via **Settings → Payments** (TSE section) or **PUT `/tenant/settings
 
 | Event | TSE process type |
 |-------|------------------|
-| Order fully paid (mark-paid / last payment leg) | **`sale`** (KassenSichV Beleg) |
+| Order fully paid (mark-paid / last payment leg / offline-cash sync) | **`sale`** (KassenSichV Beleg) |
 | Unmark paid (void settlement) | **`storno`** linked to prior sale |
 | Explicit API | **POST** `/orders/{id}/tse-transaction/sign` (idempotent sale if paid) |
 

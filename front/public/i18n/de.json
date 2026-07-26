@@ -989,7 +989,10 @@
     "TSE_SERIAL": "TSE-Seriennummer",
     "TSE_COUNTER": "Signaturzähler",
     "TSE_TIME": "TSE-Zeitstempel",
-    "TSE_DISCLAIMER": "Test-/Stub-TSE-Datensatz — keine Aussage über BSI-TR-03153-Zertifizierung."
+    "TSE_DISCLAIMER": "Test-/Stub-TSE-Datensatz — keine Aussage über BSI-TR-03153-Zertifizierung.",
+    "SPLIT_BY_LINE": "Oder ausgewählte Positionen zahlen",
+    "SPLIT_BY_LINE_HINT": "Positionen für diesen Zahler auswählen. Betrag wird aus den Zeilen berechnet (oder unten Betrag eingeben).",
+    "SPLIT_LINE_TOTAL": "Summe ausgewählter Positionen"
   },
   "CUSTOMERS": {
     "TITLE": "Kunden (Rechnung)",
@@ -2141,7 +2144,9 @@
     "TSE_CLIENT_ID": "TSE-Client-/TSS-ID (optional)",
     "TSE_CLIENT_ID_HINT": "Anbieter-Client-ID bei Cloud-TSE.",
     "TSE_API_SECRET": "TSE-API-Geheimnis (optional)",
-    "TSE_API_SECRET_HINT": "Leer lassen, um den aktuellen Wert zu behalten. Niemals echte Secrets committen."
+    "TSE_API_SECRET_HINT": "Leer lassen, um den aktuellen Wert zu behalten. Niemals echte Secrets committen.",
+    "LOYALTY_BIRTHDAY_BONUS": "Geburtstags-Bonus-Einheiten",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Extra-Einheiten einmal pro Jahr, wenn ein Mitglied am Geburtstag bezahlt (0 = aus)."
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",
@@ -2803,6 +2808,9 @@
     "JOINED": "Willkommen — du bist im Club.",
     "BALANCE": "Kontostand",
     "KEEP_LINK": "Diesen Kartenlink speichern:",
-    "CARD_NOT_FOUND": "Mitgliedschaft nicht gefunden."
+    "CARD_NOT_FOUND": "Mitgliedschaft nicht gefunden.",
+    "BIRTHDAY_MONTH": "Geburtsmonat (optional)",
+    "BIRTHDAY_DAY": "Geburtstag (optional)",
+    "BIRTHDAY_HINT": "Optional Monat und Tag, damit das Restaurant einen Geburtstagsbonus vergeben kann."
   }
 }

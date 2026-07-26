@@ -113,6 +113,19 @@ def create_offline_cash_order(
     )
     session.add(ledger)
     session.add(order)
+    # Audit leg so offline cash matches online mark-paid / split-bill ledger (#318).
+    try:
+        from app.order_payment_service import ensure_full_payment_leg
+
+        ensure_full_payment_leg(
+            session,
+            order=order,
+            payment_method="cash",
+            paid_by_user_id=user_id,
+            tip_amount_cents=None,
+        )
+    except Exception:
+        pass
     session.commit()
     session.refresh(order)
 
@@ -130,6 +143,15 @@ def create_offline_cash_order(
             },
             table_id=order.table_id,
         )
+    except Exception:
+        pass
+
+    # German TSE: auto-sign sale on offline-cash sync when tenant TSE is enabled (#316 / #331).
+    try:
+        from app.tse_service import maybe_sign_sale_after_paid
+
+        maybe_sign_sale_after_paid(session, order)
+        session.refresh(order)
     except Exception:
         pass
 

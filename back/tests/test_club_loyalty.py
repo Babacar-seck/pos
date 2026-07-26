@@ -268,3 +268,64 @@ class TestClubLoyalty(PgClientTestCase):
         self.assertEqual(r.status_code, 200)
         self.assertFalse(r.json()["apple_wallet_available"])
         self.assertFalse(r.json()["google_wallet_available"])
+
+    def test_birthday_bonus_on_paid_order(self):
+        """Birthday bonus folds into earn once per year (#331)."""
+        from datetime import datetime, timezone
+
+        today = datetime.now(timezone.utc).date()
+        self._enable_program(earn_units_per_order=1, birthday_bonus_units=5)
+        join = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Bday",
+                "email": "bday.loyalty@amvara.de",
+                "birthday_month": today.month,
+                "birthday_day": today.day,
+            },
+        )
+        self.assertEqual(join.status_code, 200, join.text)
+        mid = join.json()["membership"]["id"]
+        self.assertEqual(join.json()["membership"]["birthday_month"], today.month)
+        self.assertEqual(join.json()["membership"]["birthday_day"], today.day)
+
+        order = models.Order(
+            tenant_id=self.tenant.id,
+            table_id=self.table.id,
+            status=models.OrderStatus.pending,
+            loyalty_membership_id=mid,
+        )
+        self.session.add(order)
+        self.session.commit()
+        self.session.refresh(order)
+        self.session.add(
+            models.OrderItem(
+                order_id=order.id,
+                product_id=self.product.id,
+                product_name="Coffee",
+                quantity=1,
+                price_cents=400,
+                status=models.OrderItemStatus.pending,
+            )
+        )
+        self.session.commit()
+
+        r = self.client.put(
+            f"/orders/{order.id}/mark-paid",
+            json={"payment_method": "cash"},
+            headers=_bearer_headers(self.waiter),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        membership = self.session.get(models.LoyaltyMembership, mid)
+        self.session.refresh(membership)
+        self.assertEqual(membership.balance, 6)  # 1 earn + 5 birthday
+        self.assertEqual(membership.birthday_bonus_year, today.year)
+        earns = self.session.exec(
+            select(models.LoyaltyLedgerEntry).where(
+                models.LoyaltyLedgerEntry.order_id == order.id,
+                models.LoyaltyLedgerEntry.entry_type == "earn",
+            )
+        ).all()
+        self.assertEqual(len(earns), 1)
+        self.assertEqual(earns[0].units, 6)
+        self.assertIn("birthday bonus", (earns[0].note or "").lower())

@@ -197,3 +197,83 @@ class TestSplitBill(PgClientTestCase):
         d = self.client.delete(f"/orders/{order.id}/payments/{pid}", headers=h)
         self.assertEqual(d.status_code, 200, d.text)
         self.assertEqual(d.json()["amount_paid_cents"], 0)
+
+    def test_split_by_line_two_items(self) -> None:
+        """Pay each line separately via order_item_ids (#331)."""
+        order = models.Order(
+            tenant_id=self.tenant.id,
+            table_id=self.table.id,
+            status=models.OrderStatus.completed,
+            session_id="split-lines",
+        )
+        self.session.add(order)
+        self.session.commit()
+        self.session.refresh(order)
+        p2 = models.Product(
+            tenant_id=self.tenant.id,
+            name="Fries",
+            price_cents=500,
+            category="Sides",
+        )
+        self.session.add(p2)
+        self.session.commit()
+        self.session.refresh(p2)
+        i1 = models.OrderItem(
+            order_id=order.id,
+            product_id=self.product.id,
+            product_name=self.product.name,
+            quantity=1,
+            price_cents=1000,
+            status=models.OrderItemStatus.delivered,
+        )
+        i2 = models.OrderItem(
+            order_id=order.id,
+            product_id=p2.id,
+            product_name=p2.name,
+            quantity=1,
+            price_cents=500,
+            status=models.OrderItemStatus.delivered,
+        )
+        self.session.add(i1)
+        self.session.add(i2)
+        self.session.commit()
+        self.session.refresh(i1)
+        self.session.refresh(i2)
+        h = _bearer_headers(self.admin)
+
+        r1 = self.client.post(
+            f"/orders/{order.id}/payments",
+            headers=h,
+            json={
+                "order_item_ids": [i1.id],
+                "payment_method": "cash",
+                "payer_label": "Alice",
+            },
+        )
+        self.assertEqual(r1.status_code, 200, r1.text)
+        body1 = r1.json()
+        self.assertEqual(body1["status"], "partial")
+        self.assertEqual(body1["amount_paid_cents"], 1000)
+        self.assertEqual(body1["amount_remaining_cents"], 500)
+        self.assertEqual(body1["payment"]["order_item_ids"], [i1.id])
+        self.assertEqual(body1["unallocated_order_item_ids"], [i2.id])
+
+        # Same line again → reject
+        bad = self.client.post(
+            f"/orders/{order.id}/payments",
+            headers=h,
+            json={"order_item_ids": [i1.id], "payment_method": "cash"},
+        )
+        self.assertEqual(bad.status_code, 400, bad.text)
+
+        r2 = self.client.post(
+            f"/orders/{order.id}/payments",
+            headers=h,
+            json={"order_item_ids": [i2.id], "payment_method": "terminal", "payer_label": "Bob"},
+        )
+        self.assertEqual(r2.status_code, 200, r2.text)
+        body2 = r2.json()
+        self.assertEqual(body2["status"], "paid")
+        self.assertEqual(body2["amount_remaining_cents"], 0)
+        self.assertEqual(body2["payment_method"], "split")
+        self.assertEqual(sorted(body2["unallocated_order_item_ids"]), [])

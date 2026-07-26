@@ -61,7 +61,16 @@ def amount_paid_cents(session: Session, order_id: int) -> int:
     return sum(int(p.amount_cents or 0) for p in list_active_payments(session, order_id))
 
 
-def payment_to_dict(p: models.OrderPayment) -> dict:
+def payment_line_ids(session: Session, payment_id: int) -> list[int]:
+    rows = session.exec(
+        select(models.OrderPaymentItem).where(
+            models.OrderPaymentItem.order_payment_id == payment_id
+        )
+    ).all()
+    return [int(r.order_item_id) for r in rows]
+
+
+def payment_to_dict(session: Session, p: models.OrderPayment) -> dict:
     return {
         "id": p.id,
         "order_id": p.order_id,
@@ -74,7 +83,62 @@ def payment_to_dict(p: models.OrderPayment) -> dict:
         "paid_at": p.paid_at.isoformat() if p.paid_at else None,
         "voided_at": p.voided_at.isoformat() if p.voided_at else None,
         "note": p.note,
+        "order_item_ids": payment_line_ids(session, p.id) if p.id else [],
     }
+
+
+def allocated_order_item_ids(session: Session, order_id: int) -> set[int]:
+    """Order item ids already assigned to a non-voided payment leg."""
+    payments = list_active_payments(session, order_id)
+    if not payments:
+        return set()
+    pay_ids = [p.id for p in payments if p.id is not None]
+    if not pay_ids:
+        return set()
+    rows = session.exec(
+        select(models.OrderPaymentItem).where(
+            models.OrderPaymentItem.order_payment_id.in_(pay_ids)  # type: ignore[attr-defined]
+        )
+    ).all()
+    return {int(r.order_item_id) for r in rows}
+
+
+def unallocated_order_items(session: Session, order: models.Order) -> list[models.OrderItem]:
+    taken = allocated_order_item_ids(session, order.id)
+    return [i for i in active_order_items(session, order.id) if i.id not in taken]
+
+
+def resolve_line_payment_amount(
+    session: Session,
+    *,
+    order: models.Order,
+    order_item_ids: list[int],
+) -> tuple[int, list[models.OrderItem]]:
+    """Validate line selection and return (amount_cents, selected items)."""
+    if not order_item_ids:
+        raise HTTPException(status_code=400, detail="order_item_ids must not be empty")
+    wanted = {int(x) for x in order_item_ids}
+    if len(wanted) != len(order_item_ids):
+        raise HTTPException(status_code=400, detail="Duplicate order_item_ids")
+    active = {i.id: i for i in active_order_items(session, order.id) if i.id is not None}
+    missing = wanted - set(active.keys())
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"order_item_ids not on order or not payable: {sorted(missing)}",
+        )
+    already = allocated_order_item_ids(session, order.id)
+    conflict = wanted & already
+    if conflict:
+        raise HTTPException(
+            status_code=400,
+            detail=f"order_item_ids already allocated to another payment: {sorted(conflict)}",
+        )
+    items = [active[i] for i in sorted(wanted)]
+    amount = sum(int(i.price_cents) * int(i.quantity) for i in items)
+    if amount < 1:
+        raise HTTPException(status_code=400, detail="Selected lines total must be at least 1 cent")
+    return amount, items
 
 
 def reconciliation_dict(session: Session, order: models.Order) -> dict:
@@ -82,12 +146,14 @@ def reconciliation_dict(session: Session, order: models.Order) -> dict:
     paid = amount_paid_cents(session, order.id)
     payments = list_active_payments(session, order.id)
     remaining = max(0, due - paid)
+    unalloc = unallocated_order_items(session, order)
     return {
         "amount_due_cents": due,
         "amount_paid_cents": paid,
         "amount_remaining_cents": remaining,
         "is_fully_paid": remaining == 0 and due > 0 and order.paid_at is not None,
-        "payments": [payment_to_dict(p) for p in payments],
+        "payments": [payment_to_dict(session, p) for p in payments],
+        "unallocated_order_item_ids": [i.id for i in unalloc if i.id is not None],
     }
 
 
@@ -104,16 +170,21 @@ def record_payment(
     session: Session,
     *,
     order: models.Order,
-    amount_cents: int,
+    amount_cents: int | None,
     payment_method: str,
     paid_by_user_id: int | None,
     payer_label: str | None = None,
     tip_amount_cents: int | None = None,
     note: str | None = None,
     stripe_payment_intent_id: str | None = None,
+    order_item_ids: list[int] | None = None,
     settle_if_covered: bool = True,
 ) -> tuple[models.OrderPayment, dict]:
-    """Append a payment leg. When settle_if_covered and remaining hits 0, mark order paid."""
+    """Append a payment leg. When settle_if_covered and remaining hits 0, mark order paid.
+
+    Pass ``order_item_ids`` for split-by-line (amount derived from lines). Otherwise
+    ``amount_cents`` is required (split by amount).
+    """
     if order.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status == models.OrderStatus.cancelled:
@@ -121,9 +192,27 @@ def record_payment(
     if order.status == models.OrderStatus.paid or order.paid_at:
         raise HTTPException(status_code=400, detail="Order is already paid")
 
-    amt = int(amount_cents)
-    if amt < 1:
-        raise HTTPException(status_code=400, detail="amount_cents must be at least 1")
+    line_items: list[models.OrderItem] = []
+    if order_item_ids:
+        amt, line_items = resolve_line_payment_amount(
+            session, order=order, order_item_ids=order_item_ids
+        )
+        if amount_cents is not None and int(amount_cents) != amt:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"amount_cents {int(amount_cents)} does not match selected lines total {amt}"
+                ),
+            )
+    else:
+        if amount_cents is None:
+            raise HTTPException(
+                status_code=400,
+                detail="amount_cents is required when order_item_ids is omitted",
+            )
+        amt = int(amount_cents)
+        if amt < 1:
+            raise HTTPException(status_code=400, detail="amount_cents must be at least 1")
 
     method = (payment_method or "cash").strip().lower()[:32] or "cash"
     label = (payer_label or "").strip()[:120] or None
@@ -160,6 +249,19 @@ def record_payment(
     )
     session.add(row)
     session.flush()
+
+    for item in line_items:
+        line_amt = int(item.price_cents) * int(item.quantity)
+        session.add(
+            models.OrderPaymentItem(
+                tenant_id=order.tenant_id,
+                order_payment_id=row.id,  # type: ignore[arg-type]
+                order_item_id=item.id,  # type: ignore[arg-type]
+                amount_cents=line_amt,
+            )
+        )
+    if line_items:
+        session.flush()
 
     payments = list_active_payments(session, order.id)
     paid_total = sum(int(p.amount_cents or 0) for p in payments)
@@ -234,6 +336,13 @@ def void_all_payments(session: Session, order_id: int) -> int:
     for p in list_active_payments(session, order_id):
         p.voided_at = now
         session.add(p)
+        if p.id is not None:
+            for alloc in session.exec(
+                select(models.OrderPaymentItem).where(
+                    models.OrderPaymentItem.order_payment_id == p.id
+                )
+            ).all():
+                session.delete(alloc)
         n += 1
     return n
 
@@ -256,6 +365,13 @@ def void_payment(
         raise HTTPException(status_code=400, detail="Payment already voided")
     row.voided_at = datetime.now(timezone.utc)
     session.add(row)
+    # Free line allocations so items can be paid again on another leg.
+    for alloc in session.exec(
+        select(models.OrderPaymentItem).where(
+            models.OrderPaymentItem.order_payment_id == payment_id
+        )
+    ).all():
+        session.delete(alloc)
     session.commit()
     session.refresh(row)
     return row

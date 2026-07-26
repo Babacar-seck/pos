@@ -1111,7 +1111,10 @@
     "TSE_SERIAL": "TSE serial",
     "TSE_COUNTER": "Signature counter",
     "TSE_TIME": "TSE timestamp",
-    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification."
+    "TSE_DISCLAIMER": "Test/stub TSE record — not a claim of BSI TR-03153 certification.",
+    "SPLIT_BY_LINE": "या चयनित पंक्तियाँ भुगतान करें",
+    "SPLIT_BY_LINE_HINT": "इस भुगतानकर्ता के लिए आइटम चुनें। राशि पंक्तियों से निकाली जाती है (या नीचे राशि दर्ज करें)।",
+    "SPLIT_LINE_TOTAL": "चयनित पंक्तियों का योग"
   },
   "CUSTOMERS": {
     "TITLE": "ग्राहक (इनवॉइस)",
@@ -2297,7 +2300,9 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_BIRTHDAY_BONUS": "जन्मदिन बोनस इकाइयाँ",
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "प्रति वर्ष एक बार अतिरिक्त इकाइयाँ जब सदस्य अपने जन्मदिन पर भुगतान करता है (0 = बंद)।"
   },
   "PAYMENTS": {
     "PAYMENT": "भुगतान",
@@ -2803,6 +2808,9 @@
     "JOINED": "Welcome — you are in the club.",
     "BALANCE": "Balance",
     "KEEP_LINK": "Save this card link to check your balance:",
-    "CARD_NOT_FOUND": "Membership not found."
+    "CARD_NOT_FOUND": "Membership not found.",
+    "BIRTHDAY_MONTH": "जन्म माह (वैकल्पिक)",
+    "BIRTHDAY_DAY": "जन्म दिन (वैकल्पिक)",
+    "BIRTHDAY_HINT": "वैकल्पिक माह और दिन ताकि रेस्तराँ जन्मदिन बोनस दे सके।"
   }
 }

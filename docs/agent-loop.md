@@ -307,7 +307,8 @@ mac-stats-reviewer’s **`agents/autoresearch/README.md`** describes **Track A**
 
 - **`AGENTS.md`** — Docker, smoke tests, **`development` / `master`**, frontend log checks.
 - **`.cursor/rules/git-development-branch-workflow.mdc`** — always-on branch and promotion rules for agents.
-- **`docs/0032-github-issues-roadmap.md`** — Umbrella issues **#52–#54** and links.
+- **`ROADMAP.md`** — high-level shipped / next / deferred; refresh after CLOSED product batches or when **008** sees drift (see “How to keep this current” in that file).
+- **`docs/0032-github-issues-roadmap.md`** — Umbrella issues **#52–#54** and links (keep the #52 table aligned with `ROADMAP.md`).
 - **`docs/testing.md`** — Puppeteer scripts, **`go-ahead-loop.sh`**.
 - **`.cursor/rules/error-investigation-workflow.mdc`** — log order for incidents.
 - **`.cursor/rules/commit-changelog-version.mdc`** — changelog and version bump when cutting work.

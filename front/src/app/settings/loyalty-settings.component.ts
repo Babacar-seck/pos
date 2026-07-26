@@ -56,6 +56,17 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
               (ngModelChange)="dirty.set(true)"
             />
           </label>
+          <label>
+            <span>{{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS' | translate }}</span>
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="birthdayBonus"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-birthday-bonus"
+            />
+            <span class="hint">{{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS_HINT' | translate }}</span>
+          </label>
         </div>
 
         @if (joinUrl()) {
@@ -186,6 +197,7 @@ export class LoyaltySettingsComponent implements OnInit {
   earnUnits = 1;
   threshold = 10;
   rewardCents = 500;
+  birthdayBonus = 0;
 
   ngOnInit(): void {
     this.reload();
@@ -202,6 +214,7 @@ export class LoyaltySettingsComponent implements OnInit {
         this.earnUnits = p.earn_units_per_order;
         this.threshold = p.redemption_threshold;
         this.rewardCents = p.reward_discount_cents;
+        this.birthdayBonus = p.birthday_bonus_units ?? 0;
         this.joinUrl.set(
           typeof window !== 'undefined' && p.join_path
             ? `${window.location.origin}${p.join_path}`
@@ -234,6 +247,7 @@ export class LoyaltySettingsComponent implements OnInit {
         earn_units_per_order: Number(this.earnUnits) || 0,
         redemption_threshold: Math.max(1, Number(this.threshold) || 1),
         reward_discount_cents: Math.max(0, Number(this.rewardCents) || 0),
+        birthday_bonus_units: Math.max(0, Number(this.birthdayBonus) || 0),
       })
       .subscribe({
         next: () => {

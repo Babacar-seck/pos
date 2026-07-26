@@ -54,6 +54,31 @@
             <span>{{ 'LOYALTY_PUBLIC.PHONE' | translate }}</span>
             <input type="tel" [(ngModel)]="phone" name="phone" />
           </label>
+          <div class="birthday-row">
+            <label>
+              <span>{{ 'LOYALTY_PUBLIC.BIRTHDAY_MONTH' | translate }}</span>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                [(ngModel)]="birthdayMonth"
+                name="birthdayMonth"
+                data-testid="loyalty-join-birthday-month"
+              />
+            </label>
+            <label>
+              <span>{{ 'LOYALTY_PUBLIC.BIRTHDAY_DAY' | translate }}</span>
+              <input
+                type="number"
+                min="1"
+                max="31"
+                [(ngModel)]="birthdayDay"
+                name="birthdayDay"
+                data-testid="loyalty-join-birthday-day"
+              />
+            </label>
+          </div>
+          <p class="hint">{{ 'LOYALTY_PUBLIC.BIRTHDAY_HINT' | translate }}</p>
           <p class="hint">{{ 'LOYALTY_PUBLIC.CONTACT_HINT' | translate }}</p>
           @if (submitError()) {
             <p class="error">{{ submitError() }}</p>

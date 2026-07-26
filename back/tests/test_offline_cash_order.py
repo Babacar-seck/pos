@@ -127,6 +127,33 @@ class TestOfflineCashOrderApi(PgClientTestCase):
         r = self.client.post("/orders/offline-cash", json=self._payload(), headers=headers)
         self.assertEqual(r.status_code, 404, r.text)
 
+    def test_offline_cash_auto_signs_tse_when_enabled(self) -> None:
+        """Offline-cash sync creates TSE sale in test mode (#316 / #331)."""
+        self.tenant.fiscal_country = "DE"
+        self.tenant.tse_mode = "test"
+        self.session.add(self.tenant)
+        self.session.commit()
+
+        headers = _bearer_headers(self.owner)
+        r = self.client.post(
+            "/orders/offline-cash",
+            json=self._payload(key="offline-tse-key-001"),
+            headers=headers,
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        oid = r.json()["order_id"]
+
+        tse = self.client.get(f"/orders/{oid}/tse-transaction", headers=headers)
+        self.assertEqual(tse.status_code, 200, tse.text)
+        body = tse.json()
+        self.assertEqual(body["process_type"], "sale")
+        self.assertTrue(body.get("tse_serial"))
+
+        pays = self.client.get(f"/orders/{oid}/payments", headers=headers)
+        self.assertEqual(pays.status_code, 200, pays.text)
+        self.assertGreaterEqual(pays.json()["amount_paid_cents"], 1)
+        self.assertGreaterEqual(len(pays.json()["payments"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

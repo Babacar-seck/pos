@@ -42,6 +42,8 @@ export class LoyaltyPublicComponent implements OnInit {
   displayName = '';
   email = '';
   phone = '';
+  birthdayMonth: number | null = null;
+  birthdayDay: number | null = null;
 
   constructor() {
     afterNextRender(() => this.updateDocumentTitle());
@@ -92,11 +94,15 @@ export class LoyaltyPublicComponent implements OnInit {
     if (!this.canSubmit() || this.submitting()) return;
     this.submitting.set(true);
     this.submitError.set(null);
+    const month = Number(this.birthdayMonth);
+    const day = Number(this.birthdayDay);
     this.api
       .joinPublicLoyalty(this.tenantId(), {
         display_name: this.displayName.trim(),
         email: this.email.trim() || undefined,
         phone: this.phone.trim() || undefined,
+        birthday_month: Number.isFinite(month) && month >= 1 ? month : null,
+        birthday_day: Number.isFinite(day) && day >= 1 ? day : null,
       })
       .subscribe({
         next: (res) => {

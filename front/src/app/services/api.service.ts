@@ -835,6 +835,8 @@ export interface LoyaltyProgram {
   earn_units_per_order: number;
   redemption_threshold: number;
   reward_discount_cents: number;
+  /** Extra units once per year when member pays on birthday (0 = off). */
+  birthday_bonus_units?: number;
   created_at?: string | null;
   updated_at?: string | null;
   wallet?: LoyaltyWalletStatus;
@@ -904,6 +906,9 @@ export interface LoyaltyMembership {
   phone?: string | null;
   balance: number;
   member_token?: string;
+  birthday_month?: number | null;
+  birthday_day?: number | null;
+  birthday_bonus_year?: number | null;
   joined_at?: string | null;
   updated_at?: string | null;
 }
@@ -1480,6 +1485,8 @@ export interface OrderPaymentLeg {
   paid_at?: string | null;
   voided_at?: string | null;
   note?: string | null;
+  /** Present when this leg was recorded as split-by-line (#331). */
+  order_item_ids?: number[];
 }
 
 export interface Order {
@@ -2799,11 +2806,12 @@ export class ApiService {
   recordOrderPayment(
     orderId: number,
     body: {
-      amount_cents: number;
+      amount_cents?: number | null;
       payment_method: string;
       payer_label?: string | null;
       tip_amount_cents?: number | null;
       note?: string | null;
+      order_item_ids?: number[] | null;
     }
   ): Observable<{
     status: string;
@@ -2815,6 +2823,7 @@ export class ApiService {
     payments: OrderPaymentLeg[];
     paid_at?: string | null;
     payment_method?: string | null;
+    unallocated_order_item_ids?: number[];
   }> {
     return this.http.post<{
       status: string;
@@ -2826,6 +2835,7 @@ export class ApiService {
       payments: OrderPaymentLeg[];
       paid_at?: string | null;
       payment_method?: string | null;
+      unallocated_order_item_ids?: number[];
     }>(`${this.apiUrl}/orders/${orderId}/payments`, body);
   }
 
@@ -3594,7 +3604,13 @@ export class ApiService {
 
   joinPublicLoyalty(
     tenantId: number,
-    body: { display_name: string; email?: string; phone?: string },
+    body: {
+      display_name: string;
+      email?: string;
+      phone?: string;
+      birthday_month?: number | null;
+      birthday_day?: number | null;
+    },
   ): Observable<{
     ok: boolean;
     membership: LoyaltyMembership;

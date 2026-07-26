@@ -16,19 +16,21 @@ Tenant-scoped loyalty distinct from pricing promos (**#322**):
 
 | Table | Role |
 |-------|------|
-| `loyalty_program` | One row per tenant: enabled, mode (`points`\|`stamps`), earn rate, redemption threshold, reward discount cents |
-| `loyalty_membership` | Member identity (name + email/phone), opaque `member_token`, cached `balance` |
+| `loyalty_program` | One row per tenant: enabled, mode (`points`\|`stamps`), earn rate, redemption threshold, reward discount cents, optional `birthday_bonus_units` |
+| `loyalty_membership` | Member identity (name + email/phone), opaque `member_token`, cached `balance`, optional `birthday_month`/`birthday_day`, `birthday_bonus_year` |
 | `loyalty_ledger_entry` | Append-only `earn` / `redeem` / `adjust`; optional `order_id`; unique earn-per-order |
 | `order` columns | `loyalty_membership_id`, `loyalty_discount_cents`, `loyalty_units_redeemed` |
 
-Migration: `back/migrations/20260726162500_club_loyalty.sql`.
+Migrations: `back/migrations/20260726162500_club_loyalty.sql`, `20260726223000_split_by_line_and_loyalty_birthday.sql` (birthday columns).
 
 ## Earn / redeem
 
 - **Earn:** after `paid_at` is set (`mark-paid`, `finish`, Stripe/Revolut confirm), `loyalty_service.award_on_order_paid` runs if `loyalty_membership_id` is set. Idempotent (one `earn` ledger row per order).
+- **Birthday bonus (#331):** when `birthday_bonus_units > 0` and the member’s month/day matches `paid_at` (UTC), extra units are folded into that earn row (or a standalone earn with `order_id` null if the order already had an earn). Once per calendar year (`birthday_bonus_year`). Join accepts optional birthday; linked `BillingCustomer.birth_date` can seed month/day.
 - **Redeem:** `POST /orders/{id}/loyalty/redeem` with `membership_id` or `member_token`. Requires balance ≥ threshold; writes `redeem` ledger row and sets order discount fields.
 - **Manual adjust:** `POST /loyalty/memberships/{id}/adjust` — **owner/admin** (`loyalty:write`) only.
 - **Permissions:** `loyalty:read`, `loyalty:write` (program + adjust), `loyalty:redeem` (waiter+).
+- **Still deferred:** VIP tiers, referral rewards, Wallet pass signing until certs are configured.
 
 ## APIs (summary)
 

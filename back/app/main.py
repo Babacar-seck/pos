@@ -1933,6 +1933,8 @@ def public_loyalty_join(
         display_name=body.display_name,
         email=email,
         phone=phone,
+        birthday_month=body.birthday_month,
+        birthday_day=body.birthday_day,
     )
     session.commit()
     session.refresh(membership)
@@ -2026,6 +2028,8 @@ def update_loyalty_program(
         program.redemption_threshold = body.redemption_threshold
     if body.reward_discount_cents is not None:
         program.reward_discount_cents = body.reward_discount_cents
+    if body.birthday_bonus_units is not None:
+        program.birthday_bonus_units = body.birthday_bonus_units
     program.updated_at = datetime.now(timezone.utc)
     session.add(program)
     session.commit()
@@ -13868,6 +13872,7 @@ def post_order_payment(
         payer_label=body.payer_label,
         tip_amount_cents=body.tip_amount_cents,
         note=body.note,
+        order_item_ids=body.order_item_ids,
         settle_if_covered=True,
     )
 
@@ -13907,7 +13912,7 @@ def post_order_payment(
     return {
         "status": "paid" if order.paid_at else "partial",
         "order_id": order.id,
-        "payment": order_pay_svc.payment_to_dict(payment),
+        "payment": order_pay_svc.payment_to_dict(session, payment),
         **recon,
         "paid_at": order.paid_at.isoformat() if order.paid_at else None,
         "payment_method": order.payment_method,
@@ -13935,7 +13940,7 @@ def delete_order_payment(
     return {
         "status": "voided",
         "order_id": order.id,
-        "payment": order_pay_svc.payment_to_dict(row),
+        "payment": order_pay_svc.payment_to_dict(session, row),
         **recon,
     }
 

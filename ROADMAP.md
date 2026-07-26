@@ -1,368 +1,77 @@
 # Development Roadmap
 
-## Feature Development Status
+High-level product status for Satisfecho POS. Prefer this file for “what’s done / what’s next”; use `docs/` for how it works and [`CHANGELOG.md`](CHANGELOG.md) for release history.
 
-### ✅ Completed Features
-- **Order Management System**: Full order lifecycle (pending → preparing → ready → delivered → paid). Session-based orders per browser; status reset when adding items to ready orders. See `docs/0008-order-management-logic.md` and `docs/0007-implementation-verification.md`.
-- **Order modification & soft delete**: Customers can remove items, change quantities, cancel orders (before delivery). Staff can cancel items. Removed items shown with "Show Removed Items" toggle. Item-level status (pending → preparing → ready → delivered).
-- **Customer Name Support**: Customers can enter their name, displayed in customer-facing menu and admin orders view.
-- **Bidirectional Status Controls**: Order and item status can be moved forward and backward with user-friendly dropdown menus.
-- **Currency Support**: Restaurant currency settings are respected throughout the application (orders, menu, etc.).
-- **Immediate Payment Required**: Database field, admin settings UI, menu API returns `tenant_immediate_payment_required`; when enabled, checkout modal auto-opens after placing an order.
-- **Customer-Facing Menu**: Full menu browsing, cart, order placement, order history section; `GET /menu/{table_token}/order-history`.
-- **Payment Integration**: Stripe payment processing for customer orders.
-- **Real-time Updates**: WebSocket support for order status updates; token-based WS auth (`/ws-token`, frontend `getWsToken()`).
-- **Table reservations**: Staff list/create/edit/cancel/seat/finish at `/reservations`; public book at `/book/:tenantId`, view/cancel by token at `/reservation?token=...`. Table status includes `reserved`. See `docs/0010-table-reservation-implementation-plan.md`, `docs/0011-table-reservation-user-guide.md`.
-- **Table PIN security**: Table activation, 4-digit PIN validation for placing orders, PIN rate limiting (Redis). See `docs/0009-table-pin-security.md`.
-- **Translations**: Frontend i18n (`@ngx-translate`, `front/public/i18n/*.json`), backend localized messages (`back/app/messages.py`), language detection and persistence. See `docs/0012-translation-implementation.md`.
-- **Deployment**: Config guide for domain/IP, `API_URL`, `WS_URL`, CORS. See `docs/0004-deployment.md`.
-- **Provider portal**: Suppliers register at `/provider/register`, log in at `/provider/login`, manage catalog at `/provider` (tile/list view, search, add/edit/delete products, company details, bank info). API: `GET/PUT /provider/me`, `GET/POST/PUT/DELETE /provider/products`, etc. See `docs/0014-provider-portal.md`.
-- **Kitchen display**: Full-screen view at `/kitchen` for kitchen staff — large order cards, auto-refresh (15s) and WebSocket, optional sound on new orders; read-only. Same access as Orders. See `docs/0015-kitchen-display.md`.
-- **Reports (Sales & Revenue)**: Date range, summary (total revenue, order count, average payment per client), reservation count and by source (public/staff), by product/category/table/waiter, CSS charts, CSV/Excel export. Owner/admin only. See `docs/0016-reports.md`.
-- **Dashboard**: Quick links at `/dashboard` to Catalog, Reservations, Kitchen display, Reports, Inventory, Users, Configuration (admin sections shown only to owner/admin), plus Help section with links to [GitHub Issues](https://github.com/satisfecho/pos/issues) and [GitHub Discussions](https://github.com/satisfecho/pos/discussions).
-- **Settings – Tax ID / CIF**: Tenant settings (Contact tab at `/settings`) include **Tax ID / VAT** and **CIF / NIF** fields; stored in DB (migration `20260316120000_add_tenant_tax_id_cif.sql`), shown on printed invoices.
-- **Orders – Print invoice**: Each order card on `/orders` has a **Print invoice** button; opens a print-optimized invoice (business name, logo, address, Tax ID, CIF, order lines, total) and the browser print dialog for customer handover.
-- **Billing customers (Factura)**: Register customers that need a tax invoice with company details. **Customers** at `/customers`: list, search, add, edit, delete. From Orders (any tab): **Print Factura** lets staff select a billing customer and print an invoice with “Bill to” block; optional link to save customer on the order. See `docs/0017-billing-customers-factura.md`.
-- **Rate limiting**: Global (100/min), login (5/15min), register (3/hour), payment (10/min + 3/order/hour) per IP; public menu 30/min per IP; uploads 10/hour per user; admin/management 30/min per user; Redis storage, X-Forwarded-For, 429 logging. See `docs/0020-rate-limiting-production.md`.
-- **Satisfecho Delivery**: Staff Delivery tab / courier portal (`/courier`), public checkout at `/delivery/{tenantId}`, guest track, fee/postal/radius coverage. See `docs/0053-satisfecho-delivery-order-channel.md`.
-- **Waiting list**: Public join at `/waitlist/{tenantId}`; staff manage from Reservations → Waitlist. See `docs/0011-table-reservation-user-guide.md`.
-- **Restaurant groups**: Multi-location join codes; optional shared billing customers/products. See `docs/0054-restaurant-groups.md`.
-- **SaaS signup paywall**: Hard paywall for restaurant signups (trial/subscribe before staff app); flag default off. See `docs/0052-saas-signup-paywall.md`.
-- **Platform operator portal**: SaaS metrics and tenant oversight at `/platform`. See `docs/0059-platform-operator-portal.md`.
-- **Order / item comments**: Guests can add notes on Take Away / menu orders; kitchen display shows item and order notes. See `docs/0015-kitchen-display.md` (smoke: `test:order-comments`).
-- **Order customizations (GitHub [#50](https://github.com/satisfecho/pos/issues/50))**: Staff configure product questions on **`/products`**; public menu collects answers (including multi-select choice); kitchen/invoice use `customization_summary`. See `docs/0031-order-customizations-plan.md`.
-
-### ❌ Missing Features / To Be Implemented
-- **Customer accounts (end-user)**: Registration, login, email verification, MFA, account-based order history, and customer-facing self-serve invoices — **not shipped** (staff Factura CRM is separate; see Completed). Design notes: `docs/0002-customer-features-plan.md`.
-- **Order management Phase 4 (advanced)**: Batch status updates, status/audit history, item replacement, modification after payment/refund, analytics. See `docs/0007-implementation-verification.md` § "NOT IMPLEMENTED (Phase 4)".
-- **Stricter “immediate payment” (optional)**: Today the menu auto-opens payment after place order; customers can still close the modal. A strict “cannot place another order or proceed without paying” flow is not enforced.
-- **Order customization price deltas (optional, [#50](https://github.com/satisfecho/pos/issues/50))**: Per-option priced modifiers — **not shipped**; core customizations are under Completed. See `docs/0031-order-customizations-plan.md`.
-- **Large multi-topic tracks ([#52](https://github.com/satisfecho/pos/issues/52)–[#54](https://github.com/satisfecho/pos/issues/54))**: Per-theme status in `docs/0032-github-issues-roadmap.md` (#52: warehouses, split bills, join tables, offline, etc.; **partial**: guest feedback + Google review, billing-customer **birth date**). #53–#54: kitchen SLAs, marketing/comms — open slices as smaller issues when building.
-
-### Documentation reference
-- **`docs/`**: `0008-order-management-logic.md`, `0007-implementation-verification.md`, `0010-table-reservation-implementation-plan.md`, `0011-table-reservation-user-guide.md`, `0009-table-pin-security.md`, `0012-translation-implementation.md`, `0004-deployment.md`, `0002-customer-features-plan.md`, `0005-email-sending-options.md`, `0013-verification-alternatives.md`, `0015-kitchen-display.md`, `0059-platform-operator-portal.md`, `0016-reports.md`, `0014-provider-portal.md`, `0020-rate-limiting-production.md`, `0031-order-customizations-plan.md`, `0032-github-issues-roadmap.md`, `0052-saas-signup-paywall.md`, `0053-satisfecho-delivery-order-channel.md`, `0054-restaurant-groups.md`.
-- **`CHANGELOG.md`**: Tracks unreleased and released changes (reservations, order history, WebSocket, fixes).
+**Umbrella tracks:** [#52](https://github.com/satisfecho/pos/issues/52)–[#54](https://github.com/satisfecho/pos/issues/54) detail lives in [`docs/0032-github-issues-roadmap.md`](docs/0032-github-issues-roadmap.md).
 
 ---
 
-# Rate Limiting & Security Roadmap
+## How to keep this current (recurring)
 
-## Current State Analysis
+Refresh **`ROADMAP.md`** and the **#52** table in **`docs/0032-github-issues-roadmap.md`** whenever:
 
-### ✅ Implemented (Rate Limiting)
-- **Global API rate limiting** – 100 requests/minute per IP (slowapi + Redis; in-memory fallback).
-- **Brute force protection** – Login `POST /token`: 5 attempts per 15 minutes per IP; register `POST /register` and `POST /register/provider`: 3 per hour per IP.
-- **Payment protection** – `create-payment-intent` and `confirm-payment`: 10 requests/minute per IP; **3 attempts per order per hour** per IP.
-- **Public menu rate limiting** – `/menu/{table_token}`, `/menu/{table_token}/order`, order-history, call-waiter, request-payment, order item updates: 30 requests/minute per IP.
-- **Upload rate limiting** – `POST /tenant/logo`, `POST /products/{id}/image`, `POST /provider/products/{id}/image`: 10 uploads per hour per authenticated user.
-- **Admin/management limits** – `/tenant/settings`, `/tables` (and table actions), `/providers`: 30 requests/minute per authenticated user.
-- **Monitoring** – Each 429 is logged (path, method, client IP). Client IP from `X-Forwarded-For` when behind proxy.
-- **Login UI** – Shows "Too many login attempts. Please try again later." on 429.
-- **Tests** – API test (`test:rate-limit`) and Puppeteer test (`test:rate-limit-puppeteer`). See `docs/0020-rate-limiting-production.md`.
+1. A batch of product issues lands as **`CLOSED-*`** under `agents2/tasks/done/`, or
+2. Agent **008** (enhancement reviewer) runs its weekly pass and notices drift vs `CHANGELOG.md`.
 
-### ❌ Not Yet Implemented
-- **CAPTCHA** after failed login attempts (recommended after 3 attempts).
-
-### ✅ Existing Infrastructure
-- Redis available (used for rate limiting storage)
-- JWT authentication in place
-- File size limits (5MB) for uploads
-- CORS middleware configured
+Do **not** paste implementation howtos, rate-limit strategy drafts, or secrets here — link to `docs/` instead. Queue a small **`FEAT-0-…-update-roadmap.md`** (or reopen a roadmap issue) when this file lags shipped work.
 
 ---
 
-## Recommended Rate Limiting Strategy
+## Shipped (stable)
 
-### 1. Global API Rate Limiting (All Endpoints)
+Core POS and recent 2026-07-26 slices. Links are the source of detail.
 
-**Implementation:** FastAPI middleware using Redis
-
-- **Rate Limit:** 100 requests/minute per IP address
-- **Burst:** Allow 20 requests in 5 seconds
-- **Storage:** Redis (sliding window or token bucket algorithm)
-- **Response:** HTTP 429 Too Many Requests with `Retry-After` header
-
-**Why:** Prevents basic flooding and abuse of any endpoint.
-
----
-
-### 2. Authentication Endpoints (Critical Priority)
-
-**Endpoints:** `/token` (login), `/register`
-
-- **Login Attempts:** 5 attempts per 15 minutes per IP
-- **Registration:** 3 attempts per hour per IP
-- **After Limit:** Temporary block (15-60 minutes) or CAPTCHA requirement
-- **Tracking:** Store failed attempts in Redis with IP + email combination
-
-**Why:** Prevents brute force attacks and account enumeration.
+| Area | Notes |
+|------|--------|
+| Orders & kitchen | Lifecycle, soft-delete, comments, customizations ([#50](https://github.com/satisfecho/pos/issues/50)), kitchen display — `docs/0008`, `docs/0015`, `docs/0031` |
+| Payments | Stripe; immediate-payment setting; split bill by amount + by line ([#318](https://github.com/satisfecho/pos/issues/318), [#331](https://github.com/satisfecho/pos/issues/331)) — `docs/0071` |
+| Reservations & waitlist | Staff + public book/cancel; waiting list — `docs/0011` |
+| Delivery | Satisfecho Delivery staff/courier/public — `docs/0053` |
+| Billing / fiscal | Factura customers; VeriFactu prep ([#326](https://github.com/satisfecho/pos/issues/326)); German TSE Phase 1 ([#316](https://github.com/satisfecho/pos/issues/316)) — `docs/0017`, `docs/0018`, `docs/0065`, `docs/0072` |
+| Inventory | Multi-warehouse MVP ([#320](https://github.com/satisfecho/pos/issues/320)) — `docs/0061` |
+| Offline | Staff offline cash sale + sync ([#319](https://github.com/satisfecho/pos/issues/319)) — `docs/0063` |
+| Migration | Products/categories CSV import ([#321](https://github.com/satisfecho/pos/issues/321)) — `docs/0062` |
+| Promos & loyalty | Category %-off ([#322](https://github.com/satisfecho/pos/issues/322)); club loyalty + birthday bonus ([#327](https://github.com/satisfecho/pos/issues/327), [#331](https://github.com/satisfecho/pos/issues/331)) — `docs/0068`, `docs/0066` |
+| Guests | Feedback + Google review URL ([#325](https://github.com/satisfecho/pos/issues/325)); reservation birthdays ([#324](https://github.com/satisfecho/pos/issues/324)) — `docs/0064`, `docs/0067` |
+| Multi-site | Restaurant groups; branch hub fulfillment ([#323](https://github.com/satisfecho/pos/issues/323)); floor-plan table join MVP — `docs/0054`, `docs/0069`, `docs/0051` |
+| Hardware | LAN print agent / kitchen+receipt jobs ([#317](https://github.com/satisfecho/pos/issues/317)) — `docs/0070` |
+| SaaS / platform | Signup paywall; `/pricing`; platform portal — `docs/0052`, `docs/0059` |
+| Security | Rate limiting (Redis/slowapi) — `docs/0020`; CAPTCHA still deferred |
+| Other | Provider portal, reports, i18n, table PIN, deploy — `docs/0014`, `docs/0016`, `docs/0012`, `docs/0009`, `docs/0004` |
 
 ---
 
-### 3. Public Menu Endpoints (Moderate Priority)
+## In progress / next
 
-**Endpoints:** `/menu/{table_token}`, `/menu/{table_token}/order`
+| Item | Status | Tracking |
+|------|--------|----------|
+| **#52 remaining slices** | Partial — see table in `docs/0032` | Transfers/WMS, deeper offline (SW write queue), more migration entities, Uber Eats |
+| **#53 Kitchen SLAs / stations** | Not started | Age gradients, category SLAs, station views — `docs/0015`, issue [#53](https://github.com/satisfecho/pos/issues/53) |
+| **#54 Post-visit campaigns** | Partial feedback shipped; SMS/email automation open | [#54](https://github.com/satisfecho/pos/issues/54) |
+| **TSE live / VeriFactu live** | Test/stub paths shipped; live gated on certified middleware | `docs/0072`, `docs/0065` |
+| **Order customizations price deltas** | Core customizations shipped; priced modifiers optional | [#50](https://github.com/satisfecho/pos/issues/50), `docs/0031` |
 
-- **Rate Limit:** 30 requests/minute per IP
-- **Per Table Token:** 60 requests/minute
-- **Caching:** Cache menu responses for 5-10 minutes (Redis)
-
-**Why:** Prevents abuse while allowing normal customer usage.
-
----
-
-### 4. File Upload Endpoints (Strict Priority)
-
-**Endpoints:** `/products/{product_id}/image`, `/tenant/logo`
-
-- **Rate Limit:** 10 uploads per hour per authenticated user
-- **File Size:** 5MB upload limit (optimized after upload)
-- **Additional:** Validate file type, scan for malicious content
-
-**Why:** Prevents storage abuse and DoS via large uploads.
+Open issues: [github.com/satisfecho/pos/issues](https://github.com/satisfecho/pos/issues).
 
 ---
 
-### 5. Database-Heavy Endpoints (Moderate Priority)
+## Deferred
 
-**Endpoints:** `/catalog`, `/products`, `/orders`
-
-- **Rate Limit:** 60 requests/minute per authenticated user
-- **Caching:** Cache catalog responses for 5 minutes
-- **Query Limits:** Add pagination limits (max 100 items per page)
-
-**Why:** Protects database from query flooding.
-
----
-
-### 6. Payment Endpoints (Very Strict Priority)
-
-**Endpoints:** `/orders/{order_id}/create-payment-intent`, `/orders/{order_id}/confirm-payment`
-
-- **Rate Limit:** 10 requests/minute per authenticated user
-- **Per Order:** 3 payment attempts per order per hour
-- **Additional:** Validate order state, prevent duplicate payments
-
-**Why:** Prevents payment fraud and duplicate charges.
+| Item | Why deferred | Notes |
+|------|--------------|--------|
+| **End-user customer accounts** | Separate from staff Factura CRM | Registration, MFA, self-serve history — `docs/0002` |
+| **Order management Phase 4** | Advanced ops | Batch status, audit history, post-payment mods — `docs/0007` |
+| **Strict immediate payment** | Product choice | Modal can still be dismissed today |
+| **CAPTCHA after failed login** | Nice-to-have on top of rate limits | Listed in `docs/0020` |
+| **Aggregator delivery (Uber Eats, etc.)** | Distinct from Satisfecho Delivery | Under #52 |
+| **Warehouse transfers / full WMS** | Beyond multi-warehouse MVP | Under #52 |
 
 ---
 
-### 7. Admin/Management Endpoints (Strict Priority)
+## Related
 
-**Endpoints:** `/tenant/settings`, `/providers`, `/tables`
-
-- **Rate Limit:** 30 requests/minute per authenticated user
-- **Write Operations:** 20 requests/minute (POST/PUT/DELETE)
-
-**Why:** Prevents accidental or malicious bulk changes.
-
----
-
-### 8. External API Calls (Scripts)
-
-**Scripts:** `wine_import.py`, `update_wine_details.py`
-
-- **Rate Limit:** 1 request/second to external APIs
-- **Retry Logic:** Exponential backoff (1s, 2s, 4s, 8s)
-- **Respect:** External API rate limits (if documented)
-
-**Why:** Prevents being blocked by external providers.
-
----
-
-## Implementation Approach
-
-### Option A: FastAPI Middleware with slowapi (Recommended)
-
-**Package:** `slowapi` (FastAPI-compatible wrapper for `flask-limiter`)
-
-**Pros:**
-- Easy to implement
-- Works with Redis
-- Per-endpoint or global limits
-- Good documentation
-
-**Example Structure:**
-```python
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-
-limiter = Limiter(key_func=get_remote_address, storage_uri="redis://redis:6379")
-
-@app.post("/token")
-@limiter.limit("5/15minutes")  # 5 requests per 15 minutes
-async def login(...):
-    ...
-```
-
----
-
-### Option B: Custom Redis-Based Middleware
-
-**Pros:**
-- Full control
-- No extra dependencies
-- Can implement sliding window or token bucket
-
-**Cons:**
-- More code to maintain
-- Need to handle edge cases
-
----
-
-### Option C: Nginx Rate Limiting (Infrastructure Level)
-
-**Pros:**
-- Offloads rate limiting from application
-- Works for all services
-- Can use `limit_req` module
-
-**Cons:**
-- Requires Nginx configuration
-- Less flexible for per-user limits
-
----
-
-## Recommended Configuration Values
-
-| Endpoint Type | Limit | Window | Key |
-|--------------|-------|--------|-----|
-| Global (all) | 100 req | 1 minute | IP address |
-| Login | 5 req | 15 minutes | IP address |
-| Register | 3 req | 1 hour | IP address |
-| Public Menu | 30 req | 1 minute | IP address |
-| File Upload | 10 req | 1 hour | User ID |
-| Catalog/Products | 60 req | 1 minute | User ID |
-| Payment | 10 req | 1 minute | User ID |
-| Admin | 30 req | 1 minute | User ID |
-
----
-
-## Additional Security Recommendations
-
-### 1. Request Size Limits
-- **Max Request Body:** 10MB (except file uploads)
-- **Max Query Params:** 50 parameters
-
-### 2. Timeout Limits
-- **Request Timeout:** 30 seconds
-- **Database Query Timeout:** 10 seconds
-
-### 3. IP Allowlisting/Blocklisting
-- Block known malicious IPs
-- Optional allowlist for admin endpoints
-
-### 4. Rate Limit Headers
-- Return `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
-- Helps clients respect limits
-
-### 5. Monitoring and Alerting
-- Log rate limit violations
-- Alert on sustained abuse patterns
-- Track metrics (requests/sec, blocked IPs)
-
-### 6. Graceful Degradation
-- Return 429 with `Retry-After` header
-- Don't crash on rate limit errors
-- Log for analysis
-
----
-
-## Implementation Priority
-
-### 🔴 High Priority — ✅ Done
-1. **Authentication endpoints** (`/token`, `/register`) – 5/15min, 3/hour
-2. **Global API rate limiting** – 100/min per IP
-3. **Payment endpoints** – 10/min per IP
-
-### 🟡 Medium Priority — ✅ Done
-1. **Public menu endpoints** – 30/min per IP
-2. **File upload endpoints** – 10 uploads/hour per user
-3. **Admin endpoints** – 30/min per user
-
-### 🟢 Low Priority (Nice to Have)
-1. **Database-heavy endpoints** – 60/min, catalog caching (optional)
-2. **External API rate limiting (scripts)**
-3. **Advanced features** (IP blocklisting, CAPTCHA)
-
----
-
-## Questions to Consider
-
-1. **Should rate limits be per-tenant or global?**
-   - Recommendation: Global with per-user limits for authenticated endpoints
-
-2. **Should we use Redis or in-memory storage?**
-   - Recommendation: Redis (already available, works across instances)
-
-3. **Should we implement CAPTCHA after failed login attempts?**
-   - Recommendation: Yes, after 3 failed attempts
-
-4. **Should we log all rate limit violations?**
-   - Recommendation: Yes, for security monitoring — **implemented** (each 429 logged with path, method, client)
-
----
-
-## Environment Variables to Add
-
-```bash
-# Rate Limiting Configuration
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_REDIS_URL=redis://redis:6379
-
-# Global Limits
-RATE_LIMIT_GLOBAL_PER_MINUTE=100
-RATE_LIMIT_GLOBAL_BURST=20
-
-# Authentication Limits
-RATE_LIMIT_LOGIN_PER_15MIN=5
-RATE_LIMIT_REGISTER_PER_HOUR=3
-
-# Public Endpoints
-RATE_LIMIT_PUBLIC_MENU_PER_MINUTE=30
-
-# File Uploads
-RATE_LIMIT_UPLOAD_PER_HOUR=10
-
-# Payment Endpoints
-RATE_LIMIT_PAYMENT_PER_MINUTE=10
-RATE_LIMIT_PAYMENT_PER_ORDER_PER_HOUR=3
-
-# Public Menu
-RATE_LIMIT_PUBLIC_MENU_PER_MINUTE=30
-
-# File Uploads
-RATE_LIMIT_UPLOAD_PER_HOUR=10
-
-# Admin Endpoints
-RATE_LIMIT_ADMIN_PER_MINUTE=30
-```
-
----
-
-## Implementation Checklist
-
-- [x] Install `slowapi` package
-- [x] Configure Redis connection for rate limiting
-- [x] Add global rate limiting middleware
-- [x] Add authentication endpoint rate limits
-- [x] Add payment endpoint rate limits
-- [x] Add public menu endpoint rate limits
-- [x] Add file upload rate limits
-- [x] Add admin/management endpoint rate limits
-- [x] Add per-order payment attempt rate limits
-- [x] Add rate limit headers to responses
-- [x] Add logging for rate limit violations
-- [x] Add environment variables for configuration
-- [x] Test rate limiting with various scenarios (API + Puppeteer)
-- [x] Document rate limits (`docs/0020-rate-limiting-production.md`)
-- [ ] Set up monitoring/alerts for abuse patterns (logs exist; alerting optional)
-
----
-
-## References
-
-- [slowapi Documentation](https://github.com/laurents/slowapi)
-- [FastAPI Security Best Practices](https://fastapi.tiangolo.com/tutorial/security/)
-- [OWASP API Security Top 10](https://owasp.org/www-project-api-security/)
-- [Redis Rate Limiting Patterns](https://redis.io/docs/manual/patterns/rate-limiting/)
+- [`CHANGELOG.md`](CHANGELOG.md) — what shipped in each version
+- [`docs/README.md`](docs/README.md) — doc index
+- [`docs/0032-github-issues-roadmap.md`](docs/0032-github-issues-roadmap.md) — #52–#54 theme table
+- [`docs/agent-loop.md`](docs/agent-loop.md) — agent pipeline (includes roadmap refresh note)
+- [`docs/0020-rate-limiting-production.md`](docs/0020-rate-limiting-production.md) — rate limits (implementation guide; not duplicated here)
