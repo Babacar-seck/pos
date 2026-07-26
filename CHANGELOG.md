@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.83] - 2026-07-26
+
+### Changed
+
+- **Public features docs:** Indexed the marketing `/features` page (no login) in root README Features and Access Points, and in `docs/README.md` Quick links / Feature guides, so contributors can find the prospect-facing capabilities list without digging through changelog or Angular routes.
+
 ## [2.1.82] - 2026-07-26
 
 ### Changed

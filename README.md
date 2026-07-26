@@ -75,6 +75,7 @@ Staff dashboard, kitchen display, and customer menu — a quick visual sense of 
 | **Products & images** | Staff manage products at `/products`. On deploy, demo products are linked to catalog provider products so the Products page shows images (beer/pizza/wine import); first load of `/products` backfills image URLs. |
 | **Provider portal** | Suppliers register at `/provider/register`, log in at `/provider/login`, and manage their catalog at `/provider` (tile/list view, search, add/edit/delete products, company details). See [docs/0014-provider-portal.md](docs/0014-provider-portal.md). |
 | **Tenant branding (public)** | Per-tenant **background colour** (hex, e.g. RAL5002 Azul) and **header background image** for book, menu, and reservation-view pages. Set in Settings → Business profile; optional dark overlay when a header image is used. See [docs/0028-tenant-public-branding.md](docs/0028-tenant-public-branding.md). |
+| **Public features (marketing)** | Product capabilities for prospects at **`/features`** (no login). Linked from the landing nav (“View all features”); uses the same landing site footer as the home page. |
 
 Planned but not yet implemented: batch order operations, and stricter “must pay before continuing” flow. See [ROADMAP.md](ROADMAP.md).
 
@@ -141,6 +142,7 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **DB health** | http://localhost:4202/api/health/db |
 | **Public menu (example)** | http://localhost:4202/menu/{table_token} |
 | **Public booking** | http://localhost:4202/book/{tenantId} |
+| **Public features (marketing)** | http://localhost:4202/features |
 | **Public guest feedback** | http://localhost:4202/feedback/{tenantId} |
 | **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
