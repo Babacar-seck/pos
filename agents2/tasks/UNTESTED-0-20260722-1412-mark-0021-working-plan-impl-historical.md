@@ -20,3 +20,37 @@
 - Otherwise add a short top banner: **historical / pre-build** — working plan is shipped; use **`docs/0021-working-plan.md`** for current behaviour and ops.
 - Do **not** re-open BetterShift integration or rewrite the evaluation narrative; do **not** re-renumber (0060 is taken).
 - Pass criteria: first screenful points readers to the living 0021 guide; no product code changes.
+
+## Coder notes (2026-07-26)
+
+- Verified **`docs/0060-working-plan-implementation-plan.md`**: first content block is a blockquote **Historical / pre-build** pointing to **`docs/0021-working-plan.md`**.
+- Living guide **`docs/0021-working-plan.md`** exists and describes current behaviour.
+- No product or docs edits required (duplicate of work already done by the 0021 renumber task).
+
+## Testing instructions
+
+### What to verify
+
+- `docs/0060-working-plan-implementation-plan.md` opens with a **historical / pre-build** banner.
+- The banner links (or clearly points) readers to **`docs/0021-working-plan.md`** as the living guide.
+- No product code under `back/` / `front/` was changed for this task.
+
+### How to test
+
+From repo root:
+
+```bash
+# Banner present and points at living guide
+head -n 5 docs/0060-working-plan-implementation-plan.md
+
+# Living guide exists
+test -f docs/0021-working-plan.md && echo OK
+
+# Optional: confirm no accidental product diffs for this handoff
+git status --short back/ front/
+```
+
+### Pass/fail criteria
+
+- **Pass:** First screenful of `0060` includes **Historical / pre-build** (or equivalent) and references `0021-working-plan.md`; `docs/0021-working-plan.md` exists; no required product changes left open.
+- **Fail:** Banner missing, does not point to `0021-working-plan.md`, or file still looks like open backlog without status.

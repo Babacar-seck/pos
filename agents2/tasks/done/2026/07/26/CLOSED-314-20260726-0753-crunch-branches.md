@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Stale merged git branches were cleaned up while protected and unmerged tips were kept.
+- **What was done:** Three merged remotes and three merged local branches were deleted after inventory; five already-gone remotes were pruned; three unmerged remotes left for human keep-or-delete.
+- **What was tested:** Git verification PASS — protected remotes present, deleted refs gone, unmerged remotes retained, no force-push on development/master.
+- **Why closed:** All criteria passed.
+- **Closed at (UTC):** 2026-07-26 12:59
+---
+
 # Crunch stale branches
 
 ## GitHub Issues
@@ -89,3 +99,20 @@ Left in place pending human keep-or-delete:
    ```
 5. Optional: `git branch -r --merged origin/development` should only list `origin/development` (plus any new tips since this run). Local branches should be only `development` and `master` on the coder machine after cleanup.
 6. Confirm **no** force-push / history rewrite on `development` or `master`.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26 12:58:55 – 12:59:13 UTC. Log window: N/A (git-only verification; no container logs).
+2. **Environment:** Local repo after `./scripts/git-sync-development.sh` and `git fetch --prune origin`; branch `development`. No Docker / no `BASE_URL`.
+3. **What was tested:** Protected remotes present; three deleted remotes absent; three unmerged remotes retained; merged-into-development remote list lean; local branches only `development` + `master`; no force-push/history rewrite on protected branches.
+4. **Results:**
+   - Protected remotes resolve — **PASS** — `origin/development`=`b630a2b8…`, `origin/master`=`f2c58558…`
+   - Deleted remotes gone — **PASS** — `git show-ref --verify` failed for all three (`feat/ariba-doner-marketing-site`, `security-fixes-payment-session-…`, `style-standardization-translations`)
+   - Unmerged remotes retained — **PASS** — `origin/feature/i18n-support-…`, `origin/gilberto-dev`, `origin/rbac-implementation-…` listed
+   - Merged remotes lean — **PASS** — `git branch -r --merged origin/development` lists only `origin/development`
+   - Local branches cleaned — **PASS** — only `* development` and `master`
+   - No force-push on protected — **PASS** — tips resolve normally; no rewrite attempted in this verification
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Stale merged remotes are gone; `development` and `master` remain. Three unmerged tips (`i18n-support`, `gilberto-dev`, `rbac-implementation`) were correctly left for a human keep-or-delete decision — no risky mass delete.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts:** N/A — git-only. Evidence commands as above (show-ref fatals for deleted refs; branch -r listings for retained).

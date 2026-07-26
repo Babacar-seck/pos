@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.130] - 2026-07-26
+
+### Changed
+
+- **Repo hygiene (#314):** Removed stale merged remote and local feature branches while keeping `development`, `master`, and unmerged tips that still need a human keep-or-delete decision.
+
 ## [2.1.129] - 2026-07-26
 
 ### Changed
