@@ -2,6 +2,11 @@
 
 This document describes the **provider portal**: registration, login, and catalog management for product providers (suppliers). It is intended for developers and operators.
 
+> **Not the courier portal.**  
+> **Provider** = wholesale / catalog suppliers at **`/provider`** (login `/provider/login`).  
+> **Courier** = Satisfecho Delivery fulfillment drivers at **`/courier`** (login `/courier/login`).  
+> For delivery orders, staff Delivery tab, and courier API, see [0053-satisfecho-delivery-order-channel.md](0053-satisfecho-delivery-order-channel.md).
+
 ---
 
 ## 1. Overview

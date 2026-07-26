@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.78] - 2026-07-26
+
+### Changed
+
+- **Provider portal docs:** Clarified that `/provider` is the supplier catalog portal, not the courier delivery portal (`/courier`), with a callout in `docs/0014-provider-portal.md` and a matching Feature guides row in `docs/README.md` linking to Satisfecho Delivery (`docs/0053`).
+
 ## [2.1.77] - 2026-07-26
 
 ### Changed
