@@ -14,20 +14,20 @@ Guests sometimes do not show up for a reservation. If the only outcomes are “b
 
 1. **Record no-shows** – A distinct status so “did not show” is not conflated with “cancelled”.
 2. **Free the table** – Marking a reservation as no-show must release the table (same as cancel/finish).
-3. **Reduce no-shows** – Optional reminder email before the reservation (when the guest has an email).
+3. **Reduce no-shows** – Optional reminder before the reservation via **email** and/or **WhatsApp** (see [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md)).
 
 ### Scope (implemented)
 
-- Backend: new status `no_show`, status update clears `table_id`; reminder email endpoint.
-- Frontend: filter by no-show, badge and card style, “Mark as no-show” with confirmation, “Send reminder” when email exists.
+- Backend: new status `no_show`, status update clears `table_id`; `POST /reservations/{id}/send-reminder` (email and/or WhatsApp).
+- Frontend: filter by no-show, badge and card style, “Mark as no-show” with confirmation, “Send reminder” when email **or** phone is present.
 - i18n: all supported locales (en, de, es, fr, ca, zh-CN, hi).
 
 ### Out of scope (optional extensions)
 
-- Scheduled/automatic reminder (e.g. 24h before) – requires a job runner or cron.
-- No-show count in reports – aggregate by status.
-- View/cancel link in reminder email – requires a configurable app base URL.
+- No-show count in reports – aggregate by status (reports already expose some overbooking/no-show signals; extend as needed).
 - Deposits or penalties – product decision.
+
+Shipped after the original plan (not re-specified here): scheduled 24h/2h reminder heartbeat; optional view/cancel link in the reminder email when `PUBLIC_APP_BASE_URL` and a reservation `token` are set.
 
 ---
 
@@ -36,10 +36,10 @@ Guests sometimes do not show up for a reservation. If the only outcomes are “b
 | Layer      | Change |
 |-----------|--------|
 | **Model** | `ReservationStatus.no_show`; no new columns (status is already string). |
-| **API**   | `PUT /reservations/{id}/status` accepts `no_show` and clears `table_id`; `POST /reservations/{id}/send-reminder` (staff, booked only, requires `customer_email`). |
-| **Email** | `send_reservation_reminder()` in `email_service.py`: tenant name, date, time, party size; optional `view_url` (not set by default). |
-| **Frontend** | Reservations list: status filter “No-show”, card style and badge; for “booked”: “Mark as no-show” (with confirm), “Send reminder” (when email present). |
-| **i18n**  | `RESERVATIONS.STATUS_NO_SHOW`, `NO_SHOW`, `NO_SHOW_CONFIRM_*`, `SEND_REMINDER`, `REMINDER_SENT`, `REMINDER_FAILED` in all locales. |
+| **API**   | `PUT /reservations/{id}/status` accepts `no_show` and clears `table_id`; `POST /reservations/{id}/send-reminder` (staff, booked only; requires **at least one** of `customer_email`, or `customer_phone` with WhatsApp/Twilio configured). Returns `email_sent` / `whatsapp_sent`. |
+| **Email / WhatsApp** | `send_reservation_reminder()` in `email_service.py`; WhatsApp via `whatsapp_service.py` when Twilio is configured. Optional `view_url` when `PUBLIC_APP_BASE_URL` and reservation `token` are set. |
+| **Frontend** | Reservations list: status filter “No-show”, card style and badge; for “booked”: “Mark as no-show” (with confirm), “Send reminder” when email **or** phone is present. |
+| **i18n**  | `RESERVATIONS.STATUS_NO_SHOW`, `NO_SHOW`, `NO_SHOW_CONFIRM_*`, `SEND_REMINDER`, `REMINDER_SENT_*`, `REMINDER_FAILED` in all locales. |
 
 Table availability and “next available slot” logic already consider only `booked` and `seated`; `no_show` is never treated as holding a table.
 
@@ -89,9 +89,9 @@ No other reservation endpoints need to treat `no_show` specially: list/filter al
 
 1. Add `POST /reservations/{reservation_id}/send-reminder`.
 2. Resolve the reservation by id and current user’s `tenant_id`; require `reservation:write`.
-3. Require `reservation.status == booked` and `reservation.customer_email` non-empty.
-4. Load tenant for name and SMTP; call `send_reservation_reminder(...)`.
-5. Return e.g. `{"sent": true, "to": email}` or 400/502 with a clear message if email is missing or send fails.
+3. Require `reservation.status == booked` and **at least one** sendable channel: non-empty `customer_email`, and/or non-empty `customer_phone` with WhatsApp configured (Twilio). Return **400** only when neither channel can send.
+4. Load tenant for name and SMTP; call `send_reservation_reminder(...)` when email is present; send WhatsApp when phone is present and configured (see [0024](0024-whatsapp-reminder-notes.md)).
+5. Return e.g. `{"email_sent": bool, "whatsapp_sent": bool, "to_email": …, "to_phone": …}` or 400/503 with a clear message if no channel is available or send fails.
 
 ### 3.4 Frontend – API and types
 
@@ -110,7 +110,7 @@ No change to existing `updateReservationStatus(id, status)` is needed; the backe
 2. **Card styling:** For `reservation.status === 'no_show'`, add a distinct class (e.g. `status-no_show`) and a badge with the same label.
 3. **Actions for “booked”:**
    - **Mark as no-show:** Button that opens a confirmation modal; on confirm, call `updateReservationStatus(id, 'no_show')` and refresh list/tables.
-   - **Send reminder:** Show only when `reservation.customer_email` is set. Button calls `sendReservationReminder(id)`; show loading state and then success or error (e.g. toast or alert).
+   - **Send reminder:** Show when `reservation.customer_email` **or** `reservation.customer_phone` is set. Button calls `sendReservationReminder(id)`; show loading state and then success or error (e.g. toast or alert). Backend chooses email and/or WhatsApp.
 4. **State:** Use a signal or flag for “reservation to confirm as no-show” and “sending reminder for id” to avoid double submits.
 
 ### 3.6 i18n
@@ -136,15 +136,11 @@ In the report that aggregates reservations (e.g. by date range), include a count
 
 ### 4.2 View/cancel link in reminder email
 
-- Add a configurable base URL (e.g. per tenant or in `config.env`) for the public app (e.g. `https://your-domain.com`).
-- When sending the reminder, set `view_url = f"{base_url}/reservation?token={reservation.token}"` and pass it to `send_reservation_reminder(..., view_url=view_url)`.
-- The email template already supports an optional “view or cancel” block when `view_url` is present.
+**Shipped:** when `PUBLIC_APP_BASE_URL` is set and the reservation has a `token`, the reminder email includes `…/reservation?token=…`.
 
 ### 4.3 Scheduled reminders (e.g. 24h before)
 
-- Add a job (cron, Celery, or in-process scheduler) that runs periodically.
-- Query reservations with `status == booked`, `reservation_date` = tomorrow (in tenant TZ), and `customer_email` set; optionally filter by “reminder not yet sent” if you add a `reminder_sent_at` column.
-- For each, call the same email flow as `POST /reservations/{id}/send-reminder` (or a shared function). Set `reminder_sent_at` to avoid duplicate emails.
+**Shipped** via the reservation reminder heartbeat (tenant settings `reservation_reminder_24h_enabled` / `reservation_reminder_2h_enabled`). Same channel rules as `POST /reservations/{id}/send-reminder` (email and/or WhatsApp).
 
 ### 4.4 No-show policy or deposits
 
@@ -160,16 +156,17 @@ Product/legal territory. Implementation would likely involve: optional deposit o
 | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | User-facing behaviour and URLs for staff and public. |
 | [0005-email-sending-options.md](0005-email-sending-options.md) | Email configuration (SMTP, tenant vs global). |
 | [0018-gmail-setup.md](0018-gmail-setup.md) | Gmail SMTP setup for sending reminder emails. |
+| [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md) | WhatsApp/Twilio channel for the same send-reminder flow. |
 
 ---
 
 ## 6. Checklist for a new environment
 
 - [ ] Backend: `ReservationStatus.no_show` and status handler clears `table_id`.
-- [ ] Backend: `send_reservation_reminder()` and `POST /reservations/{id}/send-reminder`; SMTP configured (tenant or global).
+- [ ] Backend: `POST /reservations/{id}/send-reminder` (email and/or WhatsApp); SMTP and/or Twilio configured as needed.
 - [ ] Frontend: `ReservationStatus` includes `no_show`; filter, badge, and card style for no-show.
-- [ ] Frontend: “Mark as no-show” with confirmation; “Send reminder” when email present.
+- [ ] Frontend: “Mark as no-show” with confirmation; “Send reminder” when email **or** phone is present.
 - [ ] i18n: All new keys added in every supported locale.
 - [ ] (Optional) Reports: no-show count or breakdown.
-- [ ] (Optional) Reminder email: base URL and view/cancel link.
-- [ ] (Optional) Scheduled reminder job.
+- [ ] (Optional) `PUBLIC_APP_BASE_URL` for view/cancel link in reminder email.
+- [ ] (Optional) Enable scheduled 24h/2h reminder settings per tenant.

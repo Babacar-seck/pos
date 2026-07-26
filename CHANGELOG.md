@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.64] - 2026-07-26
+
+### Changed
+
+- **No-show docs (reminder channels):** `docs/0019-no-show-implementation-plan.md` now matches the live send-reminder API — email and/or WhatsApp when phone + Twilio are set — with a link to `docs/0024-whatsapp-reminder-notes.md`, and notes shipped scheduled reminders and `PUBLIC_APP_BASE_URL` view/cancel links.
+
 ## [2.1.63] - 2026-07-26
 
 ### Changed
