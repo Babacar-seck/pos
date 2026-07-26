@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.61] - 2026-07-26
+
+### Changed
+
+- **Enhancement preflight (stale docs):** When a stale `docs/*.md` basename is already covered by an open root task, preflight logs `docs_stale_owned` instead of emitting `SIGNAL docs_stale` / bumping `G008_DOC_DRIFT`, so 008 is not re-woken for work already queued.
+
 ## [2.1.60] - 2026-07-26
 
 ### Changed

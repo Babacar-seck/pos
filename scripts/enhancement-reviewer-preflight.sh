@@ -161,6 +161,39 @@ changelog_sparse_fresh_cut() {
   return 1
 }
 
+# First open root task that owns a stale docs/*.md stem (task basename), or empty.
+# stem = file basename without .md (e.g. 0026-haproxy-ssl-amvara9, PRINTING).
+# Match: filename contains stem, or body mentions docs/<stem> / <stem>.md (case-insensitive).
+# Excludes this preflight meta-task so it never owns the SIGNAL it is fixing.
+open_stale_doc_owner() {
+  local stem="$1"
+  local f base
+  [[ -n "$stem" ]] || return 1
+  shopt -s nullglob
+  for f in "$TASKDIR"/NEW-*.md "$TASKDIR"/FEAT-*.md "$TASKDIR"/WIP-*.md \
+    "$TASKDIR"/UNTESTED-*.md "$TASKDIR"/TESTING-*.md; do
+    [[ -f "$f" ]] || continue
+    base=$(basename "$f")
+    case "$base" in
+      *preflight-skip-queued-stale-docs*) continue ;;
+    esac
+    if printf '%s' "$base" | grep -qiF -- "$stem"; then
+      echo "$base"
+      shopt -u nullglob
+      return 0
+    fi
+    # Prefer path/basename forms so casual "PRINTING" / "0014" mentions do not own the SIGNAL.
+    if grep -qiF -- "docs/${stem}" "$f" 2>/dev/null \
+      || grep -qiF -- "${stem}.md" "$f" 2>/dev/null; then
+      echo "$base"
+      shopt -u nullglob
+      return 0
+    fi
+  done
+  shopt -u nullglob
+  return 1
+}
+
 # First open root task that owns demo-table repair (basename), or empty.
 # Matches filename/body markers from 008 (check_demo_tables|seed_demo_tables|repair-demo-tables).
 # Excludes this preflight meta-task; ignores doc-only body cites without a repair/demo-tables slug.
@@ -273,6 +306,7 @@ if [[ -f CHANGELOG.md ]]; then
 fi
 
 stale_docs=0
+stale_docs_owned=0
 if [[ -d docs ]]; then
   while IFS= read -r doc; do
     [[ -f "$doc" ]] || continue
@@ -286,10 +320,20 @@ print(delta.days)
 PY
 )
     if (( doc_age_days > 90 && code_commits_14d > 3 )); then
-      stale_docs=$((stale_docs + 1))
-      emit "stale_doc path=${doc} age_days=${doc_age_days}"
+      stem=$(basename "$doc" .md)
+      owner="$(open_stale_doc_owner "$stem" || true)"
+      if [[ -n "$owner" ]]; then
+        stale_docs_owned=$((stale_docs_owned + 1))
+        emit "stale_doc path=${doc} age_days=${doc_age_days} (owned by open task ${owner})"
+      else
+        stale_docs=$((stale_docs + 1))
+        emit "stale_doc path=${doc} age_days=${doc_age_days}"
+      fi
     fi
   done < <(find docs -maxdepth 1 -name '*.md' -type f 2>/dev/null | head -20)
+  if (( stale_docs_owned > 0 )); then
+    emit "docs_stale_owned count=${stale_docs_owned} (open tasks already cover these basenames; not SIGNAL)"
+  fi
   if (( stale_docs > 0 )); then
     G008_DOC_DRIFT=$((G008_DOC_DRIFT + stale_docs))
     emit "SIGNAL docs_stale count=${stale_docs} (docs/*.md untouched >90d while code moved)"
