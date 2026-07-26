@@ -26,3 +26,36 @@ Root **`README.md`** Features / Key URLs still describe table-QR ordering and th
 - Add `courier` to the Multi-tenant roles list
 - Do **not** expand WIP-296 / WIP-302 product scope here — documentation pointers only; if a feature is still behind a WIP, phrase as “in progress / see doc”
 - Pass criteria: a reader of root README can find Delivery, courier, and SaaS paywall and open the matching `docs/0052` / `0053` links; no other stale docs edited
+
+## Implementation notes (coder)
+
+- Updated root **`README.md` only** (2026-07-26T02:42Z UTC).
+- **Features:** added Satisfecho Delivery, Courier portal, SaaS signup paywall, Platform operator; added `courier` to Multi-tenant roles.
+- **Access Points:** `/delivery/1`, `/courier/login`, `/courier`, `/paywall`, `/platform/login`, `/platform`.
+- Links resolve to existing `docs/0052`, `docs/0053`, `docs/0015-platform-operator-portal.md`.
+
+## Testing instructions
+
+### What to verify
+
+Root README documents Satisfecho Delivery, courier portal, SaaS paywall (with default off), and optionally platform operator; Access Points list the matching URLs; Multi-tenant roles include `courier`.
+
+### How to test
+
+From repo root:
+
+```bash
+rg -n 'Satisfecho Delivery|/courier|/delivery/1|/paywall|SAAS_PAYWALL_ENABLED|0052|0053|courier' README.md
+test -f docs/0052-saas-signup-paywall.md
+test -f docs/0053-satisfecho-delivery-order-channel.md
+test -f docs/0015-platform-operator-portal.md
+```
+
+Optional: open `README.md` Features + Access Points in an editor and click the three doc links.
+
+No product code, Docker, or Puppeteer required.
+
+### Pass/fail criteria
+
+- **Pass:** `rg` finds Delivery, `/courier`, `/delivery/1`, `/paywall`, `SAAS_PAYWALL_ENABLED`, `courier` role, and `docs/0052` / `0053` links in root README; linked doc files exist; no other `docs/*.md` changed for this task.
+- **Fail:** any of those strings missing from README, or broken relative doc paths.

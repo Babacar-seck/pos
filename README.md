@@ -67,7 +67,11 @@ Staff dashboard, kitchen display, and customer menu — a quick visual sense of 
 | **Reservations** | Staff: list, create, edit, seat, finish, cancel at `/reservations`. **Client notes** (from the customer at booking) and **owner notes** (internal staff notes). **Client technical info** (IP, user-agent, browser fingerprint, screen size) is recorded for public bookings and visible to staff. **No-show**: mark no-shows and **send reminders** by email and/or **WhatsApp** (when Twilio is configured). Public: book at `/book/:tenantId`, view/cancel at `/reservation?token=...`. Table status: available / reserved / occupied. |
 | **Real-time** | WebSocket updates for order status; token-based WS auth (`/ws-token`). |
 | **i18n & currency** | Multiple UI languages (e.g. en, es, ca, de, zh-CN, hi); backend localized messages; per-tenant currency (EUR, USD, MXN, etc.). |
-| **Multi-tenant** | Isolated data per tenant; first user becomes owner; configurable roles (owner, admin, kitchen, bartender, waiter, receptionist) and permissions (e.g. reservation read/write). |
+| **Multi-tenant** | Isolated data per tenant; first user becomes owner; configurable roles (owner, admin, kitchen, bartender, waiter, receptionist, courier) and permissions (e.g. reservation read/write). |
+| **Satisfecho Delivery** | First-party delivery channel (not Glovo/Uber): staff **Delivery** tab on Orders, create/assign courier, public guest checkout at `/delivery/{tenantId}`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
+| **Courier portal** | Couriers log in at `/courier/login` and work Mine / order actions at `/courier`. Demo credentials: `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
+| **SaaS signup paywall** | After guided signup (`/register` / `/signup`), new tenants may hit `/paywall` (trial or subscribe) when `SAAS_PAYWALL_ENABLED=true`. Default is `false` for local/demo. See [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md). |
+| **Platform operator** | Satisfecho platform admins log in at `/platform/login` and oversee tenants at `/platform`. Distinct from provider and tenant staff. See [docs/0015-platform-operator-portal.md](docs/0015-platform-operator-portal.md). |
 | **Products & images** | Staff manage products at `/products`. On deploy, demo products are linked to catalog provider products so the Products page shows images (beer/pizza/wine import); first load of `/products` backfills image URLs. |
 | **Provider portal** | Suppliers register at `/provider/register`, log in at `/provider/login`, and manage their catalog at `/provider` (tile/list view, search, add/edit/delete products, company details). See [docs/0014-provider-portal.md](docs/0014-provider-portal.md). |
 | **Tenant branding (public)** | Per-tenant **background colour** (hex, e.g. RAL5002 Azul) and **header background image** for book, menu, and reservation-view pages. Set in Settings → Business profile; optional dark overlay when a header image is used. See [docs/0028-tenant-public-branding.md](docs/0028-tenant-public-branding.md). |
@@ -137,8 +141,14 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **DB health** | http://localhost:4202/api/health/db |
 | **Public menu (example)** | http://localhost:4202/menu/{table_token} |
 | **Public booking** | http://localhost:4202/book/{tenantId} |
+| **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
 | **Provider dashboard** | http://localhost:4202/provider |
+| **Courier login** | http://localhost:4202/courier/login |
+| **Courier dashboard** | http://localhost:4202/courier |
+| **SaaS paywall** | http://localhost:4202/paywall |
+| **Platform operator login** | http://localhost:4202/platform/login |
+| **Platform operator dashboard** | http://localhost:4202/platform |
 | **Kitchen display** | http://localhost:4202/kitchen |
 | **Reports (owner/admin)** | http://localhost:4202/reports |
 | **Customers (Factura)** | http://localhost:4202/customers |
