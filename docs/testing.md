@@ -246,6 +246,17 @@ npm run test:working-plan --prefix front
 - **Env:** `BASE_URL`, `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `ADMIN_EMAIL`/`ADMIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` (from `.env`). `TENANT_ID` (default `1`) — login uses `/login?tenant=1` so the user is in the correct tenant. User must have schedule access (owner, admin, kitchen, bartender, waiter, receptionist). `HEADLESS`.
 - **Asserts:** After login, `/working-plan` loads; `[data-testid="working-plan-page"]` and `[data-testid="working-plan-add-shift"]` are present; week navigation is present; switching to Calendar view shows `[data-testid="working-plan-calendar-grid"]` with header and day cells; days that do not meet personnel requirements (too many or too few staff) are marked red; **Excel export** controls `[data-testid="working-plan-export-worker"]` and `[data-testid="working-plan-export-excel"]` are present when the tenant has schedulable users. The working-plan route is lazy-loaded—if UI changes don’t appear after editing, do a full page refresh or restart the dev server.
 
+**Calendar route smoke** (`test:working-plan-calendar` — differs from `test:working-plan`): opens **`/working-plan/calendar` directly** (no week-view navigation) and **fails if the page logs console errors**. Use this when changing the calendar route or lazy-load; use `test:working-plan` for week grid, in-page calendar switch, staffing colours, and Excel export asserts.
+
+```bash
+npm run test:working-plan-calendar --prefix front
+# Or: LOGIN_EMAIL=owner@amvara.de LOGIN_PASSWORD=secret node front/scripts/test-working-plan-calendar.mjs
+# Headless: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-working-plan-calendar.mjs
+```
+
+- **Env:** Same as `test:working-plan` (`BASE_URL`, `LOGIN_*` / `DEMO_LOGIN_*` / `ADMIN_*`, `TENANT_ID` default `1`, `HEADLESS`).
+- **Asserts:** After login, `/working-plan/calendar` loads; calendar chrome is present; no console `error` messages during the run.
+
 **Debug (inspect red / staffing days — not a pass/fail smoke):**
 
 ```bash
@@ -253,7 +264,7 @@ npm run debug:working-plan-calendar --prefix front
 # Or: LOGIN_EMAIL=... LOGIN_PASSWORD=... BASE_URL=http://127.0.0.1:4202 node front/scripts/debug-working-plan-calendar.mjs
 ```
 
-- Logs into the working-plan calendar and prints cell / red-day counts for diagnosing staffing-day colouring. Same login env as `test:working-plan` (`LOGIN_*` / `DEMO_LOGIN_*`, optional `TENANT_ID`, `BASE_URL`). For CI-style checks use **`test:working-plan`** (and **`test:working-plan-calendar`** when indexed).
+- Logs into the working-plan calendar and prints cell / red-day counts for diagnosing staffing-day colouring. Same login env as `test:working-plan` (`LOGIN_*` / `DEMO_LOGIN_*`, optional `TENANT_ID`, `BASE_URL`). For CI-style checks use **`test:working-plan`** and **`test:working-plan-calendar`**.
 
 ---
 
@@ -669,6 +680,8 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `debug:reservations` | `scripts/debug-reservations.mjs` |
 | `debug:reservations:public` | `scripts/debug-reservations-public.mjs` |
 | `debug:working-plan-calendar` | `scripts/debug-working-plan-calendar.mjs` (inspect red/staffing days on calendar; not a pass/fail smoke — use `test:working-plan` / `test:working-plan-calendar` for CI) |
+| `test:working-plan` | `scripts/test-working-plan.mjs` (week view + in-page calendar switch, staffing colours, Excel export; needs schedule access + `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:working-plan-calendar` | `scripts/test-working-plan-calendar.mjs` (direct `/working-plan/calendar` load; fails on console errors; same login env as `test:working-plan`) |
 | `test:register` | `scripts/test-register.mjs` |
 | `test:demo-data` | `scripts/test-demo-data.mjs` |
 | `test:tables-page` | `scripts/test-tables-page.mjs` |

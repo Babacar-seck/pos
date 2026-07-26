@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.112] - 2026-07-26
+
+### Changed
+
+- **Testing docs:** Documented `test:working-plan-calendar` (direct `/working-plan/calendar` load, fails on console errors) in section 2b and the npm scripts table, distinct from week-view `test:working-plan`.
+
 ## [2.1.111] - 2026-07-26
 
 ### Changed
