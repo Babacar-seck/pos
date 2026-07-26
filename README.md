@@ -172,6 +172,7 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | `CORS_ORIGINS` | Allowed frontend origins (comma-separated) | Yes (production) |
 | `POSTGRES_*` / `DB_*` | Database connection | Yes |
 | `STRIPE_CURRENCY` | Fallback currency if tenant has none | Optional |
+| `SAAS_PAYWALL_ENABLED` | When `true`, new restaurant signups hit `/paywall` (trial or subscribe) after guided signup; default `false` for local/demo. See [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md) | Optional (default `false`) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` | Optional; when set, reservation reminders can be sent via WhatsApp (in addition to email) | Optional |
 | `DEFAULT_PHONE_COUNTRY` | ISO country code (e.g. `ES`, `DE`) for normalizing reservation phone numbers to E.164 | Optional (default `ES`) |
 

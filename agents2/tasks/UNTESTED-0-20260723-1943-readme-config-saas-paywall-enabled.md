@@ -20,3 +20,30 @@ SaaS hard paywall is controlled by **`SAAS_PAYWALL_ENABLED`** in **`config.env`*
 - Add one row to **`README.md` Configuration** for **`SAAS_PAYWALL_ENABLED`**: optional; default `false`; when `true`, new restaurant signups hit `/paywall`; link **`docs/0052-saas-signup-paywall.md`**
 - Keep the table style consistent; do not paste Stripe secrets or change defaults
 - Pass/fail: `rg 'SAAS_PAYWALL_ENABLED' README.md` hits under Configuration; no product code
+
+## Implementation notes (coder)
+
+- Added one Configuration table row for **`SAAS_PAYWALL_ENABLED`** after **`STRIPE_CURRENCY`**, linking **`docs/0052-saas-signup-paywall.md`**. No product code or default changes.
+
+## Testing instructions
+
+### What to verify
+
+- Root **`README.md` Configuration** lists **`SAAS_PAYWALL_ENABLED`** with default `false`, `/paywall` behavior, and a link to **`docs/0052-saas-signup-paywall.md`**.
+- No unrelated product/config changes.
+
+### How to test
+
+From repo root:
+
+```bash
+rg -n 'SAAS_PAYWALL_ENABLED' README.md
+rg -n '0052-saas-signup-paywall' README.md
+```
+
+Confirm the hit is under the **Configuration** table (near `STRIPE_CURRENCY` / Twilio rows), not only Features/Documentation sections.
+
+### Pass/fail criteria
+
+- **Pass:** `rg 'SAAS_PAYWALL_ENABLED' README.md` hits under Configuration; description mentions default `false` and `/paywall`; link to 0052 present; no `back/` / `front/` edits required for this task.
+- **Fail:** Flag missing from Configuration, secrets pasted, or unrelated files changed.
