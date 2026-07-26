@@ -6,7 +6,7 @@
 
 ## Problem / goal
 
-**`docs/0030-reservation-confirmation-email-troubleshooting.md`** is the live ops runbook for “booking has email but no confirmation,” but **`docs/README.md`** never lists it under Email & SMTP (or elsewhere). Operators following the docs index stop at **0005** / **0018** and miss the diagnose script + Settings SMTP checklist. Sibling **`NEW-0-20260723-0658-refresh-0030-…`** owns a light body refresh and only *confirms* an index entry *if it exists* — it does not add one.
+**`docs/0030-reservation-confirmation-email-troubleshooting.md`** is the live ops runbook for “booking has email but no confirmation,” but **`docs/README.md`** never lists it under Email & SMTP (or elsewhere). Operators following the docs index stop at **0005** / **0056** and miss the diagnose script + Settings SMTP checklist. Sibling **`NEW-0-20260723-0658-refresh-0030-…`** owns a light body refresh and only *confirms* an index entry *if it exists* — it does not add one.
 
 ## Evidence (008 preflight / review)
 

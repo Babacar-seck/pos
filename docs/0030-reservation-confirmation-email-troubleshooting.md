@@ -1,6 +1,6 @@
 # Reservation confirmation email troubleshooting (amvara9)
 
-**Status (ops troubleshooting — current):** Use this runbook when a booking has a customer email but no confirmation arrives. For **SMTP setup** (Gmail App Password, Settings → Email fields) see [`0018-gmail-setup.md`](0018-gmail-setup.md). For **provider comparison / research** (SendGrid, Resend, etc.) see [`0005-email-sending-options.md`](0005-email-sending-options.md) — research only, not a shipping checklist.
+**Status (ops troubleshooting — current):** Use this runbook when a booking has a customer email but no confirmation arrives. For **SMTP setup** (Gmail App Password, Settings → Email fields) see [`0056-gmail-setup.md`](0056-gmail-setup.md). For **provider comparison / research** (SendGrid, Resend, etc.) see [`0005-email-sending-options.md`](0005-email-sending-options.md) — research only, not a shipping checklist.
 
 When public bookings include a customer email but no confirmation email is received, check the following.
 
@@ -69,7 +69,7 @@ After a booking with email, you will see one of:
 
 - Whenever a reservation is **created** with a non-empty **customer email** (staff UI or public booking).
 - **Public** bookings also get a **token**; the confirmation email may include a **view/cancel** link when `public_app_base_url` is set. Staff-created reservations have no token, so the email has details only (no self-service link).
-- **SMTP** must be configured for the tenant (Settings → Email) or globally in `config.env`, or sending is skipped with a log line. Usability for “has SMTP” is `smtp_user` + `smtp_password` (tenant or global); host/port/TLS must still be correct for the provider or send will fail (see [0018](0018-gmail-setup.md)).
+- **SMTP** must be configured for the tenant (Settings → Email) or globally in `config.env`, or sending is skipped with a log line. Usability for “has SMTP” is `smtp_user` + `smtp_password` (tenant or global); host/port/TLS must still be correct for the provider or send will fail (see [0056](0056-gmail-setup.md)).
 
 ### Custom subject and body (Settings → Email)
 

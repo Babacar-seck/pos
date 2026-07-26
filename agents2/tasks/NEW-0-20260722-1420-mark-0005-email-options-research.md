@@ -6,7 +6,7 @@
 
 ## Problem / goal
 
-`docs/0005-email-sending-options.md` is a long comparison of Proton Mail / SendGrid / Resend / Gmail with no status banner. It still appears in `docs/README.md` as a live options guide while day-to-day ops live in **`docs/0018-gmail-setup.md`** and **`docs/0030-…`**. Agents may treat provider shopping as open product work.
+`docs/0005-email-sending-options.md` is a long comparison of Proton Mail / SendGrid / Resend / Gmail with no status banner. It still appears in `docs/README.md` as a live options guide while day-to-day ops live in **`docs/0056-gmail-setup.md`** and **`docs/0030-…`**. Agents may treat provider shopping as open product work.
 
 ## Evidence (008 preflight / review)
 
@@ -16,7 +16,7 @@
 
 ## High-level instructions for coder
 
-- Add a short top banner on **`docs/0005-email-sending-options.md`**: **research / options comparison** — not an implementation backlog; for Gmail/SMTP ops use **`docs/0018-…`** and for confirmation failures use **`docs/0030-…`**.
+- Add a short top banner on **`docs/0005-email-sending-options.md`**: **research / options comparison** — not an implementation backlog; for Gmail/SMTP ops use **`docs/0056-gmail-setup.md`** and for confirmation failures use **`docs/0030-…`**.
 - Soften the **`docs/README.md`** index blurb to say research/comparison (one line).
 - Do **not** rewrite provider tables or pick a new mail vendor in this task.
 - Pass/fail: first screenful + README make clear 0005 is historical research; no product code changes.

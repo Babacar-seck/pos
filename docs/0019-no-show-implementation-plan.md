@@ -155,7 +155,7 @@ Product/legal territory. Implementation would likely involve: optional deposit o
 | [0010-table-reservation-implementation-plan.md](0010-table-reservation-implementation-plan.md) | Reservation model, table status, seat/finish flow. |
 | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) | User-facing behaviour and URLs for staff and public. |
 | [0005-email-sending-options.md](0005-email-sending-options.md) | Email configuration (SMTP, tenant vs global). |
-| [0018-gmail-setup.md](0018-gmail-setup.md) | Gmail SMTP setup for sending reminder emails. |
+| [0056-gmail-setup.md](0056-gmail-setup.md) | Gmail SMTP setup for sending reminder emails. |
 | [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md) | WhatsApp/Twilio channel for the same send-reminder flow. |
 
 ---

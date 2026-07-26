@@ -16,7 +16,7 @@ Two feature guides share the **`0015-`** prefix: `docs/0015-kitchen-display.md` 
 
 ## High-level instructions for coder
 
-- Rename `docs/0015-platform-operator-portal.md` → **`docs/0055-platform-operator-portal.md`** (next free `005x` after 0054 restaurant groups).
+- Rename `docs/0015-platform-operator-portal.md` → next free id after **0058** (e.g. **`docs/0059-platform-operator-portal.md`**). Do **not** use **0055** (already `0055-public-seo.md`) or **0056–0058** (gmail / deploy-css / overbooking scenario).
 - Update **`docs/README.md`** Feature guides row (link + keep kitchen as 0015).
 - Update in-repo references that point at the old path (at least open task **`NEW-0-20260722-1159-readme-delivery-courier-saas-features.md`** if still open, and **`WIP-296-…`** context line). Prefer a short `rg '0015-platform-operator'` pass under `docs/` and `agents2/`.
 - Do not renumber kitchen display; no product code changes.

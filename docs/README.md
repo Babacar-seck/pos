@@ -13,7 +13,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Multi-agent task loop + GitHub Issues handoff | [agent-loop.md](agent-loop.md) |
 | Deploy to a server | [0004-deployment.md](0004-deployment.md) |
 | Set up CI/CD (amvara9) | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) |
-| Configure Gmail for email | [0018-gmail-setup.md](0018-gmail-setup.md) |
+| Configure Gmail for email | [0056-gmail-setup.md](0056-gmail-setup.md) |
 | Troubleshoot missing reservation confirmation email | [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) |
 | Understand reservations (staff + public) | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) |
 | Rate limits (production) | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) |
@@ -28,7 +28,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 |-----|-------------|
 | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) | CI/CD: deploy to amvara9 on push to master (GitHub Actions, SSH key, secrets); daily demo data reset cron for tenant 1; hourly unpaid public Satisfecho Delivery cleanup cron (all tenants). |
 | [0004-deployment.md](0004-deployment.md) | Deployment guide: configuration (API_URL, WS_URL, CORS), deploy steps (git pull, compose, migrations, seeds, optional demo reset). |
-| [0024-deploy-css-fix-amvara9.md](0024-deploy-css-fix-amvara9.md) | Fix for stale front build on deploy (force front image rebuild, Cache-Control for index.html). |
+| [0057-deploy-css-fix-amvara9.md](0057-deploy-css-fix-amvara9.md) | Fix for stale front build on deploy (force front image rebuild, Cache-Control for index.html). |
 | [0026-haproxy-ssl-amvara9.md](0026-haproxy-ssl-amvara9.md) | HAProxy SSL on amvara9: durable cert path (certbot/haproxy-certs), reload without overwriting certs. |
 | [0029-deployment-images-plan-next-month.md](0029-deployment-images-plan-next-month.md) | **Deferred / not scheduled:** Future deploy-via-images plan (CI → registry → pull, two-slot). Current production path remains [0001](0001-ci-cd-amvara9.md) / [0004](0004-deployment.md). |
 
@@ -39,7 +39,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Doc | Description |
 |-----|-------------|
 | [0005-email-sending-options.md](0005-email-sending-options.md) | Email sending options: Proton Mail, SendGrid, Resend, Gmail; comparison and config (**research**). |
-| [0018-gmail-setup.md](0018-gmail-setup.md) | Gmail setup: create account, 2FA, App Password, POS Settings → Email (SMTP). |
+| [0056-gmail-setup.md](0056-gmail-setup.md) | Gmail setup: create account, 2FA, App Password, POS Settings → Email (SMTP). |
 | [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) | **Ops:** booking has email but no confirmation — diagnose script, log strings, tenant vs global SMTP. |
 
 ---
@@ -76,7 +76,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0019-no-show-implementation-plan.md](0019-no-show-implementation-plan.md) | No-show feature: status, reminder emails, implementation steps. |
 | [0021-working-plan.md](0021-working-plan.md) | Working plan (shift schedule): implementation plan and status. |
 | [0025-reservation-overbooking-detection.md](0025-reservation-overbooking-detection.md) | Reservation overbooking detection: slot capacity, overbooking report, 400 on over capacity. |
-| [0025-test-scenario-one-empty-table.md](0025-test-scenario-one-empty-table.md) | Test scenario: all tables seated except one empty (maps 0025 requirements to this case). |
+| [0058-test-scenario-one-empty-table.md](0058-test-scenario-one-empty-table.md) | Test scenario: all tables seated except one empty (maps 0025 overbooking requirements to this case). |
 | [0031-order-customizations-plan.md](0031-order-customizations-plan.md) | GitHub **#50**: pizza-style order modifiers — existing `ProductQuestion` / `customization_answers`, staff UI gap, phased plan. |
 | [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella roadmap (warehouses, kitchen SLAs, marketing/comms). |
 | [0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md) | GitHub **#52**: dedicated child-issue specs, phases, dependencies, copy-paste bodies for filing. |

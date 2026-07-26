@@ -1,4 +1,4 @@
-# 0025 – Test scenario: all tables seated, one empty
+# 0058 – Test scenario: all tables seated, one empty
 
 This document maps the **Reservations – overbooking detection and seating warnings (0025)** requirements to the situation: **all tables are seated/in use except one empty table**.
 

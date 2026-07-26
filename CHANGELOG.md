@@ -8,11 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.101] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (unique prefixes):** Kept VeriFactu as `0018`, WhatsApp as `0024`, and overbooking detection as `0025`; moved Gmail setup → `0056-gmail-setup.md`, deploy CSS fix → `0057-deploy-css-fix-amvara9.md`, and overbooking one-empty-table scenario → `0058-test-scenario-one-empty-table.md`. Updated `docs/README.md`, cross-links, and `config.env.example`.
+
 ## [2.1.100] - 2026-07-26
 
 ### Changed
 
-- **Reservation confirmation email troubleshooting (0030):** Refreshed the ops runbook — current-status banner with links to Gmail setup (0018) and email research (0005), local Docker diagnose command, log strings aligned with the backend, and indexing under Email & SMTP plus Quick links in `docs/README.md`.
+- **Reservation confirmation email troubleshooting (0030):** Refreshed the ops runbook — current-status banner with links to Gmail setup (now `0056-gmail-setup.md`) and email research (0005), local Docker diagnose command, log strings aligned with the backend, and indexing under Email & SMTP plus Quick links in `docs/README.md`.
 
 ## [2.1.99] - 2026-07-26
 
@@ -143,7 +149,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 
-- **Overbooking scenario docs (0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0025-test-scenario-one-empty-table.md`, and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
+- **Overbooking scenario docs (0058, maps 0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0058-test-scenario-one-empty-table.md` (formerly `0025-test-scenario-one-empty-table.md`), and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
 
 ## [2.1.78] - 2026-07-26
 
