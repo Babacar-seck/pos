@@ -39,7 +39,17 @@ Related ops/seeds: `seed_demo_products`, `link_demo_products_to_catalog`, `clear
 
 - **Handoff (`012-feature-coder-handoff.md`, 2026-07-26 06:58 UTC, Cursor):** `./scripts/git-sync-development.sh` (OK). **#312** **OPEN**, labels **`agent:planned`**, **`agent:wip`**. Fix is on **`origin/development`** @ **`01538ff8`** (Release **2.1.95**); **`01538ff8` not on `origin/master`** (tip still **`522369e2`** / **2.1.92**); latest **Deploy to amvara9** predates this fix; production landing still **2.1.92**. Embedded **Test report** **Overall: FAIL** (criterion **#4** production images). **Remain WIP** — **no** `WIP-312-…` → `UNTESTED-*`; **no** `gh issue edit 312 --add-label "agent:untested"`. Deploy-blocker per **012** / **`docs/agent-loop.md`**: feature coder must promote **`development` → `master`** + green **Deploy to amvara9**, then re-hand off (or archive per Deploy-blocker archive if cycling continues).
 
+- **Coder (002, 2026-07-26 ~07:19 UTC):** Resumed WIP (no NEW product tasks; remaining NEW are docs hygiene). Synced `development`. Local `test:delivery-checkout` **PASS**. Merged **`development` → `master`** (`f2c58558`, through **2.1.97** incl. **2.1.95** image fix) and pushed. **Deploy to amvara9** [30192580940](https://github.com/satisfecho/pos/actions/runs/30192580940) **success**. amvara9 `HEAD` **`f2c58558`**, landing **2.1.97**. Production `BASE_URL=https://satisfecho.de` `test:delivery-checkout` **PASS** (`Product images OK (7 via /api/uploads/, no bare-/uploads 404s)`). pytest `tests/test_public_tenant_menu.py` **15 passed**. Handing off **WIP → UNTESTED**.
+
 ## Testing instructions
+
+### What to verify
+
+- Public Satisfecho Delivery product images load via **`/api/uploads/...`** (not bare `/uploads/...`) on local HAProxy and production.
+- Missing-on-disk image filenames yield placeholders (no `image_url`), not broken `<img>` 404 spam.
+- Landing app-version on production is **≥ 2.1.95** (currently **2.1.97** after promote).
+
+### How to test
 
 1. **Local smoke (required):**
    ```bash
@@ -47,62 +57,27 @@ Related ops/seeds: `seed_demo_products`, `link_demo_products_to_catalog`, `clear
    ```
    Expect: `Product images OK (... via /api/uploads/, no bare-/uploads 404s)`, then cart/order create PASS.
 
-2. **Manual local:** Open `http://127.0.0.1:4202/delivery/1`. Product images should load (not broken icons). HAProxy should **not** log 404 for bare `GET /uploads/...` on that page load (requests go to `/api/uploads/...` → back 200).
+2. **Manual local:** Open `http://127.0.0.1:4202/delivery/1`. Product images should load. HAProxy should **not** log 404 for bare `GET /uploads/...` on that page load.
 
 3. **Backend unit:**
    ```bash
    docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T back python3 -m pytest tests/test_public_tenant_menu.py -q
    ```
 
-4. **After deploy to production:** Open `https://satisfecho.de/delivery/1` and confirm images load. Optional: same Puppeteer with `BASE_URL=https://satisfecho.de`.
+4. **Production (required — was the prior FAIL):**
+   ```bash
+   BASE_URL=https://satisfecho.de TENANT_ID=1 npm run test:delivery-checkout --prefix front
+   ```
+   Confirm landing meta `app-version` **2.1.97** (or later) and amvara9 `git rev-parse --short HEAD` matches promoted merge (coder saw **`f2c58558`**). Deploy run: https://github.com/satisfecho/pos/actions/runs/30192580940
 
-## Test report
+### Pass/fail criteria
+
+- Local + production Puppeteer: **PASS** with images via `/api/uploads/` and zero bare-`/uploads` 404s from the page.
+- pytest public tenant menu: all green.
+- Production no longer serves the pre-fix client that requested bare `/uploads/...` for delivery products.
+
+## Prior test report (pre-deploy — Overall FAIL; superseded)
 
 - **Date/time (UTC):** 2026-07-26 06:49:16 start → 06:50:06 end
-- **Log window:** ~06:49–06:50 UTC (local HAProxy/front/back); production browser check ~06:49–06:50 UTC
-- **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:4202`; branch `development` @ `d9fcc145`; production `https://satisfecho.de` still on app-version **2.1.92** / merge `522369e2` (fix not deployed)
-- **What was tested:** Delivery product image URL prefix (`/api/uploads`), local smoke + HAProxy, pytest public menu, production `/delivery/1`
-
-### Results
-
-1. **Local smoke `test:delivery-checkout` — PASS.** Output: `Product images OK (7 via /api/uploads/, no bare-/uploads 404s)`; cart/order create OK (id=2354); overall `PASS`.
-2. **Manual local `/delivery/1` — PASS.** Browser: 7 product imgs via `/api/uploads/...`, `bareCount=0`, `brokenCount=0` (e.g. Café americano 1920×1200). HAProxy since 3m: `bare_uploads_count=0`, `api_uploads_200=12`.
-3. **Backend unit `tests/test_public_tenant_menu.py` — PASS.** `15 passed` in 1.29s.
-4. **Production `/delivery/1` — FAIL.** Page still uses bare `https://satisfecho.de/uploads/...` for products (`bareCount=7`, broken imgs). Network: `GET .../uploads/providers/05debe46-.../b5bf4456-....jpg` → **404**; same path under `/api/uploads/...` → **200**. Landing meta still **2.1.92**; fix is **uncommitted** on the local tree (`delivery-checkout.component.ts`, `public_tenant_menu.py`, etc.) — not on `origin/master`, so amvara9 cannot serve it yet.
-
-### Overall: **FAIL**
-
-Failed criterion: **4 (production images after deploy)**. Local 1–3 pass with the working-tree fix; production remains broken until the change is committed, promoted, and deployed.
-
-### Product owner feedback
-
-Locally the delivery page looks fixed: images load through `/api/uploads` and HAProxy no longer 404s bare `/uploads` on that flow. Production demo delivery still shows broken product images because the old client still requests bare `/uploads/...`. Ship the front/back fix (commit on `development`, promote/deploy) and re-verify `https://satisfecho.de/delivery/1` before calling this done.
-
-### URLs tested
-
-1. http://127.0.0.1:4202/delivery/1
-2. https://satisfecho.de/delivery/1
-3. https://satisfecho.de/uploads/providers/05debe46-d6a8-4b7d-8484-fd6fd26a2de9/products/b5bf4456-1cf8-412c-9539-b40d595ffac2.jpg (404)
-4. https://satisfecho.de/api/uploads/providers/05debe46-d6a8-4b7d-8484-fd6fd26a2de9/products/b5bf4456-1cf8-412c-9539-b40d595ffac2.jpg (200)
-5. http://127.0.0.1:4202/api/uploads/1/products/7637d8f9-1d71-40ae-8760-ca2599537ec5.jpg (200)
-6. https://www.satisfecho.de/api/health (`{"status":"ok"}`)
-
-### Relevant log excerpts (last section)
-
-```
-# Local smoke
-Product images OK (7 via /api/uploads/, no bare-/uploads 404s)
-PASS
-
-# pytest
-15 passed, 1 warning in 1.29s
-
-# Local HAProxy after manual /delivery/1 (no bare /uploads)
-bare_uploads_count=0
-api_uploads_200=12
-… "GET /api/uploads/1/products/7637d8f9-1d71-40ae-8760-ca2599537ec5.jpg HTTP/1.1" 200 …
-
-# Production network (Chrome DevTools)
-GET https://satisfecho.de/uploads/providers/05debe46-…/b5bf4456-….jpg [404]
-GET https://satisfecho.de/api/uploads/1/logo/a5fe3bdd-….png [200]
-```
+- **Environment:** local OK; production still **2.1.92** / `522369e2` (fix not deployed)
+- **Results:** Local 1–3 PASS; production criterion **#4 FAIL** (bare `/uploads` 404s). See handoff log above for post-deploy coder re-check (**PASS**).
