@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.126] - 2026-07-26
+
+### Changed
+
+- **Docs (0009):** Marked table PIN security as **shipped** (staff activate / PIN / regenerate / close; public-menu gates; optional GPS flagging off by default) and aligned the docs README Plans blurb.
+
 ## [2.1.125] - 2026-07-26
 
 ### Changed

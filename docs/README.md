@@ -78,7 +78,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 |-----|-------------|
 | [0002-customer-features-plan.md](0002-customer-features-plan.md) | Customer features: registration, login, email verification, MFA, order history, invoices. |
 | [0008-order-management-logic.md](0008-order-management-logic.md) | Order management: **shipped** session rules / design reference (lifecycle, status reset, edge cases) — not an open backlog. |
-| [0009-table-pin-security.md](0009-table-pin-security.md) | Table PIN security: activation, 4-digit PIN, rate limiting (Redis). |
+| [0009-table-pin-security.md](0009-table-pin-security.md) | Table PIN security: **shipped** (activate / PIN / regenerate / close; public-menu gates); optional GPS flagging off by default — operator/reference. |
 | [0010-table-reservation-implementation-plan.md](0010-table-reservation-implementation-plan.md) | Table reservation: **historical** design/API plan (core shipped); use **[0011](0011-table-reservation-user-guide.md)** for live staff/public how-to. |
 | [0019-no-show-implementation-plan.md](0019-no-show-implementation-plan.md) | No-show feature: status, reminder emails, implementation steps. |
 | [0021-working-plan.md](0021-working-plan.md) | Working plan (shift schedule): living guide — status, API, UI, ops. |
