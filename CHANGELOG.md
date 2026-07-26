@@ -8,8 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.67] - 2026-07-26
+
 ### Changed
 
+- **Enhancement reviewer (owned SIGNAL stamp-only):** When the NEW backlog is deep and every digest SIGNAL theme is already owned (or a known false positive) with no failing demo SIGNAL, 008 now stamps only (`stamp-only: owned_signals`) instead of inventing more README/index/smoke micro-tasks; a new unqueued product/demo finding can still queue up to three tasks. Documented in `docs/agent-loop.md`.
 - **Agent task queue:** Archived the stale July-12 changelog Unreleased NEW and its retarget follow-up under `agents2/tasks/done/`, and retargeted sibling Evidence so Unreleased ownership points at the committer workflow instead of an outdated root NEW.
 
 ## [2.1.66] - 2026-07-26
