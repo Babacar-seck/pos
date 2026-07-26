@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Root README omitted shipped Satisfecho Delivery, courier portal, and SaaS paywall surfaces that docs already covered.
+- **What was done:** Features, Multi-tenant roles, and Access Points in root README were updated with Delivery, courier, SaaS paywall (default off), and platform operator pointers to docs/0052, 0053, and 0015.
+- **What was tested:** Docs-only `rg` + file-existence checks on README and linked docs — **PASS**.
+- **Why closed:** All pass criteria met; no product code changes required.
+- **Closed at (UTC):** 2026-07-26 02:44
+---
+
 # Add Satisfecho Delivery, courier, and SaaS paywall to root README
 
 ## GitHub Issues
@@ -59,3 +69,22 @@ No product code, Docker, or Puppeteer required.
 
 - **Pass:** `rg` finds Delivery, `/courier`, `/delivery/1`, `/paywall`, `SAAS_PAYWALL_ENABLED`, `courier` role, and `docs/0052` / `0053` links in root README; linked doc files exist; no other `docs/*.md` changed for this task.
 - **Fail:** any of those strings missing from README, or broken relative doc paths.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-26T02:43:45Z – 2026-07-26T02:43:47Z. Log window: N/A (docs-only; no containers used).
+2. **Environment:** branch `development` (synced via `./scripts/git-sync-development.sh`); verification on working tree + `HEAD` commit `7ac71cff` (“Document Satisfecho Delivery, courier, and SaaS paywall in root README.”). No Docker / `BASE_URL`.
+3. **What was tested:** Root README Features + Access Points cover Satisfecho Delivery, courier portal, SaaS paywall (default off), platform operator; Multi-tenant roles include `courier`; relative links to `docs/0052`, `docs/0053`, `docs/0015-platform-operator-portal.md` exist on disk.
+4. **Results:**
+   - Satisfecho Delivery feature row + `docs/0053` link — **PASS** (`README.md:71`)
+   - Courier portal `/courier/login`, `/courier` + Access Points — **PASS** (`README.md:72`, `:147–148`)
+   - `/delivery/1` in Access Points — **PASS** (`README.md:144`)
+   - SaaS paywall `/paywall` + `SAAS_PAYWALL_ENABLED` default `false` + `docs/0052` — **PASS** (`README.md:73`, `:149`)
+   - Multi-tenant roles include `courier` — **PASS** (`README.md:70`)
+   - Platform operator + `docs/0015-platform-operator-portal.md` — **PASS** (`README.md:74`, `:150–151`; file exists)
+   - Linked doc files exist (`0052`, `0053`, `0015-platform-operator-portal`) — **PASS**
+   - No other `docs/*.md` dirty for this verification — **PASS** (`git status --short docs/` empty)
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Root README now points operators at Delivery, courier, and the SaaS paywall without digging into `docs/README.md`. Defaults and demo env vars are clear enough for local setup. No product gaps found in this docs-only scope.
+7. **URLs tested:** N/A — no browser
+8. **Relevant log excerpts:** N/A — docs-only verification (`rg` + `test -f`); no `pos-front` / `pos-back` logs.

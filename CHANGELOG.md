@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.69] - 2026-07-26
+
+### Changed
+
+- **Root README (Delivery / courier / SaaS):** Features, Multi-tenant roles, and Access Points now cover Satisfecho Delivery, the courier portal, SaaS signup paywall (default off), and the platform operator portal, with links to `docs/0052`, `docs/0053`, and `docs/0015-platform-operator-portal.md`.
+
 ## [2.1.68] - 2026-07-26
 
 ### Removed
