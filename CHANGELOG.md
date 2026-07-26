@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Fixed
+
+- **Enhancement preflight cadence:** `last_review_iso` now uses the latest agent stamp (`| FEAT:` / `| NEW:`) from the append-only review log instead of the first line, so weekly cadence no longer stays due after a same-week 008 run.
+
 ### Changed
 
 - **Docs index (0053 Feature guides):** `docs/README.md` Feature guides blurb for Satisfecho Delivery now covers public checkout, fee/zone/radius, guest `/track`, and unpaid TTL cleanup — not only the staff/courier API (#297 / #306).

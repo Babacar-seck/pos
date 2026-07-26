@@ -58,8 +58,18 @@ PY
 }
 
 last_review_iso() {
+  # Stamp file is append-only (then rotated). Prefer the latest agent summary
+  # line (| FEAT: / | NEW:); otherwise the latest ISO timestamp on any line.
   [[ -f "$STAMP_FILE" ]] || return 0
-  head -1 "$STAMP_FILE" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' | head -1 || true
+  local iso=""
+  iso=$(grep -E '\| FEAT:|\| NEW:' "$STAMP_FILE" 2>/dev/null \
+    | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' \
+    | tail -1 || true)
+  if [[ -z "$iso" ]]; then
+    iso=$(grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z' "$STAMP_FILE" 2>/dev/null \
+      | tail -1 || true)
+  fi
+  printf '%s' "$iso"
 }
 
 count_root_tasks() {
