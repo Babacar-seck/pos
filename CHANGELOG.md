@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.60] - 2026-07-26
+
+### Changed
+
+- **Testing docs index:** `docs/testing.md` now documents five existing Puppeteer npm aliases — settings logo upload, support access, kitchen timer, book WhatsApp CTA, and my-shift clock QR — with how-to sections and npm scripts table rows.
+
 ## [2.1.59] - 2026-07-26
 
 ### Changed

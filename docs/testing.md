@@ -572,6 +572,72 @@ npm run test:bar-display --prefix front
 
 ---
 
+### 13c. Settings → logo upload
+
+Login as owner/admin, open Settings, upload a logo file, save, and assert success.
+
+```bash
+npm run test:settings-logo --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-settings-logo-upload.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*` (owner/admin), `TENANT_ID` (default `1`), `HEADLESS`.
+
+---
+
+### 13d. Support access (Users → Add Satisfecho support)
+
+Login as admin or owner, open `/users`, use **Add Satisfecho support**, and assert the form pre-fills `support@satisfecho.de` as admin.
+
+```bash
+npm run test:support-access --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-support-access.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD` (admin or owner), `HEADLESS`.
+
+---
+
+### 13e. Kitchen display – timer settings
+
+Login, open `/kitchen`, assert **Timer settings** is visible (and **Waiting** timer when orders exist).
+
+```bash
+npm run test:kitchen-timer --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-kitchen-timer.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD` (staff with kitchen access), `HEADLESS`.
+
+---
+
+### 13f. Book page – WhatsApp CTA
+
+Public `/book/1` (no login): assert a WhatsApp link when the tenant has a WhatsApp number. Optional `API_BASE` if the API is on another origin than `BASE_URL`.
+
+```bash
+npm run test:book-whatsapp --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-book-whatsapp-puppeteer.mjs
+# API on another origin: API_BASE=http://127.0.0.1:8020 npm run test:book-whatsapp --prefix front
+```
+
+- **Env:** `BASE_URL`, `HEADLESS`, `API_BASE` (optional; defaults to `BASE_URL`). No login credentials.
+
+---
+
+### 13g. My shift – venue clock QR
+
+When venue clock QR is required, `/my-shift` loads clock-qr-status and shows **Scan venue QR** (`.scan-cta`) with no token in session. Prefer `OWNER_*` to toggle clock QR via API and `LOGIN_*` for the user opening My shift (often a waiter).
+
+```bash
+npm run test:my-shift-clock-qr --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... OWNER_EMAIL=... OWNER_PASSWORD=... node front/scripts/test-my-shift-clock-qr.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` (staff that can open `/my-shift` and has `SETTINGS_UPDATE` if regenerating QR), optional `OWNER_EMAIL` / `OWNER_PASSWORD` when different from staff, `HEADLESS`.
+
+---
+
 ## npm scripts (front)
 
 From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <script>`.
@@ -604,6 +670,11 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:bartender-role` | `scripts/test-bartender-role.mjs` (Users → Add user → role dropdown includes Bartender) |
 | `test:kitchen-status-dropdown` | `scripts/test-kitchen-status-dropdown.mjs` (Kitchen display: status dropdown visible, not clipped) |
 | `test:bar-display` | `scripts/test-bar-display.mjs` (Bar display `/bar`: route + chrome + Bar title) |
+| `test:settings-logo` | `scripts/test-settings-logo-upload.mjs` (Settings logo upload; owner/admin `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:support-access` | `scripts/test-support-access.mjs` (Users → Add Satisfecho support pre-fills `support@satisfecho.de`; admin/owner) |
+| `test:kitchen-timer` | `scripts/test-kitchen-timer.mjs` (Kitchen `/kitchen`: Timer settings + Waiting timer when orders exist) |
+| `test:book-whatsapp` | `scripts/test-book-whatsapp-puppeteer.mjs` (public `/book/1` WhatsApp CTA; optional `API_BASE`; no login) |
+| `test:my-shift-clock-qr` | `scripts/test-my-shift-clock-qr.mjs` (My shift venue clock QR / `.scan-cta`; waiter `LOGIN_*` + optional `OWNER_*`) |
 | `test:rate-limit` | `scripts/test-rate-limit.mjs` (API rate limiting: login 5/15min, register 3/hour; expects 429 after limit) |
 | `test:rate-limit-puppeteer` | `scripts/test-rate-limit-puppeteer.mjs` (Puppeteer: login page, 6 wrong attempts, expects error banner) |
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
