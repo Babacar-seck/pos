@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Public Satisfecho Delivery at `/delivery/1` showed broken product images because the client requested bare `/uploads/...` URLs that HAProxy routed to the front (404), while files existed and `/api/uploads/...` already worked.
+- **What was done:** Prefixed delivery `productImageUrl()` with `apiUrl` (like public-menu), omitted missing-on-disk `image_url` in the public tenant menu API, extended delivery checkout smoke + pytest, and promoted/deployed through **2.1.97** to amvara9.
+- **What was tested:** Local and production `test:delivery-checkout` PASS (images via `/api/uploads/`, no bare-`/uploads` 404s); pytest `test_public_tenant_menu.py` 15 passed; landing **2.1.97** / amvara9 `f2c58558`.
+- **Why closed:** All pass/fail criteria met after deploy; Overall **PASS**.
+- **Closed at (UTC):** 2026-07-26 07:24
+---
+
 # Demo delivery missing images
 
 ## GitHub Issues
@@ -81,3 +91,28 @@ Related ops/seeds: `seed_demo_products`, `link_demo_products_to_catalog`, `clear
 - **Date/time (UTC):** 2026-07-26 06:49:16 start → 06:50:06 end
 - **Environment:** local OK; production still **2.1.92** / `522369e2` (fix not deployed)
 - **Results:** Local 1–3 PASS; production criterion **#4 FAIL** (bare `/uploads` 404s). See handoff log above for post-deploy coder re-check (**PASS**).
+
+## Test report
+
+- **Date/time (UTC):** 2026-07-26 07:22:51 start → 07:23:30 end (log window: HAProxy/front/back since ~07:22Z)
+- **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; branch **`development`** @ **`fe64316a`**; local **`BASE_URL=http://127.0.0.1:4202`**; production **`BASE_URL=https://satisfecho.de`** (also checked `https://www.satisfecho.de`). Deploy ready signal: GHA run [30192580940](https://github.com/satisfecho/pos/actions/runs/30192580940) **success** (updatedAt 2026-07-26T07:21:16Z); amvara9 `HEAD` **`f2c58558`**, `front/package.json` **2.1.97**; landing meta `app-version` **2.1.97**.
+- **What was tested:** Delivery product images via `/api/uploads/…` (not bare `/uploads/…`) locally and on production; missing-file handling covered by pytest; production client ≥ 2.1.95.
+- **Results:**
+  1. Local `npm run test:delivery-checkout` — **PASS** — `Product images OK (7 via /api/uploads/, no bare-/uploads 404s)`; cart + order create OK (id=2357).
+  2. Manual local `/delivery/1` — **PASS** — browser: 7 `<img>` srcs under `/api/uploads/…`, `bareUploads=[]`; sample images `naturalWidth` 800/1920; HAProxy since 07:22Z: no bare `GET /uploads/…` 404s on that load.
+  3. `pytest tests/test_public_tenant_menu.py` — **PASS** — 15 passed.
+  4. Production `test:delivery-checkout` — **PASS** — `Product images OK (7 via /api/uploads/, no bare-/uploads 404s)`; order id=265; landing **2.1.97** / amvara9 **`f2c58558`**.
+- **Overall:** **PASS**
+- **Product owner feedback:** Demo delivery images now load through the API upload path on both local HAProxy and satisfecho.de; the pre-fix bare-`/uploads` breakage is gone on the live 2.1.97 client. Guests should see real product photos instead of broken image icons.
+- **URLs tested:**
+  1. `http://127.0.0.1:4202/delivery/1`
+  2. `http://127.0.0.1:4202/` (landing HTTP 200 preflight)
+  3. `https://satisfecho.de/delivery/1`
+  4. `https://www.satisfecho.de/` (app-version 2.1.97)
+  5. `https://satisfecho.de/api/health` → `{"status":"ok"}`
+- **Relevant log excerpts (last section):**
+  - Local Puppeteer: `Product images OK (7 via /api/uploads/, no bare-/uploads 404s)` / `PASS`
+  - Prod Puppeteer: same + `Order create OK (id= 265 )` / `PASS`
+  - pytest: `15 passed … in 1.16s`
+  - HAProxy (tester window): `GET /delivery/1` 200; no bare `/uploads/` 404 after 07:22Z (earlier 07:18:57 bare-`/uploads` 404s predate this verification / look like stale client)
+  - GHA deploy 30192580940: `conclusion=success`, `headSha=f2c5855888c7…`
