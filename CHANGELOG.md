@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.118] - 2026-07-26
+
+### Changed
+
+- **Docs (0010):** Marked the table-reservation implementation plan as **shipped core / design history** (pointing readers to **0011** for live how-to) and reframed later-phase items as backlog; updated the docs README Plans blurb.
+
 ## [2.1.117] - 2026-07-26
 
 ### Changed
