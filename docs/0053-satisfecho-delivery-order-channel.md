@@ -18,6 +18,7 @@ Marketplace orders still use `delivery_integration_id` / `external_order_ref`; c
 
 - `POST /orders/satisfecho-delivery` — staff (`order:update_status`): create with items + address (+ optional phone/name/notes/courier). Kitchen is notified immediately.
 - `POST /public/tenants/{tenant_id}/satisfecho-delivery` — **public** (rate-limited): create with items + **required** address and phone (+ optional name/notes). No courier assign. Returns `public_order_token`, `total_cents`, and payment hints (`stripe_publishable_key`, `revolut_configured`). Kitchen/inventory notify is deferred until payment succeeds. Public creates set `session_id=public_satisfecho_delivery` so ops can TTL-clean abandoned unpaid rows (see below).
+- **Item `product_id` (#304):** On both staff and public Satisfecho Delivery create, each line `product_id` may be a tenant-scoped public-menu **`TenantProduct.id`** (resolved to the linked `Product` via `_resolve_product_lines` in `delivery_order_service`) or a legacy **`Product.id`**. Cross-tenant IDs must not resolve. Regression: `back/tests/test_public_satisfecho_delivery.py::test_public_create_accepts_tenant_product_menu_ids`; UI smoke: `npm run test:delivery-checkout` (see `docs/testing.md`).
 - `PUT /orders/{id}/delivery` — update delivery metadata on Satisfecho Delivery orders only.
 - `GET /orders` — includes `order_channel`, `delivery_address`, `customer_phone`, `courier_user_id`; `table_name` is `"Satisfecho Delivery"` for that channel.
 - `GET /users/couriers` — staff (`order:read`): list courier-role users for assign UI.
@@ -37,7 +38,7 @@ Revolut success redirect for delivery: `{PUBLIC_APP_BASE_URL}/delivery/{tenantId
 
 ## Public UI
 
-- `/delivery/:tenantId` — cart + address (+ postal code / location when configured) + Stripe/Revolut pay; shows delivery fee before pay.
+- `/delivery/:tenantId` — cart + address (+ postal code / location when configured) + Stripe/Revolut pay; shows delivery fee before pay. Cart lines post the public-menu catalog id (`TenantProduct.id`); create accepts that id or legacy `Product.id` (see **Item `product_id`** under API).
 - `/delivery/:tenantId/payment-success` — confirms Revolut after redirect; links to track page.
 - `/delivery/:tenantId/track?order_id=&public_order_token=` — customer live status (polling; no maps).
 - `/public-menu/:tenantId` — read-only menu with a link to delivery checkout.

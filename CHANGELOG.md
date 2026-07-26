@@ -8,8 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.62] - 2026-07-26
+
 ### Changed
 
+- **Satisfecho Delivery docs (product IDs):** `docs/0053-satisfecho-delivery-order-channel.md` now states that staff and public create accept tenant-scoped `TenantProduct.id` (resolved to `Product`) or legacy `Product.id`, with pointers to the regression pytest and `test:delivery-checkout` (#304).
 - **Config example (unpaid delivery cleanup):** `config.env.example` now points operators to the unpaid public Satisfecho Delivery TTL cleanup CLI, amvara9 cron wrapper, and related docs (`docs/0053`, `docs/0001`).
 
 ## [2.1.61] - 2026-07-26
