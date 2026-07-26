@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.122] - 2026-07-26
+
+### Changed
+
+- **Docs (0005):** Marked email-sending options as **research only** (not a shipping checklist), with ops pointers to **0056** (Gmail/SMTP) and **0030** (confirmation troubleshooting), and aligned the docs README blurb.
+
 ## [2.1.121] - 2026-07-26
 
 ### Changed

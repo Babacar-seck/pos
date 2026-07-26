@@ -44,7 +44,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 
 | Doc | Description |
 |-----|-------------|
-| [0005-email-sending-options.md](0005-email-sending-options.md) | Email sending options: Proton Mail, SendGrid, Resend, Gmail; comparison and config (**research**). |
+| [0005-email-sending-options.md](0005-email-sending-options.md) | **Research only** — provider comparison (Proton, SendGrid, Resend, Gmail); not a shipping checklist. Ops: [0056](0056-gmail-setup.md), [0030](0030-reservation-confirmation-email-troubleshooting.md). |
 | [0056-gmail-setup.md](0056-gmail-setup.md) | Gmail setup: create account, 2FA, App Password, POS Settings → Email (SMTP). |
 | [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) | **Ops:** booking has email but no confirmation — diagnose script, log strings, tenant vs global SMTP. |
 
