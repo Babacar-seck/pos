@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.65",
+  "version": "2.1.66",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -51,6 +51,7 @@
     "test:delivery-track": "node scripts/test-delivery-track.mjs",
     "test:staff-delivery": "node scripts/test-staff-delivery.mjs",
     "test:paywall": "node scripts/test-paywall.mjs",
+    "test:platform-operator": "node scripts/test-platform-operator.mjs",
     "test:waiting-list": "node scripts/test-waiting-list.mjs",
     "test:restaurant-groups": "node scripts/test-restaurant-groups.mjs",
     "test:order-comments": "node scripts/test-order-comments.mjs",

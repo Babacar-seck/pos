@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.66] - 2026-07-26
+
+### Added
+
+- **Platform operator Puppeteer smoke alias:** `npm run test:platform-operator` runs the existing `/platform` login → dashboard metrics → tenant detail delivery-link smoke, indexed in `docs/testing.md` with env/seed notes and a pointer to `docs/0015-platform-operator-portal.md`.
+
 ## [2.1.65] - 2026-07-26
 
 ### Changed
