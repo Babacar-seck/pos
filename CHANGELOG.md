@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.71] - 2026-07-26
+
+### Added
+
+- **Orders edit smoke alias:** `npm run test:review-order-edit` runs the existing staff Orders Edit / modal / status popover Puppeteer smoke, indexed in `docs/testing.md`.
+
 ## [2.1.70] - 2026-07-26
 
 ### Changed

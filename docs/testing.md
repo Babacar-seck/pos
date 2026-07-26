@@ -422,13 +422,12 @@ npm run test:order-8-status --prefix front
 Review test for the staff Orders page: Edit button on cards and in History grid, order edit modal (add/remove/change items, billing, print), and status popover visibility (z-index). Logs in with tenant=1 (using `.env` credentials), opens `/staff/orders`, clicks Edit on the first order card and verifies the order edit modal opens; then checks the status dropdown is visible with sufficient z-index; then switches to Order History and clicks Edit in the grid and verifies the same modal opens.
 
 ```bash
-node front/scripts/review-order-edit-puppeteer.mjs
+npm run test:review-order-edit --prefix front
 # Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/review-order-edit-puppeteer.mjs
 ```
 
 - **Env:** `BASE_URL` (default `http://127.0.0.1:4202`), `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` (from `.env`), `TENANT_ID` (default `1`), `HEADLESS`.
 - **Asserts:** Edit button on card found; clicking it opens the order edit modal (title, items, billing). Status button opens dropdown that is visible (z-index ≥ 100). In History tab, Edit button in grid opens the same order edit modal. If the modal does not open from the card, the script still passes when it opens from the History grid (and suggests rebuilding/refreshing the frontend). On failure, a screenshot is saved to `front/scripts/screenshots/review-edit-modal-fail.png`.
-- No npm script; run with `node` from repo root.
 
 ---
 
@@ -675,6 +674,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |
+| `test:review-order-edit` | `scripts/review-order-edit-puppeteer.mjs` (staff Orders: Edit button, edit modal, status popover z-index; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:register-page` | `scripts/test-register-page.mjs` |
 | `test:guided-signup-wizard` | `scripts/test-guided-signup-wizard.mjs` (guided `/register` wizard: step 0 intro → Get started → account fields + Back/Next; no tenant create) |
 | `test:reports` | `scripts/test-reports.mjs` (Reports page smoke; owner/admin) |
@@ -706,8 +706,6 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:menu-logo` | `scripts/test-menu-logo.mjs` (customer `/menu/:token` shows restaurant logo; needs `LOGIN_*` or `TABLE_TOKEN`) |
 | `test:settings-contact-tax` | `scripts/test-settings-contact-tax-dropdown.mjs` (Settings → Contact default tax IVA options; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:staff-menu-link` | `scripts/test-staff-menu-link-puppeteer.mjs` (staff Open menu → place order without PIN modal; needs open order + `LOGIN_*`) |
-
-`review-order-edit-puppeteer` has no npm script; run via `node front/scripts/review-order-edit-puppeteer.mjs`.
 
 ---
 
@@ -795,7 +793,7 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Landing** | Version, provider links | Version bar; footer links to provider login/register. |
 | **Provider portal** | Register, add-product, landing links | No dedicated “login only” test; add-product covers login + dashboard. |
 | **Staff auth** | Register page content, guided wizard, full register | Who-is-this-for; guided step 0→1 (no create); full registration (no cleanup). |
-| **Orders** | Order #8 status dropdown; `review-order-edit-puppeteer.mjs` (Edit button, order edit modal, status popover) | Order #8: requires existing order in Active Orders. Review script: login, /staff/orders, card + History Edit, status dropdown z-index. |
+| **Orders** | Order #8 status dropdown; `test:review-order-edit` (Edit button, order edit modal, status popover) | Order #8: requires existing order in Active Orders. Review script: login, /staff/orders, card + History Edit, status dropdown z-index. |
 | **Reports** | `test-reports.mjs` | Smoke: page loads (owner/admin). |
 | **Tips (POS)** | `test-order-tip-flows.mjs` | Settings Payments tip mode toggle + Reports tips summary card. |
 | **Users / Bartender role** | `test-bartender-role.mjs` | Admin/owner: /users → Add user → role dropdown includes Bartender. |
