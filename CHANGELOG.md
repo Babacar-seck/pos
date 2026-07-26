@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Offline POS (#319):** Architecture ADR + threat model (`docs/0063-offline-capable-client.md`); staff MVP queues a take-away **cash** sale offline and syncs via idempotent `POST /orders/offline-cash`, with a clear offline/pending banner.
+- **Migration (#321):** CSV cutover toolkit for products + categories — sample CSV, idempotent CLI (`--dry-run` / `--apply`), validation report that refuses writes on bad rows, and cutover runbook (`docs/0062-pos-migration-import.md`).
+- **Inventory (#320):** Multi-warehouse (almacenes) MVP — tenant-scoped warehouses, per-location stock on receive/adjust, warehouse CRUD under Inventory, and stock dashboard filter by location.
+
 ## [2.1.132] - 2026-07-26
 
 ### Changed

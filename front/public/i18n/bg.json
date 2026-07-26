@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "Планиране",
     "GROUP_CATALOG": "Каталог и склад",
     "GROUP_ADMIN": "Администрация",
-    "CONTRACTS": "Договори"
+    "CONTRACTS": "Договори",
+    "WAREHOUSES": "Складове"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Навигация за персонал",
@@ -2296,6 +2297,32 @@
       "PROCESSING": "Обработва се...",
       "TOTAL": "Общо",
       "VIEW": "Виж"
+    },
+    "WAREHOUSES": {
+      "TITLE": "Warehouses",
+      "WAREHOUSE": "Warehouse",
+      "ADD_WAREHOUSE": "Add Warehouse",
+      "EDIT_WAREHOUSE": "Edit Warehouse",
+      "NEW_WAREHOUSE": "New Warehouse",
+      "DELETE_WAREHOUSE": "Delete Warehouse",
+      "LOADING": "Loading warehouses...",
+      "NO_WAREHOUSES_YET": "No warehouses yet",
+      "NO_WAREHOUSES_DESC": "A default Main warehouse is created automatically when you open this page.",
+      "CODE": "Code",
+      "NAME": "Name",
+      "DEFAULT": "Default",
+      "DEFAULT_BADGE": "Default",
+      "STATUS": "Status",
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "SET_AS_DEFAULT": "Set as default warehouse",
+      "WAREHOUSE_IS_ACTIVE": "Warehouse is Active",
+      "DELETE_CONFIRM": "Are you sure you want to delete \"{{name}}\"?",
+      "ALL_WAREHOUSES": "All warehouses",
+      "FAILED_TO_LOAD": "Failed to load warehouses",
+      "FAILED_TO_CREATE": "Failed to create",
+      "FAILED_TO_UPDATE": "Failed to update",
+      "FAILED_TO_DELETE": "Delete failed"
     }
   },
   "CONTRACTS": {
@@ -2569,5 +2596,29 @@
     "STATUS_OUT_FOR_DELIVERY": "Out for delivery",
     "STATUS_DELIVERED": "Delivered",
     "STATUS_CANCELLED": "Cancelled"
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "Offline cash sale",
+    "CASH_SALE_HINT": "Record a take-away cash sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate).",
+    "STATUS_ONLINE": "Online",
+    "STATUS_OFFLINE": "Offline",
+    "STATUS_DEGRADED": "Server unreachable",
+    "PENDING_SYNC": "{{count}} waiting to sync",
+    "NO_TAKE_AWAY": "No Take Away table in cache. Go online and refresh, or create a Take Away table.",
+    "NO_PRODUCT_CACHE": "No products cached yet. Connect and refresh the product cache.",
+    "REFRESH_CACHE": "Refresh cache",
+    "PRODUCT": "Product",
+    "SELECT_PRODUCT": "Select product…",
+    "QTY": "Qty",
+    "CUSTOMER": "Customer",
+    "CUSTOMER_PH": "Optional name",
+    "RECORD_CASH": "Record cash sale",
+    "QUEUE_CASH": "Queue cash sale",
+    "ENQUEUE_FAILED": "Could not queue sale (need Take Away table + product cache).",
+    "QUEUED_ONLINE": "Sale submitted for sync.",
+    "QUEUED_OFFLINE": "Sale queued — will sync when back online.",
+    "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
+    "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
+    "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
   }
 }

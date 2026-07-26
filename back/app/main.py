@@ -12485,6 +12485,66 @@ def compute_order_status_from_items(items: list[models.OrderItem]) -> models.Ord
     return models.OrderStatus.pending
 
 
+@app.post("/orders/offline-cash")
+def create_offline_cash_order_endpoint(
+    body: models.OfflineCashOrderCreate,
+    current_user: Annotated[
+        models.User,
+        Depends(require_permission(Permission.ORDER_UPDATE_STATUS, Permission.ORDER_MARK_PAID)),
+    ],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Staff: sync a cash sale queued while offline (idempotent on idempotency_key)."""
+    if not body.items:
+        raise HTTPException(status_code=400, detail="Order must have at least one item")
+
+    from app.offline_order_service import create_offline_cash_order
+
+    lines = [
+        {"product_id": it.product_id, "quantity": it.quantity, "notes": it.notes}
+        for it in body.items
+    ]
+    order, outcome = create_offline_cash_order(
+        session,
+        tenant_id=current_user.tenant_id,
+        user_id=current_user.id,
+        idempotency_key=body.idempotency_key,
+        table_id=body.table_id,
+        lines=lines,
+        notes=body.notes,
+        customer_name=body.customer_name,
+    )
+    if not order:
+        detail = outcome.get("detail", "create_failed")
+        if detail in ("invalid_idempotency_key",):
+            raise HTTPException(status_code=400, detail="idempotency_key must be 8–64 characters")
+        if detail == "table_not_found":
+            raise HTTPException(status_code=404, detail="Table not found")
+        if detail == "table_not_active":
+            raise HTTPException(
+                status_code=400,
+                detail="Table is not active. Use Take Away or activate the table first.",
+            )
+        if detail == "no_lines":
+            raise HTTPException(status_code=400, detail="Order must have at least one item")
+        if str(detail).startswith("product_not_found"):
+            raise HTTPException(status_code=400, detail=f"Product not found: {detail.split(':', 1)[-1]}")
+        if detail == "idempotency_orphan":
+            raise HTTPException(status_code=409, detail="Idempotency key refers to a missing order")
+        raise HTTPException(status_code=400, detail=str(detail))
+
+    table = session.get(models.Table, order.table_id) if order.table_id else None
+    return {
+        "status": outcome.get("status", "created"),
+        "order_id": order.id,
+        "payment_method": order.payment_method,
+        "paid_at": order.paid_at.isoformat() if order.paid_at else None,
+        "table_id": order.table_id,
+        "table_name": table.name if table else None,
+        "idempotency_key": body.idempotency_key.strip(),
+    }
+
+
 @app.post("/orders/satisfecho-delivery")
 def create_satisfecho_delivery_order_endpoint(
     body: models.SatisfechoDeliveryOrderCreate,

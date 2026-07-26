@@ -2545,6 +2545,34 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/mark-paid`, body);
   }
 
+  /** Sync a cash sale queued while offline (idempotent). See docs/0063-offline-capable-client.md. */
+  syncOfflineCashOrder(body: {
+    idempotency_key: string;
+    table_id: number;
+    items: { product_id: number; quantity: number; notes?: string }[];
+    customer_name?: string;
+    notes?: string;
+    client_created_at?: string;
+  }): Observable<{
+    status: string;
+    order_id: number;
+    payment_method: string;
+    paid_at: string | null;
+    table_id: number | null;
+    table_name: string | null;
+    idempotency_key: string;
+  }> {
+    return this.http.post<{
+      status: string;
+      order_id: number;
+      payment_method: string;
+      paid_at: string | null;
+      table_id: number | null;
+      table_name: string | null;
+      idempotency_key: string;
+    }>(`${this.apiUrl}/orders/offline-cash`, body);
+  }
+
   /** Deliver all active items and mark order paid in one request (staff fast checkout). */
   finishOrder(
     orderId: number,

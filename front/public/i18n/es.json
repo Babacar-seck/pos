@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "Planificación",
     "GROUP_CATALOG": "Catálogo e inventario",
     "GROUP_ADMIN": "Administración",
-    "CONTRACTS": "Contratos"
+    "CONTRACTS": "Contratos",
+    "WAREHOUSES": "Almacenes"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navegación de personal",
@@ -2296,6 +2297,32 @@
       "FLUID_OUNCE": "Onza líquida",
       "CUP": "Taza",
       "GALLON": "Galón"
+    },
+    "WAREHOUSES": {
+      "TITLE": "Almacenes",
+      "WAREHOUSE": "Almacén",
+      "ADD_WAREHOUSE": "Añadir almacén",
+      "EDIT_WAREHOUSE": "Editar almacén",
+      "NEW_WAREHOUSE": "Nuevo almacén",
+      "DELETE_WAREHOUSE": "Eliminar almacén",
+      "LOADING": "Cargando almacenes...",
+      "NO_WAREHOUSES_YET": "Aún no hay almacenes",
+      "NO_WAREHOUSES_DESC": "Se crea automáticamente un almacén Principal al abrir esta página.",
+      "CODE": "Código",
+      "NAME": "Nombre",
+      "DEFAULT": "Predeterminado",
+      "DEFAULT_BADGE": "Predeterminado",
+      "STATUS": "Estado",
+      "ACTIVE": "Activo",
+      "INACTIVE": "Inactivo",
+      "SET_AS_DEFAULT": "Establecer como almacén predeterminado",
+      "WAREHOUSE_IS_ACTIVE": "El almacén está activo",
+      "DELETE_CONFIRM": "¿Seguro que quieres eliminar \"{{name}}\"?",
+      "ALL_WAREHOUSES": "Todos los almacenes",
+      "FAILED_TO_LOAD": "Error al cargar almacenes",
+      "FAILED_TO_CREATE": "Error al crear",
+      "FAILED_TO_UPDATE": "Error al actualizar",
+      "FAILED_TO_DELETE": "Error al eliminar"
     }
   },
   "CONTRACTS": {
@@ -2569,5 +2596,29 @@
     "STATUS_OUT_FOR_DELIVERY": "En camino",
     "STATUS_DELIVERED": "Entregado",
     "STATUS_CANCELLED": "Cancelado"
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "Venta en efectivo sin conexión",
+    "CASH_SALE_HINT": "Registra una venta para llevar en efectivo con o sin conexión. Se sincroniza al volver la red (misma clave = sin duplicados).",
+    "STATUS_ONLINE": "En línea",
+    "STATUS_OFFLINE": "Sin conexión",
+    "STATUS_DEGRADED": "Servidor no alcanzable",
+    "PENDING_SYNC": "{{count}} pendientes de sincronizar",
+    "NO_TAKE_AWAY": "No hay mesa Take Away en caché. Conéctate y actualiza, o crea una mesa Take Away.",
+    "NO_PRODUCT_CACHE": "Aún no hay productos en caché. Conéctate y actualiza la caché.",
+    "REFRESH_CACHE": "Actualizar caché",
+    "PRODUCT": "Producto",
+    "SELECT_PRODUCT": "Seleccionar producto…",
+    "QTY": "Cant.",
+    "CUSTOMER": "Cliente",
+    "CUSTOMER_PH": "Nombre opcional",
+    "RECORD_CASH": "Registrar venta en efectivo",
+    "QUEUE_CASH": "Encolar venta en efectivo",
+    "ENQUEUE_FAILED": "No se pudo encolar (hace falta mesa Take Away y caché de productos).",
+    "QUEUED_ONLINE": "Venta enviada para sincronizar.",
+    "QUEUED_OFFLINE": "Venta en cola — se sincronizará al volver la conexión.",
+    "BANNER_OFFLINE": "Modo sin conexión — las ventas en efectivo se pueden encolar y sincronizar después.",
+    "BANNER_DEGRADED": "No se puede alcanzar el servidor — modo sin conexión; las ventas en cola se sincronizarán al volver.",
+    "BANNER_PENDING": "{{count}} venta(s) sin conexión pendientes de sincronizar…"
   }
 }

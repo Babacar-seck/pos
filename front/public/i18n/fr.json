@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "Planification",
     "GROUP_CATALOG": "Catalogue et stock",
     "GROUP_ADMIN": "Administration",
-    "CONTRACTS": "Contrats"
+    "CONTRACTS": "Contrats",
+    "WAREHOUSES": "Entrepôts"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navigation du personnel",
@@ -2257,6 +2258,32 @@
       "PROCESSING": "Traitement…",
       "TOTAL": "Total",
       "VIEW": "Voir"
+    },
+    "WAREHOUSES": {
+      "TITLE": "Entrepôts",
+      "WAREHOUSE": "Entrepôt",
+      "ADD_WAREHOUSE": "Ajouter un entrepôt",
+      "EDIT_WAREHOUSE": "Modifier l'entrepôt",
+      "NEW_WAREHOUSE": "Nouvel entrepôt",
+      "DELETE_WAREHOUSE": "Supprimer l'entrepôt",
+      "LOADING": "Chargement des entrepôts...",
+      "NO_WAREHOUSES_YET": "Aucun entrepôt pour le moment",
+      "NO_WAREHOUSES_DESC": "Un entrepôt Principal est créé automatiquement à l'ouverture de cette page.",
+      "CODE": "Code",
+      "NAME": "Nom",
+      "DEFAULT": "Par défaut",
+      "DEFAULT_BADGE": "Par défaut",
+      "STATUS": "Statut",
+      "ACTIVE": "Actif",
+      "INACTIVE": "Inactif",
+      "SET_AS_DEFAULT": "Définir comme entrepôt par défaut",
+      "WAREHOUSE_IS_ACTIVE": "L'entrepôt est actif",
+      "DELETE_CONFIRM": "Voulez-vous vraiment supprimer \"{{name}}\" ?",
+      "ALL_WAREHOUSES": "Tous les entrepôts",
+      "FAILED_TO_LOAD": "Failed to load warehouses",
+      "FAILED_TO_CREATE": "Failed to create",
+      "FAILED_TO_UPDATE": "Failed to update",
+      "FAILED_TO_DELETE": "Delete failed"
     }
   },
   "CONTRACTS": {
@@ -2569,5 +2596,29 @@
     "STATUS_OUT_FOR_DELIVERY": "Out for delivery",
     "STATUS_DELIVERED": "Delivered",
     "STATUS_CANCELLED": "Cancelled"
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "Vente cash hors ligne",
+    "CASH_SALE_HINT": "Enregistrez une vente à emporter en espèces hors ligne ou en ligne. Sync au retour réseau (même clé = pas de doublon).",
+    "STATUS_ONLINE": "En ligne",
+    "STATUS_OFFLINE": "Hors ligne",
+    "STATUS_DEGRADED": "Serveur injoignable",
+    "PENDING_SYNC": "{{count}} en attente de sync",
+    "NO_TAKE_AWAY": "Pas de table Take Away en cache. Reconnectez-vous et actualisez, ou créez Take Away.",
+    "NO_PRODUCT_CACHE": "Aucun produit en cache. Connectez-vous et actualisez le cache.",
+    "REFRESH_CACHE": "Actualiser le cache",
+    "PRODUCT": "Produit",
+    "SELECT_PRODUCT": "Choisir un produit…",
+    "QTY": "Qté",
+    "CUSTOMER": "Client",
+    "CUSTOMER_PH": "Nom optionnel",
+    "RECORD_CASH": "Enregistrer vente cash",
+    "QUEUE_CASH": "Mettre en file (cash)",
+    "ENQUEUE_FAILED": "Impossible de mettre en file (table Take Away + cache produits requis).",
+    "QUEUED_ONLINE": "Vente envoyée pour synchronisation.",
+    "QUEUED_OFFLINE": "Vente en file — sync au retour en ligne.",
+    "BANNER_OFFLINE": "Mode hors ligne — les ventes cash peuvent être mises en file puis synchronisées.",
+    "BANNER_DEGRADED": "Serveur injoignable — hors ligne ; la file se synchronisera au retour.",
+    "BANNER_PENDING": "{{count}} vente(s) hors ligne en attente de sync…"
   }
 }

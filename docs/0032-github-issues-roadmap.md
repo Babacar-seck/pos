@@ -10,11 +10,11 @@ Umbrella list. **This table is the source of truth** for “is it done?” until
 
 | Theme | Status in product | Docs / notes |
 |--------|-------------------|--------------|
-| **Multiple warehouses (“almacenes”)** | Not started | Inventory today is purchase-oriented; needs locations, stock moves, picking. |
+| **Multiple warehouses (“almacenes”)** | MVP shipped (#320) | Named warehouses per tenant; receive/adjust + stock filter by location. Transfers / WMS picking still open. |
 | **Split invoice** | Not started | Partial payments / multi-payer bills: orders, Stripe, Factura printing. |
 | **Join tables** | Not started | Physical merge of tables + one or many bills: see `docs/0008-order-management-logic.md` (sessions per device already). |
-| **Offline operation** | Not started | Service worker, local queue, conflict resolution — large architecture change. |
-| **Migrate from existing system** | Partial | Seeds, imports exist for catalog/demo; no generic “import any POS” pipeline or runbook. |
+| **Offline operation** | MVP started | ADR + staff cash sale queue/idempotent sync (#319); SW/full write queue later — see [0063](0063-offline-capable-client.md). |
+| **Migrate from existing system** | MVP shipped (#321) | Products + categories CSV CLI + cutover runbook ([0062](0062-pos-migration-import.md)); tables/customers/orders still open. |
 | **Opinion surveys / Google** | **Partial** | Guest feedback `/feedback/:id`, **Settings → Google review URL**, thank-you step — see [#54](https://github.com/satisfecho/pos/issues/54), `CHANGELOG.md`. |
 | **Birthdays (“cumpleaños”)** | **Partial** | Optional **`birth_date`** on **billing customers** (Customers / Factura CRM); not on reservations yet. Automated campaigns → [#54](https://github.com/satisfecho/pos/issues/54). |
 | **Marketing / special offers** | Not started | Promotions / pricing rules — overlaps [#54](https://github.com/satisfecho/pos/issues/54). |

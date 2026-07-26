@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "Planificació",
     "GROUP_CATALOG": "Catàleg i inventari",
     "GROUP_ADMIN": "Administració",
-    "CONTRACTS": "Contractes"
+    "CONTRACTS": "Contractes",
+    "WAREHOUSES": "Magatzems"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navegació de personal",
@@ -2393,6 +2394,32 @@
       "PROCESSING": "Processant...",
       "TOTAL": "Total",
       "VIEW": "Veure"
+    },
+    "WAREHOUSES": {
+      "TITLE": "Magatzems",
+      "WAREHOUSE": "Magatzem",
+      "ADD_WAREHOUSE": "Afegeix magatzem",
+      "EDIT_WAREHOUSE": "Edita magatzem",
+      "NEW_WAREHOUSE": "Magatzem nou",
+      "DELETE_WAREHOUSE": "Elimina magatzem",
+      "LOADING": "Carregant magatzems...",
+      "NO_WAREHOUSES_YET": "Encara no hi ha magatzems",
+      "NO_WAREHOUSES_DESC": "Es crea automàticament un magatzem Principal en obrir aquesta pàgina.",
+      "CODE": "Código",
+      "NAME": "Nombre",
+      "DEFAULT": "Predeterminado",
+      "DEFAULT_BADGE": "Predeterminado",
+      "STATUS": "Estado",
+      "ACTIVE": "Activo",
+      "INACTIVE": "Inactivo",
+      "SET_AS_DEFAULT": "Estableix com a magatzem predeterminat",
+      "WAREHOUSE_IS_ACTIVE": "El magatzem està actiu",
+      "DELETE_CONFIRM": "¿Seguro que quieres eliminar \"{{name}}\"?",
+      "ALL_WAREHOUSES": "Tots els magatzems",
+      "FAILED_TO_LOAD": "Error al cargar almacenes",
+      "FAILED_TO_CREATE": "Error al crear",
+      "FAILED_TO_UPDATE": "Error al actualizar",
+      "FAILED_TO_DELETE": "Error al eliminar"
     }
   },
   "CONTRACTS": {
@@ -2569,5 +2596,29 @@
     "INVALID_PHONE": "Introduïu un número de telèfon vàlid (amb prefix internacional si cal).",
     "ERROR_INVALID_LINK": "Enllaç no vàlid. Utilitzeu l'enllaç del restaurant.",
     "ERROR_FAILED": "No s'ha pogut unir a la llista d'espera. Torneu-ho a provar."
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "Offline cash sale",
+    "CASH_SALE_HINT": "Record a take-away cash sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate).",
+    "STATUS_ONLINE": "Online",
+    "STATUS_OFFLINE": "Offline",
+    "STATUS_DEGRADED": "Server unreachable",
+    "PENDING_SYNC": "{{count}} waiting to sync",
+    "NO_TAKE_AWAY": "No Take Away table in cache. Go online and refresh, or create a Take Away table.",
+    "NO_PRODUCT_CACHE": "No products cached yet. Connect and refresh the product cache.",
+    "REFRESH_CACHE": "Refresh cache",
+    "PRODUCT": "Product",
+    "SELECT_PRODUCT": "Select product…",
+    "QTY": "Qty",
+    "CUSTOMER": "Customer",
+    "CUSTOMER_PH": "Optional name",
+    "RECORD_CASH": "Record cash sale",
+    "QUEUE_CASH": "Queue cash sale",
+    "ENQUEUE_FAILED": "Could not queue sale (need Take Away table + product cache).",
+    "QUEUED_ONLINE": "Sale submitted for sync.",
+    "QUEUED_OFFLINE": "Sale queued — will sync when back online.",
+    "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
+    "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
+    "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
   }
 }

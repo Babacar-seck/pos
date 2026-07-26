@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "Planung",
     "GROUP_CATALOG": "Katalog & Lager",
     "GROUP_ADMIN": "Verwaltung",
-    "CONTRACTS": "Verträge"
+    "CONTRACTS": "Verträge",
+    "WAREHOUSES": "Lager"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Personal-Navigation",
@@ -2262,6 +2263,32 @@
       "PROCESSING": "Verarbeitung...",
       "TOTAL": "Gesamt",
       "VIEW": "Ansehen"
+    },
+    "WAREHOUSES": {
+      "TITLE": "Lager",
+      "WAREHOUSE": "Lager",
+      "ADD_WAREHOUSE": "Lager hinzufügen",
+      "EDIT_WAREHOUSE": "Lager bearbeiten",
+      "NEW_WAREHOUSE": "Neues Lager",
+      "DELETE_WAREHOUSE": "Lager löschen",
+      "LOADING": "Lager werden geladen...",
+      "NO_WAREHOUSES_YET": "Noch keine Lager",
+      "NO_WAREHOUSES_DESC": "Beim Öffnen dieser Seite wird automatisch ein Standardlager „Main“ angelegt.",
+      "CODE": "Code",
+      "NAME": "Name",
+      "DEFAULT": "Standard",
+      "DEFAULT_BADGE": "Standard",
+      "STATUS": "Status",
+      "ACTIVE": "Aktiv",
+      "INACTIVE": "Inaktiv",
+      "SET_AS_DEFAULT": "Als Standardlager festlegen",
+      "WAREHOUSE_IS_ACTIVE": "Lager ist aktiv",
+      "DELETE_CONFIRM": "Möchten Sie \"{{name}}\" wirklich löschen?",
+      "ALL_WAREHOUSES": "Alle Lager",
+      "FAILED_TO_LOAD": "Lager konnten nicht geladen werden",
+      "FAILED_TO_CREATE": "Erstellen fehlgeschlagen",
+      "FAILED_TO_UPDATE": "Aktualisieren fehlgeschlagen",
+      "FAILED_TO_DELETE": "Löschen fehlgeschlagen"
     }
   },
   "ITEM_STATUS": {
@@ -2569,5 +2596,29 @@
     "STATUS_OUT_FOR_DELIVERY": "Unterwegs",
     "STATUS_DELIVERED": "Zugestellt",
     "STATUS_CANCELLED": "Storniert"
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "Offline-Barverkauf",
+    "CASH_SALE_HINT": "Take-away-Barverkauf online oder offline erfassen. Synchronisiert bei Wiederverbindung (gleicher Schlüssel = kein Duplikat).",
+    "STATUS_ONLINE": "Online",
+    "STATUS_OFFLINE": "Offline",
+    "STATUS_DEGRADED": "Server nicht erreichbar",
+    "PENDING_SYNC": "{{count}} warten auf Sync",
+    "NO_TAKE_AWAY": "Kein Take-Away-Tisch im Cache. Online gehen und aktualisieren oder Take Away anlegen.",
+    "NO_PRODUCT_CACHE": "Noch keine Produkte im Cache. Verbinden und Cache aktualisieren.",
+    "REFRESH_CACHE": "Cache aktualisieren",
+    "PRODUCT": "Produkt",
+    "SELECT_PRODUCT": "Produkt wählen…",
+    "QTY": "Menge",
+    "CUSTOMER": "Kunde",
+    "CUSTOMER_PH": "Optionaler Name",
+    "RECORD_CASH": "Barverkauf buchen",
+    "QUEUE_CASH": "Barverkauf in Warteschlange",
+    "ENQUEUE_FAILED": "Konnte nicht einreihen (Take-Away-Tisch + Produktcache nötig).",
+    "QUEUED_ONLINE": "Verkauf zur Synchronisation übermittelt.",
+    "QUEUED_OFFLINE": "Verkauf in Warteschlange — Sync bei Online-Verbindung.",
+    "BANNER_OFFLINE": "Offline-Modus — Barverkäufe können gespeichert und später synchronisiert werden.",
+    "BANNER_DEGRADED": "Server nicht erreichbar — Offline; Warteschlange synchronisiert später.",
+    "BANNER_PENDING": "{{count}} Offline-Verkauf(e) warten auf Sync…"
   }
 }

@@ -25,6 +25,8 @@ from .inventory_models import (
     PurchaseOrderStatus,
     TransactionType,
     UnitOfMeasure,
+    Warehouse,
+    WarehouseStock,
     convert_units,
     get_unit_type,
 )
@@ -39,6 +41,116 @@ class InsufficientStockError(Exception):
         super().__init__(
             f"Low stock warning for {item_name}: needed {required}, available {available}"
         )
+
+
+def get_or_create_default_warehouse(session: Session, tenant_id: int) -> Warehouse:
+    """Return the tenant's default warehouse, creating 'Main' if missing."""
+    statement = (
+        select(Warehouse)
+        .where(Warehouse.tenant_id == tenant_id)
+        .where(Warehouse.is_deleted == False)
+        .where(Warehouse.is_default == True)
+    )
+    warehouse = session.exec(statement).first()
+    if warehouse:
+        return warehouse
+
+    # Prefer any existing active warehouse; otherwise create Main.
+    any_wh = session.exec(
+        select(Warehouse)
+        .where(Warehouse.tenant_id == tenant_id)
+        .where(Warehouse.is_deleted == False)
+        .order_by(Warehouse.id)
+    ).first()
+    if any_wh:
+        any_wh.is_default = True
+        any_wh.updated_at = datetime.now(timezone.utc)
+        session.add(any_wh)
+        session.flush()
+        return any_wh
+
+    warehouse = Warehouse(
+        tenant_id=tenant_id,
+        name="Main",
+        code="MAIN",
+        is_default=True,
+        is_active=True,
+    )
+    session.add(warehouse)
+    session.flush()
+    return warehouse
+
+
+def resolve_warehouse(
+    session: Session,
+    tenant_id: int,
+    warehouse_id: int | None,
+) -> Warehouse:
+    """Resolve warehouse_id or fall back to the tenant default. Validates tenant scope."""
+    if warehouse_id is None:
+        return get_or_create_default_warehouse(session, tenant_id)
+
+    warehouse = session.get(Warehouse, warehouse_id)
+    if (
+        not warehouse
+        or warehouse.tenant_id != tenant_id
+        or warehouse.is_deleted
+        or not warehouse.is_active
+    ):
+        raise ValueError("Warehouse not found or inactive")
+    return warehouse
+
+
+def adjust_warehouse_stock(
+    session: Session,
+    *,
+    tenant_id: int,
+    warehouse_id: int,
+    inventory_item_id: int,
+    delta: Decimal,
+) -> WarehouseStock:
+    """Apply a signed quantity delta to warehouse_stock (creates row if missing)."""
+    statement = (
+        select(WarehouseStock)
+        .where(WarehouseStock.warehouse_id == warehouse_id)
+        .where(WarehouseStock.inventory_item_id == inventory_item_id)
+    )
+    row = session.exec(statement).first()
+    if not row:
+        row = WarehouseStock(
+            tenant_id=tenant_id,
+            warehouse_id=warehouse_id,
+            inventory_item_id=inventory_item_id,
+            quantity=Decimal("0"),
+        )
+    row.quantity = (row.quantity or Decimal("0")) + delta
+    row.updated_at = datetime.now(timezone.utc)
+    session.add(row)
+    return row
+
+
+def set_default_warehouse(
+    session: Session,
+    tenant_id: int,
+    warehouse_id: int,
+) -> Warehouse:
+    """Mark one warehouse as default; clear is_default on siblings."""
+    warehouse = session.get(Warehouse, warehouse_id)
+    if not warehouse or warehouse.tenant_id != tenant_id or warehouse.is_deleted:
+        raise ValueError("Warehouse not found")
+
+    siblings = session.exec(
+        select(Warehouse)
+        .where(Warehouse.tenant_id == tenant_id)
+        .where(Warehouse.is_deleted == False)
+    ).all()
+    now = datetime.now(timezone.utc)
+    for sibling in siblings:
+        sibling.is_default = sibling.id == warehouse_id
+        sibling.updated_at = now
+        session.add(sibling)
+    session.flush()
+    return warehouse
 
 
 def generate_po_number(session: Session, tenant_id: int) -> str:
@@ -238,12 +350,15 @@ def receive_goods(
     received_items: list[dict],  # [{purchase_order_item_id, quantity_received, unit_cost_cents?}]
     created_by_id: int,
     notes: str | None = None,
+    warehouse_id: int | None = None,
 ) -> list[InventoryBatch]:
     """
     Receive goods against a Purchase Order.
     Creates inventory batches for FIFO tracking.
     Updates stock levels and PO status.
+    Stock is attributed to warehouse_id (or the tenant default).
     """
+    warehouse = resolve_warehouse(session, purchase_order.tenant_id, warehouse_id)
     batches_created = []
     all_fully_received = True
     
@@ -286,6 +401,7 @@ def receive_goods(
             tenant_id=purchase_order.tenant_id,
             inventory_item_id=inv_item.id,
             purchase_order_id=purchase_order.id,
+            warehouse_id=warehouse.id,
             quantity_received=quantity_in_base,
             quantity_remaining=quantity_in_base,
             cost_per_unit_cents=unit_cost_in_base,
@@ -309,12 +425,21 @@ def receive_goods(
         inv_item.current_quantity = new_quantity
         inv_item.updated_at = datetime.now(timezone.utc)
         session.add(inv_item)
+
+        adjust_warehouse_stock(
+            session,
+            tenant_id=purchase_order.tenant_id,
+            warehouse_id=warehouse.id,
+            inventory_item_id=inv_item.id,
+            delta=quantity_in_base,
+        )
         
         # Create transaction record
         transaction = InventoryTransaction(
             tenant_id=purchase_order.tenant_id,
             inventory_item_id=inv_item.id,
             batch_id=batch.id,
+            warehouse_id=warehouse.id,
             transaction_type=TransactionType.purchase,
             quantity=quantity_in_base,  # Positive for addition
             unit=inv_item.unit,
@@ -348,10 +473,14 @@ def adjust_stock(
     adjustment_type: TransactionType,
     notes: str | None = None,
     created_by_id: int | None = None,
+    warehouse_id: int | None = None,
 ) -> InventoryTransaction:
     """
     Manual stock adjustment (add, subtract, or record waste).
+    Attributed to warehouse_id (or the tenant default).
     """
+    warehouse = resolve_warehouse(session, inventory_item.tenant_id, warehouse_id)
+
     # Convert to base unit
     quantity_in_base = convert_to_base_unit(quantity, unit, inventory_item)
     
@@ -359,10 +488,12 @@ def adjust_stock(
         # Addition
         new_quantity = inventory_item.current_quantity + quantity_in_base
         transaction_quantity = quantity_in_base  # Positive
+        warehouse_delta = quantity_in_base
     elif adjustment_type in (TransactionType.adjustment_subtract, TransactionType.waste):
         # Subtraction or waste
         new_quantity = inventory_item.current_quantity - quantity_in_base
         transaction_quantity = -quantity_in_base  # Negative
+        warehouse_delta = -quantity_in_base
     else:
         raise ValueError(f"Invalid adjustment type: {adjustment_type}")
     
@@ -370,12 +501,21 @@ def adjust_stock(
     inventory_item.current_quantity = new_quantity
     inventory_item.updated_at = datetime.now(timezone.utc)
     session.add(inventory_item)
+
+    adjust_warehouse_stock(
+        session,
+        tenant_id=inventory_item.tenant_id,
+        warehouse_id=warehouse.id,
+        inventory_item_id=inventory_item.id,
+        delta=warehouse_delta,
+    )
     
     # Create transaction
     transaction = InventoryTransaction(
         tenant_id=inventory_item.tenant_id,
         inventory_item_id=inventory_item.id,
         batch_id=None,  # Manual adjustments don't use batches
+        warehouse_id=warehouse.id,
         transaction_type=adjustment_type,
         quantity=transaction_quantity,
         unit=unit,

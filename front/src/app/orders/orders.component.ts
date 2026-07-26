@@ -24,6 +24,7 @@ import { AgGridAngular } from 'ag-grid-angular';
 import { SidebarComponent } from '../shared/sidebar.component';
 import { StaffPosToolbarComponent } from '../shared/staff-pos-toolbar.component';
 import { FocusFirstInputDirective } from '../shared/focus-first-input.directive';
+import { OfflineCashSaleComponent } from './offline-cash-sale.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { intlLocaleFromTranslate } from '../shared/intl-locale';
 import { currencySymbolFromIsoCode } from '../shared/currency-symbol';
@@ -48,7 +49,7 @@ ModuleRegistry.registerModules([
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [AgGridAngular, SidebarComponent, StaffPosToolbarComponent, FormsModule, FocusFirstInputDirective, TranslateModule],
+  imports: [AgGridAngular, SidebarComponent, StaffPosToolbarComponent, FormsModule, FocusFirstInputDirective, TranslateModule, OfflineCashSaleComponent],
   template: `
     <app-sidebar>
         <div class="page-header page-header--staff-flow">
@@ -72,6 +73,9 @@ ModuleRegistry.registerModules([
         </div>
 
         <div class="content">
+          @if (canMarkPaid() && canUpdateStatus()) {
+            <app-offline-cash-sale />
+          }
           @if (loading()) {
             <div class="empty-state"><p>{{ 'ORDERS.LOADING' | translate }}</p></div>
           } @else {

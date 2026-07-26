@@ -931,6 +931,24 @@ class Order(TenantMixin, table=True):
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
 
 
+class OfflineOrderIdempotency(TenantMixin, table=True):
+    """Ledger so staff offline cash sales sync without double-creating orders (#319)."""
+
+    __tablename__ = "offline_order_idempotency"
+    __table_args__ = (
+        UniqueConstraint(
+            "tenant_id",
+            "idempotency_key",
+            name="uq_offline_order_idempotency_tenant_key",
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    idempotency_key: str = Field(max_length=64, index=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
 class OrderItemStatus(str, Enum):
     pending = "pending"
     preparing = "preparing"
@@ -1301,6 +1319,18 @@ class OrderMarkPaid(SQLModel):
     tip_amount_cents: int | None = None
     # Optional: amount charged on card/terminal (cents); must be >= subtotal + tip when set
     amount_paid_cents: int | None = None
+
+
+class OfflineCashOrderCreate(SQLModel):
+    """Staff offline → online cash sale sync (idempotent). See docs/0063-offline-capable-client.md."""
+
+    idempotency_key: str = Field(min_length=8, max_length=64)
+    table_id: int
+    items: list[OrderItemCreate]
+    notes: str | None = None
+    customer_name: str | None = None
+    # Client clock at queue time (advisory only; server timestamps win).
+    client_created_at: datetime | None = None
 
 
 class OrderBillingCustomerSet(SQLModel):

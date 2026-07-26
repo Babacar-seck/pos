@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../../shared/sidebar.component';
 import { InventoryService } from '../inventory.service';
-import { StockLevel, LowStockItem, InventoryCategory, inventoryUnitKey, inventoryCategoryKey } from '../inventory.types';
+import { StockLevel, LowStockItem, InventoryCategory, Warehouse, inventoryUnitKey, inventoryCategoryKey } from '../inventory.types';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -88,12 +88,20 @@ import { TranslateModule } from '@ngx-translate/core';
         <div class="section">
           <div class="section-header">
             <h2>{{ 'INVENTORY.DASHBOARD.STOCK_LEVELS' | translate }}</h2>
-            <select [(ngModel)]="categoryFilter" (change)="applyFilter()">
-              <option value="">{{ 'INVENTORY.ITEMS.ALL_CATEGORIES' | translate }}</option>
-              @for (cat of categories; track cat) {
-                <option [value]="cat">{{ categoryKey(cat) | translate }}</option>
-              }
-            </select>
+            <div class="filters-row">
+              <select [(ngModel)]="warehouseFilter" (change)="loadData()">
+                <option value="">{{ 'INVENTORY.WAREHOUSES.ALL_WAREHOUSES' | translate }}</option>
+                @for (wh of warehouses(); track wh.id) {
+                  <option [value]="wh.id">{{ wh.name }}</option>
+                }
+              </select>
+              <select [(ngModel)]="categoryFilter" (change)="applyFilter()">
+                <option value="">{{ 'INVENTORY.ITEMS.ALL_CATEGORIES' | translate }}</option>
+                @for (cat of categories; track cat) {
+                  <option [value]="cat">{{ categoryKey(cat) | translate }}</option>
+                }
+              </select>
+            </div>
           </div>
 
           @if (loading()) {
@@ -158,8 +166,10 @@ export class StockDashboardComponent implements OnInit {
 
   stockLevels = signal<StockLevel[]>([]);
   lowStockItems = signal<LowStockItem[]>([]);
+  warehouses = signal<Warehouse[]>([]);
   loading = signal(true);
   categoryFilter = '';
+  warehouseFilter = '';
 
   categories: InventoryCategory[] = ['ingredients', 'beverages', 'packaging', 'cleaning', 'equipment', 'other'];
 
@@ -179,12 +189,17 @@ export class StockDashboardComponent implements OnInit {
   totalValue = computed(() => this.stockLevels().reduce((sum, i) => sum + i.total_value_cents, 0));
 
   ngOnInit() {
+    this.inventoryService.getWarehouses().subscribe({
+      next: warehouses => this.warehouses.set(warehouses),
+      error: () => { }
+    });
     this.loadData();
   }
 
   loadData() {
     this.loading.set(true);
-    this.inventoryService.getStockLevels().subscribe({
+    const warehouseId = this.warehouseFilter ? Number(this.warehouseFilter) : null;
+    this.inventoryService.getStockLevels({ warehouseId }).subscribe({
       next: levels => { this.stockLevels.set(levels); this.loading.set(false); },
       error: () => this.loading.set(false)
     });

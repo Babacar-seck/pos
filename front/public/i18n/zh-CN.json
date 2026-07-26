@@ -112,7 +112,8 @@
     "GROUP_PLANNING": "计划",
     "GROUP_CATALOG": "目录与库存",
     "GROUP_ADMIN": "管理",
-    "CONTRACTS": "合同"
+    "CONTRACTS": "合同",
+    "WAREHOUSES": "仓库"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "员工导航",
@@ -2393,6 +2394,32 @@
       "PROCESSING": "处理中...",
       "TOTAL": "总计",
       "VIEW": "查看"
+    },
+    "WAREHOUSES": {
+      "TITLE": "仓库",
+      "WAREHOUSE": "仓库",
+      "ADD_WAREHOUSE": "添加仓库",
+      "EDIT_WAREHOUSE": "编辑仓库",
+      "NEW_WAREHOUSE": "新建仓库",
+      "DELETE_WAREHOUSE": "删除仓库",
+      "LOADING": "正在加载仓库...",
+      "NO_WAREHOUSES_YET": "暂无仓库",
+      "NO_WAREHOUSES_DESC": "打开此页面时会自动创建默认主仓库。",
+      "CODE": "编码",
+      "NAME": "名称",
+      "DEFAULT": "默认",
+      "DEFAULT_BADGE": "默认",
+      "STATUS": "状态",
+      "ACTIVE": "启用",
+      "INACTIVE": "停用",
+      "SET_AS_DEFAULT": "设为默认仓库",
+      "WAREHOUSE_IS_ACTIVE": "仓库已启用",
+      "DELETE_CONFIRM": "确定要删除 \"{{name}}\" 吗？",
+      "ALL_WAREHOUSES": "全部仓库",
+      "FAILED_TO_LOAD": "Failed to load warehouses",
+      "FAILED_TO_CREATE": "Failed to create",
+      "FAILED_TO_UPDATE": "Failed to update",
+      "FAILED_TO_DELETE": "Delete failed"
     }
   },
   "CONTRACTS": {
@@ -2569,5 +2596,29 @@
     "INVALID_PHONE": "请输入有效的电话号码（如需请含国家区号）。",
     "ERROR_INVALID_LINK": "链接无效，请使用餐厅提供的链接。",
     "ERROR_FAILED": "无法加入等候名单，请重试。"
+  },
+  "OFFLINE": {
+    "CASH_SALE_TITLE": "离线现金销售",
+    "CASH_SALE_HINT": "在线或离线记录外带现金销售。恢复连接后同步（相同密钥不会重复）。",
+    "STATUS_ONLINE": "在线",
+    "STATUS_OFFLINE": "离线",
+    "STATUS_DEGRADED": "无法连接服务器",
+    "PENDING_SYNC": "{{count}} 等待同步",
+    "NO_TAKE_AWAY": "缓存中没有外带桌。请上线刷新，或创建外带桌。",
+    "NO_PRODUCT_CACHE": "尚未缓存产品。请连接并刷新产品缓存。",
+    "REFRESH_CACHE": "刷新缓存",
+    "PRODUCT": "产品",
+    "SELECT_PRODUCT": "选择产品…",
+    "QTY": "数量",
+    "CUSTOMER": "顾客",
+    "CUSTOMER_PH": "可选姓名",
+    "RECORD_CASH": "记录现金销售",
+    "QUEUE_CASH": "排队现金销售",
+    "ENQUEUE_FAILED": "无法入队（需要外带桌和产品缓存）。",
+    "QUEUED_ONLINE": "销售已提交同步。",
+    "QUEUED_OFFLINE": "销售已排队 — 恢复在线后同步。",
+    "BANNER_OFFLINE": "离线模式 — 可排队现金销售，稍后同步。",
+    "BANNER_DEGRADED": "无法连接服务器 — 离线工作；排队销售将在恢复后同步。",
+    "BANNER_PENDING": "{{count}} 笔离线销售等待同步…"
   }
 }

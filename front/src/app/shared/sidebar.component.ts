@@ -10,6 +10,8 @@ import { LanguagePickerComponent } from './language-picker.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TablesAreaPreferenceService } from '../services/tables-area-preference.service';
 import { StaffLayoutService } from '../services/staff-layout.service';
+import { ConnectivityService } from '../services/connectivity.service';
+import { OfflineOrderQueueService } from '../services/offline-order-queue.service';
 
 type NavGroupKey = 'operations' | 'planning' | 'catalog' | 'admin';
 
@@ -216,6 +218,9 @@ type NavGroupKey = 'operations' | 'planning' | 'catalog' | 'admin';
                           <a routerLink="/inventory/suppliers" routerLinkActive="active" class="nav-sublink nav-sublink--nested" (click)="closeSidebar()">
                             <span>{{ 'NAV.SUPPLIERS' | translate }}</span>
                           </a>
+                          <a routerLink="/inventory/warehouses" routerLinkActive="active" class="nav-sublink nav-sublink--nested" (click)="closeSidebar()">
+                            <span>{{ 'NAV.WAREHOUSES' | translate }}</span>
+                          </a>
                           <a routerLink="/inventory/purchase-orders" routerLinkActive="active" class="nav-sublink nav-sublink--nested" (click)="closeSidebar()">
                             <span>{{ 'NAV.PURCHASE_ORDERS' | translate }}</span>
                           </a>
@@ -302,6 +307,22 @@ type NavGroupKey = 'operations' | 'planning' | 'catalog' | 'admin';
       <div class="overlay" (click)="closeSidebar()"></div>
 
       <main class="main">
+        @if (showOfflineBanner()) {
+          <div
+            class="connectivity-banner"
+            [class.connectivity-banner--offline]="connectivity.status() !== 'online'"
+            [class.connectivity-banner--pending]="offlineQueue.pendingCount() > 0 && connectivity.isOnline()"
+            role="status"
+          >
+            @if (connectivity.status() === 'offline') {
+              {{ 'OFFLINE.BANNER_OFFLINE' | translate }}
+            } @else if (connectivity.status() === 'degraded') {
+              {{ 'OFFLINE.BANNER_DEGRADED' | translate }}
+            } @else if (offlineQueue.pendingCount() > 0) {
+              {{ 'OFFLINE.BANNER_PENDING' | translate: { count: offlineQueue.pendingCount() } }}
+            }
+          </div>
+        }
         <ng-content></ng-content>
       </main>
     </div>
@@ -316,6 +337,8 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   private destroyRef = inject(DestroyRef);
   tablesArea = inject(TablesAreaPreferenceService);
   staffLayout = inject(StaffLayoutService);
+  readonly connectivity = inject(ConnectivityService);
+  readonly offlineQueue = inject(OfflineOrderQueueService);
 
   @ViewChild('navScroll') navScroll?: ElementRef<HTMLElement>;
 
@@ -328,6 +351,12 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy {
   inventoryOpen = signal(false);
   version = environment.version;
   commitHash = environment.commitHash;
+
+  showOfflineBanner = computed(
+    () =>
+      !!this.user() &&
+      (this.connectivity.status() !== 'online' || this.offlineQueue.pendingCount() > 0)
+  );
 
   canViewTables = computed(() => this.permissions.canAccessRoute(this.user(), '/tables'));
   canViewReservations = computed(() => this.permissions.hasPermission(this.user(), 'reservation:read'));
