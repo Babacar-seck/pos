@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.113] - 2026-07-26
+
+### Changed
+
+- **Overbooking docs (0025):** Marked reservation overbooking detection as **shipped** (live report API, 400 on over capacity, UI/reports pointers, 0058 / checker links) and aligned the docs README Plans blurb so agents no longer treat it as an unstarted proposal.
+
 ## [2.1.112] - 2026-07-26
 
 ### Changed

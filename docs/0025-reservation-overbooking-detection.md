@@ -1,10 +1,25 @@
-# Reservation Overbooking Detection – Proposal
+# Reservation Overbooking Detection
 
-This document describes the current database and behaviour for tables (seated, reserved) and reservations, and proposes changes to detect and prevent overbooking. **No code changes yet** – implementation will follow in a separate step.
+## Status: shipped
+
+Slot capacity checks, overbooking detection, and prevention are **live** in product. Prefer this status section (and code/tests) over the historical design sections below.
+
+**What shipped**
+
+- **Report:** `GET /reservations/overbooking-report` — per-slot seats/tables demand vs capacity (`over_seats` / `over_tables`).
+- **Prevention:** create/update reservation returns **400** when the slot would exceed capacity; public next-available respects remaining capacity.
+- **UI:** overbooking indicators on the reservations list; remaining capacity on create/edit; Reports summary card when `overbooking_slots_count > 0` (see [0016-reports.md](0016-reports.md)).
+- **Verify:** scenario notes in [0058-test-scenario-one-empty-table.md](0058-test-scenario-one-empty-table.md); checker `python -m app.seeds.check_overbooking_0025` (exit 0 = pass); unittest `python -m tests.test_overbooking_0025`.
+
+Anything below that still reads as “future work” is **optional polish** or historical design context — not “not implemented”.
 
 ---
 
-## 1. Current state
+The sections below are **historical design notes** from before shipping. Prefer the status section, [0058](0058-test-scenario-one-empty-table.md), and current code for behaviour.
+
+---
+
+## 1. Current state (at proposal time)
 
 ### 1.1 Database
 
@@ -76,9 +91,9 @@ So the enhancement is: **detect** and **prevent** slot overbooking by comparing,
 
 ---
 
-## 3. Implementation scope
+## 3. Implementation scope (historical)
 
-What we will implement is defined below. Anything not listed here is out of scope for this enhancement.
+What was in scope for the original enhancement is defined below. Anything not listed was out of scope then; treat remaining gaps as optional polish, not “unstarted”.
 
 ### 3.1 In scope
 
@@ -138,16 +153,16 @@ What we will implement is defined below. Anything not listed here is out of scop
 
 ---
 
-## 4. Summary
+## 4. Summary (historical — shipped)
 
-| Area | Current | We will implement |
+| Area | Before | Shipped (design intent) |
 |------|--------|----------|
 | **DB** | reservation (date, time, party_size, status, table_id set only at seat); table (seat_count) | No schema change. |
 | **Table status** | Occupied = order or seated reservation; Reserved = booked reservation with table_id, date≥today | Unchanged. |
-| **Overbooking** | Not defined; staff can create unlimited reservations per slot | Per (date, time): reserved_guests > total_seats or reserved_parties > total_tables. |
-| **Detection** | None | GET /reservations/overbooking-report with per-slot metrics and over_seats / over_tables flags. |
+| **Overbooking** | Staff could create unlimited reservations per slot | Per (date, time): reserved_guests > total_seats or reserved_parties > total_tables. |
+| **Detection** | None | `GET /reservations/overbooking-report` with per-slot metrics and over_seats / over_tables flags. |
 | **Prevention** | None | Validate on create/update; return 400 if slot over capacity. Next-available returns first slot with capacity. |
 | **UX** | No capacity info | Overbooking indicators per slot in list; show remaining capacity in create/edit and keep form open on save error; overbooking summary in reports. |
 | **Seat modal** | None | (1) Show “You have N upcoming reservations today with no table assigned.” (2) For tables with upcoming_reservation: show “Table X has upcoming reservation at HH:MM (Name). Seat here anyway?” — allow Seat. |
 
-All of the above is in scope. Out of scope: no new columns/tables, no duration/turn time, no pre-assign table at booking, no floor-level capacity, no blocking of the seat action (warn only).
+Core of the above is **shipped**. Out of scope for the original enhancement (and still not required to treat the feature as done): no new columns/tables for duration-only pre-assign, no floor-level capacity, no blocking of the seat action (warn only). See the **Status: shipped** section for live pointers.
