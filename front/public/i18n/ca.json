@@ -1095,7 +1095,16 @@
     "REQUEST_HQ_PREP": "Sol·licitar prep. HQ",
     "PRINT_KITCHEN": "Imprimir tiquet de cuina",
     "PRINT_BRIDGE_SENT": "Enviat a l'agent d'impressió (sense diàleg del navegador)",
-    "PRINT_BRIDGE_OFFLINE": "Pont d'impressió fora de línia — impressió del navegador"
+    "PRINT_BRIDGE_OFFLINE": "Pont d'impressió fora de línia — impressió del navegador",
+    "AMOUNT_PAID": "Import pagat",
+    "AMOUNT_REMAINING": "Pendent",
+    "PARTIAL_PAYMENT_AMOUNT": "Import del pagament parcial",
+    "PAYER_LABEL": "Etiqueta del pagador (opcional)",
+    "PAYER_LABEL_HINT": "p. ex. Comensal 1 / Targeta",
+    "RECORD_PARTIAL_PAYMENT": "Registrar pagament parcial",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Introdueix un import de pagament parcial més gran que zero.",
+    "PARTIAL_PAYMENT_EXCEEDS": "El pagament parcial no pot superar l'import pendent.",
+    "PARTIAL_PAYMENT_RECORDED": "Pagament parcial registrat."
   },
   "CUSTOMERS": {
     "TITLE": "Clients (Factura)",

@@ -1095,7 +1095,16 @@
     "REQUEST_HQ_PREP": "请求总部备餐",
     "PRINT_KITCHEN": "打印厨房小票",
     "PRINT_BRIDGE_SENT": "已发送到打印代理（无浏览器对话框）",
-    "PRINT_BRIDGE_OFFLINE": "打印桥离线 — 使用浏览器打印"
+    "PRINT_BRIDGE_OFFLINE": "打印桥离线 — 使用浏览器打印",
+    "AMOUNT_PAID": "已付金额",
+    "AMOUNT_REMAINING": "剩余",
+    "PARTIAL_PAYMENT_AMOUNT": "部分付款金额",
+    "PAYER_LABEL": "付款人标签（可选）",
+    "PAYER_LABEL_HINT": "例如 客人1 / 卡",
+    "RECORD_PARTIAL_PAYMENT": "记录部分付款",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "请输入大于零的部分付款金额。",
+    "PARTIAL_PAYMENT_EXCEEDS": "部分付款不能超过剩余金额。",
+    "PARTIAL_PAYMENT_RECORDED": "已记录部分付款。"
   },
   "CUSTOMERS": {
     "TITLE": "客户（发票）",

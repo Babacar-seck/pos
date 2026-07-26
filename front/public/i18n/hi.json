@@ -1095,7 +1095,16 @@
     "REQUEST_HQ_PREP": "HQ तैयारी अनुरोध करें",
     "PRINT_KITCHEN": "किचन टिकट प्रिंट करें",
     "PRINT_BRIDGE_SENT": "प्रिंट एजेंट को भेजा गया (बिना ब्राउज़र डायलॉग)",
-    "PRINT_BRIDGE_OFFLINE": "प्रिंट ब्रिज ऑफ़लाइन — ब्राउज़र प्रिंट उपयोग हो रहा है"
+    "PRINT_BRIDGE_OFFLINE": "प्रिंट ब्रिज ऑफ़लाइन — ब्राउज़र प्रिंट उपयोग हो रहा है",
+    "AMOUNT_PAID": "भुगतान की गई राशि",
+    "AMOUNT_REMAINING": "शेष",
+    "PARTIAL_PAYMENT_AMOUNT": "आंशिक भुगतान राशि",
+    "PAYER_LABEL": "भुगतानकर्ता लेबल (वैकल्पिक)",
+    "PAYER_LABEL_HINT": "जैसे अतिथि 1 / कार्ड",
+    "RECORD_PARTIAL_PAYMENT": "आंशिक भुगतान दर्ज करें",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "शून्य से अधिक आंशिक भुगतान राशि दर्ज करें।",
+    "PARTIAL_PAYMENT_EXCEEDS": "आंशिक भुगतान शेष राशि से अधिक नहीं हो सकता।",
+    "PARTIAL_PAYMENT_RECORDED": "आंशिक भुगतान दर्ज हो गया।"
   },
   "CUSTOMERS": {
     "TITLE": "ग्राहक (इनवॉइस)",

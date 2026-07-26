@@ -975,7 +975,16 @@
     "REQUEST_HQ_PREP": "Solicitar prep. HQ",
     "PRINT_KITCHEN": "Imprimir ticket de cocina",
     "PRINT_BRIDGE_SENT": "Enviado al agente de impresión (sin diálogo del navegador)",
-    "PRINT_BRIDGE_OFFLINE": "Puente de impresión desconectado — se usa la impresión del navegador"
+    "PRINT_BRIDGE_OFFLINE": "Puente de impresión desconectado — se usa la impresión del navegador",
+    "AMOUNT_PAID": "Importe pagado",
+    "AMOUNT_REMAINING": "Pendiente",
+    "PARTIAL_PAYMENT_AMOUNT": "Importe del pago parcial",
+    "PAYER_LABEL": "Etiqueta del pagador (opcional)",
+    "PAYER_LABEL_HINT": "p. ej. Comensal 1 / Tarjeta",
+    "RECORD_PARTIAL_PAYMENT": "Registrar pago parcial",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Introduce un importe de pago parcial mayor que cero.",
+    "PARTIAL_PAYMENT_EXCEEDS": "El pago parcial no puede superar el importe pendiente.",
+    "PARTIAL_PAYMENT_RECORDED": "Pago parcial registrado."
   },
   "CUSTOMERS": {
     "TITLE": "Clientes (Factura)",

@@ -975,7 +975,16 @@
     "REQUEST_HQ_PREP": "HQ تیاری کی درخواست",
     "PRINT_KITCHEN": "کچن ٹکٹ پرنٹ کریں",
     "PRINT_BRIDGE_SENT": "پرنٹ ایجنٹ کو بھیجا گیا (بغیر براؤزر ڈائیلاگ)",
-    "PRINT_BRIDGE_OFFLINE": "پرنٹ برج آف لائن — براؤزر پرنٹ استعمال ہو رہا ہے"
+    "PRINT_BRIDGE_OFFLINE": "پرنٹ برج آف لائن — براؤزر پرنٹ استعمال ہو رہا ہے",
+    "AMOUNT_PAID": "ادا شدہ رقم",
+    "AMOUNT_REMAINING": "باقی",
+    "PARTIAL_PAYMENT_AMOUNT": "جزوی ادائیگی کی رقم",
+    "PAYER_LABEL": "ادا کنندہ لیبل (اختیاری)",
+    "PAYER_LABEL_HINT": "مثلاً مہمان 1 / کارڈ",
+    "RECORD_PARTIAL_PAYMENT": "جزوی ادائیگی ریکارڈ کریں",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "صفر سے زیادہ جزوی ادائیگی کی رقم درج کریں۔",
+    "PARTIAL_PAYMENT_EXCEEDS": "جزوی ادائیگی باقی رقم سے زیادہ نہیں ہو سکتی۔",
+    "PARTIAL_PAYMENT_RECORDED": "جزوی ادائیگی ریکارڈ ہو گئی۔"
   },
   "CUSTOMERS": {
     "TITLE": "گاہک (انوائس)",

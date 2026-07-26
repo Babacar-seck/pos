@@ -1448,6 +1448,20 @@ export interface HubFulfillment {
   order_customer_name?: string | null;
 }
 
+/** One split-bill payment leg (#318). */
+export interface OrderPaymentLeg {
+  id: number;
+  order_id: number;
+  amount_cents: number;
+  payment_method: string;
+  payer_label?: string | null;
+  tip_amount_cents?: number | null;
+  paid_by_user_id?: number | null;
+  paid_at?: string | null;
+  voided_at?: string | null;
+  note?: string | null;
+}
+
 export interface Order {
   id: number;
   table_name: string;
@@ -1473,6 +1487,11 @@ export interface Order {
   removed_items_count?: number;
   paid_at?: string | null;
   payment_method?: string | null;
+  /** Split-bill reconciliation (#318) */
+  amount_due_cents?: number;
+  amount_paid_cents?: number;
+  amount_remaining_cents?: number;
+  payments?: OrderPaymentLeg[];
   /** Waiter marked urgent — guest waiting (kitchen/bar). */
   staff_urgent?: boolean;
   /** When set, joined tables label e.g. "T1 + T2" for staff context */
@@ -2730,6 +2749,71 @@ export class ApiService {
       body.tip_percent = opts.tipPercent;
     }
     return this.http.put(`${this.apiUrl}/orders/${orderId}/mark-paid`, body);
+  }
+
+  getOrderPayments(orderId: number): Observable<{
+    order_id: number;
+    amount_due_cents: number;
+    amount_paid_cents: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+    paid_at?: string | null;
+  }> {
+    return this.http.get<{
+      order_id: number;
+      amount_due_cents: number;
+      amount_paid_cents: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+      paid_at?: string | null;
+    }>(`${this.apiUrl}/orders/${orderId}/payments`);
+  }
+
+  recordOrderPayment(
+    orderId: number,
+    body: {
+      amount_cents: number;
+      payment_method: string;
+      payer_label?: string | null;
+      tip_amount_cents?: number | null;
+      note?: string | null;
+    }
+  ): Observable<{
+    status: string;
+    order_id: number;
+    payment: OrderPaymentLeg;
+    amount_due_cents: number;
+    amount_paid_cents: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+    paid_at?: string | null;
+    payment_method?: string | null;
+  }> {
+    return this.http.post<{
+      status: string;
+      order_id: number;
+      payment: OrderPaymentLeg;
+      amount_due_cents: number;
+      amount_paid_cents: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+      paid_at?: string | null;
+      payment_method?: string | null;
+    }>(`${this.apiUrl}/orders/${orderId}/payments`, body);
+  }
+
+  voidOrderPayment(orderId: number, paymentId: number): Observable<{
+    status: string;
+    order_id: number;
+    amount_remaining_cents: number;
+    payments: OrderPaymentLeg[];
+  }> {
+    return this.http.delete<{
+      status: string;
+      order_id: number;
+      amount_remaining_cents: number;
+      payments: OrderPaymentLeg[];
+    }>(`${this.apiUrl}/orders/${orderId}/payments/${paymentId}`);
   }
 
   /** Sync a cash sale queued while offline (idempotent). See docs/0063-offline-capable-client.md. */

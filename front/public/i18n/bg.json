@@ -975,7 +975,16 @@
     "REQUEST_HQ_PREP": "Заяви HQ подготовка",
     "PRINT_KITCHEN": "Печат кухненски билет",
     "PRINT_BRIDGE_SENT": "Изпратено към печатния агент (без браузърски диалог)",
-    "PRINT_BRIDGE_OFFLINE": "Печатният мост е офлайн — използва се браузърският печат"
+    "PRINT_BRIDGE_OFFLINE": "Печатният мост е офлайн — използва се браузърският печат",
+    "AMOUNT_PAID": "Платена сума",
+    "AMOUNT_REMAINING": "Остатък",
+    "PARTIAL_PAYMENT_AMOUNT": "Сума на частично плащане",
+    "PAYER_LABEL": "Етикет на платеца (по избор)",
+    "PAYER_LABEL_HINT": "напр. Гост 1 / Карта",
+    "RECORD_PARTIAL_PAYMENT": "Запиши частично плащане",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Въведете сума за частично плащане по-голяма от нула.",
+    "PARTIAL_PAYMENT_EXCEEDS": "Частичното плащане не може да надвишава остатъка.",
+    "PARTIAL_PAYMENT_RECORDED": "Частичното плащане е записано."
   },
   "CUSTOMERS": {
     "TITLE": "Клиенти (фактура)",

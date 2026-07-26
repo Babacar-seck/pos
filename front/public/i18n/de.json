@@ -975,7 +975,16 @@
     "REQUEST_HQ_PREP": "HQ-Zubereitung anfragen",
     "PRINT_KITCHEN": "Küchenbon drucken",
     "PRINT_BRIDGE_SENT": "An Druckagent gesendet (kein Browser-Dialog)",
-    "PRINT_BRIDGE_OFFLINE": "Druckbrücke offline — Browser-Druck wird verwendet"
+    "PRINT_BRIDGE_OFFLINE": "Druckbrücke offline — Browser-Druck wird verwendet",
+    "AMOUNT_PAID": "Bereits bezahlt",
+    "AMOUNT_REMAINING": "Restbetrag",
+    "PARTIAL_PAYMENT_AMOUNT": "Teilzahlungsbetrag",
+    "PAYER_LABEL": "Zahlerbezeichnung (optional)",
+    "PAYER_LABEL_HINT": "z. B. Gast 1 / Karte",
+    "RECORD_PARTIAL_PAYMENT": "Teilzahlung erfassen",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Bitte einen Teilzahlungsbetrag größer als null eingeben.",
+    "PARTIAL_PAYMENT_EXCEEDS": "Die Teilzahlung darf den Restbetrag nicht überschreiten.",
+    "PARTIAL_PAYMENT_RECORDED": "Teilzahlung erfasst."
   },
   "CUSTOMERS": {
     "TITLE": "Kunden (Rechnung)",

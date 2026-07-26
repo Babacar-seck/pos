@@ -1095,7 +1095,16 @@
     "HUB_PREPARING_BADGE": "HQ preparing",
     "HUB_REQUESTED_BADGE": "HQ prep requested",
     "HUB_CANCELLED_BADGE": "HQ prep cancelled",
-    "REQUEST_HQ_PREP": "Request HQ prep"
+    "REQUEST_HQ_PREP": "Request HQ prep",
+    "AMOUNT_PAID": "Amount paid",
+    "AMOUNT_REMAINING": "Remaining",
+    "PARTIAL_PAYMENT_AMOUNT": "Partial payment amount",
+    "PAYER_LABEL": "Payer label (optional)",
+    "PAYER_LABEL_HINT": "e.g. Guest 1 / Card",
+    "RECORD_PARTIAL_PAYMENT": "Record partial payment",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Enter a partial payment amount greater than zero.",
+    "PARTIAL_PAYMENT_EXCEEDS": "Partial payment cannot exceed the remaining balance.",
+    "PARTIAL_PAYMENT_RECORDED": "Partial payment recorded."
   },
   "CUSTOMERS": {
     "TITLE": "Customers (Invoice)",

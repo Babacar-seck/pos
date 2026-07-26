@@ -26,6 +26,8 @@ import { environment } from '../../environments/environment';
             <span class="landing-footer__group-label">{{ 'LANDING.FOOTER_ACCOUNT' | translate }}</span>
             <a routerLink="/register">{{ 'AUTH.CREATE_ACCOUNT' | translate }}</a>
             <a routerLink="/login">{{ 'LANDING.LOGIN' | translate }}</a>
+            <a routerLink="/pricing" data-testid="landing-pricing">{{ 'LANDING.NAV_PRICING' | translate }}</a>
+            <a routerLink="/features">{{ 'LANDING.NAV_FEATURES' | translate }}</a>
           </div>
           <div class="landing-footer__group">
             <span class="landing-footer__group-label">{{ 'LANDING.FOOTER_PARTNERS' | translate }}</span>

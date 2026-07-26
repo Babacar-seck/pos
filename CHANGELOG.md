@@ -8,8 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.136] - 2026-07-26
+
 ### Added
 
+- **Split bill / partial payments (#318):** Staff can record multiple payment legs on one order (by amount), with remaining-balance reconciliation; order marks paid only when covered. One Factura/VeriFactu alta per settled order; loyalty still earns once. See `docs/0071-split-bill.md`.
+- **Public pricing page (#328):** Real `/pricing` route shows trial length and monthly hosted price from `GET /saas/config` (not hardcoded), plus AGPLv3 self-host tier; respects `SAAS_PAYWALL_ENABLED` so inactive billing is not implied everywhere. Multi-tier-ready `plans[]` on the config payload.
 - **Hardware printing (#317):** Option C ADR + LAN print agent — staff `POST /print-jobs` (kitchen|receipt), agent auth token, poll/claim/complete, Settings → Printing, ESC/POS agent script (`scripts/print-agent/`), browser `window.print()` fallback with offline warning (`docs/0070-hardware-printing.md`).
 
 ## [2.1.135] - 2026-07-26

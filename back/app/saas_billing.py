@@ -139,12 +139,21 @@ def plan_config() -> dict[str, Any]:
     currency = (getattr(settings, "saas_plan_currency", None) or "eur").lower()
     price_id = (getattr(settings, "saas_stripe_price_id", None) or "").strip()
     secret = (settings.stripe_secret_key or "").strip()
+    # Flat top-level fields stay for paywall/signup; `plans` is the forward-compatible catalog.
+    hosted_standard = {
+        "id": "hosted_standard",
+        "trial_days": trial_days,
+        "price_cents": price_cents,
+        "currency": currency,
+        "interval": "month",
+    }
     return {
         "enabled": paywall_enabled(),
         "trial_days": trial_days,
         "price_cents": price_cents,
         "currency": currency,
         "stripe_checkout_available": bool(secret and price_id),
+        "plans": [hosted_standard],
     }
 
 

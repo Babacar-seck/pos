@@ -975,7 +975,16 @@
     "REQUEST_HQ_PREP": "Demander prep. HQ",
     "PRINT_KITCHEN": "Imprimer ticket cuisine",
     "PRINT_BRIDGE_SENT": "Envoyé à l'agent d'impression (pas de dialogue navigateur)",
-    "PRINT_BRIDGE_OFFLINE": "Pont d'impression hors ligne — impression navigateur"
+    "PRINT_BRIDGE_OFFLINE": "Pont d'impression hors ligne — impression navigateur",
+    "AMOUNT_PAID": "Montant payé",
+    "AMOUNT_REMAINING": "Reste à payer",
+    "PARTIAL_PAYMENT_AMOUNT": "Montant du paiement partiel",
+    "PAYER_LABEL": "Libellé du payeur (optionnel)",
+    "PAYER_LABEL_HINT": "ex. Client 1 / Carte",
+    "RECORD_PARTIAL_PAYMENT": "Enregistrer un paiement partiel",
+    "PARTIAL_PAYMENT_AMOUNT_REQUIRED": "Saisissez un montant de paiement partiel supérieur à zéro.",
+    "PARTIAL_PAYMENT_EXCEEDS": "Le paiement partiel ne peut pas dépasser le solde restant.",
+    "PARTIAL_PAYMENT_RECORDED": "Paiement partiel enregistré."
   },
   "CUSTOMERS": {
     "TITLE": "Clients (Facture)",

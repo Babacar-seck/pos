@@ -1074,6 +1074,24 @@ class Order(TenantMixin, table=True):
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
 
 
+class OrderPayment(TenantMixin, table=True):
+    """One payment leg against an order (split bill / partial pay). See docs/0071-split-bill.md."""
+
+    __tablename__ = "order_payment"
+
+    id: int | None = Field(default=None, primary_key=True)
+    order_id: int = Field(foreign_key="order.id", index=True)
+    amount_cents: int = Field(ge=1)
+    payment_method: str = Field(max_length=32)  # cash, terminal, stripe, other, …
+    payer_label: str | None = Field(default=None, max_length=120)
+    tip_amount_cents: int | None = Field(default=None, ge=0)
+    stripe_payment_intent_id: str | None = Field(default=None, max_length=128)
+    paid_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    paid_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    voided_at: datetime | None = None
+    note: str | None = Field(default=None, max_length=500)
+
+
 class OfflineOrderIdempotency(TenantMixin, table=True):
     """Ledger so staff offline cash sales sync without double-creating orders (#319)."""
 
@@ -1548,6 +1566,16 @@ class OrderMarkPaid(SQLModel):
     tip_amount_cents: int | None = None
     # Optional: amount charged on card/terminal (cents); must be >= subtotal + tip when set
     amount_paid_cents: int | None = None
+
+
+class OrderPaymentCreate(SQLModel):
+    """Staff records a partial or settling payment leg (#318)."""
+
+    amount_cents: int = Field(ge=1)
+    payment_method: str = "cash"
+    payer_label: str | None = Field(default=None, max_length=120)
+    tip_amount_cents: int | None = Field(default=None, ge=0)
+    note: str | None = Field(default=None, max_length=500)
 
 
 class OfflineCashOrderCreate(SQLModel):

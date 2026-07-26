@@ -98,6 +98,7 @@ from . import restaurant_groups as rg
 from . import branch_fulfillment as hub_ff
 from . import loyalty_service as loyalty_svc
 from . import promo_service as promo_svc
+from . import order_payment_service as order_pay_svc
 from .order_discounts import order_level_discount_cents
 from .tenant_ui_modules import (
     merge_tenant_ui_modules_patch,
@@ -13572,6 +13573,11 @@ def list_orders(
             "removed_items_count": len([item for item in all_items if item.removed_by_customer]),
             "can_request_hub_fulfillment": can_request_hub and order.id not in hub_by_order,
         }
+        recon = order_pay_svc.reconciliation_dict(session, order)
+        row_out["amount_due_cents"] = recon["amount_due_cents"]
+        row_out["amount_paid_cents"] = recon["amount_paid_cents"]
+        row_out["amount_remaining_cents"] = recon["amount_remaining_cents"]
+        row_out["payments"] = recon["payments"]
         if tg_label:
             row_out["table_group_label"] = tg_label
         ff = hub_by_order.get(order.id) if order.id is not None else None
@@ -13657,7 +13663,7 @@ def mark_order_paid(
     current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_MARK_PAID))],
     session: Session = Depends(get_session)
 ) -> dict:
-    """Mark order as paid manually (for cash/terminal payments)."""
+    """Mark order as paid manually (for cash/terminal payments). Pays remaining balance as one leg."""
     order = session.exec(
         select(models.Order).where(
             models.Order.id == order_id,
@@ -13683,16 +13689,40 @@ def mark_order_paid(
 
     # Allow pre-pay: staff can mark as paid even when not all items are delivered (e.g. customer pays before food is ready).
     # Do not clear bill_requested_at here — unmark-paid needs it for /tables/with-status payment_pending (GitHub #190).
-    order.status = models.OrderStatus.paid
-    order.paid_at = datetime.now(timezone.utc)
-    order.paid_by_user_id = current_user.id
-    order.payment_method = payment_data.payment_method
     order.tip_percent_applied = tip_pct
     order.tip_amount_cents = tip_amt if tip_amt else None
     order.tip_attributed_user_id = _effective_waiter_for_tip(session, order)
-
     session.add(order)
-    session.commit()
+    session.flush()
+
+    due = order_pay_svc.order_due_cents(session, order, include_tip=True)
+    already = order_pay_svc.amount_paid_cents(session, order.id)
+    remaining = max(0, due - already)
+    method = (payment_data.payment_method or "cash").strip() or "cash"
+
+    if remaining > 0:
+        _payment, recon = order_pay_svc.record_payment(
+            session,
+            order=order,
+            amount_cents=remaining,
+            payment_method=method,
+            paid_by_user_id=current_user.id,
+            tip_amount_cents=None,
+            note="Full settlement (mark-paid)",
+            settle_if_covered=True,
+        )
+    else:
+        now = datetime.now(timezone.utc)
+        order.status = models.OrderStatus.paid
+        order.paid_at = now
+        order.paid_by_user_id = current_user.id
+        order.payment_method = order_pay_svc.settlement_payment_method(
+            order_pay_svc.list_active_payments(session, order.id)
+        ) or method
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        recon = order_pay_svc.reconciliation_dict(session, order)
 
     # Club loyalty: earn once per paid order when membership linked (#327)
     try:
@@ -13710,16 +13740,137 @@ def mark_order_paid(
         "type": "order_paid",
         "order_id": order.id,
         "table_name": table.name if table else "Unknown",
-        "payment_method": payment_data.payment_method
+        "payment_method": order.payment_method or method
     }, table_id=order.table_id)
 
     return {
         "status": "paid",
         "order_id": order.id,
-        "payment_method": payment_data.payment_method,
-        "paid_at": order.paid_at.isoformat(),
+        "payment_method": order.payment_method or method,
+        "paid_at": order.paid_at.isoformat() if order.paid_at else None,
         "tip_percent_applied": order.tip_percent_applied,
         "tip_amount_cents": order.tip_amount_cents,
+        "amount_due_cents": recon.get("amount_due_cents"),
+        "amount_paid_cents": recon.get("amount_paid_cents"),
+        "amount_remaining_cents": recon.get("amount_remaining_cents"),
+        "payments": recon.get("payments"),
+    }
+
+
+@app.get("/orders/{order_id}/payments")
+def get_order_payments(
+    order_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_READ))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """List payment legs and reconciliation totals for split bill (#318)."""
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    recon = order_pay_svc.reconciliation_dict(session, order)
+    return {"order_id": order.id, "paid_at": order.paid_at.isoformat() if order.paid_at else None, **recon}
+
+
+@app.post("/orders/{order_id}/payments")
+def post_order_payment(
+    order_id: int,
+    body: models.OrderPaymentCreate,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_MARK_PAID))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Record a partial or settling payment leg (#318)."""
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    payment, recon = order_pay_svc.record_payment(
+        session,
+        order=order,
+        amount_cents=body.amount_cents,
+        payment_method=body.payment_method,
+        paid_by_user_id=current_user.id,
+        payer_label=body.payer_label,
+        tip_amount_cents=body.tip_amount_cents,
+        note=body.note,
+        settle_if_covered=True,
+    )
+
+    if order.paid_at:
+        try:
+            if loyalty_svc.award_on_order_paid(session, order):
+                session.commit()
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "loyalty award failed after partial settlement order_id=%s", order.id
+            )
+        table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
+        publish_order_update(
+            current_user.tenant_id,
+            {
+                "type": "order_paid",
+                "order_id": order.id,
+                "table_name": table.name if table else "Unknown",
+                "payment_method": order.payment_method,
+            },
+            table_id=order.table_id,
+        )
+    else:
+        table = session.exec(select(models.Table).where(models.Table.id == order.table_id)).first()
+        publish_order_update(
+            current_user.tenant_id,
+            {
+                "type": "order_payment_recorded",
+                "order_id": order.id,
+                "table_name": table.name if table else "Unknown",
+                "amount_cents": payment.amount_cents,
+                "amount_remaining_cents": recon.get("amount_remaining_cents"),
+            },
+            table_id=order.table_id,
+        )
+
+    return {
+        "status": "paid" if order.paid_at else "partial",
+        "order_id": order.id,
+        "payment": order_pay_svc.payment_to_dict(payment),
+        **recon,
+        "paid_at": order.paid_at.isoformat() if order.paid_at else None,
+        "payment_method": order.payment_method,
+    }
+
+
+@app.delete("/orders/{order_id}/payments/{payment_id}")
+def delete_order_payment(
+    order_id: int,
+    payment_id: int,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.ORDER_MARK_PAID))],
+    session: Session = Depends(get_session),
+) -> dict:
+    """Void a payment leg while the order is not fully paid (#318)."""
+    order = session.exec(
+        select(models.Order).where(
+            models.Order.id == order_id,
+            models.Order.tenant_id == current_user.tenant_id,
+        )
+    ).first()
+    if not order or order.deleted_at is not None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    row = order_pay_svc.void_payment(session, order=order, payment_id=payment_id)
+    recon = order_pay_svc.reconciliation_dict(session, order)
+    return {
+        "status": "voided",
+        "order_id": order.id,
+        "payment": order_pay_svc.payment_to_dict(row),
+        **recon,
     }
 
 
@@ -13769,16 +13920,37 @@ def finish_order(
             item.delivered_by_user_id = current_user.id
             session.add(item)
 
-    order.status = models.OrderStatus.paid
-    order.paid_at = now
-    order.paid_by_user_id = current_user.id
-    order.payment_method = payment_data.payment_method
     order.tip_percent_applied = tip_pct
     order.tip_amount_cents = tip_amt if tip_amt else None
     order.tip_attributed_user_id = _effective_waiter_for_tip(session, order)
-
     session.add(order)
-    session.commit()
+    session.flush()
+
+    method = (payment_data.payment_method or "cash").strip() or "cash"
+    due = order_pay_svc.order_due_cents(session, order, include_tip=True)
+    already = order_pay_svc.amount_paid_cents(session, order.id)
+    remaining = max(0, due - already)
+    if remaining > 0:
+        _payment, recon = order_pay_svc.record_payment(
+            session,
+            order=order,
+            amount_cents=remaining,
+            payment_method=method,
+            paid_by_user_id=current_user.id,
+            note="Full settlement (finish)",
+            settle_if_covered=True,
+        )
+    else:
+        order.status = models.OrderStatus.paid
+        order.paid_at = now
+        order.paid_by_user_id = current_user.id
+        order.payment_method = order_pay_svc.settlement_payment_method(
+            order_pay_svc.list_active_payments(session, order.id)
+        ) or method
+        session.add(order)
+        session.commit()
+        session.refresh(order)
+        recon = order_pay_svc.reconciliation_dict(session, order)
 
     try:
         session.refresh(order)
@@ -13796,7 +13968,7 @@ def finish_order(
             "type": "order_paid",
             "order_id": order.id,
             "table_name": table.name if table else "Unknown",
-            "payment_method": payment_data.payment_method,
+            "payment_method": order.payment_method or method,
         },
         table_id=order.table_id,
     )
@@ -13804,10 +13976,12 @@ def finish_order(
     return {
         "status": "paid",
         "order_id": order.id,
-        "payment_method": payment_data.payment_method,
-        "paid_at": order.paid_at.isoformat(),
+        "payment_method": order.payment_method or method,
+        "paid_at": order.paid_at.isoformat() if order.paid_at else None,
         "tip_percent_applied": order.tip_percent_applied,
         "tip_amount_cents": order.tip_amount_cents,
+        "amount_paid_cents": recon.get("amount_paid_cents"),
+        "payments": recon.get("payments"),
     }
 
 
@@ -13844,6 +14018,7 @@ def unmark_order_paid(
     # Restore workflow status from items (do not leave status as 'paid')
     items = session.exec(select(models.OrderItem).where(models.OrderItem.order_id == order_id)).all()
     order.status = compute_order_status_from_items(list(items))
+    order_pay_svc.void_all_payments(session, order_id)
 
     session.add(order)
     session.commit()
@@ -15208,6 +15383,14 @@ def confirm_payment(
         order.bill_requested_at = None
         order.notes = f"{order.notes or ''}\n[PAID: {payment_intent_id}]".strip()
         session.add(order)
+        session.flush()
+        order_pay_svc.ensure_full_payment_leg(
+            session,
+            order=order,
+            payment_method="stripe",
+            paid_by_user_id=None,
+            stripe_payment_intent_id=payment_intent_id,
+        )
         session.commit()
 
         try:
@@ -15420,6 +15603,13 @@ def confirm_revolut_payment(
     order.bill_requested_at = None
     order.notes = f"{order.notes or ''}\n[PAID: Revolut {order.revolut_order_id}]".strip()
     session.add(order)
+    session.flush()
+    order_pay_svc.ensure_full_payment_leg(
+        session,
+        order=order,
+        payment_method="revolut",
+        paid_by_user_id=None,
+    )
     session.commit()
 
     try:

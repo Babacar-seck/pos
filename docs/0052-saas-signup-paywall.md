@@ -33,12 +33,23 @@ Columns on `tenant`:
 
 ## API
 
-- `GET /saas/config` — public plan flags
+- `GET /saas/config` — public plan flags (`enabled`, `trial_days`, `price_cents`, `currency`, `stripe_checkout_available`) plus a forward-compatible **`plans`** array (currently one `hosted_standard` tier with the same price/trial). Used by `/paywall`, signup, and the public **`/pricing`** page (#328).
 - `GET /saas/subscription` — current tenant status (auth)
 - `POST /saas/start-trial` — owner/admin; starts trial
 - `POST /saas/checkout-session` — Stripe Checkout URL when configured
 - `POST /saas/confirm-checkout` — after redirect with `session_id` (fast path)
 - `POST /saas/webhook` — Stripe billing webhook (signature via `SAAS_STRIPE_WEBHOOK_SECRET`); source of truth for subscription lifecycle
+
+## Public pricing page
+
+Prospects can open **`/pricing`** (linked from landing / features nav and footer) to see:
+
+- Hosted monthly price and trial days from live `GET /saas/config` (env-driven; no drifting hardcoded copy).
+- A short “what’s included” list (QR ordering, kitchen/bar, reservations, reports, loyalty).
+- Self-host / AGPLv3 as a zero license-cost alternative.
+- When `SAAS_PAYWALL_ENABLED` is false, the page still shows plan numbers but states that hosted paywall billing is **not** required on that deployment.
+
+Smoke: `npm run test:pricing --prefix front` (see `docs/testing.md`).
 
 ## Stripe webhook
 

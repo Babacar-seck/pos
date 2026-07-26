@@ -1293,6 +1293,62 @@ ModuleRegistry.registerModules([
                 } @else {
                   <p class="modal-hint">{{ 'ORDERS.PAY_NOW_HELP' | translate }}</p>
                 }
+                @if (orderToMarkPaid(); as payOrder) {
+                  <div class="split-pay-summary" data-testid="split-pay-summary">
+                    <p class="modal-hint">
+                      {{ 'ORDERS.AMOUNT_DUE' | translate }}: {{ formatPrice(paymentAmountDueCents(payOrder)) }}
+                      @if ((payOrder.amount_paid_cents || 0) > 0) {
+                        — {{ 'ORDERS.AMOUNT_PAID' | translate }}: {{ formatPrice(payOrder.amount_paid_cents || 0) }}
+                        — {{ 'ORDERS.AMOUNT_REMAINING' | translate }}: {{ formatPrice(paymentAmountRemainingCents(payOrder)) }}
+                      }
+                    </p>
+                    @if (payOrder.payments && payOrder.payments.length > 0) {
+                      <ul class="split-pay-list" data-testid="split-pay-list">
+                        @for (p of payOrder.payments; track p.id) {
+                          <li>
+                            {{ formatPrice(p.amount_cents) }} · {{ p.payment_method }}
+                            @if (p.payer_label) { ({{ p.payer_label }}) }
+                          </li>
+                        }
+                      </ul>
+                    }
+                    @if (!paymentModalFinishMode() && paymentAmountRemainingCents(payOrder) > 0) {
+                      <div class="form-group">
+                        <label for="partial-pay-amount">{{ 'ORDERS.PARTIAL_PAYMENT_AMOUNT' | translate }}</label>
+                        <input
+                          id="partial-pay-amount"
+                          type="text"
+                          inputmode="decimal"
+                          class="form-control"
+                          [(ngModel)]="partialPaymentAmountInput"
+                          name="partialPaymentAmount"
+                          data-testid="partial-pay-amount"
+                        />
+                      </div>
+                      <div class="form-group">
+                        <label for="partial-pay-label">{{ 'ORDERS.PAYER_LABEL' | translate }}</label>
+                        <input
+                          id="partial-pay-label"
+                          type="text"
+                          class="form-control"
+                          [(ngModel)]="partialPaymentPayerLabel"
+                          name="partialPaymentPayerLabel"
+                          data-testid="partial-pay-label"
+                          [placeholder]="'ORDERS.PAYER_LABEL_HINT' | translate"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-testid="record-partial-payment"
+                        (click)="confirmPartialPayment()"
+                        [disabled]="processingPayment()"
+                      >
+                        {{ 'ORDERS.RECORD_PARTIAL_PAYMENT' | translate }}
+                      </button>
+                    }
+                  </div>
+                }
                 <div class="form-group">
                   <label for="payment-method">{{ 'ORDERS.PAYMENT_METHOD' | translate }}</label>
                   <select id="payment-method" [(ngModel)]="paymentMethod" class="form-select">
@@ -2345,6 +2401,20 @@ ModuleRegistry.registerModules([
     .waiter-alert-dismiss:hover {
       background: rgba(255,255,255,0.35);
     }
+    .split-pay-summary {
+      margin: var(--space-3) 0;
+      padding: var(--space-3) 0;
+      border-top: 1px solid var(--color-border);
+    }
+    .split-pay-list {
+      margin: 0.5rem 0 0.75rem;
+      padding-left: 1.25rem;
+      font-size: 0.875rem;
+      color: var(--color-text-muted, #666);
+    }
+    .split-pay-summary .btn {
+      margin-bottom: var(--space-3);
+    }
     @keyframes slideDown {
       from { transform: translateY(-100%); }
       to { transform: translateY(0); }
@@ -2461,6 +2531,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
   paymentAmountPaidInput = '';
   /** Editable tip in major units (defaults from amount − subtotal) */
   paymentTipAmountInput = '';
+  /** Split-bill partial payment amount (major units) */
+  partialPaymentAmountInput = '';
+  partialPaymentPayerLabel = '';
   processingPayment = signal(false);
   statusDropdownOpen = signal<number | null>(null); // Order ID for which dropdown is open
   itemStatusDropdownOpen = signal<string | null>(null); // "orderId-itemId" for which dropdown is open
@@ -4275,6 +4348,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
   }
 
   openFinishPaymentModal(order: Order) {
@@ -4285,6 +4360,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
   }
 
   closePaymentModal() {
@@ -4294,6 +4371,73 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipPercent = 0;
     this.paymentAmountPaidInput = '';
     this.paymentTipAmountInput = '';
+    this.partialPaymentAmountInput = '';
+    this.partialPaymentPayerLabel = '';
+  }
+
+  paymentAmountDueCents(order: Order): number {
+    if (order.amount_due_cents != null && order.amount_due_cents >= 0) {
+      return order.amount_due_cents;
+    }
+    return this.paymentGrandTotalCents(order);
+  }
+
+  paymentAmountRemainingCents(order: Order): number {
+    if (order.amount_remaining_cents != null && order.amount_remaining_cents >= 0) {
+      return order.amount_remaining_cents;
+    }
+    const paid = order.amount_paid_cents || 0;
+    return Math.max(0, this.paymentAmountDueCents(order) - paid);
+  }
+
+  confirmPartialPayment() {
+    const order = this.orderToMarkPaid();
+    if (!order || !this.paymentMethod) return;
+    const cents = this.parseMoneyMajorToCents(this.partialPaymentAmountInput);
+    if (cents < 1) {
+      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_AMOUNT_REQUIRED'), 'error');
+      return;
+    }
+    const remaining = this.paymentAmountRemainingCents(order);
+    if (cents > remaining) {
+      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_EXCEEDS'), 'error');
+      return;
+    }
+    this.processingPayment.set(true);
+    this.api
+      .recordOrderPayment(order.id, {
+        amount_cents: cents,
+        payment_method: this.paymentMethod,
+        payer_label: this.partialPaymentPayerLabel.trim() || null,
+      })
+      .subscribe({
+        next: (res) => {
+          this.processingPayment.set(false);
+          this.partialPaymentAmountInput = '';
+          this.partialPaymentPayerLabel = '';
+          if (res.status === 'paid' || res.paid_at) {
+            this.showToast(this.translate.instant('COMMON.SUCCESS'), 'success');
+            this.closePaymentModal();
+            this.loadOrders();
+            return;
+          }
+          const updated: Order = {
+            ...order,
+            amount_due_cents: res.amount_due_cents,
+            amount_paid_cents: res.amount_paid_cents,
+            amount_remaining_cents: res.amount_remaining_cents,
+            payments: res.payments,
+          };
+          this.orderToMarkPaid.set(updated);
+          this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_RECORDED'), 'success');
+          this.loadOrders();
+        },
+        error: (err) => {
+          this.processingPayment.set(false);
+          const detail = err?.error?.detail || this.translate.instant('ORDERS.FAILED_TO_MARK_PAID');
+          this.showToast(typeof detail === 'string' ? detail : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'), 'error');
+        },
+      });
   }
 
   orderPaymentSubtotal(order: Order): number {
