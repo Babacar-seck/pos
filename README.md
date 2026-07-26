@@ -203,6 +203,9 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | [docs/0014-provider-portal.md](docs/0014-provider-portal.md) | Provider registration, login, and catalog management |
 | [docs/0015-kitchen-display.md](docs/0015-kitchen-display.md) | Kitchen display: full-screen view, auto-refresh, optional sound |
 | [docs/0017-billing-customers-factura.md](docs/0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to” |
+| [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md) | SaaS signup paywall: trial or subscribe before staff app (`SAAS_PAYWALL_ENABLED`) |
+| [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md) | Satisfecho Delivery: staff Delivery tab, courier API, public `/delivery/{tenantId}` checkout |
+| [docs/0054-restaurant-groups.md](docs/0054-restaurant-groups.md) | Restaurant groups: multi-location sharing of billing customers and products |
 
 ---
 

@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.76] - 2026-07-26
+
+### Changed
+
+- **Root README Documentation index:** Added links to the July feature guides for SaaS signup paywall (`docs/0052`), Satisfecho Delivery (`docs/0053`), and restaurant groups (`docs/0054`).
+
 ## [2.1.75] - 2026-07-26
 
 ### Changed
