@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.57] - 2026-07-26
+
+### Added
+
+- **Jul product screenshots:** `capture-screenshots.mjs` now captures public delivery and waitlist (by `TENANT_ID`), plus optional courier and platform operator pages; new PNGs and README sections under `docs/screenshots/` (classic staff shots regenerated in the same run).
+
 ## [2.1.56] - 2026-07-26
 
 ### Added
