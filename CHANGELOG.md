@@ -8,8 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.103] - 2026-07-26
+
 ### Changed
 
+- **Docs index:** Listed `SECURITY-REVIEW.md` under Quick links and Reference & notes in `docs/README.md` (structured security pass — not a pentest).
 - **Agent cursor-rules catalog:** Related link in `docs/agent-cursor-rules.md` now points at `agents2/TASKS-README.md` and the live `agents2/tasks/` queue (legacy `agents/tasks/` noted only).
 
 ## [2.1.102] - 2026-07-26

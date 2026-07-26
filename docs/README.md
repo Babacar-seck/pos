@@ -18,6 +18,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Understand reservations (staff + public) | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) |
 | Rate limits (production) | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) |
 | Capture screenshots | [screenshots/README.md](screenshots/README.md) |
+| Security review notes (structured pass, not a pentest) | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) |
 | Browse public marketing features list (`/features`, no login) | [../README.md](../README.md) Access Points / Features — route `http://localhost:4202/features` |
 
 ---
@@ -89,6 +90,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 |-----|-------------|
 | [agent-loop.md](agent-loop.md) | Multi-agent workflow (task statuses, roles, `agents/` layout); modeled on mac-stats-reviewer; links to **`go-ahead-loop.sh`** and testing smokes. |
 | [agent-cursor-rules.md](agent-cursor-rules.md) | Categorized index of **`.cursor/rules/*.mdc`** for agents (Angular, FastAPI/SQLModel, Docker/HAProxy, security, i18n, smoke tests); also linked from **`AGENTS.md`**. |
+| [SECURITY-REVIEW.md](SECURITY-REVIEW.md) | Structured security pass (uploads, auth, tenant isolation, public/payment surfaces) — **not a penetration test**; repeat after major releases. |
 | [0007-implementation-verification.md](0007-implementation-verification.md) | Implementation verification: what’s done vs Phase 4 (batch, audit, etc.). |
 | [0012-translation-implementation.md](0012-translation-implementation.md) | Translation (i18n): frontend, backend, DB content. |
 | [0013-verification-alternatives.md](0013-verification-alternatives.md) | Customer verification alternatives (SMS, etc.). |

@@ -21,3 +21,29 @@
 - Optional Quick links one-liner (“Security review notes”) if that table stays short
 - Documentation index only; no product code; do not expand SECURITY-REVIEW body here
 - Pass/fail: `rg -n 'SECURITY-REVIEW' docs/README.md` hits the new row; link resolves
+
+## Coder notes
+
+- Indexed **`SECURITY-REVIEW.md`** in **Reference & notes** (after `agent-cursor-rules.md`) and **Quick links** (“Security review notes”).
+- Did not expand `SECURITY-REVIEW.md` body; no `back/` / `front/` changes.
+- Sibling SECURITY content NEWs (waitlist/groups, TenantProduct) left untouched.
+
+## Testing instructions
+
+### What to verify
+
+- `docs/README.md` links **`SECURITY-REVIEW.md`** under Reference & notes (and Quick links).
+- The markdown link resolves to the on-disk file.
+
+### How to test
+
+```bash
+# From repo root
+rg -n 'SECURITY-REVIEW' docs/README.md
+test -f docs/SECURITY-REVIEW.md && echo OK
+```
+
+### Pass/fail criteria
+
+- **Pass:** `rg` hits the new Reference (and Quick links) row(s); `docs/SECURITY-REVIEW.md` exists; no product code required.
+- **Fail:** `SECURITY-REVIEW` absent from `docs/README.md`, or link target missing.

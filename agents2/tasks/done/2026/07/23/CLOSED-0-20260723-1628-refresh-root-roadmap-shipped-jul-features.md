@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Root ROADMAP.md still omitted major Jul shipped product areas (Delivery, waitlist, groups, paywall, platform operator, order comments).
+- **What was done:** Added Completed Features bullets with doc links and Documentation reference entries for 0052/0053/0054/platform operator (live path 0059 after renumber); ROADMAP.md only.
+- **What was tested:** `rg` hits for Jul bullets and doc paths; linked docs on disk; no back/front product edits — Overall PASS.
+- **Why closed:** All testing criteria passed; product-owner feedback confirms ROADMAP matches the Jul shipped surface.
+- **Closed at (UTC):** 2026-07-26 08:37
+---
+
 # Refresh root ROADMAP.md for shipped Jul features
 
 ## GitHub Issues
@@ -59,3 +69,27 @@ test -f docs/0052-saas-signup-paywall.md \
 ### Pass/fail criteria
 - **Pass:** `rg` hits the new Completed Feature bullets (not only incidental “delivery” in older order-status wording); doc paths resolve on disk; `git diff --stat` shows only `ROADMAP.md` (+ this task file rename).
 - **Fail:** Missing any of the six feature bullets, broken doc filenames, or unrelated product edits.
+
+## Test report
+
+- **Date/time (UTC):** 2026-07-26 08:37:13 – 08:37:24 UTC (log window N/A — docs-only)
+- **Environment:** local repo on `development` (synced via `./scripts/git-sync-development.sh`); no Docker/browser; `BASE_URL` N/A
+- **What was tested:** Root `ROADMAP.md` Completed Features Jul bullets + Documentation reference links; linked docs on disk; no product code changes for this task
+
+### Results
+- Completed Features six bullets (Delivery, waiting list, restaurant groups, paywall, platform operator, order/item comments) with doc links — **PASS** — `rg` lines 28–33
+- Documentation reference includes `0052` / `0053` / `0054` and platform operator doc — **PASS** — line 42 lists those paths (`0059-platform-operator-portal.md` after renumber)
+- Linked doc files resolve on disk — **PASS** — `0052`, `0053`, `0054`, `0059-platform-operator-portal.md`, `0011`, `0015-kitchen-display.md` all exist
+- No `back/` / `front/` product edits from this task — **PASS** — `ROADMAP.md` already committed (`96879346`); working tree clean for product paths
+- Note: How-to-test still named `0015-platform-operator-portal.md`; post-`2118d203` the live path is `0059-platform-operator-portal.md` and ROADMAP matches disk — not a failure under pass/fail criteria
+
+### Overall: **PASS**
+
+### Product owner feedback
+ROADMAP Completed Features now reflects the Jul shipped surface (delivery, waitlist, groups, paywall, platform, order comments) with working doc links. The platform-operator path correctly follows the later 0015→0059 renumber; no further ROADMAP edit needed for this task.
+
+### URLs tested
+N/A — no browser
+
+### Relevant log excerpts (last section)
+N/A — docs-only verification (`rg` + `test -f`); no container logs.

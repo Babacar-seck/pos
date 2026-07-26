@@ -20,3 +20,31 @@
 - In **`docs/README.md` Email & SMTP**, add one row for **`0030-reservation-confirmation-email-troubleshooting.md`**: confirmation not arriving, `diagnose_reservation_email.py`, Settings → Email SMTP checks
 - Index only; no product code; no bulk rewrite of 0030 (leave body to **0658** if still open)
 - Pass/fail: `rg -n '0030|confirmation-email-troubleshooting' docs/README.md` hits Email & SMTP; link resolves
+
+## Coder notes
+
+- On start (2026-07-26): goal already satisfied on `development`. Sibling **`CLOSED-0-20260723-0658-refresh-0030-…`** (release 2.1.100 / commit `735ea616`) indexed **0030** under **Email & SMTP** and **Quick links** while refreshing the runbook body.
+- Verified current `docs/README.md`:
+  - L17 Quick links: “Troubleshoot missing reservation confirmation email” → `0030-…`
+  - L43 Email & SMTP: row with diagnose script / tenant vs global SMTP blurb
+- Target file `docs/0030-reservation-confirmation-email-troubleshooting.md` exists; no further README edit needed; no `back/` / `front/` changes.
+
+## Testing instructions
+
+### What to verify
+
+- `docs/README.md` lists **0030** under **Email & SMTP** (and optionally Quick links).
+- The markdown link resolves to the on-disk runbook.
+
+### How to test
+
+```bash
+# From repo root
+rg -n '0030|confirmation-email-troubleshooting' docs/README.md
+test -f docs/0030-reservation-confirmation-email-troubleshooting.md && echo OK
+```
+
+### Pass/fail criteria
+
+- **Pass:** `rg` hits Email & SMTP (and Quick links); `docs/0030-reservation-confirmation-email-troubleshooting.md` exists; no product code required for this task.
+- **Fail:** 0030 missing from Email & SMTP table, or link target missing.
