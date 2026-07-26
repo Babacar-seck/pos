@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.88] - 2026-07-26
+
+### Changed
+
+- **Kitchen display docs (0015):** Documented Satisfecho Delivery cards (table label “Satisfecho Delivery”), the five active kitchen/bar statuses including `paid`, and that `out_for_delivery` is dropped after courier pickup; updated the Feature guides blurb in `docs/README.md`.
+
 ## [2.1.87] - 2026-07-26
 
 ### Changed
