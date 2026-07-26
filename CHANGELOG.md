@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.104] - 2026-07-26
+
+### Changed
+
+- **Docs renumber (working plan):** Kept the living shift-schedule guide as `0021-working-plan.md`; moved the pre-build BetterShift/implementation plan to `0060-working-plan-implementation-plan.md` with a historical banner. Updated `docs/README.md` Implementation plans rows.
+
 ## [2.1.103] - 2026-07-26
 
 ### Changed

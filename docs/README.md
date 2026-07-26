@@ -75,7 +75,8 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0009-table-pin-security.md](0009-table-pin-security.md) | Table PIN security: activation, 4-digit PIN, rate limiting (Redis). |
 | [0010-table-reservation-implementation-plan.md](0010-table-reservation-implementation-plan.md) | Table reservation implementation plan: scope, reference systems, schema, API. |
 | [0019-no-show-implementation-plan.md](0019-no-show-implementation-plan.md) | No-show feature: status, reminder emails, implementation steps. |
-| [0021-working-plan.md](0021-working-plan.md) | Working plan (shift schedule): implementation plan and status. |
+| [0021-working-plan.md](0021-working-plan.md) | Working plan (shift schedule): living guide — status, API, UI, ops. |
+| [0060-working-plan-implementation-plan.md](0060-working-plan-implementation-plan.md) | Working plan: **historical** pre-build plan (BetterShift eval); use **0021** for current behaviour. |
 | [0025-reservation-overbooking-detection.md](0025-reservation-overbooking-detection.md) | Reservation overbooking detection: slot capacity, overbooking report, 400 on over capacity. |
 | [0058-test-scenario-one-empty-table.md](0058-test-scenario-one-empty-table.md) | Test scenario: all tables seated except one empty (maps 0025 overbooking requirements to this case). |
 | [0031-order-customizations-plan.md](0031-order-customizations-plan.md) | GitHub **#50**: pizza-style order modifiers — existing `ProductQuestion` / `customization_answers`, staff UI gap, phased plan. |

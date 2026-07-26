@@ -1,5 +1,7 @@
 # Working Plan (Kitchen, Bar, Waiters) – Implementation Plan
 
+> **Historical / pre-build.** The working plan feature has shipped. Use **[0021-working-plan.md](0021-working-plan.md)** for current behaviour and ops. This file keeps the original BetterShift evaluation and in-house build plan for context only.
+
 This document describes a plan to implement a **working plan** (shift schedule / rota) for kitchen, bar, and waiters: who is scheduled to work on which days and time slots.
 
 ---
