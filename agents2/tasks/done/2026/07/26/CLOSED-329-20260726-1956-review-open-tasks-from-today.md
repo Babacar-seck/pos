@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Meta close-out for 2026-07-26 confirmed GitHub and the agent live queue were clear aside from #329 after product issues #311–#328 were closed and archived.
+- **What was done:** Feature coder re-checked open issues and archives (18/18 for #311–#328), commented inventory on #329, and closed the issue; no product code changes and no follow-up filed.
+- **What was tested:** Tester PASS — open GH issues empty, live queue clear of leftover product work, day archives present; landing and loyalty public API both 200.
+- **Why closed:** All close-out criteria passed; nothing untracked remaining.
+- **Closed at (UTC):** 2026-07-26 20:00
+---
+
 # Review open tasks from today
 
 ## GitHub Issues
@@ -42,3 +52,24 @@ No product code changed. Tester/closer should confirm:
 1. `gh issue list --repo satisfecho/pos --state open` shows no open product issues (ideally empty after #329 closed).
 2. `agents2/tasks/` has no leftover `NEW-` / `FEAT-` / `WIP-` product work (this file should be the only pipeline item until closed/archived).
 3. `agents2/tasks/done/2026/07/26/` still contains `CLOSED-311` … `CLOSED-328` archives.
+
+## Test report
+
+- **Date/time (UTC):** 2026-07-26 19:59:35 – 19:59:47 UTC (log window ~5m before end).
+- **Environment:** branch `development` (synced); local Docker via HAProxy `http://127.0.0.1:4202`; compose `docker-compose.yml` + `docker-compose.dev.yml` (running stack). No product code under test.
+- **What was tested:** Close-out criteria from Testing instructions (open GH issues, live agent queue, day archives #311–#328); optional smoke that stack still responds.
+- **Results:**
+  1. Open GH issues empty — **PASS** — `gh issue list --repo satisfecho/pos --state open` returned no rows; #329 state **CLOSED**.
+  2. Live queue clear of leftover product work — **PASS** — only `TESTING-329-…` under `agents2/tasks/` (plus `TEMPLATE.md`); no `NEW-` / `FEAT-` / `WIP-` / `UNTESTED-` / other `CLOSED-`.
+  3. Day archives #311–#328 present — **PASS** — `agents2/tasks/done/2026/07/26/` has all 18 `CLOSED-311` … `CLOSED-328` files; no missing issue numbers.
+  - Supplemental smoke: `GET /` → 200; `GET /api/public/tenants/1/loyalty` → 200 (back log: `GET /public/tenants/1/loyalty` 200 OK).
+- **Overall:** **PASS**
+- **Product owner feedback:** Day’s product issues #311–#328 are closed and archived; GitHub has no open issues left; the agent live queue is empty aside from this meta close-out. Safe to archive #329 after closer review — nothing untracked remaining from this inventory.
+- **URLs tested:**
+  1. http://127.0.0.1:4202/
+  2. http://127.0.0.1:4202/api/public/tenants/1/loyalty
+- **Relevant log excerpts (last section):**
+  ```
+  pos-back: "GET /public/tenants/1/loyalty HTTP/1.1" 200 OK
+  curl landing:200 loyalty:200
+  ```
