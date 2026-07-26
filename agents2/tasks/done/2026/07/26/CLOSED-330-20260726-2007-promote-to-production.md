@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Production promotion for today’s tested batch: merge `development` → `master`, deploy to amvara9, and publish release **v2.1.138**.
+- **What was done:** Merged at **f39127d7** (no new semver bump; `[Unreleased]` was meta-only), pushed `master`, published GitHub release **v2.1.138**, Deploy to amvara9 run **30218369187** succeeded; prod shows **2.1.138 f39127d7**.
+- **What was tested:** Tester **PASS** — release notes, `origin/master` tip, GHA deploy success, production `/` + `/api/health` 200, landing version/hash, amvara9 HEAD and package version all match.
+- **Why closed:** All promote/smoke criteria passed; production is live on **2.1.138**.
+- **Closed at (UTC):** 2026-07-26 20:14
+---
+
 # Promote to production
 
 ## GitHub Issues
@@ -41,3 +51,30 @@ See **`docs/0001-ci-cd-amvara9.md`**, **`.cursor/rules/commit-changelog-version.
    - `curl -sS https://www.satisfecho.de/api/health` → `{"status":"ok"}` **200**
    - Landing meta `app-version` content **`2.1.138`**; footer short hash **`f39127d7`**
 5. On amvara9: `cd /development/pos && git rev-parse --short HEAD` → **`f39127d7`**; `front/package.json` version **2.1.138**.
+
+## Test report
+
+1. **Date/time (UTC):** start **2026-07-26T20:13:23Z**, end **2026-07-26T20:13:54Z**. Log window: amvara9 containers ~**2026-07-26T20:13:40Z–20:13:53Z**.
+2. **Environment:** production **https://www.satisfecho.de** (amvara9); local branch **`development`** @ **`7bc1bbfe`** (synced before test). Deploy readiness: GHA run **30218369187** already **success** (updatedAt 2026-07-26T20:12:05Z) before re-smoke — no sleep-based wait.
+3. **What was tested:** GitHub release **v2.1.138** notes vs CHANGELOG; `origin/master` tip **f39127d7**; Deploy to amvara9 run success; production `/` + `/api/health`; landing **app-version** + footer short hash; amvara9 HEAD + `front/package.json` version.
+4. **Results:**
+   - Release **v2.1.138** exists; body matches CHANGELOG **2.1.138** Fixed/Changed (loyalty SlowAPI) and includes highlights since 2.1.97 / #312 — **PASS** (`gh release view`; URL https://github.com/satisfecho/pos/releases/tag/v2.1.138).
+   - `origin/master` tip **f39127d7** — **PASS** (`git fetch` + `git log -1 --oneline origin/master` → `Merge development: release through 2.1.138…`).
+   - Deploy run **30218369187** conclusion **success** — **PASS** (`gh run view` status completed / conclusion success).
+   - `GET https://www.satisfecho.de/` → **200** — **PASS** (`curl` HTTP code).
+   - `GET https://www.satisfecho.de/api/health` → `{"status":"ok"}` **200** — **PASS**.
+   - Landing meta `app-version` **2.1.138**; footer **`2.1.138 f39127d7`** — **PASS** (meta via curl; footer via `BASE_URL=https://www.satisfecho.de npm run test:landing-version` version element text).
+   - amvara9 `git rev-parse --short HEAD` → **f39127d7**; `front/package.json` → **2.1.138** — **PASS** (`ssh amvara9`).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Production is on **2.1.138** at merge **f39127d7** with a published GitHub release and a green Deploy to amvara9 run. Public landing and health look healthy; today’s batch (loyalty SlowAPI fix through TSE / split bill / promos and related cuts) is live. Optional Puppeteer login after landing version check got **401** (credentials/env), outside this task’s promote smoke criteria.
+7. **URLs tested:**
+   1. https://github.com/satisfecho/pos/releases/tag/v2.1.138
+   2. https://github.com/satisfecho/pos/actions/runs/30218369187
+   3. https://www.satisfecho.de/
+   4. https://www.satisfecho.de/api/health
+   5. https://www.satisfecho.de/login?tenant=1 (incidental from landing-version script after footer check)
+8. **Relevant log excerpts (last section):**
+   - amvara9 `pos-haproxy`: `GET / HTTP/1.1` **200**; `GET …/api/health` path via back health **200** in same window.
+   - amvara9 `pos-front`: `GET /` **200** (landing assets + Puppeteer).
+   - amvara9 `pos-back`: `GET /health` **200 OK** (repeated); incidental `POST /token?tenant_id=1` **401** from optional login step — not a promote criterion.
+
