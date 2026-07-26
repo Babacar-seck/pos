@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.120] - 2026-07-26
+
+### Changed
+
+- **Docs (0028):** Documented that tenant public branding (background colour and header image) also covers waitlist and guest feedback, marked the guide as shipped, and aligned the docs README blurb.
+
 ## [2.1.119] - 2026-07-26
 
 ### Changed
