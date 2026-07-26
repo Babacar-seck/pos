@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.110] - 2026-07-26
+
+### Changed
+
+- **Docs index (VeriFactu):** Feature guides now list `0018-verifactu-fiscal-invoicing.md` after billing/Factura 0017, with a short cross-link on the 0017 blurb (tenant `fiscal_mode`, server-issued fiscal stub, Factura QR/disclaimer; no production AEAT submission yet).
+
 ## [2.1.109] - 2026-07-26
 
 ### Changed
