@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.86] - 2026-07-26
+
+### Fixed
+
+- **Translation how-to docs (0012):** Replaced the “add a new language” walkthrough that still used French/`fr` (already shipped) with a hypothetical Portuguese/`pt` example, and noted that §4 locales including `fr` and `bg` should not be recreated.
+
 ## [2.1.85] - 2026-07-26
 
 ### Changed
