@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent cursor-rules catalog:** Related link in `docs/agent-cursor-rules.md` now points at `agents2/TASKS-README.md` and the live `agents2/tasks/` queue (legacy `agents/tasks/` noted only).
+
 ## [2.1.102] - 2026-07-26
 
 ### Changed

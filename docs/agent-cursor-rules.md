@@ -31,4 +31,4 @@ This repository uses **`.cursor/rules/*.mdc`** to give agents short, verifiable 
 ## Related
 
 - **`docs/agent-loop.md`** — multi-agent roles and task filenames.
-- **`agents/tasks/README.md`** — task status pipeline (`wip`, `untested`, …).
+- **`agents2/TASKS-README.md`** — task status pipeline (`wip`, `untested`, …); live queue is **`agents2/tasks/`** (legacy **`agents/tasks/`** may still appear in older notes).
