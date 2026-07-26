@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.93] - 2026-07-26
+
+### Changed
+
+- **Docs index:** Listed `PRINTING.md` under Reference & notes in `docs/README.md` (LAN/kitchen ticket print design; not implemented; browser/invoice print supported today).
+
 ## [2.1.92] - 2026-07-26
 
 ### Changed

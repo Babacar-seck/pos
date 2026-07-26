@@ -93,6 +93,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0023-prioritisation-019-022.md](0023-prioritisation-019-022.md) | Prioritisation: docs 0019–0022 (what to do first). |
 | [0024-whatsapp-reminder-notes.md](0024-whatsapp-reminder-notes.md) | WhatsApp reservation reminder: **shipped** Twilio channel (env + send-reminder); historical design notes. |
 | [0033-postgres-adhoc-sql-table-names.md](0033-postgres-adhoc-sql-table-names.md) | Ad-hoc SQL: no `restaurantorder` table; use `"order"` / `orderitem`, quoting reserved names. |
+| [PRINTING.md](PRINTING.md) | Restaurant LAN / kitchen ticket printing design notes (**not implemented**); browser and invoice print from staff UI are supported today. |
 
 ---
 
