@@ -60,6 +60,44 @@ Signing secret → `SAAS_STRIPE_WEBHOOK_SECRET`. Checkout and Subscription metad
 3. Start trial (or Stripe Checkout) → staff dashboard unlocks.
 4. Stripe lifecycle (renew / past_due / cancel) updates tenant columns via webhook.
 
+## Guided restaurant signup wizard
+
+Public multi-step UX at **`/register`** (alias **`/signup`**) that primes a new restaurant before the hard paywall or staff dashboard. Distinct from **provider** signup (`/provider/register`) and from **platform operator** oversight ([0015-platform-operator-portal.md](0015-platform-operator-portal.md)).
+
+### Guest path
+
+1. Landing (or `/features`) → **Create account** → `/register` (or `/signup`; same component).
+2. Wizard steps (client-side `step` 0–4):
+   | Step | UI | What happens |
+   |------|-----|----------------|
+   | 0 | Intro + “Get started” | No API calls. |
+   | 1 | Restaurant + owner account | `POST /register` creates tenant + owner user; then login. Tenant `saas_subscription_status` is `none` when paywall is on, else `grandfathered`. Optional address / phone / maps URL stored on the tenant. |
+   | 2 | Starter products | `POST /onboarding/starter-products` seeds default beverages (Coffee, Coca Cola, Water) for the new tenant. |
+   | 3 | Photos / price tweak | Authenticated `PATCH`/`upload` on `/products/*` for those starter rows (optional images). |
+   | 4 | Done (QR + public menu link) | Finish CTA: **`/paywall`** when `SAAS_PAYWALL_ENABLED=true`, else **`/dashboard`**. |
+3. When paywall is on: trial or Stripe Checkout on `/paywall` unlocks the staff app (see **Flow** and **API** above).
+4. Platform operators can later review the new tenant under `/platform` (signups metric, tenant detail) — see [0015-platform-operator-portal.md](0015-platform-operator-portal.md).
+
+### Priming vs 402 middleware
+
+While status is still `none`, signup priming must not hit the hard paywall. Exempt prefixes are listed under **Enforcement** (and in `SAAS_EXEMPT_PREFIXES` in `back/app/saas_billing.py`). For the wizard specifically:
+
+| Path prefix | Role in signup |
+|-------------|----------------|
+| `/register` | Create tenant + owner |
+| `/token` (and refresh/logout) | Login after register |
+| `/onboarding` | Seed starter products |
+| `/products` | Price updates and image upload during priming |
+| `/users/me` | Session / “who am I” while finishing |
+| `/saas` | Config, trial, checkout after finish |
+
+Staff routes outside that set return **402** `saas_subscription_required` until trial/subscribe (or grandfathering when the flag is off).
+
+### Smokes
+
+- Wizard UI only (no tenant create): `npm run test:guided-signup-wizard --prefix front` — see `docs/testing.md`.
+- Full paywall path (creates a tenant): `npm run test:paywall --prefix front` when the flag is on.
+
 ## Production enablement
 
 Keep **`SAAS_PAYWALL_ENABLED=false`** until this checklist is done. Do **not** flip the flag mid-deploy without webhook + Price ID ready — cancel / `past_due` / renewals will not sync. amvara9 ops pointer: [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) (§ SaaS paywall).

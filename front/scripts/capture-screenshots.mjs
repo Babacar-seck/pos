@@ -1,19 +1,25 @@
 #!/usr/bin/env node
 /**
  * Capture screenshots for docs (README and feature docs).
- * Logs in as staff (and optionally as provider), navigates to each page, saves PNG to docs/screenshots/.
+ * Logs in as staff (and optionally as provider/courier/platform), navigates to each page,
+ * saves PNG to docs/screenshots/.
  *
  * Usage (from repo root):
  *   LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/capture-screenshots.mjs
  *   BASE_URL=http://127.0.0.1:4202 LOGIN_EMAIL=... LOGIN_PASSWORD=... npm run capture-screenshots --prefix front
  *
  * Env:
- *   BASE_URL              App URL (default: http://127.0.0.1:4202, then auto-detect 4203, 4202, 4200)
- *   LOGIN_EMAIL           Staff (owner/admin) email — required for dashboard, orders, kitchen, reports, reservations, tables, menu
- *   LOGIN_PASSWORD       Staff password
- *   PROVIDER_TEST_EMAIL   Optional: provider login for provider dashboard screenshot
+ *   BASE_URL                     App URL (default: http://127.0.0.1:4202, then auto-detect 4203, 4202, 4200)
+ *   LOGIN_EMAIL                  Staff (owner/admin) email — required for dashboard, orders, kitchen, reports, reservations, tables, menu
+ *   LOGIN_PASSWORD               Staff password
+ *   TENANT_ID                    Public delivery / waitlist tenant (default 1)
+ *   PROVIDER_TEST_EMAIL          Optional: provider login for provider dashboard screenshot
  *   PROVIDER_TEST_PASSWORD
- *   HEADLESS       Default headless; set 0, false, or no for a visible browser.
+ *   COURIER_EMAIL / COURIER_TEST_EMAIL         Optional: courier portal home screenshot
+ *   COURIER_PASSWORD / COURIER_TEST_PASSWORD
+ *   PLATFORM_OPERATOR_EMAIL      Optional: platform operator dashboard
+ *   PLATFORM_OPERATOR_PASSWORD
+ *   HEADLESS                     Default headless; set 0, false, or no for a visible browser.
  */
 
 import { isHeadless } from './puppeteer-headless.mjs';
@@ -117,11 +123,17 @@ async function main() {
   const baseUrl = await detectBaseUrl();
   const loginEmail = process.env.LOGIN_EMAIL || process.env.DEMO_LOGIN_EMAIL;
   const loginPassword = process.env.LOGIN_PASSWORD || process.env.DEMO_LOGIN_PASSWORD;
+  const tenantId = process.env.TENANT_ID || '1';
   const providerEmail = process.env.PROVIDER_TEST_EMAIL;
   const providerPassword = process.env.PROVIDER_TEST_PASSWORD;
+  const courierEmail = process.env.COURIER_EMAIL || process.env.COURIER_TEST_EMAIL;
+  const courierPassword = process.env.COURIER_PASSWORD || process.env.COURIER_TEST_PASSWORD;
+  const platformEmail = process.env.PLATFORM_OPERATOR_EMAIL;
+  const platformPassword = process.env.PLATFORM_OPERATOR_PASSWORD;
   const headless = isHeadless();
 
   console.log('BASE_URL:', baseUrl);
+  console.log('TENANT_ID:', tenantId);
   console.log('Output dir:', outDir);
   if (!loginEmail || !loginPassword) {
     console.error('LOGIN_EMAIL and LOGIN_PASSWORD are required (owner/admin for dashboard, reports, etc.).');
@@ -182,6 +194,24 @@ async function main() {
       console.log('\nSkipping menu (no table token from API)');
     }
 
+    console.log('\nCapturing public Jul surfaces...');
+    try {
+      await capture(page, baseUrl, `/delivery/${tenantId}`, 'delivery.png', {
+        waitSelector: '.delivery-checkout-page, app-delivery-checkout, .delivery-shell, main',
+        delayMs: 1500,
+      });
+    } catch (err) {
+      console.log('  (skipping delivery.png:', err.message + ')');
+    }
+    try {
+      await capture(page, baseUrl, `/waitlist/${tenantId}`, 'waitlist.png', {
+        waitSelector: '#wl-name, app-waitlist-public, main',
+        delayMs: 1000,
+      });
+    } catch (err) {
+      console.log('  (skipping waitlist.png:', err.message + ')');
+    }
+
     if (providerEmail && providerPassword) {
       console.log('\nCapturing provider dashboard...');
       await page.goto(new URL('/provider/login', baseUrl).href, {
@@ -202,6 +232,67 @@ async function main() {
       }
     } else {
       console.log('\nSkipping provider (set PROVIDER_TEST_EMAIL and PROVIDER_TEST_PASSWORD to capture)');
+    }
+
+    if (courierEmail && courierPassword) {
+      console.log('\nCapturing courier portal...');
+      try {
+        await page.goto(new URL('/courier/login', baseUrl).href, {
+          waitUntil: 'networkidle2',
+          timeout: 20000,
+        });
+        await page.waitForSelector('input[type="email"], input[name="username"]', {
+          timeout: 10000,
+        });
+        await page.type('input[type="email"], input[name="username"]', courierEmail);
+        await page.type('input[type="password"]', courierPassword);
+        await page.click('button[type="submit"]');
+        await new Promise((r) => setTimeout(r, 4000));
+        if (page.url().includes('/courier/login')) {
+          console.log('  (courier login failed, skipping courier.png)');
+        } else {
+          await capture(page, baseUrl, '/courier', 'courier.png', {
+            waitSelector: '.courier-page, app-courier-home, main',
+            delayMs: 1000,
+          });
+        }
+      } catch (err) {
+        console.log('  (skipping courier.png:', err.message + ')');
+      }
+    } else {
+      console.log(
+        '\nSkipping courier (set COURIER_EMAIL/COURIER_PASSWORD or COURIER_TEST_* to capture)',
+      );
+    }
+
+    if (platformEmail && platformPassword) {
+      console.log('\nCapturing platform operator dashboard...');
+      try {
+        await page.goto(new URL('/platform/login', baseUrl).href, {
+          waitUntil: 'networkidle2',
+          timeout: 20000,
+        });
+        await page.waitForSelector('input#email, input[type="email"]', { timeout: 10000 });
+        const emailSel = (await page.$('input#email')) ? 'input#email' : 'input[type="email"]';
+        await page.type(emailSel, platformEmail);
+        await page.type('input#password, input[type="password"]', platformPassword);
+        await page.click('button[type="submit"]');
+        await new Promise((r) => setTimeout(r, 4000));
+        if (!page.url().includes('/platform') || page.url().includes('/platform/login')) {
+          console.log('  (platform login failed, skipping platform.png)');
+        } else {
+          await capture(page, baseUrl, '/platform', 'platform.png', {
+            waitSelector: '.metric-card, app-platform-dashboard, main',
+            delayMs: 1000,
+          });
+        }
+      } catch (err) {
+        console.log('  (skipping platform.png:', err.message + ')');
+      }
+    } else {
+      console.log(
+        '\nSkipping platform (set PLATFORM_OPERATOR_EMAIL and PLATFORM_OPERATOR_PASSWORD to capture)',
+      );
     }
 
     console.log('\nDone. Screenshots in', outDir);

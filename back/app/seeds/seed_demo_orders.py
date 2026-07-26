@@ -11,7 +11,8 @@ so the default report date range shows revenue, by product, by table, etc.
 
 Idempotent: runs only when tenant 1 has no orders (clean deployment). Does not delete or
 change existing orders. Assigns `courier_user_id` only when a courier-role user already
-exists for the tenant (never creates users or passwords).
+exists for the tenant (never creates users; run seed_demo_courier_user first via
+bootstrap / reset_demo_data).
 
 Usage:
   docker compose exec back python -m app.seeds.seed_demo_orders

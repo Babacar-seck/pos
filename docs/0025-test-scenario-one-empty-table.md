@@ -4,7 +4,7 @@ This document maps the **Reservations – overbooking detection and seating warn
 
 ## Scenario
 
-- **Venue:** e.g. 10 tables (T01–T10), total seats = 10×4 + 10×2 (demo: T01–T05 = 4 seats, T06–T10 = 2) = 30 seats.
+- **Venue:** e.g. 10 tables (T01–T10), total seats = 5×4 + 5×2 (demo: T01–T05 = 4 seats, T06–T10 = 2) = 30 seats.
 - **State:** For a given slot (e.g. today 19:00), 9 reservations exist with status **seated** (or booked), each assigned to a different table. One table has no reservation → **one empty table**.
 - **0025 capacity:** Capacity is **tenant-level** (all tables), not “tables currently free”. So `total_tables = 10`, `total_seats = 30`. Demand for that slot: `reserved_parties = 9`, `reserved_guests = sum(party_size)` of those 9.
 

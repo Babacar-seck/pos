@@ -1,6 +1,7 @@
 """
-Seed default products for any tenant that has no products.
-Idempotent: creates only products that don't exist (by tenant_id + name).
+Seed default demo products for every tenant (including partial menus).
+Idempotent: creates only DEMO_PRODUCTS names that are missing for that tenant;
+does not delete or alter existing catalog/wine/beer/pizza rows.
 No image filenames so it works on any new deployment.
 
 Usage:
@@ -30,11 +31,13 @@ DEMO_PRODUCTS = [
     ("Coffee", 250, "Beverages", None),
 ]
 
+DEMO_PRODUCT_NAMES = [name for name, *_ in DEMO_PRODUCTS]
+
 
 def _seed_tenant_products(session, tenant_id: int) -> int:
     """Create missing demo products for tenant. Returns number created."""
     result = session.execute(
-        text('SELECT name FROM product WHERE tenant_id = :tid'),
+        text("SELECT name FROM product WHERE tenant_id = :tid"),
         {"tid": tenant_id},
     )
     existing_names = {row[0] for row in result.fetchall()}
@@ -56,6 +59,16 @@ def _seed_tenant_products(session, tenant_id: int) -> int:
     return created
 
 
+def _tenant_missing_demo_names(session, tenant_id: int) -> list[str]:
+    """Return DEMO_PRODUCTS names not yet present for the tenant."""
+    result = session.execute(
+        text("SELECT name FROM product WHERE tenant_id = :tid"),
+        {"tid": tenant_id},
+    )
+    existing_names = {row[0] for row in result.fetchall()}
+    return [name for name in DEMO_PRODUCT_NAMES if name not in existing_names]
+
+
 def run() -> None:
     with Session(engine) as session:
         result = session.execute(text("SELECT id FROM tenant ORDER BY id"))
@@ -64,19 +77,21 @@ def run() -> None:
             print("No tenants found.")
             return
 
-        result = session.execute(text("SELECT tenant_id FROM product GROUP BY tenant_id"))
-        tenants_with_products = {row[0] for row in result.fetchall()}
-        to_seed = [tid for tid in tenant_ids if tid not in tenants_with_products]
-
-        if not to_seed:
-            print("All tenants already have products. Nothing to seed.")
-            return
-
-        for tenant_id in to_seed:
+        # Repair every tenant: empty and partial menus (create missing DEMO_PRODUCTS
+        # names only). Idempotent; never deletes existing products.
+        any_created = False
+        for tenant_id in tenant_ids:
+            missing = _tenant_missing_demo_names(session, tenant_id)
+            if not missing:
+                continue
             created = _seed_tenant_products(session, tenant_id)
             if created:
                 session.commit()
+                any_created = True
                 print(f"Tenant {tenant_id}: created {created} demo products.")
+
+        if not any_created:
+            print("All tenants already have the full demo product set. Nothing to seed.")
 
     print("Done.")
 

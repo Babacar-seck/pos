@@ -20,7 +20,7 @@ You prefer bash shell commands over python or typescript function calls.
 - **Clean tree:** do nothing.
 - **Dirty tree:** update **`CHANGELOG.md`**, optionally bump **`front/`** version, **`git add`** all intended files, **`git commit`**, **`git push origin development`**, then **link the commit on GitHub issues** (below).
 
-Optional: record last bump time in **`agents/007-committer/last-version-bump.txt`** (UTC, one line) if enforcing cadence.
+Optional: record last bump time in **`agents2/007-committer/last-version-bump.txt`** (UTC, one line) if enforcing cadence.
 
 ### Changelog
 

@@ -12,7 +12,13 @@ LOGIN_EMAIL=owner@amvara.de LOGIN_PASSWORD=secret node front/scripts/capture-scr
 # Or: npm run capture-screenshots --prefix front
 ```
 
-Optional: set `PROVIDER_TEST_EMAIL` and `PROVIDER_TEST_PASSWORD` to also capture the provider dashboard. Runs headless by default; set `HEADLESS=0` to open a visible browser.
+Optional captures (skipped with a clear log line when unset or login fails):
+
+- `PROVIDER_TEST_EMAIL` / `PROVIDER_TEST_PASSWORD` — provider dashboard
+- `COURIER_EMAIL` / `COURIER_PASSWORD` (or `COURIER_TEST_*`) — courier portal home
+- `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD` — platform operator dashboard
+
+Public **delivery** and **waitlist** use `TENANT_ID` (default `1`) and need no extra credentials. Runs headless by default; set `HEADLESS=0` to open a visible browser.
 
 ## Adding screenshots manually
 
@@ -25,7 +31,7 @@ Optional: set `PROVIDER_TEST_EMAIL` and `PROVIDER_TEST_PASSWORD` to also capture
 
 ### Staff dashboard
 
-Quick links to Catalog, Reservations, Kitchen, Reports, and more. Used in the [main README](../../README.md).
+Quick links to Catalog, Reservations, Kitchen, Reports, and more. Used in the [main README](../../README.md) screenshot collage.
 
 ![Staff dashboard at /dashboard](dashboard.png)
 
@@ -37,7 +43,7 @@ Orders list with order cards, status, items, and actions.
 
 ### Kitchen display
 
-Full-screen view for the kitchen. See [docs/0015-kitchen-display.md](../0015-kitchen-display.md).
+Full-screen view for the kitchen. Used in the [main README](../../README.md) screenshot collage. See [docs/0015-kitchen-display.md](../0015-kitchen-display.md).
 
 ![Kitchen display at /kitchen](kitchen.png)
 
@@ -61,7 +67,7 @@ Tables canvas and floor plan.
 
 ### Customer menu
 
-Customer-facing menu at `/menu/{table_token}`: products, cart, place order.
+Customer-facing menu at `/menu/{table_token}`: products, cart, place order. Used in the [main README](../../README.md) screenshot collage.
 
 ![Customer menu](menu.png)
 
@@ -71,17 +77,45 @@ Provider catalog management. See [docs/0014-provider-portal.md](../0014-provider
 
 ![Provider dashboard at /provider](provider.png)
 
+### Public Satisfecho Delivery
+
+Guest checkout at `/delivery/{tenantId}`. See [docs/0053-satisfecho-delivery-order-channel.md](../0053-satisfecho-delivery-order-channel.md).
+
+![Public delivery checkout](delivery.png)
+
+### Public waiting list
+
+Walk-in join form at `/waitlist/{tenantId}`. See [docs/0011-table-reservation-user-guide.md](../0011-table-reservation-user-guide.md) (Waiting list).
+
+![Public waiting list](waitlist.png)
+
+### Courier portal
+
+Courier home after `/courier/login` (Available / Mine / Completed). See [docs/0053-satisfecho-delivery-order-channel.md](../0053-satisfecho-delivery-order-channel.md).
+
+![Courier portal home](courier.png)
+
+### Platform operator
+
+Operator dashboard at `/platform`. See [docs/0015-platform-operator-portal.md](../0015-platform-operator-portal.md).
+
+![Platform operator dashboard](platform.png)
+
 ---
 
 ## File reference
 
 | File | Where it's used |
 |------|------------------|
-| `dashboard.png` | Main README |
+| `dashboard.png` | Main README (screenshot collage) |
 | `orders.png` | — |
-| `kitchen.png` | docs/0015-kitchen-display.md |
+| `kitchen.png` | Main README (screenshot collage); docs/0015-kitchen-display.md |
 | `reports.png` | docs/0016-reports.md |
 | `reservations.png` | docs/0011-table-reservation-user-guide.md |
 | `tables.png` | — |
-| `menu.png` | — |
+| `menu.png` | Main README (screenshot collage) |
 | `provider.png` | docs/0014-provider-portal.md |
+| `delivery.png` | docs/0053-satisfecho-delivery-order-channel.md (optional) |
+| `waitlist.png` | docs/0011-table-reservation-user-guide.md (optional) |
+| `courier.png` | docs/0053-satisfecho-delivery-order-channel.md (optional) |
+| `platform.png` | docs/0015-platform-operator-portal.md (optional) |

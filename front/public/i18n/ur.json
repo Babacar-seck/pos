@@ -2479,7 +2479,7 @@
     "FEAT_WAITLIST_TITLE": "انتظار کی فہرست",
     "FEAT_WAITLIST_DESC": "ٹیبل دستیاب نہ ہو تو مہمان نام، افراد اور فون سے قطار میں شامل ہوتے ہیں — عملہ ریزرویشنز سے مطلع کر کے بٹھاتا ہے۔",
     "FEAT_SATISFECHO_DELIVERY_TITLE": "Satisfecho Delivery",
-    "FEAT_SATISFECHO_DELIVERY_DESC": "مہمان پتے اور ادائیگی کے ساتھ آن لائن ڈیلیوری آرڈر کرتے ہیں؛ عملہ بناتا ہے، کورئیر مکمل کرتے ہیں۔",
+    "FEAT_SATISFECHO_DELIVERY_DESC": "مہمان پتے، ادائیگی اور زون فیس کے ساتھ آن لائن ڈیلیوری آرڈر کرتے ہیں؛ عملہ اور کورئیر مکمل کرتے ہیں، گاہک حیثیت ٹریک کرتے ہیں۔",
     "FEAT_PAYMENTS_TITLE": "Online payments",
     "FEAT_PAYMENTS_DESC": "Accept card payments at the table or when booking via Stripe and Revolut Checkout.",
     "FEAT_ORDER_COMMENTS_TITLE": "آرڈر تبصرے",

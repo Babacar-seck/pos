@@ -4,6 +4,8 @@ This document defines a **multi-agent workflow** for this repository, modeled on
 
 **Sources in mac-stats-reviewer used as basis:** root `README.md` (agents overview, hourly commits — *not* adopted verbatim for POS), `agents/tasks/README.md` (task pipeline), and agent prompts under `agents/001-log-reviewer/` … `agents/007-committer/` (roles and handoffs). Optional **Track A autoresearch** (`agents/autoresearch/README.md`, `RUN_24H_*.md`) is **out of scope** for initial POS adoption unless you explicitly port tooling.
 
+**POS active queue:** live task files and pipeline docs are under **`agents2/tasks/`** and **`agents2/TASKS-README.md`** (a symlink **`agents` → `agents2`** may exist for older paths; prefer **`agents2/`** in new work).
+
 ---
 
 ## Goals
@@ -39,10 +41,10 @@ If **none** of the above applies: **push `development` only**; do **not** merge 
 
 ### Sync before edits (multi-agent)
 
-Multiple agents push to **`development`**. **Before any step that edits the repo** (application code, **`agents/tasks/*.md`**, **`CHANGELOG.md`**, etc.), integrate the latest remote state:
+Multiple agents push to **`development`**. **Before any step that edits the repo** (application code, **`agents2/tasks/*.md`**, **`CHANGELOG.md`**, etc.), integrate the latest remote state:
 
 - **Humans / Cursor without the shell loop:** run **`./scripts/git-sync-development.sh`** from the repo root (or the equivalent **`git fetch`** + **`git pull --rebase --autostash origin development`** on **`development`**).
-- **`pos-agent-loop.sh`:** runs that script **at the start of each agent step** (001, 006×5, 002, 003, 004, 007). Set **`AGENT_GIT_SYNC=0`** only to skip (offline debugging).
+- **`agents2/pos-cursor-loop.sh`:** runs that script **at the start of each agent step** (001, 006×5, 002, 003, 004, 007). Set **`AGENT_GIT_SYNC=0`** only to skip (offline debugging).
 - **Before push:** pull/rebase again after your commit so **`git push origin development`** does not regress or race another agent.
 
 This is **remote integration** (fetch/pull/rebase), not “open a GitHub PR before every edit.” Use normal PRs when your team wants human review before merging a branch; day-to-day **`development`** still needs **pull/rebase** so agents do not overwrite each other’s work.
@@ -53,20 +55,20 @@ This is **remote integration** (fetch/pull/rebase), not “open a GitHub PR befo
 
 | mac-stats-reviewer agent | POS role | Typical inputs | Writes / edits |
 |--------------------------|----------|----------------|----------------|
-| **001 Log reviewer** (`001-gh-reviewer.md`) | **GitHub → FEAT; logs → NEW** | **Issues:** up to **3 × `FEAT-…`** / run for **feature coders** (×5 in loop). **Logs:** **`NEW-…`** only for concrete Docker log incidents | **`agents/tasks/`** only. **`gh`** on **`satisfecho/pos`** issues. See **001** prompt — never use **`NEW-`** for GitHub-sourced work. |
+| **001 Log reviewer** (`001-gh-reviewer.md`) | **GitHub → FEAT; logs → NEW** | **Issues:** up to **3 × `FEAT-…`** / run for **feature coders** (×5 in loop). **Logs:** **`NEW-…`** only for concrete Docker log incidents | **`agents2/tasks/`** only. **`gh`** on **`satisfecho/pos`** issues. See **001** prompt — never use **`NEW-`** for GitHub-sourced work. |
 | **005 Marketing repos reviewer** (`005-marketing-repos-reviewer.md`) | **NNN_slug org repos → register / deploy / FEAT-MKT** | Preflight scans **`satisfecho/*`** repos named **`NNN_slug`** (e.g. **`083_wimpi`**) for pushes and open issues | **`config/marketing-sites.json`**, **`front/sites/<slug>/`**, **`FEAT-MKT-…`** tasks; triggers **`Deploy to amvara9`** when bundles change. Live at **`https://www.satisfecho.de/<slug>/`**. |
-| **008 Enhancement reviewer** (`008-enhancement-reviewer.md`) | **Weekly repo health → FEAT-0 / NEW-0** | Preflight scans docs/changelog drift, demo seeds, task-queue depth (~7d cadence). Stamp file is capped via **`scripts/rotate-008-time-of-last-review.sh`** (keep last ~100 lines; older → **`time-of-last-review.archive.txt`**). | **`agents2/tasks/`** only (**`FEAT-0-*`**, **`NEW-0-*`**); digest **`$AGENT_LOOP_TMP/008-latest-context.txt`**. Override: **`AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1`**. |
+| **008 Enhancement reviewer** (`008-enhancement-reviewer.md`) | **Weekly repo health → FEAT-0 / NEW-0** | Preflight scans docs/changelog drift, demo seeds, task-queue depth (~7d cadence). When **`PAUSE new_backlog`** or deep NEW with only **owned** docs/changelog **`SIGNAL`** themes (no failing demo SIGNAL), **stamp only** (`FEAT: 0 \| NEW: 0`) — no new task files except a new unqueued product/demo finding. Stamp file is capped via **`scripts/rotate-008-time-of-last-review.sh`** (keep last ~100 lines; older → **`time-of-last-review.archive.txt`**). | **`agents2/tasks/`** only (**`FEAT-0-*`**, **`NEW-0-*`**); digest **`$AGENT_LOOP_TMP/008-latest-context.txt`**. Override: **`AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1`**. |
 | **002 Coder** (`002-coder-backend/CODER.md`) | **Implementer (main)** | **NEW** → **wip**; also continues **wip** when no **NEW** (orchestrator runs this step if **`NEW-*.md`** or **`WIP-*.md`** exists) | **`back/`**, **`front/`**, tests; task file status + **Testing instructions**; then **untested**. |
 | **006 Feature coder** (`010-feature-coder.md`) | **Implementer (FEAT queue)** | **`FEAT-*.md`** (including **`FEAT-MKT-*`** for marketing repos) → **wip** | POS **`back/`/`front/`** or sibling marketing repo per task. |
 | **003 Tester** (`TESTER.md`) | **Verifier** | **untested** → **testing** | Appends **Test report**; **closed** or back to **wip** on failure. Uses **`pytest`** (Docker), **`node front/scripts/…`**, **`npm run test:*`** per task. |
-| **004 Closing reviewer** (`CLOSING-REVIEWER-PROMPT.md`) | **Archivist** | **closed** tasks | Prepends **Closing summary**; moves file to **`agents/tasks/done/YYYY/MM/DD/`** (date from `CLOSED-YYYYMMDD-…`; use **`scripts/move-agent-task-to-done.sh`**). |
+| **004 Closing reviewer** (`CLOSING-REVIEWER-PROMPT.md`) | **Archivist** | **closed** tasks | Prepends **Closing summary**; moves file to **`agents2/tasks/done/YYYY/MM/DD/`** (date from `CLOSED-YYYYMMDD-…`; use **`scripts/move-agent-task-to-done.sh`**). |
 | **007 Committer** (`040-committer.md`) | **Changelog / version / commit** | `git status` in POS root | **`CHANGELOG.md`**, version bump; **stages and commits** finished work on **`development`**; **`Refs #N`** in message; **`scripts/link-commit-to-github-issues.sh`** comments on issues after push. Does **not** rewrite app logic. |
 
-**Orchestrator / security / release-watcher** (mentioned in mac-stats-reviewer `README.md`): optional Cursor threads or human; not required for POS unless you add matching `PROMPT-*.md` files under `agents/`.
+**Orchestrator / security / release-watcher** (mentioned in mac-stats-reviewer `README.md`): optional Cursor threads or human; not required for POS unless you add matching `PROMPT-*.md` files under `agents2/`.
 
 ---
 
-## Task workflow (from `agents/tasks/README.md`)
+## Task workflow (from `agents2/TASKS-README.md`)
 
 Adapted filename pattern and statuses — **same semantics** as mac-stats-reviewer.
 
@@ -84,7 +86,7 @@ Examples: `FEAT-20260323-1030-github-issue-50.md` (GitHub → feature coder), `N
 | **wip** | Active implementation | Coder → **untested** when done + testing instructions added |
 | **untested** | Ready for verification | Tester → **testing** |
 | **testing** | Under test | Tester → **closed** (pass) or **wip** (fail) |
-| **closed** | Verified | Closing reviewer prepends summary → archives under **`agents/tasks/done/YYYY/MM/DD/`** (same basename; full date from `CLOSED-YYYYMMDD-…`). Use **`./scripts/move-agent-task-to-done.sh`**. |
+| **closed** | Verified | Closing reviewer prepends summary → archives under **`agents2/tasks/done/YYYY/MM/DD/`** (same basename; full date from `CLOSED-YYYYMMDD-…`). Use **`./scripts/move-agent-task-to-done.sh`**. |
 
 ### Flow
 
@@ -107,30 +109,30 @@ Examples: `FEAT-20260323-1030-github-issue-50.md` (GitHub → feature coder), `N
 
 ---
 
-## Agent loop script (`agents/pos-agent-loop.sh`)
+## Agent loop script (`agents2/pos-cursor-loop.sh`)
 
-Same idea as **mac-stats-reviewer** `agents/run.sh`, but named for clarity: one entrypoint to run **log reviewer (001) → feature coder (up to ×5) → coder → tester → closing reviewer → committer** on a timer, or single steps.
+Same idea as **mac-stats-reviewer** `agents/run.sh`, but named for clarity: one entrypoint to run **log reviewer (001) → feature coder (up to ×5) → coder → tester → closing reviewer → committer** on a timer, or single steps. Prefer **`./agents2/pos-cursor-loop.sh`** (legacy **`agents/`** path resolves via the **`agents` → `agents2`** symlink when present).
 
 | Invocation | Behaviour |
 |------------|-----------|
-| **`./agents/pos-agent-loop.sh`** | Full cycle every **`AGENT_LOOP_SLEEP_MINUTES`** (default **5**); requires **`cursor-agent`** on `PATH`. |
-| **`./agents/pos-agent-loop.sh log`** (or **`log-reviewer`**, **`001`**) | Run **001** log / incident reviewer **only if** the shell preflight finds work: open GitHub issues not yet linked from a root **`agents/tasks/*.md`** (`#NN` / `issues/NN`), or Docker log lines matching incident heuristics. Otherwise **001** skips **`cursor-agent`** (saves tokens). Digest: **`$AGENT_LOOP_TMP/001-latest-context.txt`** (default **`$TMPDIR/pos-agent-loop/`**). Override: **`AGENT_LOG_REVIEWER_ALWAYS=1`** or **`AGENT_001_SKIP_PREFLIGHT=1`**. |
-| **`./agents/pos-agent-loop.sh marketing`** (or **`mkt`**, **`005`**) | Run **005** marketing repos reviewer **only if** preflight finds new/changed **`NNN_slug`** org repos, deploy candidates, or untracked issues in those repos. Digest: **`$AGENT_LOOP_TMP/005-latest-context.txt`**. Override: **`AGENT_MARKETING_REVIEWER_ALWAYS=1`** or **`AGENT_005_SKIP_PREFLIGHT=1`**. |
-| **`./agents/pos-agent-loop.sh enhancement`** (or **`enhance`**, **`008`**) | Run **008** enhancement reviewer **only if** preflight finds weekly due (**≥7d** since last stamp) or improvement **SIGNAL** lines (docs drift, demo seeds, queue backlog). Digest: **`$AGENT_LOOP_TMP/008-latest-context.txt`**. Override: **`AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1`** or **`AGENT_008_SKIP_PREFLIGHT=1`**. |
-| **`./agents/pos-agent-loop.sh coder`** | Run coder step if **`NEW-*.md`** or **`WIP-*.md`** exists (and prompt file present). Prefer finishing **NEW** first; **WIP** continues in-progress work. |
-| **`./agents/pos-agent-loop.sh tester`** | Run tester if **`UNTESTED-*.md`** or in-progress **`TESTING-*.md`** exists (so interrupted runs are not stuck). |
-| **`./agents/pos-agent-loop.sh feat`** | Run feature coder if **`FEAT-*.md`** exists. |
-| **`./agents/pos-agent-loop.sh closing-review`** | Run closer if **`CLOSED-*.md`** still in **`agents/tasks/`**. |
-| **`./agents/pos-agent-loop.sh committer`** | Run committer if POS repo has unstaged/staged changes. |
-| **`./agents/pos-agent-loop.sh help`** | Usage. |
+| **`./agents2/pos-cursor-loop.sh`** | Full cycle every **`AGENT_LOOP_SLEEP_MINUTES`** (default **5**); requires **`cursor-agent`** on `PATH`. |
+| **`./agents2/pos-cursor-loop.sh log`** (or **`log-reviewer`**, **`001`**) | Run **001** log / incident reviewer **only if** the shell preflight finds work: open GitHub issues not yet linked from a root **`agents2/tasks/*.md`** (`#NN` / `issues/NN`), or Docker log lines matching incident heuristics. Otherwise **001** skips **`cursor-agent`** (saves tokens). Digest: **`$AGENT_LOOP_TMP/001-latest-context.txt`** (default **`$TMPDIR/pos-agent-loop/`**). Override: **`AGENT_LOG_REVIEWER_ALWAYS=1`** or **`AGENT_001_SKIP_PREFLIGHT=1`**. |
+| **`./agents2/pos-cursor-loop.sh marketing`** (or **`mkt`**, **`005`**) | Run **005** marketing repos reviewer **only if** preflight finds new/changed **`NNN_slug`** org repos, deploy candidates, or untracked issues in those repos. Digest: **`$AGENT_LOOP_TMP/005-latest-context.txt`**. Override: **`AGENT_MARKETING_REVIEWER_ALWAYS=1`** or **`AGENT_005_SKIP_PREFLIGHT=1`**. |
+| **`./agents2/pos-cursor-loop.sh enhancement`** (or **`enhance`**, **`008`**) | Run **008** enhancement reviewer **only if** preflight finds weekly due (**≥7d** since last stamp) or improvement **SIGNAL** lines (docs drift, demo seeds, queue backlog). Digest: **`$AGENT_LOOP_TMP/008-latest-context.txt`**. Override: **`AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1`** or **`AGENT_008_SKIP_PREFLIGHT=1`**. |
+| **`./agents2/pos-cursor-loop.sh coder`** | Run coder step if **`NEW-*.md`** or **`WIP-*.md`** exists (and prompt file present). Prefer finishing **NEW** first; **WIP** continues in-progress work. |
+| **`./agents2/pos-cursor-loop.sh tester`** | Run tester if **`UNTESTED-*.md`** or in-progress **`TESTING-*.md`** exists (so interrupted runs are not stuck). |
+| **`./agents2/pos-cursor-loop.sh feat`** | Run feature coder if **`FEAT-*.md`** exists. |
+| **`./agents2/pos-cursor-loop.sh closing-review`** | Run closer if **`CLOSED-*.md`** still in **`agents2/tasks/`**. |
+| **`./agents2/pos-cursor-loop.sh committer`** | Run committer if POS repo has unstaged/staged changes. |
+| **`./agents2/pos-cursor-loop.sh help`** | Usage. |
 
 **001 — if `gh issue list` fails:** preflight retries with **`gh api repos/<owner>/<repo>/issues?state=open&per_page=40`** (issues only, PRs excluded) so **`G001_UNTRACKED_ISSUES`** and the digest can still see new work when the REST call succeeds.
 
-**001 — GitHub not authenticated:** If **`gh`** stderr indicates **401** / bad credentials, **`pos-agent-loop.sh`** prints a **stderr banner** on the console and sets **`G001_GH_AUTH_FAILED=1`** in the digest summary; **`gh` stderr** is appended under **`=== gh issue list stderr ===`** / **`gh api`** sections.
+**001 — GitHub not authenticated:** If **`gh`** stderr indicates **401** / bad credentials, **`pos-cursor-loop.sh`** prints a **stderr banner** on the console and sets **`G001_GH_AUTH_FAILED=1`** in the digest summary; **`gh` stderr** is appended under **`=== gh issue list stderr ===`** / **`gh api`** sections.
 
 **Git:** **`scripts/git-sync-development.sh`** runs only when a step actually has work (unless **`AGENT_GIT_SYNC=0`**): **001** syncs only when its preflight gate opens; **002–004 / 006–007** sync only when their queue (or, for **007**, uncommitted changes) is non-empty. See **Sync before edits (multi-agent)** above.
 
-**Token-saving gates:** **002 / 003 / 004 / 006 / 007** skip **`cursor-agent`** and **skip git sync** when there is no matching task file at **`agents/tasks/`** root or (committer) no unstaged/staged diff. For **003**, “matching” means **`UNTESTED-*.md`** or **`TESTING-*.md`** (unfinished test runs stay in the queue). **006** runs at most five times per cycle and **stops the FEAT batch early** when no **`FEAT-*.md`** remains. **001** adds a **preflight digest** (issues + log heuristics). **Committer** in **`agents2/pos-cursor-loop.sh`** runs **`040-committer.md`** via **`cursor-agent`** by default when there are non-stamp changes (**`AGENT_COMMITTER_USE_CURSOR`** default **1**). Stamp-only trees still use local git (**`AGENT_COMMITTER_LOCAL`**). After a new commit, **`scripts/link-commit-to-github-issues.sh`** posts on linked GitHub issues.
+**Token-saving gates:** **002 / 003 / 004 / 006 / 007** skip **`cursor-agent`** and **skip git sync** when there is no matching task file at **`agents2/tasks/`** root or (committer) no unstaged/staged diff. For **003**, “matching” means **`UNTESTED-*.md`** or **`TESTING-*.md`** (unfinished test runs stay in the queue). **006** runs at most five times per cycle and **stops the FEAT batch early** when no **`FEAT-*.md`** remains. **001** adds a **preflight digest** (issues + log heuristics). **Committer** in **`agents2/pos-cursor-loop.sh`** runs **`040-committer.md`** via **`cursor-agent`** by default when there are non-stamp changes (**`AGENT_COMMITTER_USE_CURSOR`** default **1**). Stamp-only trees still use local git (**`AGENT_COMMITTER_LOCAL`**). After a new commit, **`scripts/link-commit-to-github-issues.sh`** posts on linked GitHub issues.
 
 **Wall-clock limits (stuck-loop guard):** **`agents2/pos-cursor-loop.sh`** wraps every **`cursor-agent`** invocation with a per-step timeout (GNU **`timeout`** when on `PATH`, else a bash fallback). Defaults: **`AGENT_CURSOR_TIMEOUT_MINUTES=25`** for most steps; **`AGENT_TESTER_TIMEOUT_MINUTES=32`** for **003** (deploy polling + production checks). On timeout (exit **124**) the orchestrator logs and **continues the loop** (same as a non-zero exit); **`TESTING-*.md`** / **`WIP-*.md`** are picked up on the next cycle. Set **`AGENT_CURSOR_TIMEOUT=0`** to disable limits. Legacy **`run-agents.sh`** used **`timeout 15m`** for **goose**; the cursor loop had no equivalent until this guard.
 
@@ -147,46 +149,38 @@ Same idea as **mac-stats-reviewer** `agents/run.sh`, but named for clarity: one 
 
 **Docker / stack:** still start with repo-root **`./run.sh`** or **`./run.sh -dev`** — this script does **not** replace the POS application runner.
 
-**Prompts:** steps **skip** if the corresponding markdown under **`agents/001-log-reviewer/`**, **`agents/002-coder/`**, **`003-tester/`**, etc. is missing. Steps also skip if **`cursor-agent`** is missing (single commands); the **infinite loop** exits immediately if **`cursor-agent`** is not installed.
+**Prompts:** steps **skip** if the corresponding markdown under **`agents2/`** (e.g. **`001-gh-reviewer.md`**, **`002-coder/CODER.md`**, **`020-test.md`**) is missing. Steps also skip if **`cursor-agent`** is missing (single commands); the **infinite loop** exits immediately if **`cursor-agent`** is not installed.
 
 ---
 
 ## Where files live in POS (target layout)
 
-Prompt markdown lives under **`agents/00*-*/*/`** (see **`agents/README.md`**). **`tasks/`** holds active task files.
+Prompt markdown and the orchestrator live under **`agents2/`**. Active task files live in **`agents2/tasks/`**; pipeline rules in **`agents2/TASKS-README.md`**.
 
 ```text
-agents/
-  README.md              # Index of prompts
-  pos-agent-loop.sh      # Orchestrator (mac-stats-reviewer style); see section above
-  tasks/
-    README.md              # Copy/adapt from mac-stats-reviewer agents/tasks/README.md
-    done/                  # Archived CLOSED-* tasks: done/YYYY/MM/DD/ (see README)
-    inbox/                 # Optional: orchestrator-only queue (mac-stats-reviewer pattern)
-  001-log-reviewer/
-    LOG-REVIEWER-PROMPT.md # Adapt: Docker logs + POS docs, not ~/.mac-stats/debug.log
+agents2/
+  TASKS-README.md        # Live pipeline (statuses, archive); adapted from mac-stats agents/tasks/README.md
+  pos-cursor-loop.sh     # Orchestrator (mac-stats-reviewer style); see section above
+  001-gh-reviewer.md     # Role prompts (also 005/008/010/020/030/040-*.md)
   002-coder/
     CODER.md               # Adapt: implement under back/, front/; read docs/ first
-  003-tester/
-    TESTER.md              # Adapt: pytest + Puppeteer; BASE_URL, HEADLESS
-  004-closing-reviewer/
-    CLOSING-REVIEWER-PROMPT.md
+  tasks/
+    done/                  # Archived CLOSED-* tasks: done/YYYY/MM/DD/ (see done/README.md)
+    inbox/                 # Optional: orchestrator-only queue (mac-stats-reviewer pattern)
   007-committer/
-    COMMITTER.md           # Adapt: CHANGELOG + front/package.json (not Cargo.toml)
-  # Optional:
-  006-feature-coder/
-    FEATURE-CODER.md
+  # Optional role dirs / stamps as needed
 ```
 
-**Prompt authoring:** Start from the markdown in `~/projects/mac-stats-reviewer/agents/` and replace paths (`~/projects/mac-stats` → this repo root), log locations (**Docker** and **`docs/error-investigation-workflow`**), and stack commands (**`docker compose`**, **`front/scripts/`**).
+**Prompt authoring:** Start from the markdown in `~/projects/mac-stats-reviewer/agents/` and replace paths (`~/projects/mac-stats` → this repo root), log locations (**Docker** and **`docs/error-investigation-workflow`**), and stack commands (**`docker compose`**, **`front/scripts/`**). Land adapted prompts under **`agents2/`**.
 
 ### Done archive layout (by calendar day)
 
-Unlike a flat **`done/`** folder, POS keeps closed tasks under **`agents/tasks/done/<YYYY>/<MM>/<DD>/`**. The full calendar date comes from the **`YYYYMMDD`** segment in the filename (e.g. `CLOSED-20260323-1200-slug.md` → **`done/2026/03/23/`**), so **one folder per day**: all tasks whose `CLOSED-` stamp uses that day are grouped together. Put the **actual finish / closure day** in `YYYYMMDD` when naming **`CLOSED-…`** files so the archive matches “work done that day.”
+Unlike a flat **`done/`** folder, POS keeps closed tasks under **`agents2/tasks/done/<YYYY>/<MM>/<DD>/`**. The full calendar date comes from the **`YYYYMMDD`** segment in the filename (e.g. `CLOSED-20260323-1200-slug.md` → **`done/2026/03/23/`**), so **one folder per day**: all tasks whose `CLOSED-` stamp uses that day are grouped together. Put the **actual finish / closure day** in `YYYYMMDD` when naming **`CLOSED-…`** files so the archive matches “work done that day.”
 
 - **Closing reviewer** (or operator): after prepending the closing summary, run  
-  **`./scripts/move-agent-task-to-done.sh agents/tasks/CLOSED-….md`**
-- Details: **`agents/tasks/README.md`**, **`agents/tasks/done/README.md`**
+  **`./scripts/move-agent-task-to-done.sh agents2/tasks/CLOSED-….md`**  
+  (script accepts the path you pass; legacy **`agents/tasks/…`** still works when the **`agents` → `agents2`** symlink is present)
+- Details: **`agents2/TASKS-README.md`**, **`agents2/tasks/done/README.md`**
 
 ---
 
@@ -208,7 +202,7 @@ mac-stats-reviewer’s committer edits **`CHANGELOG.md`** and **`src-tauri/Cargo
 - **Branch policy:** commit on **`development`**; **`git push origin development`**. Merge to **`master`** only per **Git branching and production** above — not on every committer run.
 - **Issues:** after push, **`./scripts/link-commit-to-github-issues.sh`** (also invoked by the loop) comments on issues linked from **`agents2/tasks/`** files in the commit.
 
-Optional: track last version bump time in **`agents/007-committer/last-version-bump.txt`** if you want mac-stats-reviewer’s “at most twice a day” style cap.
+Optional: track last version bump time in **`agents2/007-committer/last-version-bump.txt`** if you want mac-stats-reviewer’s “at most twice a day” style cap.
 
 ---
 
@@ -248,7 +242,7 @@ Adjust names to taste (`status/planned`, etc.); keep them **documented here** so
 
 | Role | When | Update the issue |
 |------|------|------------------|
-| **Reviewer** (001 / planning) | After creating **`FEAT-…`** for issue **#NN** (never **`NEW-`** for GitHub) | Comment: link **`agents/tasks/FEAT-…md`**; label **`agent:planned`**. Optionally remove **`agent:needs-triage`**. |
+| **Reviewer** (001 / planning) | After creating **`FEAT-…`** for issue **#NN** (never **`NEW-`** for GitHub) | Comment: link **`agents2/tasks/FEAT-…md`**; label **`agent:planned`**. Optionally remove **`agent:needs-triage`**. |
 | **Coder** & **Feature coder** | When renaming task **new/feat → wip** | Add comment: “Implementation started”; **`agent:planned` → `agent:wip`** (remove planned, add wip). |
 | **Tester** | When renaming **untested → testing** | Add comment: “Verification started” (commands/env if useful); **`agent:wip` → `agent:testing`**. |
 | **Committer** (040) | After **`git push origin development`** for a commit that includes related task files | Comment via **`scripts/link-commit-to-github-issues.sh`** (commit link + subject); commit message should include **`Refs #NN`**. |
@@ -263,7 +257,7 @@ export GH_TOKEN=…   # or rely on `gh auth login`
 
 gh issue list --repo satisfecho/pos --state open --limit 30
 
-gh issue comment 50 --repo satisfecho/pos --body "Task file: agents/tasks/FEAT-20260323-1030-order-tip.md — planned for implementation (feature queue)."
+gh issue comment 50 --repo satisfecho/pos --body "Task file: agents2/tasks/FEAT-20260323-1030-order-tip.md — planned for implementation (feature queue)."
 
 gh issue edit 50 --repo satisfecho/pos --add-label "agent:planned"
 
@@ -286,8 +280,8 @@ Equivalent **HTTP** calls are documented in [GitHub REST: Issues](https://docs.g
 |-------------------------|----------|
 | **Hourly `launchd` commits** | Not required; POS uses explicit commits. |
 | **Dual-repo workspace** (`mac-stats-agent-workspace.code-workspace`) | Single repo unless you split a `pos-reviewer` clone later. |
-| **`cursor-agent < PROMPT.md`** | Use Cursor Chat/Agent with `agents/.../*.md` open or pasted; CLI availability varies. |
-| **`start-all-agents.sh` + per-agent inboxes** | Optional later; start with one **`agents/tasks/`** folder and README. |
+| **`cursor-agent < PROMPT.md`** | Use Cursor Chat/Agent with `agents2/.../*.md` open or pasted; CLI availability varies. |
+| **`start-all-agents.sh` + per-agent inboxes** | Optional later; start with one **`agents2/tasks/`** folder and **`agents2/TASKS-README.md`**. |
 | **Track A autoresearch / Ollama autopilot** | Separate infrastructure; document only in **`docs/agent-loop.md`** until you port or reference externally. |
 
 ---
@@ -300,12 +294,12 @@ mac-stats-reviewer’s **`agents/autoresearch/README.md`** describes **Track A**
 
 ## Implementation checklist (for maintainers)
 
-1. **`agents/tasks/README.md`** and **`agents/tasks/done/README.md`** define the pipeline and **`done/YYYY/MM/DD/`** layout; use **`scripts/move-agent-task-to-done.sh`** when archiving.
-2. **Prompts** ship in **`agents/0*.md`**; refine them as needed.
+1. **`agents2/TASKS-README.md`** and **`agents2/tasks/done/README.md`** define the pipeline and **`done/YYYY/MM/DD/`** layout; use **`scripts/move-agent-task-to-done.sh`** when archiving (pass an **`agents2/tasks/CLOSED-…`** path).
+2. **Prompts** ship in **`agents2/`** (role `.md` files and role dirs); refine them as needed.
 3. **Link from** **`AGENTS.md`** or **`.cursor/rules`** — one line: “Multi-agent task workflow: **`docs/agent-loop.md`**.”
 4. **Train the team** on task renames and **Testing instructions** / **Test report** format (mirror mac-stats-reviewer for consistency).
-5. **`agents/pos-agent-loop.sh`** — orchestrator for **`cursor-agent`** (see **Agent loop script** above).
-6. **Optional:** add **`agents/start-all-agents.sh`**-style helpers only if you run multiple Cursor sessions regularly.
+5. **`agents2/pos-cursor-loop.sh`** — orchestrator for **`cursor-agent`** (see **Agent loop script** above).
+6. **Optional:** add **`agents2/start-all-agents.sh`**-style helpers only if you run multiple Cursor sessions regularly.
 
 ---
 

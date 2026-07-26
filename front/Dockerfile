@@ -14,15 +14,14 @@ RUN npm ci --ignore-scripts
 # Copy source code
 COPY . .
 
-# Copy and set up entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Entrypoint under /app so the ./front bind-mount picks up host edits without an image rebuild.
+RUN chmod +x /app/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 80
 
 # Use entrypoint to inject environment variables
-ENTRYPOINT ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Start dev server with host binding for Docker (no SSR in dev mode).
 # --poll 2000: use polling for file watch so volume-mounted source changes are detected immediately

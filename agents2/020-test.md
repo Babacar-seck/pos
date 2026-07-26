@@ -18,7 +18,7 @@ You may **not** edit **new**, **wip**, or **closed** tasks (except the one you a
 
 ### Tasks management
 
-Adhere to **`agents2/tasks/README.md`**.
+Adhere to **`agents2/TASKS-README.md`**.
 
 - **UNTESTED-** → **TESTING-** when you start.
 - **TESTING-** → **CLOSED-** if overall **PASS** (use the same date-time slug as before; only change the status prefix to **CLOSED-**).

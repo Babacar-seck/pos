@@ -2,13 +2,24 @@
 
 ![POS2 — Restaurant POS and ordering](docs/banner.svg)
 
-
 [![version](https://img.shields.io/github/v/release/satisfecho/pos?style=flat-square&label=version)](https://github.com/satisfecho/pos/releases)
 [![build](https://img.shields.io/github/check-runs/satisfecho/pos/master?style=flat-square&label=build)](https://github.com/satisfecho/pos/actions)
+[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE.md)
+[![last commit](https://img.shields.io/github/last-commit/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/commits)
+[![stars](https://img.shields.io/github/stars/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/stargazers)
+
+[![Docker](https://img.shields.io/badge/deploy-docker--compose-2496ED?style=flat-square&logo=docker&logoColor=white)](docker-compose.yml)
+[![Angular](https://img.shields.io/badge/frontend-Angular-DD0031?style=flat-square&logo=angular&logoColor=white)](front/)
+[![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](back/)
+[![PostgreSQL](https://img.shields.io/badge/db-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](docker-compose.yml)
 
 **Restaurant POS and ordering infrastructure — self-hosted, multi-tenant, real-time.**
 
 _A point-of-sale system with a customer-facing menu, table management, reservations, and online payments (**Stripe** and optional **Revolut**). Staff use the Angular admin; customers order via QR codes and pay at the table. You keep full control of your data and deployment._
+
+**Topics:** `restaurant-pos` · `multi-tenant` · `self-hosted` · `docker` · `fastapi` · `angular` · `postgresql` · `stripe` · `kitchen-display`
+
+**[Try the live demo →](https://satisfecho.de/)**
 
 ---
 </div>
@@ -26,13 +37,17 @@ POS2 is built for restaurants and venues that want:
 
 The frontend is Angular; the backend is FastAPI with PostgreSQL and Redis. All major flows are implemented and documented (see [ROADMAP.md](ROADMAP.md) and the `docs/` folder).
 
-### Screenshot — Staff dashboard
+### Screenshots
 
-The staff dashboard gives quick access to Catalog, Reservations, Kitchen display, Reports, and more.
+Staff dashboard, kitchen display, and customer menu — a quick visual sense of the product.
 
-![Staff dashboard — quick links to Catalog, Reservations, Kitchen, Reports](docs/screenshots/dashboard.png)
+<p float="left">
+  <img src="docs/screenshots/dashboard.png" width="32%" alt="Staff dashboard — Catalog, Reservations, Kitchen, Reports" />
+  <img src="docs/screenshots/kitchen.png" width="32%" alt="Kitchen display — full-screen order cards" />
+  <img src="docs/screenshots/menu.png" width="32%" alt="Customer menu — browse, cart, place order" />
+</p>
 
-*More screenshots (orders, kitchen display, reports, customer menu) are listed in [docs/screenshots/README.md](docs/screenshots/README.md).*
+*More screenshots (orders, reports, reservations, tables, provider portal) are listed in [docs/screenshots/README.md](docs/screenshots/README.md).*
 
 ---
 
@@ -49,13 +64,19 @@ The staff dashboard gives quick access to Catalog, Reservations, Kitchen display
 | **Payments** | **Stripe** and **Revolut** (online checkout on the customer menu; per-tenant configuration in **Settings**). **Cash** and **card terminal (dataphone)** when staff marks the order paid. Optional **immediate payment required** (checkout opens right after placing order). Revolut sandbox and redirect URLs: [docs/REVOLUT.md](docs/REVOLUT.md). |
 | **Tables** | Table management, QR codes, canvas view. Table activation and 4-digit PIN so only present guests can order; PIN rate limiting via Redis. |
 | **Staff navigation** | After sign-in, the sidebar matches operational areas: **Dashboard**, **My shift** (optional), **Orders**, **Reservations** and **Guest feedback** (when the reservations module is enabled), **Tables** (list and canvas), **Kitchen** and **Bar** displays, **Customers**, **Products**, **Catalog** (when the providers module is enabled), **Reports**, **Working plan**, **Inventory** (items, suppliers, purchase orders, stock, reports — admin), **Users**, **Contracts** (when permitted), **Settings** (admin). |
-| **Reservations** | Staff: list, create, edit, seat, finish, cancel at `/reservations`. **Client notes** (from the customer at booking) and **owner notes** (internal staff notes). **Client technical info** (IP, user-agent, browser fingerprint, screen size) is recorded for public bookings and visible to staff. **No-show**: mark no-shows and **send reminders** by email and/or **WhatsApp** (when Twilio is configured). Public: book at `/book/:tenantId`, view/cancel at `/reservation?token=...`. Table status: available / reserved / occupied. |
+| **Reservations** | Staff: list, create, edit, seat, finish, cancel at `/reservations`. **Client notes** (from the customer at booking) and **owner notes** (internal staff notes). **Client technical info** (IP, user-agent, browser fingerprint, screen size) is recorded for public bookings and visible to staff. **No-show**: mark no-shows and **send reminders** by email and/or **WhatsApp** (when Twilio is configured). Public: book at `/book/:tenantId`, view/cancel at `/reservation?token=...`. **Waiting list:** public join at `/waitlist/:tenantId` (linked from the book page); staff manage the queue on the Reservations waiting-list tab. Table status: available / reserved / occupied. See [docs/0011-table-reservation-user-guide.md](docs/0011-table-reservation-user-guide.md). |
 | **Real-time** | WebSocket updates for order status; token-based WS auth (`/ws-token`). |
 | **i18n & currency** | Multiple UI languages (e.g. en, es, ca, de, zh-CN, hi); backend localized messages; per-tenant currency (EUR, USD, MXN, etc.). |
-| **Multi-tenant** | Isolated data per tenant; first user becomes owner; configurable roles (owner, admin, kitchen, bartender, waiter, receptionist) and permissions (e.g. reservation read/write). |
+| **Multi-tenant** | Isolated data per tenant; first user becomes owner; configurable roles (owner, admin, kitchen, bartender, waiter, receptionist, courier) and permissions (e.g. reservation read/write). |
+| **Restaurant groups** | Multi-location operators can **create**, **join**, or **leave** a restaurant group (Settings → Restaurant group) and optionally **share billing customers** and/or **product catalog** across sibling locations. See [docs/0054-restaurant-groups.md](docs/0054-restaurant-groups.md). |
+| **Satisfecho Delivery** | First-party delivery channel (not Glovo/Uber): staff **Delivery** tab on Orders, create/assign courier, public guest checkout at `/delivery/{tenantId}`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
+| **Courier portal** | Couriers log in at `/courier/login` and work Mine / order actions at `/courier`. Demo credentials: `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`. See [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md). |
+| **SaaS signup paywall** | After guided signup (`/register` / `/signup`), new tenants may hit `/paywall` (trial or subscribe) when `SAAS_PAYWALL_ENABLED=true`. Default is `false` for local/demo. See [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md). |
+| **Platform operator** | Satisfecho platform admins log in at `/platform/login` and oversee tenants at `/platform`. Distinct from provider and tenant staff. See [docs/0015-platform-operator-portal.md](docs/0015-platform-operator-portal.md). |
 | **Products & images** | Staff manage products at `/products`. On deploy, demo products are linked to catalog provider products so the Products page shows images (beer/pizza/wine import); first load of `/products` backfills image URLs. |
 | **Provider portal** | Suppliers register at `/provider/register`, log in at `/provider/login`, and manage their catalog at `/provider` (tile/list view, search, add/edit/delete products, company details). See [docs/0014-provider-portal.md](docs/0014-provider-portal.md). |
 | **Tenant branding (public)** | Per-tenant **background colour** (hex, e.g. RAL5002 Azul) and **header background image** for book, menu, and reservation-view pages. Set in Settings → Business profile; optional dark overlay when a header image is used. See [docs/0028-tenant-public-branding.md](docs/0028-tenant-public-branding.md). |
+| **Public features (marketing)** | Product capabilities for prospects at **`/features`** (no login). Linked from the landing nav (“View all features”); uses the same landing site footer as the home page. |
 
 Planned but not yet implemented: batch order operations, and stricter “must pay before continuing” flow. See [ROADMAP.md](ROADMAP.md).
 
@@ -122,9 +143,19 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **DB health** | http://localhost:4202/api/health/db |
 | **Public menu (example)** | http://localhost:4202/menu/{table_token} |
 | **Public booking** | http://localhost:4202/book/{tenantId} |
+| **Public waiting list** | http://localhost:4202/waitlist/{tenantId} |
+| **Public features (marketing)** | http://localhost:4202/features |
+| **Public guest feedback** | http://localhost:4202/feedback/{tenantId} |
+| **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
 | **Provider dashboard** | http://localhost:4202/provider |
+| **Courier login** | http://localhost:4202/courier/login |
+| **Courier dashboard** | http://localhost:4202/courier |
+| **SaaS paywall** | http://localhost:4202/paywall |
+| **Platform operator login** | http://localhost:4202/platform/login |
+| **Platform operator dashboard** | http://localhost:4202/platform |
 | **Kitchen display** | http://localhost:4202/kitchen |
+| **Bar display** | http://localhost:4202/bar (beverage-station view of the kitchen display) |
 | **Reports (owner/admin)** | http://localhost:4202/reports |
 | **Customers (Factura)** | http://localhost:4202/customers |
 | **Dashboard (staff)** | http://localhost:4202/dashboard |
@@ -146,6 +177,7 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | `CORS_ORIGINS` | Allowed frontend origins (comma-separated) | Yes (production) |
 | `POSTGRES_*` / `DB_*` | Database connection | Yes |
 | `STRIPE_CURRENCY` | Fallback currency if tenant has none | Optional |
+| `SAAS_PAYWALL_ENABLED` | When `true`, new restaurant signups hit `/paywall` (trial or subscribe) after guided signup; default `false` for local/demo. See [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md) | Optional (default `false`) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` | Optional; when set, reservation reminders can be sent via WhatsApp (in addition to email) | Optional |
 | `DEFAULT_PHONE_COUNTRY` | ISO country code (e.g. `ES`, `DE`) for normalizing reservation phone numbers to E.164 | Optional (default `ES`) |
 
@@ -178,6 +210,9 @@ Key variables in `config.env` (see `config.env.example` for the full list):
 | [docs/0014-provider-portal.md](docs/0014-provider-portal.md) | Provider registration, login, and catalog management |
 | [docs/0015-kitchen-display.md](docs/0015-kitchen-display.md) | Kitchen display: full-screen view, auto-refresh, optional sound |
 | [docs/0017-billing-customers-factura.md](docs/0017-billing-customers-factura.md) | Billing customers (Factura): register company details, search, print invoice with “Bill to” |
+| [docs/0052-saas-signup-paywall.md](docs/0052-saas-signup-paywall.md) | SaaS signup paywall: trial or subscribe before staff app (`SAAS_PAYWALL_ENABLED`) |
+| [docs/0053-satisfecho-delivery-order-channel.md](docs/0053-satisfecho-delivery-order-channel.md) | Satisfecho Delivery: staff Delivery tab, courier API, public `/delivery/{tenantId}` checkout |
+| [docs/0054-restaurant-groups.md](docs/0054-restaurant-groups.md) | Restaurant groups: multi-location sharing of billing customers and products |
 
 ---
 
@@ -315,3 +350,9 @@ Full guide: [docs/0004-deployment.md](docs/0004-deployment.md).
 | **DB connection errors** | Ensure `db` is healthy (`docker compose -f docker-compose.yml -f docker-compose.dev.yml ps`); with Compose, use `DB_HOST=db`. Check credentials in `config.env`. |
 
 More: [docs/0004-deployment.md](docs/0004-deployment.md) and [AGENTS.md](AGENTS.md).
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=satisfecho/pos&type=Date)](https://star-history.com/#satisfecho/pos&Date)

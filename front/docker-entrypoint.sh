@@ -25,9 +25,27 @@ if [ -n "$STRIPE_PUBLISHABLE_KEY" ] && [ "$STRIPE_PUBLISHABLE_KEY" != "" ]; then
     sed -i "s#window.__STRIPE_PUBLISHABLE_KEY__ || '[^']*'#window.__STRIPE_PUBLISHABLE_KEY__ || '${STRIPE_KEY_ESCAPED}'#g" /app/src/index.html
 fi
 
-# Sync version in commit-hash.ts from package.json (preserve existing git hash if .git is missing, e.g. Docker bind-mount of ./front only)
+# Sync version in commit-hash.ts from package.json (preserve existing git hash if .git is missing, e.g. Docker bind-mount of ./front only).
+# Keep the container startable on failure, but never stay silent about regen outcome.
 if [ -f /app/scripts/get-commit-hash.js ]; then
-  node /app/scripts/get-commit-hash.js || true
+  echo "[entrypoint] Regenerating src/environments/commit-hash.ts ..."
+  set +e
+  HASH_OUT=$(node /app/scripts/get-commit-hash.js 2>&1)
+  HASH_RC=$?
+  set -e
+  printf '%s\n' "$HASH_OUT"
+  if [ "$HASH_RC" -eq 0 ]; then
+    CH_VERSION=$(sed -n "s/^export const version = '\\([^']*\\)';$/\\1/p" /app/src/environments/commit-hash.ts 2>/dev/null || true)
+    CH_HASH=$(sed -n "s/^export const commitHash = '\\([^']*\\)';$/\\1/p" /app/src/environments/commit-hash.ts 2>/dev/null || true)
+    echo "[entrypoint] commit-hash.ts ready: version=${CH_VERSION:-unknown} commitHash=${CH_HASH:-unknown}"
+    PKG_VERSION=$(node -p "require('/app/package.json').version" 2>/dev/null || true)
+    if [ -n "$PKG_VERSION" ] && [ -n "$CH_VERSION" ] && [ "$CH_VERSION" != "$PKG_VERSION" ]; then
+      # stdout so docker logs keep message order with the regen lines above
+      echo "[entrypoint] WARNING: commit-hash.ts version (${CH_VERSION}) does not match package.json (${PKG_VERSION})"
+    fi
+  else
+    echo "[entrypoint] WARNING: get-commit-hash.js failed (exit ${HASH_RC}); continuing with existing commit-hash.ts"
+  fi
 fi
 
 # Optional: populate front/sites/<slug>/ and front/marketing-flat/ (docker-compose.dev mounts ./scripts → /pos-scripts)

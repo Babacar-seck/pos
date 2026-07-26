@@ -8,6 +8,404 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.92] - 2026-07-26
+
+### Changed
+
+- **WhatsApp reminder docs (0024):** Marked reservation reminders as shipped via Twilio (email and/or WhatsApp on Send reminder), documented `TWILIO_*` / `DEFAULT_PHONE_COUNTRY`, and reframed older sections as historical design notes; updated the `docs/README.md` Reference blurb.
+
+## [2.1.91] - 2026-07-26
+
+### Changed
+
+- **Postgres ad-hoc SQL docs (0033):** Documented restaurant group tables as `restaurant_group` and `restaurant_group_member` (with wrong-name hints and a join example by tenant), so operators inspecting multi-location groups avoid relation errors.
+
+## [2.1.90] - 2026-07-26
+
+### Changed
+
+- **Testing docs:** Indexed `npm run debug:working-plan-calendar` in `docs/testing.md` (working-plan §2b and npm scripts table) as a debug inspector for red/staffing days — not a pass/fail smoke; points to `test:working-plan` / `test:working-plan-calendar` for CI checks.
+
+## [2.1.89] - 2026-07-26
+
+### Changed
+
+- **Printing docs:** Marked `docs/PRINTING.md` as design notes / not implemented (no LAN print agent or `/api/print-jobs` yet); clarified that browser and invoice print remain the supported path today.
+
+## [2.1.88] - 2026-07-26
+
+### Changed
+
+- **Kitchen display docs (0015):** Documented Satisfecho Delivery cards (table label “Satisfecho Delivery”), the five active kitchen/bar statuses including `paid`, and that `out_for_delivery` is dropped after courier pickup; updated the Feature guides blurb in `docs/README.md`.
+
+## [2.1.87] - 2026-07-26
+
+### Changed
+
+- **Postgres ad-hoc SQL docs (0033):** Documented the waiting-list table as `waiting_list_entry` (with tenant/status filters and an example active-queue query), and noted that Satisfecho Delivery rows live on `"order"` — there is no separate `deliveryorder` table.
+
+## [2.1.86] - 2026-07-26
+
+### Fixed
+
+- **Translation how-to docs (0012):** Replaced the “add a new language” walkthrough that still used French/`fr` (already shipped) with a hypothetical Portuguese/`pt` example, and noted that §4 locales including `fr` and `bg` should not be recreated.
+
+## [2.1.85] - 2026-07-26
+
+### Changed
+
+- **Root README Features / Access Points:** Documented restaurant groups (create/join/leave, optional shared customers and catalog; link to `docs/0054`) and waiting list (Reservations cue + public `/waitlist/{tenantId}` Access Point; link to `docs/0011`).
+
+## [2.1.84] - 2026-07-26
+
+### Changed
+
+- **Deployment ops docs:** Indexed the hourly unpaid public Satisfecho Delivery cleanup cron (all tenants) in `docs/README.md` (0001 Deployment blurb) and `docs/0004-deployment.md` (deploy steps + summary), with links to `docs/0001` and `scripts/cleanup-unpaid-public-delivery-on-server.sh`, so operators scanning indexes see it beside the tenant-1 demo reset.
+
+## [2.1.83] - 2026-07-26
+
+### Changed
+
+- **Public features docs:** Indexed the marketing `/features` page (no login) in root README Features and Access Points, and in `docs/README.md` Quick links / Feature guides, so contributors can find the prospect-facing capabilities list without digging through changelog or Angular routes.
+
+## [2.1.82] - 2026-07-26
+
+### Changed
+
+- **AGENTS.md Key URLs:** Listed public booking, waiting list, Satisfecho Delivery, marketing features, courier portal, and platform operator entry points so agents can find Jul guest/ops routes without hunting feature docs.
+
+## [2.1.81] - 2026-07-26
+
+### Changed
+
+- **Public guest feedback docs:** Added the public `/feedback/{tenantId}` Access Point in the root README, and short public/staff feedback pointers (`/feedback/:tenantId`, `/guest-feedback`) in the table reservation user guide (`docs/0011`).
+
+## [2.1.80] - 2026-07-26
+
+### Changed
+
+- **Root README Configuration:** Documented `SAAS_PAYWALL_ENABLED` (default `false`; when `true`, new restaurant signups hit `/paywall`) with a link to `docs/0052-saas-signup-paywall.md`.
+
+## [2.1.79] - 2026-07-26
+
+### Fixed
+
+- **Overbooking scenario docs (0025):** Corrected demo venue seat math to `5×4 + 5×2 = 30` (was a wrong `10×4 + 10×2` formula) in `docs/0025-test-scenario-one-empty-table.md`, and indexed `check_overbooking_0025` plus its unittest under Backend / data checks in `docs/testing.md`.
+
+## [2.1.78] - 2026-07-26
+
+### Changed
+
+- **Provider portal docs:** Clarified that `/provider` is the supplier catalog portal, not the courier delivery portal (`/courier`), with a callout in `docs/0014-provider-portal.md` and a matching Feature guides row in `docs/README.md` linking to Satisfecho Delivery (`docs/0053`).
+
+## [2.1.77] - 2026-07-26
+
+### Changed
+
+- **Root README Access Points:** Added a Bar display row (`http://localhost:4202/bar`) next to Kitchen, noting it is the beverage-station view of the kitchen display.
+
+## [2.1.76] - 2026-07-26
+
+### Changed
+
+- **Root README Documentation index:** Added links to the July feature guides for SaaS signup paywall (`docs/0052`), Satisfecho Delivery (`docs/0053`), and restaurant groups (`docs/0054`).
+
+## [2.1.75] - 2026-07-26
+
+### Changed
+
+- **Agent loop docs:** `docs/agent-loop.md` now points the live task queue, archive, and orchestrator at `agents2/tasks/`, `agents2/TASKS-README.md`, and `agents2/pos-cursor-loop.sh` (legacy `agents/tasks` mentions kept only for mac-stats sources and the symlink note).
+
+## [2.1.74] - 2026-07-26
+
+### Changed
+
+- **SaaS signup docs:** Documented the guided restaurant signup wizard (`/register` / `/signup`) in `docs/0052-saas-signup-paywall.md` — steps 0–4, paywall vs dashboard finish destinations, 402-exempt priming paths, and a link to the platform operator portal — with a matching `docs/README.md` index blurb.
+
+## [2.1.73] - 2026-07-26
+
+### Changed
+
+- **Security review docs:** Documented public waiting-list signup (PII, per-IP rate limit, no public status page) and restaurant groups (`join_code` capability secret, share flags) in `docs/SECURITY-REVIEW.md`, with links to `docs/0011`, `docs/0020`, and `docs/0054`.
+
+## [2.1.72] - 2026-07-26
+
+### Fixed
+
+- **HAProxy SSL docs (amvara9):** `docs/0026-haproxy-ssl-amvara9.md` now points the production `bind *:443` SSL config at `haproxy.prod.cfg` (not the HTTP-only local `haproxy.cfg`), with a short local/dev vs prod/amvara9 split.
+
+## [2.1.71] - 2026-07-26
+
+### Added
+
+- **Orders edit smoke alias:** `npm run test:review-order-edit` runs the existing staff Orders Edit / modal / status popover Puppeteer smoke, indexed in `docs/testing.md`.
+
+## [2.1.70] - 2026-07-26
+
+### Changed
+
+- **Agent task paths:** Root `AGENTS.md` and always-applied cursor rules now name the live queue as `agents2/tasks/` (with `agents2/TASKS-README.md`) instead of the legacy `agents/tasks/` path.
+
+## [2.1.69] - 2026-07-26
+
+### Changed
+
+- **Root README (Delivery / courier / SaaS):** Features, Multi-tenant roles, and Access Points now cover Satisfecho Delivery, the courier portal, SaaS signup paywall (default off), and the platform operator portal, with links to `docs/0052`, `docs/0053`, and `docs/0015-platform-operator-portal.md`.
+
+## [2.1.68] - 2026-07-26
+
+### Removed
+
+- **One-off Puppeteer scripts:** Deleted undocumented `front/scripts/review-orders-buttons.mjs` and `capture-reports-screenshot.mjs`. Use `npm run capture-screenshots` and `npm run test:reports` instead.
+
+## [2.1.67] - 2026-07-26
+
+### Changed
+
+- **Enhancement reviewer (owned SIGNAL stamp-only):** When the NEW backlog is deep and every digest SIGNAL theme is already owned (or a known false positive) with no failing demo SIGNAL, 008 now stamps only (`stamp-only: owned_signals`) instead of inventing more README/index/smoke micro-tasks; a new unqueued product/demo finding can still queue up to three tasks. Documented in `docs/agent-loop.md`.
+- **Agent task queue:** Archived the stale July-12 changelog Unreleased NEW and its retarget follow-up under `agents2/tasks/done/`, and retargeted sibling Evidence so Unreleased ownership points at the committer workflow instead of an outdated root NEW.
+
+## [2.1.66] - 2026-07-26
+
+### Added
+
+- **Platform operator Puppeteer smoke alias:** `npm run test:platform-operator` runs the existing `/platform` login → dashboard metrics → tenant detail delivery-link smoke, indexed in `docs/testing.md` with env/seed notes and a pointer to `docs/0015-platform-operator-portal.md`.
+
+## [2.1.65] - 2026-07-26
+
+### Changed
+
+- **Enhancement preflight (deep NEW backlog):** When root `NEW-*` tasks exceed the pause threshold (default 20), preflight now emits `SIGNAL task_backlog new=…` and increments `G008_TASK_SIGNALS` (in addition to the existing `PAUSE new_backlog`), so the agent loop can stop piling more FEAT/doc tasks until the queue drains. Below the threshold it prints a soft `hint new_queue` only.
+
+## [2.1.64] - 2026-07-26
+
+### Changed
+
+- **No-show docs (reminder channels):** `docs/0019-no-show-implementation-plan.md` now matches the live send-reminder API — email and/or WhatsApp when phone + Twilio are set — with a link to `docs/0024-whatsapp-reminder-notes.md`, and notes shipped scheduled reminders and `PUBLIC_APP_BASE_URL` view/cancel links.
+
+## [2.1.63] - 2026-07-26
+
+### Changed
+
+- **Kitchen display docs (order comments):** `docs/0015-kitchen-display.md` now documents optional order/item comments (#284) — public menu Add comment and order-level note, staff edit on `/orders`, highlighted full text on `/kitchen` and `/bar` — with a short pointer in `docs/0008-order-management-logic.md` and a `docs/README.md` index cue.
+
+## [2.1.62] - 2026-07-26
+
+### Changed
+
+- **Satisfecho Delivery docs (product IDs):** `docs/0053-satisfecho-delivery-order-channel.md` now states that staff and public create accept tenant-scoped `TenantProduct.id` (resolved to `Product`) or legacy `Product.id`, with pointers to the regression pytest and `test:delivery-checkout` (#304).
+- **Config example (unpaid delivery cleanup):** `config.env.example` now points operators to the unpaid public Satisfecho Delivery TTL cleanup CLI, amvara9 cron wrapper, and related docs (`docs/0053`, `docs/0001`).
+
+## [2.1.61] - 2026-07-26
+
+### Changed
+
+- **Enhancement preflight (stale docs):** When a stale `docs/*.md` basename is already covered by an open root task, preflight logs `docs_stale_owned` instead of emitting `SIGNAL docs_stale` / bumping `G008_DOC_DRIFT`, so 008 is not re-woken for work already queued.
+
+## [2.1.60] - 2026-07-26
+
+### Changed
+
+- **Testing docs index:** `docs/testing.md` now documents five existing Puppeteer npm aliases — settings logo upload, support access, kitchen timer, book WhatsApp CTA, and my-shift clock QR — with how-to sections and npm scripts table rows.
+
+## [2.1.59] - 2026-07-26
+
+### Changed
+
+- **Security review (public delivery IDs):** `docs/SECURITY-REVIEW.md` now documents that public Satisfecho Delivery create accepts tenant-scoped `TenantProduct.id` or legacy `Product.id` (#304), with a residual note on the dual ID space and the regression test cite.
+
+## [2.1.58] - 2026-07-26
+
+### Added
+
+- **Public delivery-checkout Puppeteer smoke alias:** `npm run test:delivery-checkout` runs the committed public `/delivery/:tenantId` checkout smoke (menu → cart → address → create), indexed in `docs/testing.md` with a courier portal section (`test:courier-actions`).
+
+## [2.1.57] - 2026-07-26
+
+### Added
+
+- **Jul product screenshots:** `capture-screenshots.mjs` now captures public delivery and waitlist (by `TENANT_ID`), plus optional courier and platform operator pages; new PNGs and README sections under `docs/screenshots/` (classic staff shots regenerated in the same run).
+
+## [2.1.56] - 2026-07-26
+
+### Added
+
+- **Puppeteer smoke aliases:** `test:api-docs`, `test:websocket`, `test:amvara9-smoke`, `test:menu-logo`, `test:settings-contact-tax`, and `test:staff-menu-link` in `front/package.json`, indexed in `docs/testing.md` (amvara9 smoke documents its production default `BASE_URL`).
+
+### Fixed
+
+- **Enhancement preflight cadence:** `last_review_iso` now uses the latest agent stamp (`| FEAT:` / `| NEW:`) from the append-only review log instead of the first line, so weekly cadence no longer stays due after a same-week 008 run.
+
+### Changed
+
+- **Docs index (0053 Feature guides):** `docs/README.md` Feature guides blurb for Satisfecho Delivery now covers public checkout, fee/zone/radius, guest `/track`, and unpaid TTL cleanup — not only the staff/courier API (#297 / #306).
+- **Courier portal test credentials:** Documented commented `COURIER_EMAIL` / `COURIER_PASSWORD` in `config.env.example`, plus matching manual-testing notes in `AGENTS.md` and the `test:courier-actions` row in `docs/testing.md` (defaults aligned with the smoke script and demo courier seed).
+- **Daily demo reset ops doc:** `docs/0001-ci-cd-amvara9.md` now states that tenant-1 daily reset clears/reseeds orders (including Satisfecho Delivery samples), reservations, and waiting-list entries — not only orders and reservations.
+- **Rate-limit ops doc:** `docs/0020-rate-limiting-production.md` now lists public `satisfecho-delivery-config` and `delivery-status` GETs under the shared public-menu IP bucket (`RATE_LIMIT_PUBLIC_MENU_PER_MINUTE`), including that track-page polling shares that budget.
+
+## [2.1.55] - 2026-07-26
+
+### Added
+
+- **Public delivery-track Puppeteer smoke alias:** `npm run test:delivery-track` runs the committed invalid-token / error-state smoke for `/delivery/:tenantId/track`, indexed in `docs/testing.md` (cites `docs/0053`).
+
+### Changed
+
+- **Enhancement preflight:** When `check_demo_tables` fails but an open root task already owns demo-table repair, emit an informational line instead of a wake SIGNAL so 008 is not re-woken on the same owned failure.
+- **Enhancement preflight:** After a recent CHANGELOG version cut (newest `## [X.Y.Z]` within 2 UTC days, or CHANGELOG touched within 48h with empty Unreleased), suppress `SIGNAL changelog_sparse` so an intentionally empty Unreleased does not keep waking 008.
+- **Security review (delivery track):** `docs/SECURITY-REVIEW.md` now covers Satisfecho Delivery zone/fee validation, public config and delivery-status endpoints, the 24h `public_order_token` (pay + track), and the 2h unpaid-create cleanup residual; corrected the stale token-expiry comment in `main.py` (#306).
+
+## [2.1.54] - 2026-07-26
+
+### Added
+
+- **Staff guest-feedback Puppeteer smoke:** `npm run test:guest-feedback-staff` covers staff `/guest-feedback` (login, page shell, list GET, no raw `FEEDBACK.*` keys; empty list OK), indexed in `docs/testing.md`.
+
+## [2.1.53] - 2026-07-26
+
+### Added
+
+- **Public features page Puppeteer smoke:** `npm run test:features` covers `/features` (hero title, category sections, home/register nav), indexed in `docs/testing.md`.
+
+### Changed
+
+- **Agent task queue:** Archived the superseded demo-tables repair NEW (duplicate of #305) under `agents2/tasks/done/`, and retargeted the preflight skip-owner wording so it no longer points at that dead task.
+
+## [2.1.52] - 2026-07-25
+
+### Added
+
+- **Bar display Puppeteer smoke:** `npm run test:bar-display` covers staff `/bar` route load (chrome + Bar title, not Kitchen), indexed in `docs/testing.md`.
+
+## [2.1.51] - 2026-07-25
+
+### Added
+
+- **Guided signup wizard Puppeteer smoke:** `npm run test:guided-signup-wizard` covers `/register` step 0 intro → account fields + Back/Next without creating a tenant, indexed in `docs/testing.md`.
+
+## [2.1.50] - 2026-07-25
+
+### Added
+
+- **Staff Satisfecho Delivery Puppeteer smoke:** `npm run test:staff-delivery` covers staff `/staff/orders` create + edit delivery metadata (channel badge, address, phone), indexed in `docs/testing.md`.
+
+## [2.1.49] - 2026-07-25
+
+### Added
+
+- **Order comments Puppeteer smoke:** `npm run test:order-comments` covers public Take Away item + order notes through kitchen highlight (`.item-notes` / `.order-notes`), indexed in `docs/testing.md`.
+
+### Changed
+
+- **Front entrypoint commit-hash regen:** `docker-entrypoint.sh` now logs regen progress, the written `version`/`commitHash`, and clear warnings on script failure or package mismatch (container still starts). Dockerfile `ENTRYPOINT` uses the bind-mounted `/app/docker-entrypoint.sh` so host edits apply without baking a stale script into the image.
+
+### Fixed
+
+- **Landing footer git hash:** Regenerated `commit-hash.ts` so the landing footer short hash matches current `HEAD` while semver stays aligned with `package.json` (strict `test:landing-version` no longer needs a skip workaround).
+
+## [2.1.48] - 2026-07-25
+
+### Added
+
+- **Restaurant groups Puppeteer smoke:** `npm run test:restaurant-groups` covers Settings → Restaurant group (create/join or member/leave), indexed in `docs/testing.md` and pointed from `docs/0054-restaurant-groups.md`.
+
+## [2.1.47] - 2026-07-25
+
+### Fixed
+
+- **Chinese and Hindi UI strings:** Filled ~189 missing keys in `zh-CN.json` and `hi.json` (auth OTP, orders/tax, public take-away, Revolut payments, products availability/tax, reservations, reports overbooking, providers/taxes/OTP/UI modules, Settings delivery-integrations labels, co-owner hint, working-plan toasts) so Simplified Chinese and Hindi match English leaf keys.
+
+## [2.1.46] - 2026-07-25
+
+### Fixed
+
+- **Catalan UI strings:** Filled ~132 missing `ca.json` keys (auth OTP, orders/tax, products availability, reservations, reports overbooking, providers/taxes/OTP/UI modules, Settings delivery-integrations labels, co-owner hint, working-plan toasts) so Catalan matches English leaf keys.
+
+## [2.1.45] - 2026-07-25
+
+### Fixed
+
+- **Bulgarian UI strings:** Filled 25 missing `bg.json` keys (`PRODUCTS.PRODUCT_IMAGE` and Settings delivery-integrations labels) so Bulgarian matches English leaf keys.
+
+## [2.1.44] - 2026-07-25
+
+### Fixed
+
+- **French UI strings:** Filled ~149 missing `fr.json` keys (auth OTP, kitchen stations, settings taxes/providers/security/UI modules, reservations notes/overbooking, products tax/availability, orders/tax, and related menu/reports/working-plan strings) so French matches English leaf keys.
+
+## [2.1.43] - 2026-07-25
+
+### Fixed
+
+- **German UI strings:** Filled ~91 missing `de.json` keys (auth OTP, settings taxes/providers/security, reservations notes/overbooking, products tax/availability, book validation, and related menu/orders/reports strings) so German matches English leaf keys.
+
+## [2.1.42] - 2026-07-25
+
+### Added
+
+- **Waiting list Puppeteer smoke:** `npm run test:waiting-list` covers public `/waitlist/:tenantId` join (success path) and staff Reservations → Waitlist tab (`GET /waiting-list`), indexed in `docs/testing.md`.
+
+## [2.1.41] - 2026-07-25
+
+### Fixed
+
+- **Spanish UI strings:** Filled ~15 missing `es.json` keys (book validation, working-plan toasts, reservation cancel/rate-limit, auth, menu customize, co-owner hint) and corrected the terms-of-service placeholder key typo so Spanish matches English leaf keys.
+
+## [2.1.40] - 2026-07-25
+
+### Changed
+
+- **Features page Delivery card:** Satisfecho Delivery marketing copy now mentions zone-based fees and customer order tracking across all shipped locales, matching the shipped Delivery product.
+
+## [2.1.39] - 2026-07-25
+
+### Added
+
+- **Demo waiting-list check:** `python -m app.seeds.check_demo_waiting_list` fails when tenant 1 lacks at least one `waiting` and one `notified` Waitlist row, so ops/preflight catch a dropped waiting-list seed instead of relying on `demo_tables_check=ok` alone.
+
+## [2.1.38] - 2026-07-25
+
+### Added
+
+- **Demo delivery orders check:** `python -m app.seeds.check_demo_delivery_orders` fails when tenant 1 has no Satisfecho Delivery sample orders (soft-warns only if courier is unassigned), so ops/preflight catch a dropped Delivery seed instead of relying on `demo_tables_check=ok` alone.
+
+## [2.1.37] - 2026-07-25
+
+### Added
+
+- **Demo courier user:** Tenant 1 seed / `reset_demo_data` / bootstrap now create a courier-role user when missing (defaults match courier Puppeteer smokes), so Satisfecho Delivery samples can assign courier and `out_for_delivery` after daily reset. Run: `python -m app.seeds.seed_demo_courier_user`.
+
+## [2.1.36] - 2026-07-25
+
+### Added
+
+- **Demo delivery fee/zone settings:** Tenant 1 seed / `reset_demo_data` now sets a demo Satisfecho Delivery fee (250¢) and Madrid postal codes when unset, so public `/delivery/1` shows a fee and rejects out-of-zone codes after daily reset. Check: `python -m app.seeds.check_demo_delivery_settings`.
+
+## [2.1.35] - 2026-07-25
+
+### Fixed
+
+- **Demo products seed for partial tenants:** `seed_demo_products` now fills missing default menu names on tenants that already have catalog/import rows (instead of skipping any non-empty tenant), and `check_demo_products` verifies tenant 1 has the full demo set.
+- **Delivery checkout smoke harness:** Public `test-delivery-checkout.mjs` now waits for the real cart step (`ul.delivery-cart-list`) and the cart Continue control, so it no longer false-passes on menu “View cart / Ver carrito” copy and then fails opening the address step.
+
+## [2.1.34] - 2026-07-25
+
+### Added
+
+- **Marketing artifact refresh helper:** `scripts/refresh-expired-marketing-artifacts.sh` detects expired or missing GitHub Actions artifacts for sites in `config/marketing-sites.json` and can re-dispatch each site’s Build workflow (`DRY_RUN=1` / `WAIT=1`) before Deploy (#309).
+- **Orphan provider image cleanup:** Seed `python -m app.seeds.clear_orphan_provider_product_images` clears DB image refs when files are missing under `uploads/providers/`.
+
+### Changed
+
+- **README discoverability:** Added license/stars/last-commit and stack badges, a topics line, live demo CTA, a three-image screenshot collage (dashboard, kitchen, menu), and a Star History chart; screenshots index updated to match (#310).
+- **Agent queue paths:** Live prompts, `TASKS-README`, archive helper examples, and `pos-cursor-loop` now point at `agents2/tasks/`; added `agents2/tasks/done/README.md` and main coder prompt `agents2/002-coder/CODER.md`.
+- **Enhancement reviewer backlog pause:** Preflight emits `PAUSE new_backlog` when the NEW queue is deep so 008 stamps only and does not mint more tasks until the coder drains work.
+
+### Fixed
+
+- **Catalog provider images:** API responses only include provider product image URLs when the file exists on disk, so staff Catalog no longer hammers missing `/uploads/providers/...` paths with 404s.
+- **Deploy marketing fetch:** Artifact download skips expired Actions artifacts, scans recent successful runs, and reports clear HTTP/expiry errors; sync verify checks `deploySubpath` index paths and missing files so Deploy to amvara9 fails with actionable guidance instead of opaque download failures (#309).
+
 ## [2.1.33] - 2026-07-25
 
 ### Added

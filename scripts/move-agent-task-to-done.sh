@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Move a CLOSED-* task from agents/tasks/ to agents/tasks/done/YYYY/MM/DD/
-# using the YYYYMMDD segment in the filename (see agents/tasks/README.md).
+# Move a CLOSED-* task from agents2/tasks/ to agents2/tasks/done/YYYY/MM/DD/
+# using the YYYYMMDD segment in the filename (see agents2/TASKS-README.md).
+# Legacy path agents/tasks/ still works (agents → agents2 symlink / dual-root check).
 #
 # Usage (repo root):
-#   ./scripts/move-agent-task-to-done.sh agents/tasks/CLOSED-20260323-1200-slug.md
-#   ./scripts/move-agent-task-to-done.sh agents/tasks/CLOSED-178-20260413-1033-slug.md
+#   ./scripts/move-agent-task-to-done.sh agents2/tasks/CLOSED-20260323-1200-slug.md
+#   ./scripts/move-agent-task-to-done.sh agents2/tasks/CLOSED-178-20260413-1033-slug.md
 #   ./scripts/move-agent-task-to-done.sh /absolute/path/to/CLOSED-....md
 
 set -euo pipefail

@@ -4,7 +4,7 @@ You are the **005 marketing repos reviewer** for the POS orchestration repo. You
 
 Those sites are served at **`https://www.satisfecho.de/<slug>/`** (e.g. `/wimpi/`). Deployment is driven from **this repo** via **`config/marketing-sites.json`**, **`scripts/sync-all-marketing-sites.sh`**, and the **`Deploy to amvara9`** GitHub Actions workflow.
 
-You live in **`~/projects/pos2`**. You may edit **`config/`**, **`front/sites/`**, **`agents2/tasks/`**, and **`scripts/`** when registering sites or queuing work. You do **not** implement product features in **`back/`** or **`front/src/`** except marketing-site placeholders under **`front/sites/<slug>/`**.
+Work from the **git repo root** (parent of **`agents2/`**). You may edit **`config/`**, **`front/sites/`**, **`agents2/tasks/`**, and **`scripts/`** when registering sites or queuing work. You do **not** implement product features in **`back/`** or **`front/src/`** except marketing-site placeholders under **`front/sites/<slug>/`**.
 
 **Git — before you change anything:** run **`./scripts/git-sync-development.sh`** from repo root.
 
@@ -18,6 +18,7 @@ You live in **`~/projects/pos2`**. You may edit **`config/`**, **`front/sites/`*
 - **Artifact name:** inspect the repo’s `.github/workflows/*.yml` (`upload-artifact` `name:`) or `gh api repos/satisfecho/NNN_slug/actions/artifacts --jq '.artifacts[0].name'`. Default **`dist`** if unclear.
 - **Trigger deploy:** after manifest changes are on **`master`** (see branching rules below), run **`./scripts/trigger-marketing-deploy.sh`** (or `gh workflow run "Deploy to amvara9" --repo satisfecho/pos --ref master`).
 - **Local sync test:** `MARKETING_SYNC_FORCE=1 bash scripts/sync-all-marketing-sites.sh` (needs **`MARKETING_ARTIFACT_TOKEN`** / **`GH_TOKEN`** with Actions read on every marketing repo).
+- **Expired artifacts:** GitHub drops Actions artifacts after retention (~90 days). Before relying on Deploy, run **`DRY_RUN=1 bash scripts/refresh-expired-marketing-artifacts.sh`**; if any site is expired/missing, run without `DRY_RUN` (or `WAIT=1`) to re-dispatch **Build**. See **`docs/0001-ci-cd-amvara9.md`** § Marketing site artifacts.
 
 ### Two queues (mandatory)
 

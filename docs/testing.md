@@ -124,6 +124,115 @@ npm run test:demo-data --prefix front
 
 ---
 
+### 2a. Waiting list (public + staff)
+
+Smoke for public `/waitlist/:tenantId` (form + join → success) and staff `/reservations` → Waitlist tab (list GET without hard fail). Creates a unique guest name/phone per run (idempotent; leaves a `waiting` row).
+
+```bash
+npm run test:waiting-list --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-waiting-list.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` from `.env` for staff tab), `HEADLESS`.
+- Staff Waitlist tab is skipped (public join still required) when credentials are unset.
+
+---
+
+### 2a2. Restaurant groups (Settings)
+
+Smoke for **Settings → Restaurant group** (`docs/0054-restaurant-groups.md`). Logs in as owner/admin, opens the Restaurant group tab (`settings-restaurant-group-tab`), and asserts the section (`settings-restaurant-group-section`) with either create/join or member/leave UI.
+
+```bash
+npm run test:restaurant-groups --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-restaurant-groups.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; must be owner/admin), `HEADLESS`.
+
+---
+
+### 2a3. Staff Satisfecho Delivery (create + edit)
+
+Smoke for staff **`/staff/orders`**: open **New delivery order**, create a Satisfecho Delivery order (address, phone, one product; optional courier), assert Delivery tab channel badge / address, then **Edit delivery** and save a phone change. Does not cover public checkout (`test:delivery-checkout`) or courier portal (`test:courier-actions`).
+
+```bash
+npm run test:staff-delivery --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-staff-delivery.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; user needs order-update permission), `HEADLESS`.
+- Leaves one delivery order per run (demo hygiene OK).
+
+---
+
+### 2a3a. Public Satisfecho Delivery checkout
+
+Smoke for public **`/delivery/:tenantId`** checkout (`docs/0053-satisfecho-delivery-order-channel.md`, shipped CLOSED-302 / #304): menu → cart → address → create order. Script is committed on `development` (`front/scripts/test-delivery-checkout.mjs`). Does not cover staff create/edit (`test:staff-delivery`), track page (`test:delivery-track`), or courier portal (`test:courier-actions`).
+
+```bash
+npm run test:delivery-checkout --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-delivery-checkout.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `HEADLESS`. No login.
+- Leaves one public delivery order per successful run (demo hygiene OK).
+
+---
+
+### 2a3b. Public Satisfecho Delivery track (invalid token)
+
+Smoke for the token-gated customer track page at `/delivery/:tenantId/track` (`docs/0053-satisfecho-delivery-order-channel.md`). Opens the route with a missing/invalid `public_order_token` and asserts an error / not-found state (no raw `DELIVERY_TRACK.*` i18n keys). Does not create a paid order or cover the happy-path track flow.
+
+```bash
+npm run test:delivery-track --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-delivery-track.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `HEADLESS`. No login.
+
+---
+
+### 2a3c. Courier portal actions
+
+Smoke for the courier dashboard (`/courier`, login at `/courier/login`): open Mine (or Available), open an order, run one available status action, assert status updates. See `docs/0053-satisfecho-delivery-order-channel.md`. Does not cover public checkout or staff delivery create.
+
+```bash
+npm run test:courier-actions --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-courier-actions.mjs
+```
+
+- **Env:** `BASE_URL`, `COURIER_EMAIL` / `COURIER_PASSWORD` (defaults `courier-test-phase1@amvara.de` / `secret`; also in `config.env.example`), `HEADLESS`.
+- Demo seed: `docker compose exec back python -m app.seeds.seed_demo_courier_user` (bootstrap / `reset_demo_data` also run this).
+
+---
+
+### 2a3d. Platform operator portal
+
+Smoke for the SaaS platform operator dashboard (`/platform`, login at `/platform/login`): log in, assert metric cards on the dashboard, open a tenant detail page, and confirm the public Satisfecho Delivery link for that tenant. See `docs/0015-platform-operator-portal.md`. Does not cover tenant staff login, paywall (`test:paywall`), or courier portal (`test:courier-actions`).
+
+```bash
+npm run test:platform-operator --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-platform-operator.mjs
+```
+
+- **Env:** `BASE_URL`, `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD` (defaults `platform-test@amvara.de` / `test-platform-ops-123`; also commented in `config.env.example`), `HEADLESS`.
+- Seed operator (idempotent): `docker compose exec back python -m app.seeds.ensure_platform_operator` (pass the same email/password via env if not using defaults).
+
+---
+
+### 2a4. Staff guest feedback
+
+Smoke for staff **Guest feedback** at `/guest-feedback` (Reservations module). Logs in, opens the page, asserts the page shell (heading / QR card), that `GET /tenant/guest-feedback` does not hard-fail, and that raw `FEEDBACK.*` i18n keys are not dumped. Empty list is OK. Does not cover public `/feedback/:tenantId` (see `test:feedback-public-i18n`).
+
+```bash
+npm run test:guest-feedback-staff --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 TENANT_ID=1 node front/scripts/test-guest-feedback-staff.mjs
+```
+
+- **Env:** `BASE_URL`, `TENANT_ID` (default `1`), `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*` / `ADMIN_*` from `.env`; user needs reservations access), `HEADLESS`.
+
+---
+
 ### 2b. Working plan (schedule roles)
 
 Smoke test for the Working plan (shift schedule) page. Logs in as a user with schedule access (e.g. owner), opens `/working-plan`, and asserts the page and Add shift button are present.
@@ -136,6 +245,15 @@ npm run test:working-plan --prefix front
 
 - **Env:** `BASE_URL`, `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `ADMIN_EMAIL`/`ADMIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` (from `.env`). `TENANT_ID` (default `1`) — login uses `/login?tenant=1` so the user is in the correct tenant. User must have schedule access (owner, admin, kitchen, bartender, waiter, receptionist). `HEADLESS`.
 - **Asserts:** After login, `/working-plan` loads; `[data-testid="working-plan-page"]` and `[data-testid="working-plan-add-shift"]` are present; week navigation is present; switching to Calendar view shows `[data-testid="working-plan-calendar-grid"]` with header and day cells; days that do not meet personnel requirements (too many or too few staff) are marked red; **Excel export** controls `[data-testid="working-plan-export-worker"]` and `[data-testid="working-plan-export-excel"]` are present when the tenant has schedulable users. The working-plan route is lazy-loaded—if UI changes don’t appear after editing, do a full page refresh or restart the dev server.
+
+**Debug (inspect red / staffing days — not a pass/fail smoke):**
+
+```bash
+npm run debug:working-plan-calendar --prefix front
+# Or: LOGIN_EMAIL=... LOGIN_PASSWORD=... BASE_URL=http://127.0.0.1:4202 node front/scripts/debug-working-plan-calendar.mjs
+```
+
+- Logs into the working-plan calendar and prints cell / red-day counts for diagnosing staffing-day colouring. Same login env as `test:working-plan` (`LOGIN_*` / `DEMO_LOGIN_*`, optional `TENANT_ID`, `BASE_URL`). For CI-style checks use **`test:working-plan`** (and **`test:working-plan-calendar`** when indexed).
 
 ---
 
@@ -219,6 +337,15 @@ npm run test:landing-provider-links --prefix front
 
 - Asserts footer has provider login and “Register as provider” links, a **Contact us** link with `mailto:hello@satisfecho.de`, and `data-testid="landing-contact-us"`; clicks register and checks navigation to `/provider/register` and presence of registration form.
 
+**Public features page (`/features`):**
+
+```bash
+npm run test:features --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-features.mjs
+```
+
+- No login. Opens `/features`, asserts `.features-page` shell, translated hero title (not a raw `FEATURES_PAGE.*` key), at least one `.features-category`, and brand link to `/` or a register CTA. Fails on pageerror or bad HTTP for the document.
+
 ---
 
 ### 5. Provider section
@@ -266,6 +393,15 @@ npm run test:register-page --prefix front
 
 - Loads `/register`, checks `.register-explanation` and provider/guest text (English when `Accept-Language: en`).
 
+**Guided signup wizard** (multi-step intro → account fields; non-destructive):
+
+```bash
+npm run test:guided-signup-wizard --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-guided-signup-wizard.mjs
+```
+
+- Opens `/register`, asserts step-0 intro + **Get started**, advances to restaurant/account fields (tenant, address, phone, email, password) with Back/Next, then Back to intro. Does **not** submit or create a tenant. Prefer local HAProxy (`BASE_URL=http://127.0.0.1:4202`).
+
 **Full registration flow** (fill form, submit, check success/error):
 
 ```bash
@@ -295,13 +431,12 @@ npm run test:order-8-status --prefix front
 Review test for the staff Orders page: Edit button on cards and in History grid, order edit modal (add/remove/change items, billing, print), and status popover visibility (z-index). Logs in with tenant=1 (using `.env` credentials), opens `/staff/orders`, clicks Edit on the first order card and verifies the order edit modal opens; then checks the status dropdown is visible with sufficient z-index; then switches to Order History and clicks Edit in the grid and verifies the same modal opens.
 
 ```bash
-node front/scripts/review-order-edit-puppeteer.mjs
+npm run test:review-order-edit --prefix front
 # Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/review-order-edit-puppeteer.mjs
 ```
 
 - **Env:** `BASE_URL` (default `http://127.0.0.1:4202`), `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `DEMO_LOGIN_EMAIL`/`DEMO_LOGIN_PASSWORD` (from `.env`), `TENANT_ID` (default `1`), `HEADLESS`.
 - **Asserts:** Edit button on card found; clicking it opens the order edit modal (title, items, billing). Status button opens dropdown that is visible (z-index ≥ 100). In History tab, Edit button in grid opens the same order edit modal. If the modal does not open from the card, the script still passes when it opens from the History grid (and suggests rebuilding/refreshing the frontend). On failure, a screenshot is saved to `front/scripts/screenshots/review-edit-modal-fail.png`.
-- No npm script; run with `node` from repo root.
 
 ---
 
@@ -347,10 +482,11 @@ npm run test:catalog --prefix front
 Restaurant logo (e.g. Cobalto SVG) on customer menu page `/menu/{tableToken}`.
 
 ```bash
-node front/scripts/test-menu-logo.mjs
+npm run test:menu-logo --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-menu-logo.mjs
 ```
 
-- **Env:** `BASE_URL`, `TABLE_TOKEN` (optional; default: fetched via API after login), `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root if vars unset. No npm script; run with `node` from repo root.
+- **Env:** `BASE_URL`, `TABLE_TOKEN` (optional; default: fetched via API after login), `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root if vars unset.
 
 ---
 
@@ -359,11 +495,63 @@ node front/scripts/test-menu-logo.mjs
 WebSocket connectivity after owner login (e.g. on `/orders`). Requires full stack including ws-bridge.
 
 ```bash
-node front/scripts/test-websocket.mjs
-# With stack: BASE_URL=http://localhost:4202 node front/scripts/test-websocket.mjs
+npm run test:websocket --prefix front
+# With stack: BASE_URL=http://localhost:4202 npm run test:websocket --prefix front
 ```
 
-- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root. No npm script; run with `node` from repo root.
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD`. Loads `.env` from project root. Needs HAProxy + `ws-bridge`.
+
+---
+
+### 11b. API docs (`/api/docs`)
+
+Swagger UI and OpenAPI spec load at `/api/docs` (no login).
+
+```bash
+npm run test:api-docs --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 npm run test:api-docs --prefix front
+```
+
+- **Env:** `BASE_URL` (auto-detect 4203/4202/4200), `HEADLESS`.
+
+---
+
+### 11c. amvara9 production smoke
+
+Landing, login page, public book page, and `/api/health` against production. **Default `BASE_URL` is `https://www.satisfecho.de`** — set an explicit local `BASE_URL` if you do not intend to hit prod.
+
+```bash
+npm run test:amvara9-smoke --prefix front
+# Local override: BASE_URL=http://127.0.0.1:4202 npm run test:amvara9-smoke --prefix front
+```
+
+- **Env:** `BASE_URL` (default production), `HEADLESS`. No login credentials.
+
+---
+
+### 11d. Settings → Contact default tax dropdown
+
+Login, open Settings → Contact information, assert the default tax select has at least one IVA option (not an empty wrapper).
+
+```bash
+npm run test:settings-contact-tax --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 npm run test:settings-contact-tax --prefix front
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*`, `TENANT_ID` (default `1`), `HEADLESS`.
+
+---
+
+### 11e. Staff “Open menu” link (skip PIN)
+
+Login, open `/staff/orders`, click **Open menu** on the first order, add a product and place order; asserts the PIN modal does **not** appear.
+
+```bash
+npm run test:staff-menu-link --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-staff-menu-link-puppeteer.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*` (tenant 1), `HEADLESS`. Needs an open order on staff orders.
 
 ---
 
@@ -393,6 +581,85 @@ npm run test:kitchen-status-dropdown --prefix front
 
 ---
 
+### 13b. Bar display – route smoke
+
+Login, open `/bar`, assert URL contains `/bar`, kitchen/bar chrome (`.kitchen-view` header, timer settings, fullscreen toggle), and title is Bar display (not Kitchen).
+
+```bash
+npm run test:bar-display --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-bar-display.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`/`LOGIN_PASSWORD` or `DEMO_LOGIN_*` / `ADMIN_*` (staff with `kitchen_bar` module), `HEADLESS`.
+
+---
+
+### 13c. Settings → logo upload
+
+Login as owner/admin, open Settings, upload a logo file, save, and assert success.
+
+```bash
+npm run test:settings-logo --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-settings-logo-upload.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` or `DEMO_LOGIN_*` (owner/admin), `TENANT_ID` (default `1`), `HEADLESS`.
+
+---
+
+### 13d. Support access (Users → Add Satisfecho support)
+
+Login as admin or owner, open `/users`, use **Add Satisfecho support**, and assert the form pre-fills `support@satisfecho.de` as admin.
+
+```bash
+npm run test:support-access --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-support-access.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD` (admin or owner), `HEADLESS`.
+
+---
+
+### 13e. Kitchen display – timer settings
+
+Login, open `/kitchen`, assert **Timer settings** is visible (and **Waiting** timer when orders exist).
+
+```bash
+npm run test:kitchen-timer --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... node front/scripts/test-kitchen-timer.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL`, `LOGIN_PASSWORD` (staff with kitchen access), `HEADLESS`.
+
+---
+
+### 13f. Book page – WhatsApp CTA
+
+Public `/book/1` (no login): assert a WhatsApp link when the tenant has a WhatsApp number. Optional `API_BASE` if the API is on another origin than `BASE_URL`.
+
+```bash
+npm run test:book-whatsapp --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-book-whatsapp-puppeteer.mjs
+# API on another origin: API_BASE=http://127.0.0.1:8020 npm run test:book-whatsapp --prefix front
+```
+
+- **Env:** `BASE_URL`, `HEADLESS`, `API_BASE` (optional; defaults to `BASE_URL`). No login credentials.
+
+---
+
+### 13g. My shift – venue clock QR
+
+When venue clock QR is required, `/my-shift` loads clock-qr-status and shows **Scan venue QR** (`.scan-cta`) with no token in session. Prefer `OWNER_*` to toggle clock QR via API and `LOGIN_*` for the user opening My shift (often a waiter).
+
+```bash
+npm run test:my-shift-clock-qr --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 LOGIN_EMAIL=... LOGIN_PASSWORD=... OWNER_EMAIL=... OWNER_PASSWORD=... node front/scripts/test-my-shift-clock-qr.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` (staff that can open `/my-shift` and has `SETTINGS_UPDATE` if regenerating QR), optional `OWNER_EMAIL` / `OWNER_PASSWORD` when different from staff, `HEADLESS`.
+
+---
+
 ## npm scripts (front)
 
 From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <script>`.
@@ -401,6 +668,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 |--------|-------------|
 | `debug:reservations` | `scripts/debug-reservations.mjs` |
 | `debug:reservations:public` | `scripts/debug-reservations-public.mjs` |
+| `debug:working-plan-calendar` | `scripts/debug-working-plan-calendar.mjs` (inspect red/staffing days on calendar; not a pass/fail smoke — use `test:working-plan` / `test:working-plan-calendar` for CI) |
 | `test:register` | `scripts/test-register.mjs` |
 | `test:demo-data` | `scripts/test-demo-data.mjs` |
 | `test:tables-page` | `scripts/test-tables-page.mjs` |
@@ -408,36 +676,65 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:tables-canvas-open-orders` | `scripts/test-tables-canvas-open-orders.mjs` (Floor plan: select table → staff orders shortcut link with `focusOrder` / `focusTableId`; .env demo user) |
 | `test:tables-waiter-assignment` | `scripts/test-tables-waiter-assignment.mjs` (Waiter: Table view has read-only assignment cells, no `select.waiter-select-inline`; requires `WAITER_LOGIN_EMAIL` / `WAITER_LOGIN_PASSWORD`, else skips with exit 0) |
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
+| `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
+| `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |
+| `test:review-order-edit` | `scripts/review-order-edit-puppeteer.mjs` (staff Orders: Edit button, edit modal, status popover z-index; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:register-page` | `scripts/test-register-page.mjs` |
+| `test:guided-signup-wizard` | `scripts/test-guided-signup-wizard.mjs` (guided `/register` wizard: step 0 intro → Get started → account fields + Back/Next; no tenant create) |
 | `test:reports` | `scripts/test-reports.mjs` (Reports page smoke; owner/admin) |
 | `test:order-tip-flows` | `scripts/test-order-tip-flows.mjs` (Settings tip entry mode + Reports tips card; owner/admin) |
 | `test:changelog` | `scripts/test-changelog.mjs` (Dashboard What's new → changelog modal; API serves CHANGELOG.md) |
 | `test:settings-providers` | `scripts/test-settings-providers.mjs` (Settings → Providers tab; personal providers smoke; uses .env, tenant=1) |
 | `test:bartender-role` | `scripts/test-bartender-role.mjs` (Users → Add user → role dropdown includes Bartender) |
 | `test:kitchen-status-dropdown` | `scripts/test-kitchen-status-dropdown.mjs` (Kitchen display: status dropdown visible, not clipped) |
+| `test:bar-display` | `scripts/test-bar-display.mjs` (Bar display `/bar`: route + chrome + Bar title) |
+| `test:settings-logo` | `scripts/test-settings-logo-upload.mjs` (Settings logo upload; owner/admin `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:support-access` | `scripts/test-support-access.mjs` (Users → Add Satisfecho support pre-fills `support@satisfecho.de`; admin/owner) |
+| `test:kitchen-timer` | `scripts/test-kitchen-timer.mjs` (Kitchen `/kitchen`: Timer settings + Waiting timer when orders exist) |
+| `test:book-whatsapp` | `scripts/test-book-whatsapp-puppeteer.mjs` (public `/book/1` WhatsApp CTA; optional `API_BASE`; no login) |
+| `test:my-shift-clock-qr` | `scripts/test-my-shift-clock-qr.mjs` (My shift venue clock QR / `.scan-cta`; waiter `LOGIN_*` + optional `OWNER_*`) |
 | `test:rate-limit` | `scripts/test-rate-limit.mjs` (API rate limiting: login 5/15min, register 3/hour; expects 429 after limit) |
 | `test:rate-limit-puppeteer` | `scripts/test-rate-limit-puppeteer.mjs` (Puppeteer: login page, 6 wrong attempts, expects error banner) |
 | `test:paywall` | `scripts/test-paywall.mjs` (SaaS hard paywall: register → `/paywall` → Start free trial → dashboard; skips exit 0 when `SAAS_PAYWALL_ENABLED=false`) |
-| `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions) |
-
-`test-menu-logo`, `test-websocket`, and `review-order-edit-puppeteer` have no npm script; run via `node front/scripts/<name>.mjs`.
+| `test:platform-operator` | `scripts/test-platform-operator.mjs` (platform `/platform/login` → dashboard metrics → tenant detail delivery link; `PLATFORM_OPERATOR_*`; seed `ensure_platform_operator`; see `docs/0015`) |
+| `test:waiting-list` | `scripts/test-waiting-list.mjs` (public `/waitlist/:tenant` join → success; staff Reservations → Waitlist tab + GET `/waiting-list`) |
+| `test:restaurant-groups` | `scripts/test-restaurant-groups.mjs` (Settings → Restaurant group tab; create/join or member/leave UI; owner/admin) |
+| `test:order-comments` | `scripts/test-order-comments.mjs` (public Take Away menu: item + order comments → kitchen `.item-notes` / `.order-notes`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:courier-actions` | `scripts/test-courier-actions.mjs` (courier portal status actions; `COURIER_EMAIL` / `COURIER_PASSWORD`, defaults `courier-test-phase1@amvara.de` / `secret` — also in `config.env.example`) |
+| `test:delivery-checkout` | `scripts/test-delivery-checkout.mjs` (public `/delivery/:tenantId` menu → cart → address → create; no login; see `docs/0053`) |
+| `test:delivery-track` | `scripts/test-delivery-track.mjs` (public `/delivery/:tenantId/track` invalid-token / error-state; see `docs/0053`) |
+| `test:staff-delivery` | `scripts/test-staff-delivery.mjs` (staff `/staff/orders`: create Satisfecho Delivery + edit address/phone; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:api-docs` | `scripts/test-api-docs.mjs` (Swagger `/api/docs` + OpenAPI; no login) |
+| `test:websocket` | `scripts/test-websocket.mjs` (post-login WS on `/orders`; needs ws-bridge + `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:amvara9-smoke` | `scripts/test-amvara9-smoke.mjs` (prod smoke: landing/login/book + `/api/health`; **default `BASE_URL=https://www.satisfecho.de`**) |
+| `test:menu-logo` | `scripts/test-menu-logo.mjs` (customer `/menu/:token` shows restaurant logo; needs `LOGIN_*` or `TABLE_TOKEN`) |
+| `test:settings-contact-tax` | `scripts/test-settings-contact-tax-dropdown.mjs` (Settings → Contact default tax IVA options; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
+| `test:staff-menu-link` | `scripts/test-staff-menu-link-puppeteer.mjs` (staff Open menu → place order without PIN modal; needs open order + `LOGIN_*`) |
 
 ---
 
 ## Backend / data checks (non-Puppeteer)
 
 - **Demo tables:** `docker compose exec back python -m app.seeds.check_demo_tables` (exit 0 = T01–T10 present for tenant 1).
+- **Overbooking 0025 (one empty table / full slot):** `docker compose exec back python -m app.seeds.check_overbooking_0025` (exit 0 = pass; creates/cleanup test data). Unittest: `docker compose exec back python -m tests.test_overbooking_0025 -v`. Scenario notes: `docs/0025-test-scenario-one-empty-table.md` (demo seats = 5×4 + 5×2 = 30).
 - **Seed tables:** `docker compose exec back python -m app.seeds.seed_demo_tables` (idempotent).
-- **Seed demo products:** `docker compose exec back python -m app.seeds.seed_demo_products` (idempotent).
+- **Seed demo products:** `docker compose exec back python -m app.seeds.seed_demo_products` (idempotent; fills missing DEMO_PRODUCTS names on partial tenants).
+- **Demo products check:** `docker compose exec back python -m app.seeds.check_demo_products` (exit 0 = tenant 1 has all DEMO_PRODUCTS names; extra catalog rows OK).
 - **Link demo products to catalog (images on /products):** `docker compose exec back python -m app.seeds.link_demo_products_to_catalog` — links products without images to provider products that have images; deploy runs this after catalog imports.
+- **Clear orphan provider product images:** `docker compose exec back python -m app.seeds.clear_orphan_provider_product_images` — sets `ProviderProduct.image_filename` (and Product `providers/...` refs) to null when the file is missing under `uploads/providers/`, so catalog stops requesting 404 URLs.
+- **Demo courier user:** `docker compose exec back python -m app.seeds.seed_demo_courier_user` — ensures tenant 1 has one `courier` role user when missing (`COURIER_EMAIL` / `COURIER_PASSWORD`, defaults `courier-test-phase1@amvara.de` / `secret`). Bootstrap / `reset_demo_data` run this **before** demo orders so Delivery samples can assign courier / `out_for_delivery`.
 - **Demo orders (Reports + Delivery):** `docker compose exec back python -m app.seeds.seed_demo_orders` — seeds tenant 1 with paid/active **table** orders over ±90 days plus a small Satisfecho Delivery mix; idempotent (skips if orders exist). Bootstrap / `reset_demo_data` run this. Optional: `./run_seeds.sh --demo-orders` from `back/`.
+- **Demo delivery orders check:** `docker compose exec back python -m app.seeds.check_demo_delivery_orders` (exit 0 = tenant 1 has ≥1 `order_channel=satisfecho_delivery` row; soft-warns if none have `courier_user_id`).
 - **Demo waiting list:** `docker compose exec back python -m app.seeds.seed_demo_waiting_list` — seeds tenant 1 with a few `waiting` + one `notified` entry for staff Waitlist / public `/waitlist/1`; idempotent (skips if entries exist). Bootstrap / `reset_demo_data` run this.
+- **Demo waiting list check:** `docker compose exec back python -m app.seeds.check_demo_waiting_list` (exit 0 = tenant 1 has ≥1 `waiting` and ≥1 `notified` row).
+- **Demo delivery fee/zone:** `docker compose exec back python -m app.seeds.seed_demo_delivery_settings` — sets tenant 1 fee (250¢) + postal codes when unset; idempotent. Bootstrap / `reset_demo_data` run this.
+- **Demo delivery settings check:** `docker compose exec back python -m app.seeds.check_demo_delivery_settings` (exit 0 = tenant 1 has non-zero fee and/or postal/radius).
 
 See `AGENTS.md` for full seed and deploy notes.
 
@@ -506,17 +803,22 @@ GO_AHEAD_LOOP=1 DURATION_SECONDS=120 INTERVAL_SECONDS=60 SKIP_TESTS=1 ./scripts/
 | **Tables** | `test-tables-page.mjs`, `test-tables-waiter-assignment.mjs` (optional waiter creds) | View toggle, Table view and data table; waiter assignment visibility (no empty dropdown). |
 | **Landing** | Version, provider links | Version bar; footer links to provider login/register. |
 | **Provider portal** | Register, add-product, landing links | No dedicated “login only” test; add-product covers login + dashboard. |
-| **Staff auth** | Register page content, full register | Who-is-this-for; full registration (no cleanup). |
-| **Orders** | Order #8 status dropdown; `review-order-edit-puppeteer.mjs` (Edit button, order edit modal, status popover) | Order #8: requires existing order in Active Orders. Review script: login, /staff/orders, card + History Edit, status dropdown z-index. |
+| **Staff auth** | Register page content, guided wizard, full register | Who-is-this-for; guided step 0→1 (no create); full registration (no cleanup). |
+| **Orders** | Order #8 status dropdown; `test:review-order-edit` (Edit button, order edit modal, status popover) | Order #8: requires existing order in Active Orders. Review script: login, /staff/orders, card + History Edit, status dropdown z-index. |
 | **Reports** | `test-reports.mjs` | Smoke: page loads (owner/admin). |
 | **Tips (POS)** | `test-order-tip-flows.mjs` | Settings Payments tip mode toggle + Reports tips summary card. |
 | **Users / Bartender role** | `test-bartender-role.mjs` | Admin/owner: /users → Add user → role dropdown includes Bartender. |
-| **Kitchen display** | `test-kitchen-status-dropdown.mjs` | Status dropdown visible and not clipped on /kitchen. |
+| **Kitchen / Bar display** | `test-kitchen-status-dropdown.mjs`, `test-bar-display.mjs`, `test-order-comments.mjs` | Status dropdown on `/kitchen`; `/bar` route + chrome + Bar title; guest item/order comments highlighted. |
 | **Catalog** | `test-catalog.mjs` | Cards and image placeholders. |
-| **Menu (customer)** | `test-menu-logo.mjs` | Logo on `/menu/:token`. |
-| **WebSocket** | `test-websocket.mjs` | Post-login WS (ws-bridge required). |
+| **Menu (customer)** | `test:menu-logo`, `test:order-comments` | Logo on `/menu/:token`; Take Away comments → kitchen. |
+| **WebSocket** | `test:websocket` | Post-login WS (ws-bridge required). |
+| **API docs** | `test:api-docs` | `/api/docs` Swagger + OpenAPI (no login). |
+| **amvara9 prod smoke** | `test:amvara9-smoke` | Default BASE_URL is production (`www.satisfecho.de`). |
+| **Settings contact tax** | `test:settings-contact-tax` | Default tax dropdown has IVA options. |
+| **Staff menu link** | `test:staff-menu-link` | Open menu from staff orders skips PIN. |
 | **Rate limiting** | `test-rate-limit.mjs`, `test-rate-limit-puppeteer.mjs` | API: 429 after limit; Puppeteer: login page shows error banner (e.g. "Too many login attempts") when rate limited. See `docs/0020-rate-limiting-production.md` for all limits (login, register, payment, public menu, upload, admin). |
 | **SaaS signup paywall** | `test-paywall.mjs` | Requires `SAAS_PAYWALL_ENABLED=true` (see `docs/0052-saas-signup-paywall.md`). Registers a new tenant, asserts `/paywall` + localized copy (no raw `PAYWALL.*`), starts free trial, confirms `/dashboard` unlocks. Skips with exit 0 when paywall is off; set `REQUIRE_PAYWALL=1` to fail instead. |
+| **Platform operator** | `test-platform-operator.mjs` | `/platform/login` → dashboard metrics → tenant detail + `/delivery/{id}` link (`docs/0015-platform-operator-portal.md`). Seed with `ensure_platform_operator`; `PLATFORM_OPERATOR_EMAIL` / `PLATFORM_OPERATOR_PASSWORD`. |
 
 **Not covered (or partial):** No automated cleanup of test-created data (e.g. provider/restaurant registration leaves DB entries). No Puppeteer tests for settings, inventory, or tables canvas. Unit tests (Karma/Jasmine) are separate; see `npm test` in front.
 

@@ -31,12 +31,22 @@ Do **not** duplicate **001**: skip issues already tracked by **001** (open POS i
 1. **Preflight digest** — prioritize **`SIGNAL`** lines.
 2. **Docs vs code** — skim **`docs/*.md`**, **`README.md`**, **`CHANGELOG.md` [Unreleased]** against recent **`back/`** / **`front/src/`** changes (do not bulk-rewrite docs; note gaps only).
 3. **Demo tenant 1** — tables/products seeds, orders/reservations freshness; **`reset_demo_data`** path and whether **daily cron** on production is missing.
-4. **Task queue health** — many **`WIP-*`** / **`TESTING-*`** → prefer **`NEW-*`** for tiny fixes only; defer large **`FEAT-*`** until backlog drains.
+4. **Task queue health** — many **`WIP-*`** / **`TESTING-*`** → prefer **`NEW-*`** for tiny fixes only; defer large **`FEAT-*`** until backlog drains. If the digest has a **`PAUSE new_backlog`** line (or **`G008_NEW_BACKLOG_PAUSE=1`**), **create zero** new task files this run — stamp only.
 5. **Open improvement themes** — recurring friction in seeds, deploy scripts, agent prompts, i18n gaps (one finding per theme).
 
 ### Task creation rules
 
 Create **at most 3** task files per run. Prefer **`FEAT-*`** for enhancements; use **`NEW-*`** only for a **concrete, small** fix you can describe like a log incident (e.g. broken seed check).
+
+**When paused:** if **`PAUSE new_backlog`** appears in the digest, create **0** tasks (do not queue more docs/path hygiene while **`NEW-*`** is deep).
+
+**Stamp-only when SIGNAL themes are owned (deep NEW):** if **all** of the following hold, append stamp **`FEAT: 0 | NEW: 0 | stamp-only: owned_signals`** and **create no new task files** (do not invent README/index/smoke micro-tasks from already-queued themes):
+
+1. Root **`NEW-*`** count is deep — digest shows **`PAUSE new_backlog`** / **`G008_NEW_BACKLOG_PAUSE=1`**, or **`NEW` ≥ preflight threshold (**`ENHANCEMENT_NEW_BACKLOG_MAX`**, default **20**; same as deep-NEW SIGNAL).
+2. Every digest **`SIGNAL`** theme is already covered by an open root task (**`NEW-*` / `WIP-*` / `UNTESTED-*` / `TESTING-*` / `FEAT-*`**) **or** is a known false positive (e.g. **`changelog_sparse`** right after a same-day version cut with empty **`[Unreleased]`** — product Unreleased is committer duty).
+3. No failing **demo** SIGNAL (`demo_tables_check=fail`, `demo_daily_reset_not_scheduled`, or equivalent seed health failure).
+
+**Exception:** still allow up to **3** tasks when there is a **new unqueued** product/demo finding (not already owned by a root task). Docs/changelog heuristics alone do **not** qualify as that exception when their themes are already queued.
 
 **Filename:** `FEAT-0-YYYYMMDD-HHMM-<kebab-slug>.md` or `NEW-0-YYYYMMDD-HHMM-<kebab-slug>.md` (UTC).
 
@@ -65,7 +75,9 @@ See **`agents2/008-enhancement-reviewer/sample-findings.md`** for a filled examp
 ### Instructions (order)
 
 1. Read preflight digest (`008-latest-context.txt`).
-2. If **`weekly_due=no`** and **no `SIGNAL` lines**, append stamp only (**`FEAT: 0 | NEW: 0`**) and stop — no task spam.
-3. Otherwise investigate top signals (docs, demo, queue).
-4. Create up to **3** deduped task files using the template.
-5. Update **`time-of-last-review.txt`** with run summary.
+2. If **`PAUSE new_backlog`** / **`G008_NEW_BACKLOG_PAUSE=1`**, append stamp only (**`FEAT: 0 | NEW: 0 | paused: new_backlog`**) and stop — unless a **new unqueued product/demo** finding requires the exception above (then at most 3 tasks for that finding only).
+3. If **`weekly_due=no`** and **no `SIGNAL` lines**, append stamp only (**`FEAT: 0 | NEW: 0`**) and stop — no task spam.
+4. If deep NEW + every **`SIGNAL`** theme is owned (or known false positive) and there is **no** failing demo SIGNAL, append stamp only (**`FEAT: 0 | NEW: 0 | stamp-only: owned_signals`**) and stop.
+5. Otherwise investigate top signals (docs, demo, queue) — only queue tasks for **unqueued** actionable findings.
+6. Create up to **3** deduped task files using the template.
+7. Update **`time-of-last-review.txt`** with run summary.

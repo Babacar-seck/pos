@@ -165,6 +165,8 @@ Steps to get the latest **master** or **main** branch deployed on a server where
    # or: docker compose --env-file config.env -f docker-compose.yml -f docker-compose.prod.yml exec -T back python -m app.seeds.reset_demo_data
    ```
 
+   Separately, schedule the hourly unpaid public Satisfecho Delivery cleanup (all tenants; not covered by demo reset). See [Unpaid public Satisfecho Delivery cleanup](0001-ci-cd-amvara9.md#unpaid-public-satisfecho-delivery-cleanup-all-tenants) and `./scripts/cleanup-unpaid-public-delivery-on-server.sh`.
+
 8. **Check that everything is up**  
    - Logs: `docker compose --env-file config.env logs -f --tail=50`
    - Health: `curl -s http://localhost:4200/api/health` (adjust host/port if you use a reverse proxy or different `FRONTEND_PORT`)
@@ -191,7 +193,7 @@ That script starts in **production** mode (build + prod compose override) and ru
 | 4 | `docker compose --env-file config.env -f docker-compose.yml -f docker-compose.prod.yml up --build -d` |
 | 5 | `docker compose --env-file config.env exec back python -m app.migrate` |
 | 6 | (Optional) `docker compose --env-file config.env exec back python -m app.seeds.seed_demo_tables` |
-| 7 | (Optional) daily demo reset cron — see [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md#daily-demo-data-reset-tenant-1) |
+| 7 | (Optional) daily demo reset cron — see [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md#daily-demo-data-reset-tenant-1); unpaid public delivery cleanup cron — see [0001 § Unpaid public…](0001-ci-cd-amvara9.md#unpaid-public-satisfecho-delivery-cleanup-all-tenants) |
 | 8 | Check logs and `/api/health` |
 
 ---

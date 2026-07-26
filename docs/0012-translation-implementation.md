@@ -124,19 +124,19 @@ local convention.
    - Backend fetches localized product names from the `I18nText` table using `TranslationService`.
 ## 6. How to Add a New Language
 
-To add support for a new language (e.g., French - `fr`):
+Languages already listed in §4 (including **`fr`** and **`bg`**) already ship — do not recreate their locale files. The walkthrough below uses a **hypothetical** unused code (Portuguese - `pt`) so the steps stay copy-pasteable without colliding with shipped locales.
 
 ### 1. Frontend Setup
-1. Create `front/public/i18n/fr.json` and translate the labels.
+1. Create `front/public/i18n/pt.json` and translate the labels.
 2. In `front/src/app/services/language.service.ts`, add the new language to the `SUPPORTED_LANGUAGES` array:
    ```typescript
-   { code: 'fr', label: 'Français', locale: 'fr-FR' }
+   { code: 'pt', label: 'Português', locale: 'pt-PT' }
    ```
 
 ### 2. Backend Setup
-1. In `back/app/language_service.py`, add `'fr'` to the `SUPPORTED_LANGUAGES` list.
-2. In `back/app/messages.py`, add a new key `"fr"` to the `MESSAGES` dictionary and translate the strings.
+1. In `back/app/language_service.py`, add `'pt'` to the `SUPPORTED_LANGUAGES` list.
+2. In `back/app/messages.py`, add a new key `"pt"` to the `MESSAGES` dictionary and translate the strings.
 
 ### 3. Database Content
-1. Use the `PUT /i18n/{entity_type}/{entity_id}` endpoint to add French translations for products, categories, etc.
+1. Use the `PUT /i18n/{entity_type}/{entity_id}` endpoint to add Portuguese translations for products, categories, etc.
 2. (Optional) Update `back/seed_translations.py` to include default translations for the new language.

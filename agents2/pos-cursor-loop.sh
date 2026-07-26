@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # POS agent loop orchestrator (mac-stats-reviewer style). Run from repo root:
-#   ./agents/pos-agent-loop.sh [COMMAND]
+#   ./agents2/pos-cursor-loop.sh [COMMAND]
 # or:
-#   cd agents && ./pos-agent-loop.sh [COMMAND]
+#   cd agents2 && ./pos-cursor-loop.sh [COMMAND]
 #
 # Starts Docker stack: use ./run.sh -dev at repo root (separate from this file).
 # Requires: cursor-agent on PATH for steps that invoke it (001 can skip cursor when local; committer uses cursor by default — AGENT_COMMITTER_USE_CURSOR default 1; see AGENT_001_LOCAL_LOG_REVIEWER, AGENT_COMMITTER_LOCAL).
 #
-# Task dir: agents/tasks/ (sibling of this script).
+# Task dir: agents2/tasks/ (sibling of this script).
 
 set -euo pipefail
 
@@ -350,7 +350,7 @@ sync_repo() {
   fi
 }
 
-# True if agents/tasks/ root has ≥1 file matching any glob (e.g. NEW-*.md WIP-*.md).
+# True if agents2/tasks/ root has ≥1 file matching any glob (e.g. NEW-*.md WIP-*.md).
 any_root_task_glob() {
   shopt -s nullglob
   local g matches
@@ -458,7 +458,12 @@ run_agent() {
   local step="${5:-default}"
   local p="${SCRIPTDIR}/${prompt}"
   if [[ ! -f "$p" ]]; then
-    echo "----- $desc (skip: missing prompt $prompt — see docs/agent-loop.md)"
+    echo "----- $desc (ERROR: missing prompt $prompt under agents2/ — see docs/agent-loop.md)" >&2
+    # Coding with queued work must not silently no-op.
+    if [[ "$step" == "coding" ]] && any_root_task_glob 'NEW-*.md' 'WIP-*.md'; then
+      echo "ERROR: main coder prompt missing while NEW/WIP tasks exist: $p" >&2
+      return 1
+    fi
     return 0
   fi
   if ! have_cursor_agent; then
@@ -637,6 +642,7 @@ prepare_008_preflight_context() {
   G008_TASK_SIGNALS=0
   G008_DEMO_SIGNALS=0
   G008_SIGNALS=0
+  G008_NEW_BACKLOG_PAUSE=0
   mkdir -p "$(dirname "$ctx")"
   if [[ ! -x "$ENH_PREFLIGHT" ]]; then
     echo "G008 preflight script missing: $ENH_PREFLIGHT" >"$ctx"
@@ -652,6 +658,7 @@ prepare_008_preflight_context() {
       G008_DOC_DRIFT=*) eval "$line" 2>/dev/null || true ;;
       G008_TASK_SIGNALS=*) eval "$line" 2>/dev/null || true ;;
       G008_DEMO_SIGNALS=*) eval "$line" 2>/dev/null || true ;;
+      G008_NEW_BACKLOG_PAUSE=*) eval "$line" 2>/dev/null || true ;;
       G008_SIGNALS=*) eval "$line" 2>/dev/null || true ;;
     esac
   done < <(grep -E '^G008_' "$ctx" 2>/dev/null || true)
@@ -660,6 +667,8 @@ prepare_008_preflight_context() {
 should_run_008_cursor_agent() {
   [[ "${AGENT_ENHANCEMENT_REVIEWER_ALWAYS:-0}" == "1" ]] && return 0
   [[ "${AGENT_008_SKIP_PREFLIGHT:-0}" == "1" ]] && return 0
+  # Drain deep NEW queue before minting more enhancement tasks.
+  [[ "${G008_NEW_BACKLOG_PAUSE:-0}" == "1" ]] && return 1
   [[ "${G008_OK:-0}" != "1" ]] && return 1
   (( G008_WEEKLY_DUE + G008_DOC_DRIFT + G008_TASK_SIGNALS + G008_DEMO_SIGNALS > 0 ))
 }
@@ -680,7 +689,7 @@ step_enhancement_reviewer() {
       return 0
     fi
     local msg="Run 008: Read the preflight digest first (absolute path): $ctx
-Then follow 008-enhancement-reviewer.md — weekly improvement sweep; create up to 3 FEAT-0-* or NEW-0-* tasks from SIGNAL lines (no bulk doc rewrites). Task conventions: TASKS-README.md. Do your job."
+Then follow 008-enhancement-reviewer.md — weekly improvement sweep; create up to 3 FEAT-0-* or NEW-0-* tasks from SIGNAL lines (no bulk doc rewrites). If digest has PAUSE new_backlog, create 0 tasks. Task conventions: TASKS-README.md. Do your job."
     run_agent "enhancement reviewer (008)" \
       "true" \
       "008-enhancement-reviewer.md" \
@@ -688,8 +697,12 @@ Then follow 008-enhancement-reviewer.md — weekly improvement sweep; create up 
       "enhancement"
     ENHANCEMENT_PREFLIGHT_READONLY=0 POS_REPO_ROOT="$REPO_ROOT" prepare_008_preflight_context "$ctx" 0
   else
-    echo "----- enhancement (008) (skip: weekly not due and no preflight signals; days=${G008_DAYS_SINCE_LAST_REVIEW:-?})"
-    echo "----- Override: AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1 or AGENT_008_SKIP_PREFLIGHT=1"
+    if [[ "${G008_NEW_BACKLOG_PAUSE:-0}" == "1" ]]; then
+      echo "----- enhancement (008) (skip: PAUSE new_backlog — drain NEW-* via 002 coder first; AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1 to force)"
+    else
+      echo "----- enhancement (008) (skip: weekly not due and no preflight signals; days=${G008_DAYS_SINCE_LAST_REVIEW:-?})"
+      echo "----- Override: AGENT_ENHANCEMENT_REVIEWER_ALWAYS=1 or AGENT_008_SKIP_PREFLIGHT=1"
+    fi
     ENHANCEMENT_PREFLIGHT_READONLY=0 POS_REPO_ROOT="$REPO_ROOT" prepare_008_preflight_context "$ctx" 0
   fi
 }
@@ -775,7 +788,7 @@ step_closing_review() {
   run_agent "closing" \
     "any_root_task_glob 'CLOSED-*.md'" \
     "030-closing-reviewer.md" \
-    "Start closing review now. Process CLOSED-*.md in agents/tasks/; prepend summary; move to done/YYYY/MM/DD with scripts/move-agent-task-to-done.sh when done. Do your job." \
+    "Start closing review now. Process CLOSED-*.md in agents2/tasks/; prepend summary; move to done/YYYY/MM/DD with scripts/move-agent-task-to-done.sh when done. Do your job." \
     "closing"
 }
 
@@ -857,11 +870,11 @@ Usage: $(basename "$0") [COMMAND]
     log, log-reviewer, 001   Log / incident reviewer (001; runs first in full cycle)
     marketing, mkt, 005      Marketing repos reviewer (NNN_slug org repos → deploy / FEAT-MKT)
     enhancement, enhance, 008  Enhancement reviewer (weekly docs/demo/queue sweep → FEAT-0 / NEW-0)
-    feat, feature   Feature coder (FEAT-*.md in agents/tasks/)
-    coder           Coder (NEW-*.md or WIP-*.md)
+    feat, feature   Feature coder (FEAT-*.md in agents2/tasks/)
+    coder           Coder (NEW-*.md or WIP-*.md; prompt agents2/002-coder/CODER.md)
     handoff, 012    Feature-coder handoff (WIP-*.md → verify complete → UNTESTED-*.md)
     tester          Tester (UNTESTED-*.md or in-progress TESTING-*.md)
-    closing-review  Closing reviewer (CLOSED-*.md still in agents/tasks/)
+    closing-review  Closing reviewer (CLOSED-*.md still in agents2/tasks/)
     committer       Changelog + commit when POS repo has local changes
 
     help, -h, --help   Show this help
@@ -894,7 +907,7 @@ Docker / app stack: start separately from repo root with ./run.sh -dev
 
 Git: FEAT/NEW-WIP/tester/closing/committer run scripts/git-sync-development.sh only when that step has work (queue or uncommitted changes). 001 syncs when its gate opens.
 
-Prompt files in this directory (agents2/): 001-gh-reviewer.md, 005-marketing-repos-reviewer.md, 008-enhancement-reviewer.md, 010-feature-coder.md, 012-feature-coder-handoff.md (runs after coder when WIP-*.md exists), 020-test.md, 030-closing-reviewer.md, 040-committer.md; task naming: TASKS-README.md. Main coder (NEW/WIP): 002-coder/CODER.md if present. See docs/agent-loop.md.
+Prompt files in this directory (agents2/): 001-gh-reviewer.md, 005-marketing-repos-reviewer.md, 008-enhancement-reviewer.md, 010-feature-coder.md, 012-feature-coder-handoff.md (runs after coder when WIP-*.md exists), 020-test.md, 030-closing-reviewer.md, 040-committer.md; task naming: TASKS-README.md. Main coder (NEW/WIP): 002-coder/CODER.md. See docs/agent-loop.md.
 EOF
 }
 

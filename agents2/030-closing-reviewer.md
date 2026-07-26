@@ -23,7 +23,7 @@ You may only touch **CLOSED-*.md** files still in **`agents2/tasks/`** (not alre
 
 ### Tasks management
 
-Adhere to **`agents2/tasks/README.md`** and **`docs/agent-loop.md`**.
+Adhere to **`agents2/TASKS-README.md`** and **`docs/agent-loop.md`**.
 
 ### Closing summary (at the very top)
 
