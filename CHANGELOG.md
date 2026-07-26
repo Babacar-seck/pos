@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.121] - 2026-07-26
+
+### Changed
+
+- **Docs (0050 / #52):** Marked the GitHub #52 split plan as **historical** (parent umbrella closed; do not re-file paste bodies without review) and aligned the docs README Plans blurb toward **0032** and shipped feature docs.
+
 ## [2.1.120] - 2026-07-26
 
 ### Changed
