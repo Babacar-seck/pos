@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.70] - 2026-07-26
+
+### Changed
+
+- **Agent task paths:** Root `AGENTS.md` and always-applied cursor rules now name the live queue as `agents2/tasks/` (with `agents2/TASKS-README.md`) instead of the legacy `agents/tasks/` path.
+
 ## [2.1.69] - 2026-07-26
 
 ### Changed
