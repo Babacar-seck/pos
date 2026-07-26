@@ -26,7 +26,7 @@ SSL for satisfecho.de is terminated by HAProxy in the POS stack. This document e
    So whatever is in `./certbot/haproxy-certs` on the host is visible read-only in the container at `/etc/haproxy/certs`.
 
 3. **HAProxy config**  
-   In **haproxy/haproxy.cfg**, 443 is bound with:
+   Local/dev uses **`haproxy/haproxy.cfg`** (HTTP only, no certs; see `docker-compose.dev.yml`). Production/amvara9 mounts **`haproxy/haproxy.prod.cfg`** via **docker-compose.prod.yml** (as `/usr/local/etc/haproxy/haproxy.cfg` in the container). In **haproxy.prod.cfg**, 443 is bound with:
    ```text
    bind *:443 ssl crt /etc/haproxy/certs
    ```
@@ -97,7 +97,7 @@ After placing at least one `.pem` in `certbot/haproxy-certs/`, reload or restart
 | **Host path for PEM** | `/development/pos/certbot/haproxy-certs/` (e.g. satisfecho.de.pem) – not wiped by deploy |
 | **.gitignore** | `certbot/www/`, `certbot/haproxy-certs/*.pem` – certs never committed |
 | **Compose** | `./certbot/haproxy-certs` → `/etc/haproxy/certs:ro` in HAProxy |
-| **haproxy.cfg** | `bind *:443 ssl crt /etc/haproxy/certs` |
+| **haproxy.prod.cfg** (prod/amvara9) | `bind *:443 ssl crt /etc/haproxy/certs` — local/dev uses `haproxy.cfg` (no HTTPS) |
 | **Deploy script** | `mkdir -p certbot/www certbot/haproxy-certs`; does not delete or overwrite certs |
 | **Reload** | `docker exec pos-haproxy kill -HUP 1` after updating the PEM (no downtime) |
 

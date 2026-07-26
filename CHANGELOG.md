@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.72] - 2026-07-26
+
+### Fixed
+
+- **HAProxy SSL docs (amvara9):** `docs/0026-haproxy-ssl-amvara9.md` now points the production `bind *:443` SSL config at `haproxy.prod.cfg` (not the HTTP-only local `haproxy.cfg`), with a short local/dev vs prod/amvara9 split.
+
 ## [2.1.71] - 2026-07-26
 
 ### Added
