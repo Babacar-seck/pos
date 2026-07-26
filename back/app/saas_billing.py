@@ -54,6 +54,7 @@ SAAS_EXEMPT_PREFIXES = (
     "/platform",
     "/provider",
     "/courier",
+    "/print-agent",  # LAN print agent polls with its own token (#317)
     "/uploads",
     "/products",  # guided signup seeds / photos before paywall
     "/users/me",

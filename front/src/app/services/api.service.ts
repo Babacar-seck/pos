@@ -322,6 +322,15 @@ export interface RegisterResponse {
   email: string;
 }
 
+/** One catalog tier from GET /saas/config (multi-tier ready; #328) */
+export interface SaasPlanTier {
+  id: string;
+  trial_days: number;
+  price_cents: number;
+  currency: string;
+  interval: string;
+}
+
 /** Platform SaaS subscription / hard paywall (issue #296) */
 export interface SaasSubscription {
   enabled: boolean;
@@ -329,6 +338,8 @@ export interface SaasSubscription {
   price_cents: number;
   currency: string;
   stripe_checkout_available: boolean;
+  /** Forward-compatible plan catalog; omit or empty → use top-level price fields */
+  plans?: SaasPlanTier[];
   status?: string;
   has_access?: boolean;
   trial_ends_at?: string | null;
@@ -839,6 +850,48 @@ export interface LoyaltyProgramPublic {
   redemption_threshold: number;
   reward_discount_cents: number;
   wallet?: LoyaltyWalletStatus;
+}
+
+export interface PrintBridgeStatus {
+  agent_online: boolean;
+  online_count: number;
+  agent_count: number;
+  last_seen_at: string | null;
+  online_window_seconds: number;
+}
+
+export interface PrintJob {
+  id: number;
+  tenant_id: number;
+  job_type: 'kitchen' | 'receipt' | string;
+  printer_role: string;
+  status: string;
+  order_id: number | null;
+  payload: Record<string, unknown>;
+  created_by_user_id?: number | null;
+  claimed_by_agent_id?: number | null;
+  claimed_at?: string | null;
+  completed_at?: string | null;
+  error_message?: string | null;
+  created_at?: string | null;
+}
+
+export interface PrintJobCreateResponse {
+  job: PrintJob;
+  bridge: PrintBridgeStatus;
+}
+
+export interface PrintAgent {
+  id: number;
+  tenant_id: number;
+  device_id: string;
+  display_name: string;
+  last_seen_at: string | null;
+  revoked_at: string | null;
+  created_at?: string | null;
+  online: boolean;
+  /** Present only on create response */
+  token?: string;
 }
 
 export interface LoyaltyMembership {
@@ -3516,6 +3569,42 @@ export class ApiService {
       loyalty_discount_cents: number;
       loyalty_units_redeemed: number;
     }>(`${this.apiUrl}/orders/${orderId}/loyalty-membership`, { loyalty_membership_id });
+  }
+
+  getPrintBridgeStatus(): Observable<PrintBridgeStatus> {
+    return this.http.get<PrintBridgeStatus>(`${this.apiUrl}/print-jobs/status`);
+  }
+
+  createPrintJob(body: {
+    job_type: 'kitchen' | 'receipt';
+    order_id?: number | null;
+    printer_role?: string | null;
+    payload?: Record<string, unknown> | null;
+  }): Observable<PrintJobCreateResponse> {
+    return this.http.post<PrintJobCreateResponse>(`${this.apiUrl}/print-jobs`, body);
+  }
+
+  listPrintJobs(limit = 50, status?: string): Observable<PrintJob[]> {
+    let params = new HttpParams().set('limit', String(limit));
+    if (status?.trim()) {
+      params = params.set('status', status.trim());
+    }
+    return this.http.get<PrintJob[]>(`${this.apiUrl}/print-jobs`, { params });
+  }
+
+  listPrintAgents(): Observable<PrintAgent[]> {
+    return this.http.get<PrintAgent[]>(`${this.apiUrl}/tenant/print-agents`);
+  }
+
+  createPrintAgent(body: {
+    device_id: string;
+    display_name?: string;
+  }): Observable<PrintAgent> {
+    return this.http.post<PrintAgent>(`${this.apiUrl}/tenant/print-agents`, body);
+  }
+
+  revokePrintAgent(agentId: number): Observable<PrintAgent> {
+    return this.http.delete<PrintAgent>(`${this.apiUrl}/tenant/print-agents/${agentId}`);
   }
 
   submitPublicWaitingList(

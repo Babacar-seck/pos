@@ -1,7 +1,6 @@
 # Printing when the backend is outside the restaurant WiFi
 
-> **Status: design notes / not implemented.**  
-> There is no restaurant-LAN print agent, `/api/print-jobs` API, or WebSocket print bridge in the current POS. These pages are **future options** only. **Supported today:** browser and invoice print from the staff UI (and kitchen/bar display for screen tickets — see `docs/0015-kitchen-display.md`). Do not treat this document as a shipped feature plan.
+> **Status: MVP shipped (#317).** Default path is **Option C** (cloud `POST /print-jobs` + LAN poll agent). See **`docs/0070-hardware-printing.md`** for ADR, API, and runbook. Browser / invoice `window.print()` remains the fallback when no agent is online. Sections below keep the original design research (Options A–C).
 
 The backend runs in the cloud (or another network) and **cannot reach printers on the restaurant’s local WiFi**. Printers are only on the restaurant LAN. So printing must be done by **something that runs on the restaurant’s WiFi** and talks to those printers.
 

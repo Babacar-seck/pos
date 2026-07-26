@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_3": "Update your menu once — every printed QR always shows the latest version.",
     "QR_DEMO_SCAN_HINT": "Scan with your phone",
     "QR_DEMO_OPEN_MENU": "Open demo menu",
-    "FEATURES_VIEW_ALL": "View all features"
+    "FEATURES_VIEW_ALL": "View all features",
+    "NAV_PRICING": "قیمتیں"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "مینو",
@@ -971,7 +972,10 @@
     "HUB_PREPARING_BADGE": "HQ تیار کر رہا ہے",
     "HUB_REQUESTED_BADGE": "HQ تیاری کی درخواست",
     "HUB_CANCELLED_BADGE": "HQ تیاری منسوخ",
-    "REQUEST_HQ_PREP": "HQ تیاری کی درخواست"
+    "REQUEST_HQ_PREP": "HQ تیاری کی درخواست",
+    "PRINT_KITCHEN": "کچن ٹکٹ پرنٹ کریں",
+    "PRINT_BRIDGE_SENT": "پرنٹ ایجنٹ کو بھیجا گیا (بغیر براؤزر ڈائیلاگ)",
+    "PRINT_BRIDGE_OFFLINE": "پرنٹ برج آف لائن — براؤزر پرنٹ استعمال ہو رہا ہے"
   },
   "CUSTOMERS": {
     "TITLE": "گاہک (انوائس)",
@@ -2128,7 +2132,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "درخواست شدہ",
     "RESTAURANT_GROUP_STATUS_PREPARING": "تیار ہو رہا ہے",
     "RESTAURANT_GROUP_STATUS_PREPARED": "HQ پر تیار",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "منسوخ"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "منسوخ",
+    "PRINTING_TAB": "پرنٹنگ",
+    "PRINTING_TITLE": "ہارڈویئر پرنٹنگ",
+    "PRINTING_SUBTITLE": "کچن اور رسید جابز کے لیے LAN پرنٹ ایجنٹ رجسٹر کریں۔ آف لائن ہونے پر براؤزر پرنٹ ڈائیلاگ استعمال ہوتا ہے۔",
+    "PRINTING_BRIDGE_ONLINE": "پرنٹ ایجنٹ آن لائن",
+    "PRINTING_BRIDGE_OFFLINE": "پرنٹ ایجنٹ آف لائن — براؤزر پرنٹ فعال",
+    "PRINTING_DEVICE_ID": "ڈیوائس ID",
+    "PRINTING_DISPLAY_NAME": "ڈسپلے نام",
+    "PRINTING_CREATE_AGENT": "ایجنٹ بنائیں",
+    "PRINTING_TOKEN_ONCE": "یہ ٹوکن ابھی کاپی کریں — صرف ایک بار دکھایا جاتا ہے۔ LAN ایجنٹ پر PRINT_AGENT_TOKEN سیٹ کریں۔",
+    "PRINTING_AGENTS": "رجسٹرڈ ایجنٹس",
+    "PRINTING_AGENTS_EMPTY": "ابھی کوئی پرنٹ ایجنٹ نہیں۔",
+    "PRINTING_ONLINE": "آن لائن",
+    "PRINTING_OFFLINE": "آف لائن",
+    "PRINTING_REVOKED": "منسوخ",
+    "PRINTING_REVOKE": "منسوخ کریں",
+    "PRINTING_REFRESH": "ریفریش",
+    "PRINTING_DOCS_HINT": "رنبک: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",
@@ -2654,6 +2675,29 @@
     "FEAT_I18N_DESC": "Guest and staff UI in multiple languages with per-tenant defaults.",
     "FEAT_OPEN_SOURCE_TITLE": "Open source",
     "FEAT_OPEN_SOURCE_DESC": "Self-host or run in the cloud — inspect, extend, and avoid vendor lock-in."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "سادہ ہوسٹڈ قیمتیں",
+    "TITLE": "مفت آزمائیں، پھر ایک فلیٹ ماہانہ پلان",
+    "SUBTITLE": "ہوسٹڈ Satisfecho میں کارڈ کے بغیر مفت ٹرائل شامل ہے۔ خود چلائیں تو AGPLv3 کے تحت لائسنس لاگت صفر۔",
+    "HOSTED_NAME": "ہوسٹڈ",
+    "HOSTED_LEDE": "آپ کے ریسٹورنٹ کے لیے منظم Satisfecho — پلیٹ فارم ہم چلاتے ہیں۔",
+    "PER_MONTH": "/ مہینہ",
+    "TRIAL_LINE": "{{days}}-دن کا مفت ٹرائل — کارڈ درکار نہیں",
+    "BILLING_ACTIVE_NOTE": "اس تعیناتی پر ہوسٹڈ بلنگ فعال ہے: ٹرائل کے بعد نئے ریسٹورنٹس پر ماہانہ پلان لاگو ہوتا ہے۔",
+    "BILLING_INACTIVE_NOTE": "اس تعیناتی پر ہوسٹڈ پے وال بلنگ ابھی لازمی نہیں۔ اوپر کی قیمت بلنگ آن ہونے پر ہوسٹڈ پلان ہے۔",
+    "INCLUDE_QR": "QR ڈیجیٹل مینو اور ٹیبل آرڈرنگ",
+    "INCLUDE_KITCHEN": "کچن اور بار ڈسپلے",
+    "INCLUDE_RESERVATIONS": "آن لائن ریزرویشن اور ویٹ لسٹ",
+    "INCLUDE_REPORTS": "سیلز رپورٹس اور اسٹاف ٹولز",
+    "INCLUDE_LOYALTY": "کلب لائلٹی (پوائنٹس یا اسٹیمپ)",
+    "CTA_START": "اپنا اکاؤنٹ بنائیں",
+    "SELFHOST_NAME": "سیلف ہوسٹ",
+    "SELFHOST_LEDE": "اپنے سرورز پر Satisfecho چلائیں۔",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "AGPLv3 اوپن سورس — کوئی ہوسٹڈ فیس نہیں",
+    "CTA_GITHUB": "GitHub پر دیکھیں",
+    "LOAD_ERROR": "قیمتیں لوڈ نہیں ہو سکیں۔ بعد میں دوبارہ کوشش کریں۔"
   },
   "WAITLIST": {
     "TITLE": "انتظار کی فہرست",

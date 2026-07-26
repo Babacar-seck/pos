@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_3": "Mettez la carte à jour une fois — chaque QR imprimé affiche toujours la dernière version.",
     "QR_DEMO_SCAN_HINT": "Scanner avec le téléphone",
     "QR_DEMO_OPEN_MENU": "Ouvrir la carte démo",
-    "FEATURES_VIEW_ALL": "Voir toutes les fonctionnalités"
+    "FEATURES_VIEW_ALL": "Voir toutes les fonctionnalités",
+    "NAV_PRICING": "Tarifs"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Carte",
@@ -971,7 +972,10 @@
     "HUB_PREPARING_BADGE": "HQ en préparation",
     "HUB_REQUESTED_BADGE": "Prep. HQ demandée",
     "HUB_CANCELLED_BADGE": "Prep. HQ annulée",
-    "REQUEST_HQ_PREP": "Demander prep. HQ"
+    "REQUEST_HQ_PREP": "Demander prep. HQ",
+    "PRINT_KITCHEN": "Imprimer ticket cuisine",
+    "PRINT_BRIDGE_SENT": "Envoyé à l'agent d'impression (pas de dialogue navigateur)",
+    "PRINT_BRIDGE_OFFLINE": "Pont d'impression hors ligne — impression navigateur"
   },
   "CUSTOMERS": {
     "TITLE": "Clients (Facture)",
@@ -2075,7 +2079,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Demandé",
     "RESTAURANT_GROUP_STATUS_PREPARING": "En préparation",
     "RESTAURANT_GROUP_STATUS_PREPARED": "Préparé au HQ",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Annulé"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Annulé",
+    "PRINTING_TAB": "Impression",
+    "PRINTING_TITLE": "Impression matérielle",
+    "PRINTING_SUBTITLE": "Enregistrez un agent d'impression LAN pour cuisine et tickets. Hors ligne, le POS utilise le dialogue du navigateur.",
+    "PRINTING_BRIDGE_ONLINE": "Agent d'impression en ligne",
+    "PRINTING_BRIDGE_OFFLINE": "Agent hors ligne — impression navigateur active",
+    "PRINTING_DEVICE_ID": "ID appareil",
+    "PRINTING_DISPLAY_NAME": "Nom affiché",
+    "PRINTING_CREATE_AGENT": "Créer l'agent",
+    "PRINTING_TOKEN_ONCE": "Copiez ce jeton maintenant — affiché une seule fois. Définissez PRINT_AGENT_TOKEN sur l'agent.",
+    "PRINTING_AGENTS": "Agents enregistrés",
+    "PRINTING_AGENTS_EMPTY": "Aucun agent d'impression.",
+    "PRINTING_ONLINE": "En ligne",
+    "PRINTING_OFFLINE": "Hors ligne",
+    "PRINTING_REVOKED": "Révoqué",
+    "PRINTING_REVOKE": "Révoquer",
+    "PRINTING_REFRESH": "Actualiser",
+    "PRINTING_DOCS_HINT": "Guide : docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "Paiement",
@@ -2654,6 +2675,29 @@
     "FEAT_I18N_DESC": "Interface en plusieurs langues.",
     "FEAT_OPEN_SOURCE_TITLE": "Open source",
     "FEAT_OPEN_SOURCE_DESC": "Auto-hébergement ou cloud — sans lock-in."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "Tarifs hébergés simples",
+    "TITLE": "Essai gratuit, puis un forfait mensuel unique",
+    "SUBTITLE": "Satisfecho hébergé inclut un essai gratuit sans carte. Auto-hébergez sous AGPLv3 sans frais de licence si vous préférez le faire tourner vous-même.",
+    "HOSTED_NAME": "Hébergé",
+    "HOSTED_LEDE": "Satisfecho géré pour votre restaurant — nous exploitons la plateforme.",
+    "PER_MONTH": "/ mois",
+    "TRIAL_LINE": "Essai gratuit de {{days}} jours — sans carte",
+    "BILLING_ACTIVE_NOTE": "La facturation hébergée est active sur ce déploiement : après l'essai, le forfait mensuel s'applique aux nouveaux restaurants.",
+    "BILLING_INACTIVE_NOTE": "La facturation paywall hébergée n'est pas requise sur ce déploiement pour l'instant. Le prix ci-dessus est le forfait hébergé lorsque la facturation est activée.",
+    "INCLUDE_QR": "Menu QR et commandes à table",
+    "INCLUDE_KITCHEN": "Écrans cuisine et bar",
+    "INCLUDE_RESERVATIONS": "Réservations en ligne et liste d'attente",
+    "INCLUDE_REPORTS": "Rapports de ventes et outils équipe",
+    "INCLUDE_LOYALTY": "Fidélité club (points ou tampons)",
+    "CTA_START": "Créer votre compte",
+    "SELFHOST_NAME": "Auto-hébergement",
+    "SELFHOST_LEDE": "Faites tourner Satisfecho sur vos propres serveurs.",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "Open source AGPLv3 — pas de frais hébergés",
+    "CTA_GITHUB": "Voir sur GitHub",
+    "LOAD_ERROR": "Impossible de charger les tarifs. Réessayez plus tard."
   },
   "WAITLIST": {
     "TITLE": "Liste d'attente",

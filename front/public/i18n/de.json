@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_3": "Karte einmal aktualisieren — jeder gedruckte QR zeigt immer die neueste Version.",
     "QR_DEMO_SCAN_HINT": "Mit dem Handy scannen",
     "QR_DEMO_OPEN_MENU": "Demo-Karte öffnen",
-    "FEATURES_VIEW_ALL": "Alle Funktionen ansehen"
+    "FEATURES_VIEW_ALL": "Alle Funktionen ansehen",
+    "NAV_PRICING": "Preise"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Speisekarte",
@@ -971,7 +972,10 @@
     "HUB_PREPARING_BADGE": "HQ bereitet zu",
     "HUB_REQUESTED_BADGE": "HQ-Zubereitung angefragt",
     "HUB_CANCELLED_BADGE": "HQ-Zubereitung storniert",
-    "REQUEST_HQ_PREP": "HQ-Zubereitung anfragen"
+    "REQUEST_HQ_PREP": "HQ-Zubereitung anfragen",
+    "PRINT_KITCHEN": "Küchenbon drucken",
+    "PRINT_BRIDGE_SENT": "An Druckagent gesendet (kein Browser-Dialog)",
+    "PRINT_BRIDGE_OFFLINE": "Druckbrücke offline — Browser-Druck wird verwendet"
   },
   "CUSTOMERS": {
     "TITLE": "Kunden (Rechnung)",
@@ -2094,7 +2098,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Angefragt",
     "RESTAURANT_GROUP_STATUS_PREPARING": "In Zubereitung",
     "RESTAURANT_GROUP_STATUS_PREPARED": "In HQ zubereitet",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Storniert"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Storniert",
+    "PRINTING_TAB": "Drucken",
+    "PRINTING_TITLE": "Hardware-Druck",
+    "PRINTING_SUBTITLE": "Registrieren Sie einen LAN-Druckagenten für Küchen- und Bondruck. Offline fällt die Kasse auf den Browser-Druckdialog zurück.",
+    "PRINTING_BRIDGE_ONLINE": "Druckagent online",
+    "PRINTING_BRIDGE_OFFLINE": "Druckagent offline — Browser-Druck ist aktiv",
+    "PRINTING_DEVICE_ID": "Geräte-ID",
+    "PRINTING_DISPLAY_NAME": "Anzeigename",
+    "PRINTING_CREATE_AGENT": "Agent erstellen",
+    "PRINTING_TOKEN_ONCE": "Token jetzt kopieren — wird nur einmal angezeigt. Als PRINT_AGENT_TOKEN am LAN-Agent setzen.",
+    "PRINTING_AGENTS": "Registrierte Agenten",
+    "PRINTING_AGENTS_EMPTY": "Noch keine Druckagenten.",
+    "PRINTING_ONLINE": "Online",
+    "PRINTING_OFFLINE": "Offline",
+    "PRINTING_REVOKED": "Widerrufen",
+    "PRINTING_REVOKE": "Widerrufen",
+    "PRINTING_REFRESH": "Aktualisieren",
+    "PRINTING_DOCS_HINT": "Anleitung: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",
@@ -2654,6 +2675,29 @@
     "FEAT_I18N_DESC": "Gäste- und Team-Oberfläche in mehreren Sprachen.",
     "FEAT_OPEN_SOURCE_TITLE": "Open Source",
     "FEAT_OPEN_SOURCE_DESC": "Self-Hosting oder Cloud — ohne Vendor Lock-in."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "Einfache Hosted-Preise",
+    "TITLE": "Kostenlos testen, dann ein flacher Monatspreis",
+    "SUBTITLE": "Hosted Satisfecho enthält eine kostenlose Testphase ohne Karte. Self-Hosting unter AGPLv3 ohne Lizenzkosten, wenn Sie selbst betreiben möchten.",
+    "HOSTED_NAME": "Hosted",
+    "HOSTED_LEDE": "Verwaltetes Satisfecho für Ihr Restaurant — wir betreiben die Plattform.",
+    "PER_MONTH": "/ Monat",
+    "TRIAL_LINE": "{{days}} Tage kostenlos testen — keine Karte nötig",
+    "BILLING_ACTIVE_NOTE": "Hosted-Abrechnung ist in dieser Umgebung aktiv: Nach der Testphase gilt der Monatspreis für neue Restaurants.",
+    "BILLING_INACTIVE_NOTE": "Hosted-Paywall-Abrechnung ist in dieser Umgebung derzeit nicht erforderlich. Der Preis oben gilt für den Hosted-Plan, wenn Abrechnung aktiviert ist.",
+    "INCLUDE_QR": "QR-Menü und Tischbestellung",
+    "INCLUDE_KITCHEN": "Küchen- und Bar-Displays",
+    "INCLUDE_RESERVATIONS": "Online-Reservierungen und Warteliste",
+    "INCLUDE_REPORTS": "Umsatzberichte und Team-Tools",
+    "INCLUDE_LOYALTY": "Club-Treue (Punkte oder Stempel)",
+    "CTA_START": "Konto erstellen",
+    "SELFHOST_NAME": "Self-Host",
+    "SELFHOST_LEDE": "Betreiben Sie Satisfecho auf eigenen Servern.",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "AGPLv3 Open Source — keine Hosted-Gebühr",
+    "CTA_GITHUB": "Auf GitHub ansehen",
+    "LOAD_ERROR": "Preise konnten nicht geladen werden. Bitte später erneut versuchen."
   },
   "WAITLIST": {
     "TITLE": "Warteliste",

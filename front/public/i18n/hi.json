@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_2": "मेहमान तुरंत श्रेणियाँ, व्यंजन और कीमतें देखते हैं।",
     "QR_DEMO_STEP_3": "मेनू एक बार अपडेट करें — हर छपा QR हमेशा नवीनतम संस्करण दिखाता है।",
     "QR_DEMO_SCAN_HINT": "फ़ोन से स्कैन करें",
-    "QR_DEMO_OPEN_MENU": "डेमो मेनू खोलें"
+    "QR_DEMO_OPEN_MENU": "डेमो मेनू खोलें",
+    "NAV_PRICING": "मूल्य"
   },
   "FEATURES_PAGE": {
     "BADGE": "Full feature list",
@@ -296,6 +297,29 @@
     "FEAT_I18N_DESC": "Guest and staff UI in multiple languages with per-tenant defaults.",
     "FEAT_OPEN_SOURCE_TITLE": "Open source",
     "FEAT_OPEN_SOURCE_DESC": "Self-host or run in the cloud — inspect, extend, and avoid vendor lock-in."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "सरल होस्टेड मूल्य",
+    "TITLE": "मुफ़्त आज़माएँ, फिर एक फ्लैट मासिक प्लान",
+    "SUBTITLE": "होस्टेड Satisfecho में कार्ड के बिना मुफ़्त ट्रायल शामिल है। खुद चलाएँ तो AGPLv3 के तहत शून्य लाइसेंस लागत।",
+    "HOSTED_NAME": "होस्टेड",
+    "HOSTED_LEDE": "आपके रेस्तराँ के लिए प्रबंधित Satisfecho — प्लेटफ़ॉर्म हम चलाते हैं।",
+    "PER_MONTH": "/ माह",
+    "TRIAL_LINE": "{{days}}-दिन का मुफ़्त ट्रायल — कार्ड की ज़रूरत नहीं",
+    "BILLING_ACTIVE_NOTE": "इस डिप्लॉयमेंट पर होस्टेड बिलिंग सक्रिय है: ट्रायल के बाद नए रेस्तराँ पर मासिक प्लान लागू होता है।",
+    "BILLING_INACTIVE_NOTE": "इस डिप्लॉयमेंट पर होस्टेड पेवॉल बिलिंग अभी आवश्यक नहीं है। ऊपर की कीमत बिलिंग चालू होने पर होस्टेड प्लान है।",
+    "INCLUDE_QR": "QR डिजिटल मेनू और टेबल ऑर्डरिंग",
+    "INCLUDE_KITCHEN": "किचन और बार डिस्प्ले",
+    "INCLUDE_RESERVATIONS": "ऑनलाइन आरक्षण और प्रतीक्षा सूची",
+    "INCLUDE_REPORTS": "बिक्री रिपोर्ट और स्टाफ़ टूल",
+    "INCLUDE_LOYALTY": "क्लब लॉयल्टी (अंक या स्टैम्प)",
+    "CTA_START": "अपना खाता बनाएँ",
+    "SELFHOST_NAME": "सेल्फ-होस्ट",
+    "SELFHOST_LEDE": "अपने सर्वर पर Satisfecho चलाएँ।",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "AGPLv3 ओपन सोर्स — कोई होस्टेड शुल्क नहीं",
+    "CTA_GITHUB": "GitHub पर देखें",
+    "LOAD_ERROR": "मूल्य लोड नहीं हो सके। बाद में पुनः प्रयास करें।"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "मेनू",
@@ -1068,7 +1092,10 @@
     "HUB_PREPARING_BADGE": "HQ तैयार कर रहा है",
     "HUB_REQUESTED_BADGE": "HQ तैयारी अनुरोधित",
     "HUB_CANCELLED_BADGE": "HQ तैयारी रद्द",
-    "REQUEST_HQ_PREP": "HQ तैयारी अनुरोध करें"
+    "REQUEST_HQ_PREP": "HQ तैयारी अनुरोध करें",
+    "PRINT_KITCHEN": "किचन टिकट प्रिंट करें",
+    "PRINT_BRIDGE_SENT": "प्रिंट एजेंट को भेजा गया (बिना ब्राउज़र डायलॉग)",
+    "PRINT_BRIDGE_OFFLINE": "प्रिंट ब्रिज ऑफ़लाइन — ब्राउज़र प्रिंट उपयोग हो रहा है"
   },
   "CUSTOMERS": {
     "TITLE": "ग्राहक (इनवॉइस)",
@@ -2225,7 +2252,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "अनुरोधित",
     "RESTAURANT_GROUP_STATUS_PREPARING": "तैयार हो रहा है",
     "RESTAURANT_GROUP_STATUS_PREPARED": "HQ पर तैयार",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "रद्द"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "रद्द",
+    "PRINTING_TAB": "प्रिंटिंग",
+    "PRINTING_TITLE": "हार्डवेयर प्रिंटिंग",
+    "PRINTING_SUBTITLE": "किचन और रसीद जॉब के लिए LAN प्रिंट एजेंट पंजीकृत करें। ऑफ़लाइन होने पर ब्राउज़र प्रिंट डायलॉग उपयोग होता है।",
+    "PRINTING_BRIDGE_ONLINE": "प्रिंट एजेंट ऑनलाइन",
+    "PRINTING_BRIDGE_OFFLINE": "प्रिंट एजेंट ऑफ़लाइन — ब्राउज़र प्रिंट सक्रिय",
+    "PRINTING_DEVICE_ID": "डिवाइस ID",
+    "PRINTING_DISPLAY_NAME": "प्रदर्शित नाम",
+    "PRINTING_CREATE_AGENT": "एजेंट बनाएँ",
+    "PRINTING_TOKEN_ONCE": "यह टोकन अभी कॉपी करें — केवल एक बार दिखता है। LAN एजेंट पर PRINT_AGENT_TOKEN सेट करें।",
+    "PRINTING_AGENTS": "पंजीकृत एजेंट",
+    "PRINTING_AGENTS_EMPTY": "अभी कोई प्रिंट एजेंट नहीं।",
+    "PRINTING_ONLINE": "ऑनलाइन",
+    "PRINTING_OFFLINE": "ऑफ़लाइन",
+    "PRINTING_REVOKED": "रद्द",
+    "PRINTING_REVOKE": "रद्द करें",
+    "PRINTING_REFRESH": "रिफ़्रेश",
+    "PRINTING_DOCS_HINT": "रनबुक: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "भुगतान",

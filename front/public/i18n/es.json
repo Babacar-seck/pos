@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_3": "Actualice la carta una vez — cada QR impreso muestra siempre la versión más reciente.",
     "QR_DEMO_SCAN_HINT": "Escanear con el móvil",
     "QR_DEMO_OPEN_MENU": "Abrir carta demo",
-    "FEATURES_VIEW_ALL": "Ver todas las funciones"
+    "FEATURES_VIEW_ALL": "Ver todas las funciones",
+    "NAV_PRICING": "Precios"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Carta",
@@ -971,7 +972,10 @@
     "HUB_PREPARING_BADGE": "HQ preparando",
     "HUB_REQUESTED_BADGE": "Prep. HQ solicitada",
     "HUB_CANCELLED_BADGE": "Prep. HQ cancelada",
-    "REQUEST_HQ_PREP": "Solicitar prep. HQ"
+    "REQUEST_HQ_PREP": "Solicitar prep. HQ",
+    "PRINT_KITCHEN": "Imprimir ticket de cocina",
+    "PRINT_BRIDGE_SENT": "Enviado al agente de impresión (sin diálogo del navegador)",
+    "PRINT_BRIDGE_OFFLINE": "Puente de impresión desconectado — se usa la impresión del navegador"
   },
   "CUSTOMERS": {
     "TITLE": "Clientes (Factura)",
@@ -2128,7 +2132,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Solicitado",
     "RESTAURANT_GROUP_STATUS_PREPARING": "Preparando",
     "RESTAURANT_GROUP_STATUS_PREPARED": "Preparado en HQ",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancelado"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancelado",
+    "PRINTING_TAB": "Impresión",
+    "PRINTING_TITLE": "Impresión por hardware",
+    "PRINTING_SUBTITLE": "Registra un agente de impresión en la LAN para cocina y tickets. Si está desconectado, el TPV usa el diálogo del navegador.",
+    "PRINTING_BRIDGE_ONLINE": "Agente de impresión en línea",
+    "PRINTING_BRIDGE_OFFLINE": "Agente de impresión desconectado — se usa la impresión del navegador",
+    "PRINTING_DEVICE_ID": "ID del dispositivo",
+    "PRINTING_DISPLAY_NAME": "Nombre visible",
+    "PRINTING_CREATE_AGENT": "Crear agente",
+    "PRINTING_TOKEN_ONCE": "Copia este token ahora — solo se muestra una vez. Configúralo como PRINT_AGENT_TOKEN en el agente.",
+    "PRINTING_AGENTS": "Agentes registrados",
+    "PRINTING_AGENTS_EMPTY": "Aún no hay agentes de impresión.",
+    "PRINTING_ONLINE": "En línea",
+    "PRINTING_OFFLINE": "Desconectado",
+    "PRINTING_REVOKED": "Revocado",
+    "PRINTING_REVOKE": "Revocar",
+    "PRINTING_REFRESH": "Actualizar",
+    "PRINTING_DOCS_HINT": "Guía: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "Pago",
@@ -2654,6 +2675,29 @@
     "FEAT_I18N_DESC": "Interfaz en varios idiomas con valores por defecto del tenant.",
     "FEAT_OPEN_SOURCE_TITLE": "Código abierto",
     "FEAT_OPEN_SOURCE_DESC": "Autoaloje o use la nube — sin dependencia del proveedor."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "Precios hosted simples",
+    "TITLE": "Prueba gratis, luego un plan mensual fijo",
+    "SUBTITLE": "Satisfecho hosted incluye una prueba gratuita sin tarjeta. Autohospeda bajo AGPLv3 sin coste de licencia si prefieres ejecutarlo tú.",
+    "HOSTED_NAME": "Hosted",
+    "HOSTED_LEDE": "Satisfecho gestionado para tu restaurante — nosotros operamos la plataforma.",
+    "PER_MONTH": "/ mes",
+    "TRIAL_LINE": "Prueba gratuita de {{days}} días — sin tarjeta",
+    "BILLING_ACTIVE_NOTE": "La facturación hosted está activa en este despliegue: tras la prueba, el plan mensual aplica a nuevos restaurantes.",
+    "BILLING_INACTIVE_NOTE": "La facturación paywall hosted no es obligatoria en este despliegue ahora. El precio de arriba es el plan hosted cuando la facturación está activada.",
+    "INCLUDE_QR": "Menú QR y pedidos en mesa",
+    "INCLUDE_KITCHEN": "Pantallas de cocina y barra",
+    "INCLUDE_RESERVATIONS": "Reservas online y lista de espera",
+    "INCLUDE_REPORTS": "Informes de ventas y herramientas de equipo",
+    "INCLUDE_LOYALTY": "Club de fidelización (puntos o sellos)",
+    "CTA_START": "Crear tu cuenta",
+    "SELFHOST_NAME": "Autohospedaje",
+    "SELFHOST_LEDE": "Ejecuta Satisfecho en tus propios servidores.",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "Código abierto AGPLv3 — sin cuota hosted",
+    "CTA_GITHUB": "Ver en GitHub",
+    "LOAD_ERROR": "No se pudo cargar la tarifa. Inténtalo más tarde."
   },
   "WAITLIST": {
     "TITLE": "Lista de espera",

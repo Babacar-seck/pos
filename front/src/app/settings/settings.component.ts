@@ -22,6 +22,7 @@ import { FocusFirstInputDirective } from '../shared/focus-first-input.directive'
 import { TranslationsComponent } from '../translations/translations.component';
 import { KitchenStationsSettingsComponent } from './kitchen-stations-settings.component';
 import { LoyaltySettingsComponent } from './loyalty-settings.component';
+import { PrintSettingsComponent } from './print-settings.component';
 import { PromoSettingsComponent } from './promo-settings.component';
 import { RestaurantGroupSettingsComponent } from './restaurant-group-settings.component';
 import { DeliveryIntegrationsSettingsComponent } from './delivery-integrations-settings.component';
@@ -43,6 +44,7 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
     TranslationsComponent,
     KitchenStationsSettingsComponent,
     LoyaltySettingsComponent,
+    PrintSettingsComponent,
     PromoSettingsComponent,
     RestaurantGroupSettingsComponent,
     DeliveryIntegrationsSettingsComponent,
@@ -191,6 +193,20 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
               <path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/>
             </svg>
             <span>{{ 'SETTINGS.LOYALTY_TAB' | translate }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="tab"
+            data-testid="settings-printing-tab"
+            [class.active]="activeSection() === 'printing'"
+            (click)="activeSection.set('printing')">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            <span>{{ 'SETTINGS.PRINTING_TAB' | translate }}</span>
           </button>
           <button
             type="button"
@@ -575,6 +591,8 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_IMAGE_UPLOAD_MB } from '../shared/image-upl
           <app-kitchen-stations-settings />
         } @else if (activeSection() === 'loyalty') {
           <app-loyalty-settings />
+        } @else if (activeSection() === 'printing') {
+          <app-print-settings />
         } @else if (activeSection() === 'promos') {
           <app-promo-settings />
         } @else if (activeSection() === 'delivery-integrations') {
@@ -3011,6 +3029,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     | 'taxes'
     | 'kitchen-stations'
     | 'loyalty'
+    | 'printing'
     | 'promos'
     | 'restaurant-group'
     | 'delivery-integrations'

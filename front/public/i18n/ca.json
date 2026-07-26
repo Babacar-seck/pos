@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_2": "Els clients veuen categories, plats i preus a l'instant.",
     "QR_DEMO_STEP_3": "Actualitzeu la carta una vegada — cada QR imprès mostra sempre l'última versió.",
     "QR_DEMO_SCAN_HINT": "Escanejar amb el mòbil",
-    "QR_DEMO_OPEN_MENU": "Obrir carta demo"
+    "QR_DEMO_OPEN_MENU": "Obrir carta demo",
+    "NAV_PRICING": "Preus"
   },
   "FEATURES_PAGE": {
     "BADGE": "Llista completa de funcions",
@@ -296,6 +297,29 @@
     "FEAT_I18N_DESC": "Interfície en diversos idiomes.",
     "FEAT_OPEN_SOURCE_TITLE": "Codi obert",
     "FEAT_OPEN_SOURCE_DESC": "Autoallotjament o núvol — sense dependència del proveïdor."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "Preus hosted senzills",
+    "TITLE": "Prova gratis, després un pla mensual fix",
+    "SUBTITLE": "Satisfecho hosted inclou una prova gratuïta sense targeta. Autohostitja sota AGPLv3 sense cost de llicència si prefereixes executar-lo tu.",
+    "HOSTED_NAME": "Hosted",
+    "HOSTED_LEDE": "Satisfecho gestionat per al teu restaurant — nosaltres operem la plataforma.",
+    "PER_MONTH": "/ mes",
+    "TRIAL_LINE": "Prova gratuïta de {{days}} dies — sense targeta",
+    "BILLING_ACTIVE_NOTE": "La facturació hosted està activa en aquest desplegament: després de la prova, el pla mensual s'aplica a nous restaurants.",
+    "BILLING_INACTIVE_NOTE": "La facturació paywall hosted no és obligatòria en aquest desplegament ara. El preu de dalt és el pla hosted quan la facturació està activada.",
+    "INCLUDE_QR": "Menú QR i comandes a taula",
+    "INCLUDE_KITCHEN": "Pantalles de cuina i barra",
+    "INCLUDE_RESERVATIONS": "Reserves en línia i llista d'espera",
+    "INCLUDE_REPORTS": "Informes de vendes i eines d'equip",
+    "INCLUDE_LOYALTY": "Club de fidelització (punts o segells)",
+    "CTA_START": "Crea el teu compte",
+    "SELFHOST_NAME": "Autohospedatge",
+    "SELFHOST_LEDE": "Executa Satisfecho als teus propis servidors.",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "Codi obert AGPLv3 — sense quota hosted",
+    "CTA_GITHUB": "Veure a GitHub",
+    "LOAD_ERROR": "No s'ha pogut carregar la tarifa. Torna-ho a provar més tard."
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Carta",
@@ -1068,7 +1092,10 @@
     "HUB_PREPARING_BADGE": "HQ preparant",
     "HUB_REQUESTED_BADGE": "Prep. HQ sol·licitada",
     "HUB_CANCELLED_BADGE": "Prep. HQ cancel·lada",
-    "REQUEST_HQ_PREP": "Sol·licitar prep. HQ"
+    "REQUEST_HQ_PREP": "Sol·licitar prep. HQ",
+    "PRINT_KITCHEN": "Imprimir tiquet de cuina",
+    "PRINT_BRIDGE_SENT": "Enviat a l'agent d'impressió (sense diàleg del navegador)",
+    "PRINT_BRIDGE_OFFLINE": "Pont d'impressió fora de línia — impressió del navegador"
   },
   "CUSTOMERS": {
     "TITLE": "Clients (Factura)",
@@ -2225,7 +2252,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Sol·licitat",
     "RESTAURANT_GROUP_STATUS_PREPARING": "Preparant",
     "RESTAURANT_GROUP_STATUS_PREPARED": "Preparat a HQ",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancel·lat"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Cancel·lat",
+    "PRINTING_TAB": "Impressió",
+    "PRINTING_TITLE": "Impressió per maquinari",
+    "PRINTING_SUBTITLE": "Registra un agent d'impressió a la LAN per cuina i tiquets. Si està fora de línia, el TPV usa el diàleg del navegador.",
+    "PRINTING_BRIDGE_ONLINE": "Agent d'impressió en línia",
+    "PRINTING_BRIDGE_OFFLINE": "Agent fora de línia — impressió del navegador activa",
+    "PRINTING_DEVICE_ID": "ID del dispositiu",
+    "PRINTING_DISPLAY_NAME": "Nom visible",
+    "PRINTING_CREATE_AGENT": "Crear agent",
+    "PRINTING_TOKEN_ONCE": "Copia aquest testimoni ara — només es mostra un cop. Defineix PRINT_AGENT_TOKEN a l'agent.",
+    "PRINTING_AGENTS": "Agents registrats",
+    "PRINTING_AGENTS_EMPTY": "Encara no hi ha agents d'impressió.",
+    "PRINTING_ONLINE": "En línia",
+    "PRINTING_OFFLINE": "Fora de línia",
+    "PRINTING_REVOKED": "Revocat",
+    "PRINTING_REVOKE": "Revocar",
+    "PRINTING_REFRESH": "Actualitza",
+    "PRINTING_DOCS_HINT": "Guia: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "Pagament",

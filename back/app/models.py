@@ -2282,3 +2282,77 @@ class SocialPostTarget(SQLModel, table=True):
     status: str = Field(default="pending", max_length=32)
     external_id: str | None = Field(default=None, max_length=256)
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+
+
+class PrintAgent(TenantMixin, table=True):
+    """LAN print agent registered for a tenant (#317). Raw token shown once; only hash stored."""
+
+    __tablename__ = "print_agent"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "device_id", name="uq_print_agent_tenant_device"),
+        UniqueConstraint("token_hash", name="uq_print_agent_token_hash"),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    device_id: str = Field(max_length=64)
+    display_name: str = Field(default="Print agent", max_length=120)
+    token_hash: str = Field(max_length=64, index=True)
+    last_seen_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    revoked_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class PrintJob(TenantMixin, table=True):
+    """Queued kitchen/receipt print job for a LAN agent (#317)."""
+
+    __tablename__ = "print_job"
+
+    id: int | None = Field(default=None, primary_key=True)
+    job_type: str = Field(max_length=16)  # kitchen | receipt
+    printer_role: str = Field(default="receipt", max_length=32)
+    status: str = Field(default="pending", max_length=16)
+    order_id: int | None = Field(default=None, foreign_key="order.id", index=True)
+    payload: dict = Field(default_factory=dict, sa_column=Column(JSONB, nullable=False))
+    created_by_user_id: int | None = Field(default=None, foreign_key="user.id")
+    claimed_by_agent_id: int | None = Field(default=None, foreign_key="print_agent.id")
+    claimed_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    completed_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    error_message: str | None = Field(default=None, max_length=500)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class PrintJobCreate(SQLModel):
+    """Staff request to enqueue a kitchen or receipt print job."""
+
+    job_type: str = Field(max_length=16)  # kitchen | receipt
+    order_id: int | None = None
+    printer_role: str | None = Field(default=None, max_length=32)
+    payload: dict[str, Any] | None = None
+
+
+class PrintAgentCreate(SQLModel):
+    """Create a print agent; raw token returned once."""
+
+    device_id: str = Field(min_length=1, max_length=64)
+    display_name: str = Field(default="Print agent", max_length=120)
+
+
+class PrintJobComplete(SQLModel):
+    """Agent ack for a claimed job."""
+
+    status: str = Field(max_length=16)  # done | failed
+    error_message: str | None = Field(default=None, max_length=500)

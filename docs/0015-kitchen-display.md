@@ -55,7 +55,7 @@ When the tenant defines **kitchen stations** under **Settings → Kitchen statio
 
 - **Kitchen display** (`/kitchen`) and **Bar display** (`/bar`) show a **Station** filter when at least one station exists for that route. **All stations** shows every line for that display; a specific station shows only lines resolved to that station.
 - **Query param:** `?station=<id>` bookmarks a station view; omit or `all` for all stations.
-- **Printing:** Browser / invoice printing is unchanged. Splitting physical kitchen tickets per station (e.g. one printout per grill vs cold line) is a follow-up for a local print agent or bridge; see `docs/PRINTING.md`.
+- **Printing:** Kitchen/receipt jobs can go to a LAN print agent via `POST /print-jobs` when an agent is online (`docs/0070-hardware-printing.md`). Otherwise browser / invoice print is unchanged. Per-station ticket split remains a follow-up; see `docs/PRINTING.md`.
 
 ## Technical
 

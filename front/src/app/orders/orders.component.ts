@@ -19,6 +19,7 @@ import {
 import { AudioService } from '../services/audio.service';
 import { WaiterAlertService, WaiterAlertItem } from '../services/waiter-alert.service';
 import { PermissionService, Permission } from '../services/permission.service';
+import { PrintBridgeService } from '../services/print-bridge.service';
 import { Subscription } from 'rxjs';
 import { AgGridAngular } from 'ag-grid-angular';
 import { SidebarComponent } from '../shared/sidebar.component';
@@ -1014,6 +1015,7 @@ ModuleRegistry.registerModules([
                 <button type="button" class="btn btn-secondary" (click)="closeOrderEdit()">{{ 'COMMON.CLOSE' | translate }}</button>
                 <button type="button" class="btn btn-secondary" (click)="saveEditOrderBilling()">{{ 'COMMON.SAVE' | translate }}</button>
                 <button type="button" class="btn btn-secondary" (click)="printEditOrderInvoice()">{{ 'ORDERS.PRINT_INVOICE' | translate }}</button>
+                <button type="button" class="btn btn-secondary" (click)="printEditOrderKitchen()">{{ 'ORDERS.PRINT_KITCHEN' | translate }}</button>
                 @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
                   <button type="button" class="btn btn-primary" (click)="markEditOrderAsPaid(order)">{{ 'ORDERS.MARK_AS_PAID' | translate }}</button>
                 }
@@ -2385,6 +2387,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private translate = inject(TranslateService);
   private waiterAlerts = inject(WaiterAlertService);
   private permissions = inject(PermissionService);
+  private printBridge = inject(PrintBridgeService);
 
   // Permission checks for UI
   canUpdateStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status'));
@@ -3195,6 +3198,41 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
   }
 
+  printEditOrderKitchen() {
+    const order = this.editOrder();
+    if (!order?.id) return;
+    void this.printKitchenTicket(order);
+  }
+
+  async printKitchenTicket(order: Order) {
+    if (!order.id) return;
+    const result = await this.printBridge.tryEnqueue('kitchen', order.id, 'kitchen');
+    if (result.ok) {
+      this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+      return;
+    }
+    this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+    const items = (order.items || []).filter((i) => !i.removed_by_customer);
+    const rows = items
+      .map(
+        (i) =>
+          `<tr><td>${i.quantity || 1}×</td><td>${this.escapeHtml(i.product_name || '')}</td></tr>`,
+      )
+      .join('');
+    const html = `<!DOCTYPE html><html><head><title>Kitchen #${order.id}</title>
+<style>body{font-family:monospace;padding:16px} h1{font-size:18px}</style></head><body>
+<h1>KITCHEN #${order.id}</h1>
+<p>Table: ${this.escapeHtml(order.table_name || '—')}</p>
+<table>${rows}</table>
+<script>window.onload=function(){window.print();window.onafterprint=function(){window.close();};}<\/script>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+    }
+  }
+
   markEditOrderAsPaid(order: Order) {
     this.closeOrderEdit();
     this.paymentModalFinishMode.set(false);
@@ -3636,6 +3674,24 @@ export class OrdersComponent implements OnInit, OnDestroy {
     billingCustomer?: BillingCustomer | null,
     fiscalMeta?: FiscalInvoicePublic | null
   ) {
+    if (order.id != null && !fiscalMeta) {
+      const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
+      if (result.ok) {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+        return;
+      }
+      this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+    } else if (order.id != null && fiscalMeta) {
+      // Still enqueue a receipt job when bridge is up; also open browser factura for QR/fiscal text.
+      const result = await this.printBridge.tryEnqueue('receipt', order.id, 'receipt');
+      if (result.ok) {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_SENT'), 'success');
+        // Continue to browser window so fiscal QR stays visible when needed.
+      } else {
+        this.showToast(this.translate.instant('ORDERS.PRINT_BRIDGE_OFFLINE'), 'error');
+      }
+    }
+
     const settings = this.tenantSettings();
     const tenantId = this.api.getCurrentUser()?.tenant_id;
     const logoUrl = settings?.logo_filename && tenantId

@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Hardware printing (#317):** Option C ADR + LAN print agent — staff `POST /print-jobs` (kitchen|receipt), agent auth token, poll/claim/complete, Settings → Printing, ESC/POS agent script (`scripts/print-agent/`), browser `window.print()` fallback with offline warning (`docs/0070-hardware-printing.md`).
+
 ## [2.1.135] - 2026-07-26
 
 ### Added

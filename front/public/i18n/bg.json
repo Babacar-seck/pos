@@ -225,7 +225,8 @@
     "QR_DEMO_STEP_3": "Update your menu once — every printed QR always shows the latest version.",
     "QR_DEMO_SCAN_HINT": "Scan with your phone",
     "QR_DEMO_OPEN_MENU": "Open demo menu",
-    "FEATURES_VIEW_ALL": "View all features"
+    "FEATURES_VIEW_ALL": "View all features",
+    "NAV_PRICING": "Цени"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Меню",
@@ -971,7 +972,10 @@
     "HUB_PREPARING_BADGE": "HQ подготвя",
     "HUB_REQUESTED_BADGE": "Заявена HQ подготовка",
     "HUB_CANCELLED_BADGE": "Отменена HQ подготовка",
-    "REQUEST_HQ_PREP": "Заяви HQ подготовка"
+    "REQUEST_HQ_PREP": "Заяви HQ подготовка",
+    "PRINT_KITCHEN": "Печат кухненски билет",
+    "PRINT_BRIDGE_SENT": "Изпратено към печатния агент (без браузърски диалог)",
+    "PRINT_BRIDGE_OFFLINE": "Печатният мост е офлайн — използва се браузърският печат"
   },
   "CUSTOMERS": {
     "TITLE": "Клиенти (фактура)",
@@ -2128,7 +2132,24 @@
     "RESTAURANT_GROUP_STATUS_REQUESTED": "Заявено",
     "RESTAURANT_GROUP_STATUS_PREPARING": "Подготвя се",
     "RESTAURANT_GROUP_STATUS_PREPARED": "Готово в HQ",
-    "RESTAURANT_GROUP_STATUS_CANCELLED": "Отменено"
+    "RESTAURANT_GROUP_STATUS_CANCELLED": "Отменено",
+    "PRINTING_TAB": "Печат",
+    "PRINTING_TITLE": "Хардуерен печат",
+    "PRINTING_SUBTITLE": "Регистрирайте LAN агент за кухня и касови бележки. При офлайн POS използва браузърския диалог.",
+    "PRINTING_BRIDGE_ONLINE": "Печатен агент онлайн",
+    "PRINTING_BRIDGE_OFFLINE": "Печатен агент офлайн — браузърският печат е активен",
+    "PRINTING_DEVICE_ID": "ID на устройство",
+    "PRINTING_DISPLAY_NAME": "Име",
+    "PRINTING_CREATE_AGENT": "Създай агент",
+    "PRINTING_TOKEN_ONCE": "Копирайте този токен сега — показва се само веднъж. Задайте PRINT_AGENT_TOKEN на агента.",
+    "PRINTING_AGENTS": "Регистрирани агенти",
+    "PRINTING_AGENTS_EMPTY": "Все още няма печатни агенти.",
+    "PRINTING_ONLINE": "Онлайн",
+    "PRINTING_OFFLINE": "Офлайн",
+    "PRINTING_REVOKED": "Отменен",
+    "PRINTING_REVOKE": "Отмени",
+    "PRINTING_REFRESH": "Опресни",
+    "PRINTING_DOCS_HINT": "Ръководство: docs/0070-hardware-printing.md — python3 scripts/print-agent/print_agent.py"
   },
   "PAYMENTS": {
     "PAYMENT": "Плащане:",
@@ -2654,6 +2675,29 @@
     "FEAT_I18N_DESC": "Guest and staff UI in multiple languages with per-tenant defaults.",
     "FEAT_OPEN_SOURCE_TITLE": "Open source",
     "FEAT_OPEN_SOURCE_DESC": "Self-host or run in the cloud — inspect, extend, and avoid vendor lock-in."
+  },
+  "PRICING_PAGE": {
+    "BADGE": "Прости hosted цени",
+    "TITLE": "Безплатен пробен период, после един месечен план",
+    "SUBTITLE": "Hosted Satisfecho включва безплатен пробен период без карта. Self-host под AGPLv3 без лицензионна такса, ако предпочитате сами.",
+    "HOSTED_NAME": "Hosted",
+    "HOSTED_LEDE": "Управляван Satisfecho за вашия ресторант — ние оперираме платформата.",
+    "PER_MONTH": "/ месец",
+    "TRIAL_LINE": "{{days}}-дневен безплатен пробен период — без карта",
+    "BILLING_ACTIVE_NOTE": "Hosted таксуването е активно в това разгръщане: след пробния период месечният план важи за нови ресторанти.",
+    "BILLING_INACTIVE_NOTE": "Hosted paywall таксуването не е задължително в това разгръщане в момента. Цената по-горе е текущият hosted план, когато таксуването е включено.",
+    "INCLUDE_QR": "QR меню и поръчки от маса",
+    "INCLUDE_KITCHEN": "Екрани за кухня и бар",
+    "INCLUDE_RESERVATIONS": "Онлайн резервации и списък на чакащи",
+    "INCLUDE_REPORTS": "Отчети за продажби и инструменти за екипа",
+    "INCLUDE_LOYALTY": "Клубна лоялност (точки или печати)",
+    "CTA_START": "Създайте акаунт",
+    "SELFHOST_NAME": "Self-host",
+    "SELFHOST_LEDE": "Стартирайте Satisfecho на собствени сървъри.",
+    "SELFHOST_PRICE": "€0",
+    "SELFHOST_LICENSE": "Отворен код AGPLv3 — без hosted такса",
+    "CTA_GITHUB": "Вижте в GitHub",
+    "LOAD_ERROR": "Цените не можаха да се заредят. Опитайте отново по-късно."
   },
   "WAITLIST": {
     "TITLE": "Списък на чакане",
