@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.108] - 2026-07-26
+
+### Changed
+
+- **Docs index (agent-loop):** Reference blurb now points at the live `agents2/tasks/` queue (+ prompts), with a short note that legacy `agents/` may appear in older notes.
+
 ## [2.1.107] - 2026-07-26
 
 ### Changed

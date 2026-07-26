@@ -93,7 +93,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 
 | Doc | Description |
 |-----|-------------|
-| [agent-loop.md](agent-loop.md) | Multi-agent workflow (task statuses, roles, `agents/` layout); modeled on mac-stats-reviewer; links to **`go-ahead-loop.sh`** and testing smokes. |
+| [agent-loop.md](agent-loop.md) | Multi-agent workflow (task statuses, roles, `agents2/tasks/` + prompts; legacy `agents/` may appear in older notes); modeled on mac-stats-reviewer; links to **`go-ahead-loop.sh`** and testing smokes. |
 | [agent-cursor-rules.md](agent-cursor-rules.md) | Categorized index of **`.cursor/rules/*.mdc`** for agents (Angular, FastAPI/SQLModel, Docker/HAProxy, security, i18n, smoke tests); also linked from **`AGENTS.md`**. |
 | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) | Structured security pass (uploads, auth, tenant isolation, public/payment surfaces) — **not a penetration test**; repeat after major releases. |
 | [0007-implementation-verification.md](0007-implementation-verification.md) | Implementation verification: what’s done vs Phase 4 (batch, audit, etc.). |
