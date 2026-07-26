@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.94] - 2026-07-26
+
+### Changed
+
+- **Gmail setup docs (0018):** Mapped Settings Email SMTP fields to Gmail values (host `smtp.gmail.com`, port `587`, TLS on, App Password, optional From) so operators can fill every field without guessing or opening sibling docs.
+
 ## [2.1.93] - 2026-07-26
 
 ### Changed
