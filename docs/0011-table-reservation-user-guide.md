@@ -10,6 +10,7 @@ This document describes how table reservations work for **staff** and **end user
 
 - **Reservations list** (`/reservations`): Filter by date, phone, status; create, edit, cancel, **seat at table**, and finish reservations. Table column shows assigned table name or "—" when not assigned.
 - **Waiting list tab** (`/reservations` → **Waiting list**): View the walk-in queue; filter by phone or status. Actions on active entries (`waiting` / `notified`): **Mark notified**, **Book table** (opens reservation form prefilled with guest details), **Mark seated**, **No show**, and **Cancel**.
+- **Guest feedback** (`/guest-feedback`): Review ratings and comments submitted via the public feedback link (when the reservations module is enabled).
 - **Tables canvas** (`/tables/canvas`): Table status **Reserved** (amber) when a reservation is assigned; **Available** / **Occupied** as before.
 - **Permissions**: `reservation:read` and `reservation:write` for owner, admin, waiter, receptionist.
 - **API**: List/create/update reservations; seat (assign table), finish, cancel; reservation responses include `table_name` when `table_id` is set.
@@ -19,6 +20,7 @@ This document describes how table reservations work for **staff** and **end user
 - **Book a table**: Public page at **`/book/:tenantId`**. Form: date, time, party size, name, phone. Submit creates a reservation (status `booked`). Success screen shows a link to view/cancel. When no slot is available, guests can follow **“Join the waiting list”** to **`/waitlist/:tenantId`**.
 - **Join the waiting list**: Public page at **`/waitlist/:tenantId`**. Form: name, party size, phone (no date/time). Submit adds the guest to the tenant queue (status `waiting`). Also reachable from the book page link above.
 - **View or cancel**: Public page at **`/reservation?token=...`**. Shows reservation details and status; allows cancelling if status is `booked` or `seated`.
+- **Leave feedback**: Public page at **`/feedback/:tenantId`** (no login). Guests submit a rating and optional comment; staff review entries at **`/guest-feedback`**.
 
 ### Backend
 
@@ -103,7 +105,9 @@ Staff can also add waiting-list entries manually via the staff API (`POST /waiti
 | Book a table (public) | `/book/:tenantId` e.g. `/book/1` | End user |
 | Join waiting list (public) | `/waitlist/:tenantId` e.g. `/waitlist/1` | End user |
 | View / cancel reservation (public) | `/reservation?token=<uuid>` | End user |
+| Guest feedback (public) | `/feedback/:tenantId` e.g. `/feedback/1` | End user |
 | Reservations + waiting list (staff) | `/reservations` (Reservations / Waiting list tabs) | Staff (logged in) |
+| Guest feedback (staff) | `/guest-feedback` | Staff (logged in) |
 | Tables canvas (staff) | `/tables/canvas` | Staff (admin) |
 
 **Base URL**: Use the same host and port as the rest of the app (e.g. `http://localhost:4203` or `https://your-domain.com`). The booking and view pages are served by the same Angular app and API.

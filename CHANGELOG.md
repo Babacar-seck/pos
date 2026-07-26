@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.81] - 2026-07-26
+
+### Changed
+
+- **Public guest feedback docs:** Added the public `/feedback/{tenantId}` Access Point in the root README, and short public/staff feedback pointers (`/feedback/:tenantId`, `/guest-feedback`) in the table reservation user guide (`docs/0011`).
+
 ## [2.1.80] - 2026-07-26
 
 ### Changed

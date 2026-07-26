@@ -141,6 +141,7 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **DB health** | http://localhost:4202/api/health/db |
 | **Public menu (example)** | http://localhost:4202/menu/{table_token} |
 | **Public booking** | http://localhost:4202/book/{tenantId} |
+| **Public guest feedback** | http://localhost:4202/feedback/{tenantId} |
 | **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
 | **Provider dashboard** | http://localhost:4202/provider |
