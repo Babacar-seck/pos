@@ -260,14 +260,40 @@ class TestPublicTenantMenu(PgClientTestCase):
         self.assertEqual(len(all_products), 1)
         self.assertEqual(all_products[0]["name"], "Demo Burger")
 
-    def test_product_image_url_for_tenant_upload(self):
+    def test_product_image_url_omitted_when_file_missing(self):
         self.session.add(
             models.Product(
                 tenant_id=self.tenant.id,
                 name="With Image",
                 price_cents=500,
                 category="Platos",
-                image_filename="dish.jpg",
+                image_filename="dish-missing.jpg",
+            )
+        )
+        self.session.commit()
+
+        response = self.client.get(f"/public/tenants/{self.tenant.id}/menu")
+        product = response.json()["categories"][0]["products"][0]
+        self.assertIsNone(product["image_url"])
+
+    def test_product_image_url_for_tenant_upload_when_file_exists(self):
+        from pathlib import Path
+
+        from app.public_tenant_menu import _UPLOADS_DIR
+
+        fn = "dish-exists.jpg"
+        dest = _UPLOADS_DIR / str(self.tenant.id) / "products" / fn
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(b"fake-image")
+        self.addCleanup(lambda: dest.unlink(missing_ok=True))
+
+        self.session.add(
+            models.Product(
+                tenant_id=self.tenant.id,
+                name="With Image",
+                price_cents=500,
+                category="Platos",
+                image_filename=fn,
             )
         )
         self.session.commit()
@@ -276,7 +302,7 @@ class TestPublicTenantMenu(PgClientTestCase):
         product = response.json()["categories"][0]["products"][0]
         self.assertEqual(
             product["image_url"],
-            f"/uploads/{self.tenant.id}/products/dish.jpg",
+            f"/uploads/{self.tenant.id}/products/{fn}",
         )
 
 

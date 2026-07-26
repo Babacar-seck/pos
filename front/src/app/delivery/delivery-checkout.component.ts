@@ -273,8 +273,10 @@ export class DeliveryCheckoutComponent implements OnInit, OnDestroy {
 
   productImageUrl(url: string): string {
     if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) return url;
-    return `${environment.apiUrl || ''}${url.startsWith('/') ? '' : '/'}${url}`;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    // API returns paths like /uploads/...; prefix with apiUrl (/api) so HAProxy routes to back.
+    const base = (environment.apiUrl || '').replace(/\/$/, '');
+    return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
   }
 
   addToCart(product: PublicTenantMenuProduct): void {

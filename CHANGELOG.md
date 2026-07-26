@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.95] - 2026-07-26
+
+### Fixed
+
+- **Satisfecho Delivery product images:** Public `/delivery/{tenantId}` now loads product photos through `/api/uploads/...` (HAProxy → backend) instead of bare `/uploads/...`, which 404’d on the front container. Public menu omits `image_url` when the file is missing on disk so the UI shows placeholders instead of broken images (#312).
+
+### Changed
+
+- **Deploy-via-images plan (0029):** Marked as deferred / not scheduled; `docs/README.md` points operators at the current build-on-server path in 0001 / 0004.
+
 ## [2.1.94] - 2026-07-26
 
 ### Changed

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from sqlmodel import Session, select
@@ -12,6 +13,8 @@ from . import models
 from .category_codes import get_public_category_display_label
 from .tenant_currency import normalize_tenant_currency_fields
 from .translation_service import TranslationService
+
+_UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
 
 _UNCategorized_CATEGORY = "Other"
 _UNCategorized_SLUG = "other"
@@ -55,11 +58,24 @@ def format_public_price(price_cents: int, lang: str = "en") -> str:
 
 
 def resolve_product_image_url(tenant_id: int, image_filename: str | None) -> str | None:
+    """Return /uploads/... URL only when the image file exists on disk (else None / placeholder)."""
     if not image_filename:
         return None
-    if image_filename.startswith("providers/"):
-        return f"/uploads/{image_filename}"
-    return f"/uploads/{tenant_id}/products/{image_filename}"
+    fn = image_filename.replace("\\", "/").strip("/")
+    if not fn or fn.startswith(".") or ".." in fn.split("/"):
+        return None
+    if fn.startswith("providers/"):
+        path = _UPLOADS_DIR / fn
+        if not path.is_file():
+            return None
+        return f"/uploads/{fn}"
+    # Tenant product image: basename only under uploads/{tenant_id}/products/
+    if "/" in fn or fn.startswith("."):
+        return None
+    path = _UPLOADS_DIR / str(tenant_id) / "products" / fn
+    if not path.is_file():
+        return None
+    return f"/uploads/{tenant_id}/products/{fn}"
 
 
 def _category_slug(name: str) -> str:
