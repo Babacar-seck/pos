@@ -15,9 +15,10 @@ This codebase does **not** define a table named `restaurantorder`. That name usu
 
 | Concept | PostgreSQL identifier | Notes |
 |--------|------------------------|--------|
-| Restaurant **order** (header: table, status, payment, …) | **`"order"`** | `order` is a **reserved word** — use **double quotes** in SQL. |
+| Restaurant **order** (header: table, status, payment, …) | **`"order"`** | `order` is a **reserved word** — use **double quotes** in SQL. Satisfecho Delivery rows live here too (`order_channel`, `delivery_address`, …) — there is **no** separate `deliveryorder` table. |
 | Order **line items** | **`orderitem`** | Lowercase, unquoted is fine. |
 | Physical **tables** (seats, floor plan) | **`"table"`** | `table` is reserved — **double quotes** in SQL. |
+| Walk-in **waiting list** | **`waiting_list_entry`** | Not `waitinglist` / `waitlist`. Filter by **`tenant_id`** and **`status`** (`waiting`, `notified`, `seated`, `cancelled`, `no_show`). |
 
 Multi-tenant rows include **`tenant_id`** (and often **`deleted_at`** on orders). Filter by tenant when writing ad-hoc queries.
 
@@ -38,6 +39,16 @@ WHERE tenant_id = 1 AND deleted_at IS NULL
 GROUP BY table_id
 HAVING COUNT(*) >= 1
 LIMIT 10;
+```
+
+## Example: active waiting-list queue (tenant 1)
+
+```sql
+SELECT id, customer_name, party_size, status, notified_at, created_at
+FROM waiting_list_entry
+WHERE tenant_id = 1
+  AND status IN ('waiting', 'notified')
+ORDER BY created_at;
 ```
 
 ## Related

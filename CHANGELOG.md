@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.87] - 2026-07-26
+
+### Changed
+
+- **Postgres ad-hoc SQL docs (0033):** Documented the waiting-list table as `waiting_list_entry` (with tenant/status filters and an example active-queue query), and noted that Satisfecho Delivery rows live on `"order"` — there is no separate `deliveryorder` table.
+
 ## [2.1.86] - 2026-07-26
 
 ### Fixed
