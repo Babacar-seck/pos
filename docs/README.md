@@ -14,6 +14,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Deploy to a server | [0004-deployment.md](0004-deployment.md) |
 | Set up CI/CD (amvara9) | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) |
 | Configure Gmail for email | [0018-gmail-setup.md](0018-gmail-setup.md) |
+| Troubleshoot missing reservation confirmation email | [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) |
 | Understand reservations (staff + public) | [0011-table-reservation-user-guide.md](0011-table-reservation-user-guide.md) |
 | Rate limits (production) | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) |
 | Capture screenshots | [screenshots/README.md](screenshots/README.md) |
@@ -37,8 +38,9 @@ This folder contains deployment guides, feature documentation, implementation pl
 
 | Doc | Description |
 |-----|-------------|
-| [0005-email-sending-options.md](0005-email-sending-options.md) | Email sending options: Proton Mail, SendGrid, Resend, Gmail; comparison and config. |
+| [0005-email-sending-options.md](0005-email-sending-options.md) | Email sending options: Proton Mail, SendGrid, Resend, Gmail; comparison and config (**research**). |
 | [0018-gmail-setup.md](0018-gmail-setup.md) | Gmail setup: create account, 2FA, App Password, POS Settings → Email (SMTP). |
+| [0030-reservation-confirmation-email-troubleshooting.md](0030-reservation-confirmation-email-troubleshooting.md) | **Ops:** booking has email but no confirmation — diagnose script, log strings, tenant vs global SMTP. |
 
 ---
 

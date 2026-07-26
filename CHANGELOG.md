@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.100] - 2026-07-26
+
+### Changed
+
+- **Reservation confirmation email troubleshooting (0030):** Refreshed the ops runbook — current-status banner with links to Gmail setup (0018) and email research (0005), local Docker diagnose command, log strings aligned with the backend, and indexing under Email & SMTP plus Quick links in `docs/README.md`.
+
 ## [2.1.99] - 2026-07-26
 
 ### Changed
