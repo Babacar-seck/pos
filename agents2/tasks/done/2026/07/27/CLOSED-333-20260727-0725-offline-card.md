@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** Issue #333 finished the offline-card / fiscal-offline slice on top of the #319 cash-only offline MVP.
+- **What was done:** Deferred card (`payment_intent=card`) queues without PAN/CVV and syncs to unpaid take-away orders; cash path unchanged; fiscal/VeriFactu stays online-only; ADR/docs, pytest, CHANGELOG, and UI updated.
+- **What was tested:** Pytest (4 passed), landing smoke, i18n parity, staff deferred-card queue→sync→mark-paid, API idempotency, and out-of-scope checks all **PASS**.
+- **Why closed:** All Testing instructions criteria passed; feature fully delivered for #333.
+- **Closed at (UTC):** 2026-07-27 08:05
+---
+
 # Finish offline card / fiscal offline
 
 ## GitHub Issues
@@ -43,3 +53,32 @@ Offline-capable staff client MVP shipped under **#319** (`docs/0063-offline-capa
 5. **API:** `POST /api/orders/offline-cash` with `payment_intent: "card"` twice same `idempotency_key` → second `status: "duplicate"`, same `order_id`, `needs_payment: true`, `paid_at: null`.
 
 6. **Out of scope check:** No fiscal issue / VeriFactu call from offline sync; offline panel does not capture PAN/CVV; cash path still creates paid orders.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-27 08:00:04–08:04:48 UTC. Log window: `docker logs --since 15m` on `pos-back` / `pos-front`.
+2. **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:4202`; branch `development` (synced via `./scripts/git-sync-development.sh`).
+3. **What was tested:** Pytest offline-cash (incl. deferred card); landing smoke (incl. `/staff/orders`); i18n parity; staff deferred-card offline queue → sync → mark paid; API idempotent `payment_intent=card`; out-of-scope (no PAN/CVV, no fiscal from sync, cash still paid).
+4. **Results:**
+   - Pytest `tests/test_offline_cash_order.py`: **PASS** — `4 passed` in 3.09s.
+   - Landing smoke `test:landing-version`: **PASS** — landing OK; login tenant=1; nav includes `/staff/orders`.
+   - i18n parity: **PASS** — all locales OK vs `en.json` (2708 leaves).
+   - Manual deferred card (staff): **PASS** — offline queue “Karte (nach Sync)” → pending → online sync `#2642` + “Karte online einziehen”; mark-paid via Kartenterminal (`PUT /orders/2642/mark-paid` 200); no PAN/CVV inputs (`panFields: false`).
+   - API idempotency: **PASS** — first `created` order_id 2640 `needs_payment: true` `paid_at: null`; second `duplicate` same `order_id`, `needs_payment: true`, `paid_at: null`.
+   - Out of scope: **PASS** — cash path order 2641 `payment_method: cash` with `paid_at` set; card order 2640 `amount_paid_cents: 0` until online collect; offline panel has no card-number fields; no VeriFactu/fiscal call from offline sync (`/verifactu`/`/fiscal` 404; sync only creates unpaid order + note `[offline-card-intent]`).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Deferred card offline behaves as designed: staff can queue a card *intent* without capturing card data, sync creates an unpaid take-away order, and payment is collected with the normal online mark-paid UI. Cash offline remains paid-on-sync; fiscal stays out of the offline path.
+7. **URLs tested:**
+   1. `http://127.0.0.1:4202/` (landing smoke)
+   2. `http://127.0.0.1:4202/login?tenant=1`
+   3. `http://127.0.0.1:4202/dashboard`
+   4. `http://127.0.0.1:4202/staff/orders`
+   5. `http://127.0.0.1:4202/my-shift` (smoke nav)
+   6. `http://127.0.0.1:4202/tables` / `/kitchen` / `/bar` / `/customers` (smoke inventory nav)
+8. **Relevant log excerpts:**
+   ```
+   pos-back: POST /orders/offline-cash HTTP/1.1 200 OK (×4 in window)
+   pos-back: PUT /orders/2642/mark-paid HTTP/1.1 200 OK
+   pos-back: GET /orders/2642/payments HTTP/1.1 200 OK
+   pos-front: Application bundle generation complete (no TS/NG errors in window)
+   ```

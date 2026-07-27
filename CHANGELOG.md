@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Offline deferred card (#333):** Archived the verified agents2 task after PASS checks (4 offline-cash pytest, landing smoke, i18n parity, staff queue→sync→mark-paid, API idempotency, no PAN/CVV or offline fiscal). The feature itself shipped in 2.1.140.
 - **Roadmap (#332):** Archived the verified agents2 docs task after PASS checks (ROADMAP structure, no stale Missing for 2026-07-26 CLOSED features, required doc links, recurring 008 cadence, changelog line). The rewrite itself shipped in 2.1.139.
 - **Production promote (#330):** Archived the verified agents2 ops task after PASS checks (GitHub release v2.1.138, `master` merge `f39127d7`, Deploy to amvara9 success, production landing/health/version smoke on satisfecho.de). Release/ops only; no new product code.
 - **Day close-out (#329):** Archived the verified agents2 meta task after PASS checks (GitHub open issues empty, live queue clear of leftover product work, day archives #311–#328 present, landing + loyalty public API smoke). Status inventory only; no product code.
