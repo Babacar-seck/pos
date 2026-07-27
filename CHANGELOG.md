@@ -25,6 +25,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
 - **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
 
+## [2.1.140] - 2026-07-27
+
+### Added
+
+- **Loyalty VIP + referral (#334):** Tenant-configurable VIP silver/gold thresholds on **lifetime earn** (not balance), surfaced on staff member list and public card; referral codes/links award referrer (and optional invitee) units once on successful referred join. Settings → Loyalty club; see `docs/0066-club-loyalty.md`.
+- **Offline deferred card (#333):** Staff offline sale panel can queue `payment_intent=card` (intent metadata only — no PAN/CVV). Sync creates an unpaid take-away order; card is collected online after reconnect. True offline card capture and offline fiscal numbering remain blocked; ADR updated in `docs/0063-offline-capable-client.md`.
+
 ## [2.1.139] - 2026-07-26
 
 ### Added

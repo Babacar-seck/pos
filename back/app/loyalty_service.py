@@ -59,16 +59,49 @@ def program_to_dict(program: models.LoyaltyProgram) -> dict:
         "redemption_threshold": program.redemption_threshold,
         "reward_discount_cents": program.reward_discount_cents,
         "birthday_bonus_units": int(getattr(program, "birthday_bonus_units", 0) or 0),
+        "vip_silver_min_lifetime_units": int(
+            getattr(program, "vip_silver_min_lifetime_units", 0) or 0
+        ),
+        "vip_gold_min_lifetime_units": int(
+            getattr(program, "vip_gold_min_lifetime_units", 0) or 0
+        ),
+        "referral_bonus_units": int(getattr(program, "referral_bonus_units", 0) or 0),
+        "referral_invitee_bonus_units": int(
+            getattr(program, "referral_invitee_bonus_units", 0) or 0
+        ),
         "created_at": program.created_at.isoformat() if program.created_at else None,
         "updated_at": program.updated_at.isoformat() if program.updated_at else None,
     }
+
+
+def vip_tier_for_lifetime(
+    program: models.LoyaltyProgram | None,
+    lifetime_earn_units: int,
+) -> str | None:
+    """Return 'gold', 'silver', or None from lifetime earn vs program thresholds.
+
+    VIP uses lifetime earn (positive earn ledger units), not current balance — redeeming
+    does not demote. Gold wins when both thresholds are met; 0 disables that tier.
+    """
+    if not program:
+        return None
+    lifetime = max(0, int(lifetime_earn_units or 0))
+    gold_min = int(getattr(program, "vip_gold_min_lifetime_units", 0) or 0)
+    silver_min = int(getattr(program, "vip_silver_min_lifetime_units", 0) or 0)
+    if gold_min > 0 and lifetime >= gold_min:
+        return "gold"
+    if silver_min > 0 and lifetime >= silver_min:
+        return "silver"
+    return None
 
 
 def membership_to_dict(
     membership: models.LoyaltyMembership,
     *,
     include_token: bool = False,
+    program: models.LoyaltyProgram | None = None,
 ) -> dict:
+    lifetime = int(getattr(membership, "lifetime_earn_units", 0) or 0)
     data = {
         "id": membership.id,
         "tenant_id": membership.tenant_id,
@@ -78,6 +111,10 @@ def membership_to_dict(
         "email": membership.email,
         "phone": membership.phone,
         "balance": membership.balance,
+        "lifetime_earn_units": lifetime,
+        "vip_tier": vip_tier_for_lifetime(program, lifetime),
+        "referral_code": getattr(membership, "referral_code", None),
+        "referred_by_membership_id": getattr(membership, "referred_by_membership_id", None),
         "birthday_month": getattr(membership, "birthday_month", None),
         "birthday_day": getattr(membership, "birthday_day", None),
         "birthday_bonus_year": getattr(membership, "birthday_bonus_year", None),
@@ -108,6 +145,10 @@ def _new_member_token() -> str:
     return secrets.token_urlsafe(24)
 
 
+def _new_referral_code() -> str:
+    return secrets.token_urlsafe(12)[:16]
+
+
 def _apply_ledger(
     session: Session,
     *,
@@ -123,6 +164,9 @@ def _apply_ledger(
     if new_balance < 0:
         raise HTTPException(status_code=400, detail="Loyalty balance cannot go negative")
     membership.balance = new_balance
+    # Lifetime earn tracks positive earn only (VIP); redeem/adjust do not change it.
+    if entry_type == "earn" and units > 0:
+        membership.lifetime_earn_units = int(getattr(membership, "lifetime_earn_units", 0) or 0) + units
     membership.updated_at = _now()
     entry = models.LoyaltyLedgerEntry(
         tenant_id=membership.tenant_id,
@@ -140,6 +184,75 @@ def _apply_ledger(
     return entry
 
 
+def _find_referrer(
+    session: Session,
+    *,
+    tenant_id: int,
+    referral_code: str | None,
+) -> models.LoyaltyMembership | None:
+    code = (referral_code or "").strip()
+    if not code:
+        return None
+    return session.exec(
+        select(models.LoyaltyMembership).where(
+            models.LoyaltyMembership.tenant_id == tenant_id,
+            models.LoyaltyMembership.referral_code == code,
+        )
+    ).first()
+
+
+def _award_referral_on_join(
+    session: Session,
+    *,
+    program: models.LoyaltyProgram,
+    invitee: models.LoyaltyMembership,
+    referrer: models.LoyaltyMembership,
+) -> None:
+    """Award referrer (and optional invitee bonus) once for this invitee membership."""
+    if invitee.tenant_id != referrer.tenant_id:
+        raise HTTPException(status_code=400, detail="Referral must be same restaurant")
+    if invitee.id == referrer.id:
+        raise HTTPException(status_code=400, detail="Self-referral is not allowed")
+    if getattr(invitee, "referral_reward_granted", False):
+        return
+
+    note = f"Referral reward for membership {invitee.id}"
+    existing = session.exec(
+        select(models.LoyaltyLedgerEntry).where(
+            models.LoyaltyLedgerEntry.tenant_id == invitee.tenant_id,
+            models.LoyaltyLedgerEntry.entry_type == "earn",
+            models.LoyaltyLedgerEntry.note == note,
+        )
+    ).first()
+    if existing:
+        invitee.referral_reward_granted = True
+        session.add(invitee)
+        return
+
+    referrer_bonus = int(getattr(program, "referral_bonus_units", 0) or 0)
+    invitee_bonus = int(getattr(program, "referral_invitee_bonus_units", 0) or 0)
+    if referrer_bonus > 0:
+        _apply_ledger(
+            session,
+            membership=referrer,
+            entry_type="earn",
+            units=referrer_bonus,
+            note=note,
+        )
+    if invitee_bonus > 0:
+        _apply_ledger(
+            session,
+            membership=invitee,
+            entry_type="earn",
+            units=invitee_bonus,
+            note=f"Referral welcome bonus (from membership {referrer.id})",
+        )
+    invitee.referral_reward_granted = True
+    invitee.referred_by_membership_id = referrer.id
+    session.add(invitee)
+    session.flush()
+
+
 def join_program(
     session: Session,
     *,
@@ -150,6 +263,7 @@ def join_program(
     billing_customer_id: int | None = None,
     birthday_month: int | None = None,
     birthday_day: int | None = None,
+    referral_code: str | None = None,
 ) -> models.LoyaltyMembership:
     program = get_program(session, tenant_id)
     if not program or not program.enabled:
@@ -160,6 +274,9 @@ def join_program(
     if not email and not phone:
         raise HTTPException(status_code=400, detail="email or phone is required")
     bday = _valid_birthday(birthday_month, birthday_day)
+    referrer = _find_referrer(session, tenant_id=tenant_id, referral_code=referral_code)
+    if referral_code and (referral_code or "").strip() and not referrer:
+        raise HTTPException(status_code=400, detail="Invalid referral code")
 
     if email:
         existing = session.exec(
@@ -177,6 +294,7 @@ def join_program(
                 existing.updated_at = _now()
                 session.add(existing)
                 session.flush()
+            # Returning member: do not award referral again.
             return existing
     if phone:
         existing = session.exec(
@@ -196,6 +314,12 @@ def join_program(
                 session.flush()
             return existing
 
+    if referrer and (
+        (email and referrer.email and email.lower() == (referrer.email or "").lower())
+        or (phone and referrer.phone and phone == referrer.phone)
+    ):
+        raise HTTPException(status_code=400, detail="Self-referral is not allowed")
+
     membership = models.LoyaltyMembership(
         tenant_id=tenant_id,
         program_id=program.id,  # type: ignore[arg-type]
@@ -204,12 +328,29 @@ def join_program(
         email=email,
         phone=phone,
         member_token=_new_member_token(),
+        referral_code=_new_referral_code(),
         balance=0,
+        lifetime_earn_units=0,
         birthday_month=bday[0] if bday else None,
         birthday_day=bday[1] if bday else None,
+        referred_by_membership_id=referrer.id if referrer else None,
     )
     session.add(membership)
     session.flush()
+
+    if referrer and (
+        int(getattr(program, "referral_bonus_units", 0) or 0) > 0
+        or int(getattr(program, "referral_invitee_bonus_units", 0) or 0) > 0
+    ):
+        _award_referral_on_join(
+            session, program=program, invitee=membership, referrer=referrer
+        )
+    elif referrer:
+        # Track referrer even when bonuses are 0 (settings may enable later — no retro award).
+        membership.referral_reward_granted = True
+        session.add(membership)
+        session.flush()
+
     return membership
 
 

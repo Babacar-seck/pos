@@ -21,6 +21,17 @@ import { LanguagePickerComponent } from '../shared/language-picker.component';
         <p class="balance">
           {{ 'LOYALTY_PUBLIC.BALANCE' | translate }}: <strong>{{ balance() }}</strong>
         </p>
+        @if (vipTier()) {
+          <p class="tier" data-testid="loyalty-card-vip">
+            {{ 'LOYALTY_PUBLIC.VIP_TIER' | translate }}: <strong>{{ vipTier() }}</strong>
+          </p>
+        }
+        @if (referralCode() && tenantId()) {
+          <p class="hint">{{ 'LOYALTY_PUBLIC.REFERRAL_SHARE' | translate }}</p>
+          <p class="token">
+            <code>{{ origin }}/loyalty/{{ tenantId() }}?ref={{ referralCode() }}</code>
+          </p>
+        }
       }
     </div>
   `,
@@ -29,11 +40,18 @@ import { LanguagePickerComponent } from '../shared/language-picker.component';
       .loyalty-card {
         padding: 1.5rem;
       }
-      .balance {
+      .balance,
+      .tier {
         font-size: 1.25rem;
       }
       .error {
         color: #b00020;
+      }
+      .hint {
+        color: var(--text-muted, #666);
+      }
+      .token code {
+        word-break: break-all;
       }
     `,
   ],
@@ -47,6 +65,13 @@ export class LoyaltyCardPublicComponent implements OnInit {
   programName = signal('');
   displayName = signal('');
   balance = signal(0);
+  vipTier = signal<string | null>(null);
+  referralCode = signal<string | null>(null);
+  tenantId = signal<number | null>(null);
+  origin =
+    typeof window !== 'undefined' && window.location?.origin
+      ? window.location.origin
+      : '';
 
   ngOnInit(): void {
     const token = this.route.snapshot.paramMap.get('memberToken') || '';
@@ -60,6 +85,9 @@ export class LoyaltyCardPublicComponent implements OnInit {
         this.programName.set(res.program?.program_name || '');
         this.displayName.set(res.membership.display_name);
         this.balance.set(res.membership.balance);
+        this.vipTier.set(res.membership.vip_tier ?? null);
+        this.referralCode.set(res.membership.referral_code ?? null);
+        this.tenantId.set(res.membership.tenant_id ?? null);
         this.loading.set(false);
       },
       error: () => {

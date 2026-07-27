@@ -67,6 +67,48 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
             />
             <span class="hint">{{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS_HINT' | translate }}</span>
           </label>
+          <label>
+            <span>{{ 'SETTINGS.LOYALTY_VIP_SILVER' | translate }}</span>
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="vipSilver"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-vip-silver"
+            />
+            <span class="hint">{{ 'SETTINGS.LOYALTY_VIP_HINT' | translate }}</span>
+          </label>
+          <label>
+            <span>{{ 'SETTINGS.LOYALTY_VIP_GOLD' | translate }}</span>
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="vipGold"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-vip-gold"
+            />
+          </label>
+          <label>
+            <span>{{ 'SETTINGS.LOYALTY_REFERRAL_BONUS' | translate }}</span>
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="referralBonus"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-referral-bonus"
+            />
+            <span class="hint">{{ 'SETTINGS.LOYALTY_REFERRAL_HINT' | translate }}</span>
+          </label>
+          <label>
+            <span>{{ 'SETTINGS.LOYALTY_REFERRAL_INVITEE' | translate }}</span>
+            <input
+              type="number"
+              min="0"
+              [(ngModel)]="referralInvitee"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-referral-invitee"
+            />
+          </label>
         </div>
 
         @if (joinUrl()) {
@@ -108,6 +150,8 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
                 <th>{{ 'COMMON.NAME' | translate }}</th>
                 <th>{{ 'COMMON.EMAIL' | translate }}</th>
                 <th>{{ 'SETTINGS.LOYALTY_BALANCE' | translate }}</th>
+                <th>{{ 'SETTINGS.LOYALTY_VIP_TIER' | translate }}</th>
+                <th>{{ 'SETTINGS.LOYALTY_REFERRAL_CODE' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -116,6 +160,10 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
                   <td>{{ m.display_name }}</td>
                   <td>{{ m.email || m.phone || '—' }}</td>
                   <td>{{ m.balance }}</td>
+                  <td data-testid="loyalty-member-tier">{{ tierLabel(m.vip_tier) }}</td>
+                  <td>
+                    <code>{{ m.referral_code || '—' }}</code>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -198,9 +246,19 @@ export class LoyaltySettingsComponent implements OnInit {
   threshold = 10;
   rewardCents = 500;
   birthdayBonus = 0;
+  vipSilver = 0;
+  vipGold = 0;
+  referralBonus = 0;
+  referralInvitee = 0;
 
   ngOnInit(): void {
     this.reload();
+  }
+
+  tierLabel(tier: string | null | undefined): string {
+    if (tier === 'gold') return 'Gold';
+    if (tier === 'silver') return 'Silver';
+    return '—';
   }
 
   reload(): void {
@@ -215,6 +273,10 @@ export class LoyaltySettingsComponent implements OnInit {
         this.threshold = p.redemption_threshold;
         this.rewardCents = p.reward_discount_cents;
         this.birthdayBonus = p.birthday_bonus_units ?? 0;
+        this.vipSilver = p.vip_silver_min_lifetime_units ?? 0;
+        this.vipGold = p.vip_gold_min_lifetime_units ?? 0;
+        this.referralBonus = p.referral_bonus_units ?? 0;
+        this.referralInvitee = p.referral_invitee_bonus_units ?? 0;
         this.joinUrl.set(
           typeof window !== 'undefined' && p.join_path
             ? `${window.location.origin}${p.join_path}`
@@ -248,6 +310,10 @@ export class LoyaltySettingsComponent implements OnInit {
         redemption_threshold: Math.max(1, Number(this.threshold) || 1),
         reward_discount_cents: Math.max(0, Number(this.rewardCents) || 0),
         birthday_bonus_units: Math.max(0, Number(this.birthdayBonus) || 0),
+        vip_silver_min_lifetime_units: Math.max(0, Number(this.vipSilver) || 0),
+        vip_gold_min_lifetime_units: Math.max(0, Number(this.vipGold) || 0),
+        referral_bonus_units: Math.max(0, Number(this.referralBonus) || 0),
+        referral_invitee_bonus_units: Math.max(0, Number(this.referralInvitee) || 0),
       })
       .subscribe({
         next: () => {

@@ -854,6 +854,12 @@ class LoyaltyProgram(TenantMixin, table=True):
     reward_discount_cents: int = Field(default=500, ge=0)
     # Extra units once per year when member pays on their birthday (0 = disabled).
     birthday_bonus_units: int = Field(default=0, ge=0)
+    # VIP thresholds on lifetime earn units (0 = that tier disabled). Gold should be >= silver when both set.
+    vip_silver_min_lifetime_units: int = Field(default=0, ge=0)
+    vip_gold_min_lifetime_units: int = Field(default=0, ge=0)
+    # Referral: units awarded to referrer (and optionally invitee) on successful referred join (0 = off).
+    referral_bonus_units: int = Field(default=0, ge=0)
+    referral_invitee_bonus_units: int = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -873,6 +879,13 @@ class LoyaltyMembership(TenantMixin, table=True):
     phone: str | None = Field(default=None, max_length=40, index=True)
     member_token: str = Field(max_length=64, unique=True, index=True)
     balance: int = Field(default=0, ge=0)
+    # Cumulative positive earn units (VIP tiers); redeem/adjust do not change this.
+    lifetime_earn_units: int = Field(default=0, ge=0)
+    referral_code: str = Field(max_length=32, unique=True, index=True)
+    referred_by_membership_id: int | None = Field(
+        default=None, foreign_key="loyalty_membership.id", index=True
+    )
+    referral_reward_granted: bool = Field(default=False)
     birthday_month: int | None = Field(default=None)  # 1–12
     birthday_day: int | None = Field(default=None)  # 1–31
     birthday_bonus_year: int | None = Field(default=None)  # last calendar year bonus awarded
@@ -1410,6 +1423,10 @@ class LoyaltyProgramUpdate(SQLModel):
     redemption_threshold: int | None = Field(default=None, ge=1)
     reward_discount_cents: int | None = Field(default=None, ge=0)
     birthday_bonus_units: int | None = Field(default=None, ge=0)
+    vip_silver_min_lifetime_units: int | None = Field(default=None, ge=0)
+    vip_gold_min_lifetime_units: int | None = Field(default=None, ge=0)
+    referral_bonus_units: int | None = Field(default=None, ge=0)
+    referral_invitee_bonus_units: int | None = Field(default=None, ge=0)
 
 
 class LoyaltyJoinCreate(SQLModel):
@@ -1420,6 +1437,8 @@ class LoyaltyJoinCreate(SQLModel):
     phone: str | None = Field(default=None, max_length=40)
     birthday_month: int | None = Field(default=None, ge=1, le=12)
     birthday_day: int | None = Field(default=None, ge=1, le=31)
+    # Opaque referral code from an existing member (optional).
+    referral_code: str | None = Field(default=None, max_length=32)
 
 
 class LoyaltyAdjustCreate(SQLModel):
@@ -1640,7 +1659,13 @@ class OrderPaymentCreate(SQLModel):
 
 
 class OfflineCashOrderCreate(SQLModel):
-    """Staff offline → online cash sale sync (idempotent). See docs/0063-offline-capable-client.md."""
+    """Staff offline → online sale sync (idempotent). See docs/0063-offline-capable-client.md.
+
+    ``payment_intent``:
+    - ``cash`` (default): create paid cash order on sync (MVP #319).
+    - ``card``: create unpaid order; staff collects card online after reconnect (#333).
+      Never stores PAN/CVV — intent metadata only.
+    """
 
     idempotency_key: str = Field(min_length=8, max_length=64)
     table_id: int
@@ -1649,6 +1674,7 @@ class OfflineCashOrderCreate(SQLModel):
     customer_name: str | None = None
     # Client clock at queue time (advisory only; server timestamps win).
     client_created_at: datetime | None = None
+    payment_intent: str = "cash"  # cash | card
 
 
 class OrderBillingCustomerSet(SQLModel):

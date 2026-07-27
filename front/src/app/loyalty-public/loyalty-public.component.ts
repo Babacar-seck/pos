@@ -44,6 +44,9 @@ export class LoyaltyPublicComponent implements OnInit {
   phone = '';
   birthdayMonth: number | null = null;
   birthdayDay: number | null = null;
+  referralCode = '';
+  vipTier = signal<string | null>(null);
+  ownReferralCode = signal<string | null>(null);
 
   constructor() {
     afterNextRender(() => this.updateDocumentTitle());
@@ -66,6 +69,10 @@ export class LoyaltyPublicComponent implements OnInit {
       return;
     }
     this.tenantId.set(id);
+    const ref = this.route.snapshot.queryParamMap.get('ref');
+    if (ref?.trim()) {
+      this.referralCode = ref.trim();
+    }
     this.api.getPublicLoyaltyProgram(id).subscribe({
       next: (p) => {
         this.program.set(p);
@@ -103,6 +110,7 @@ export class LoyaltyPublicComponent implements OnInit {
         phone: this.phone.trim() || undefined,
         birthday_month: Number.isFinite(month) && month >= 1 ? month : null,
         birthday_day: Number.isFinite(day) && day >= 1 ? day : null,
+        referral_code: this.referralCode.trim() || undefined,
       })
       .subscribe({
         next: (res) => {
@@ -110,6 +118,8 @@ export class LoyaltyPublicComponent implements OnInit {
           this.submitted.set(true);
           this.memberToken.set(res.membership.member_token ?? null);
           this.balance.set(res.membership.balance);
+          this.vipTier.set(res.membership.vip_tier ?? null);
+          this.ownReferralCode.set(res.membership.referral_code ?? null);
           this.walletNote.set(res.wallet?.detail || this.walletNote());
         },
         error: (err) => {

@@ -1901,6 +1901,13 @@ def public_loyalty_program_info(
         "earn_units_per_order": program.earn_units_per_order,
         "redemption_threshold": program.redemption_threshold,
         "reward_discount_cents": program.reward_discount_cents,
+        "vip_silver_min_lifetime_units": int(
+            getattr(program, "vip_silver_min_lifetime_units", 0) or 0
+        ),
+        "vip_gold_min_lifetime_units": int(
+            getattr(program, "vip_gold_min_lifetime_units", 0) or 0
+        ),
+        "referral_bonus_units": int(getattr(program, "referral_bonus_units", 0) or 0),
         "wallet": loyalty_svc.wallet_pass_status(),
     }
 
@@ -1935,12 +1942,16 @@ def public_loyalty_join(
         phone=phone,
         birthday_month=body.birthday_month,
         birthday_day=body.birthday_day,
+        referral_code=body.referral_code,
     )
     session.commit()
     session.refresh(membership)
+    program = loyalty_svc.get_program(session, tenant_id)
     return {
         "ok": True,
-        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "membership": loyalty_svc.membership_to_dict(
+            membership, include_token=True, program=program
+        ),
         "wallet": loyalty_svc.wallet_pass_status(),
     }
 
@@ -1962,7 +1973,9 @@ def public_loyalty_balance(
         raise HTTPException(status_code=404, detail="Membership not found")
     program = session.get(models.LoyaltyProgram, membership.program_id)
     return {
-        "membership": loyalty_svc.membership_to_dict(membership, include_token=False),
+        "membership": loyalty_svc.membership_to_dict(
+            membership, include_token=False, program=program
+        ),
         "program": loyalty_svc.program_to_dict(program) if program else None,
         "wallet": loyalty_svc.wallet_pass_status(),
     }
@@ -2030,6 +2043,21 @@ def update_loyalty_program(
         program.reward_discount_cents = body.reward_discount_cents
     if body.birthday_bonus_units is not None:
         program.birthday_bonus_units = body.birthday_bonus_units
+    if body.vip_silver_min_lifetime_units is not None:
+        program.vip_silver_min_lifetime_units = body.vip_silver_min_lifetime_units
+    if body.vip_gold_min_lifetime_units is not None:
+        program.vip_gold_min_lifetime_units = body.vip_gold_min_lifetime_units
+    if body.referral_bonus_units is not None:
+        program.referral_bonus_units = body.referral_bonus_units
+    if body.referral_invitee_bonus_units is not None:
+        program.referral_invitee_bonus_units = body.referral_invitee_bonus_units
+    silver = int(getattr(program, "vip_silver_min_lifetime_units", 0) or 0)
+    gold = int(getattr(program, "vip_gold_min_lifetime_units", 0) or 0)
+    if silver > 0 and gold > 0 and gold < silver:
+        raise HTTPException(
+            status_code=400,
+            detail="vip_gold_min_lifetime_units must be >= vip_silver_min_lifetime_units",
+        )
     program.updated_at = datetime.now(timezone.utc)
     session.add(program)
     session.commit()
@@ -2056,7 +2084,10 @@ def list_loyalty_memberships(
         )
     q = q.order_by(models.LoyaltyMembership.joined_at.desc()).limit(limit)
     rows = session.exec(q).all()
-    return [loyalty_svc.membership_to_dict(m, include_token=True) for m in rows]
+    program = loyalty_svc.get_program(session, current_user.tenant_id)
+    return [
+        loyalty_svc.membership_to_dict(m, include_token=True, program=program) for m in rows
+    ]
 
 
 @app.get("/loyalty/memberships/{membership_id}")
@@ -2074,8 +2105,11 @@ def get_loyalty_membership(
         .order_by(models.LoyaltyLedgerEntry.created_at.desc())
         .limit(50)
     ).all()
+    program = loyalty_svc.get_program(session, current_user.tenant_id)
     return {
-        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "membership": loyalty_svc.membership_to_dict(
+            membership, include_token=True, program=program
+        ),
         "ledger": [loyalty_svc.ledger_to_dict(e) for e in entries],
     }
 
@@ -2099,8 +2133,11 @@ def adjust_loyalty_membership(
     )
     session.commit()
     session.refresh(membership)
+    program = loyalty_svc.get_program(session, current_user.tenant_id)
     return {
-        "membership": loyalty_svc.membership_to_dict(membership, include_token=True),
+        "membership": loyalty_svc.membership_to_dict(
+            membership, include_token=True, program=program
+        ),
         "entry": loyalty_svc.ledger_to_dict(entry),
     }
 
@@ -13270,7 +13307,7 @@ def create_offline_cash_order_endpoint(
     ],
     session: Session = Depends(get_session),
 ) -> dict:
-    """Staff: sync a cash sale queued while offline (idempotent on idempotency_key)."""
+    """Staff: sync a sale queued while offline (cash paid, or deferred card unpaid). Idempotent."""
     if not body.items:
         raise HTTPException(status_code=400, detail="Order must have at least one item")
 
@@ -13289,11 +13326,17 @@ def create_offline_cash_order_endpoint(
         lines=lines,
         notes=body.notes,
         customer_name=body.customer_name,
+        payment_intent=body.payment_intent or "cash",
     )
     if not order:
         detail = outcome.get("detail", "create_failed")
         if detail in ("invalid_idempotency_key",):
             raise HTTPException(status_code=400, detail="idempotency_key must be 8–64 characters")
+        if detail == "invalid_payment_intent":
+            raise HTTPException(
+                status_code=400,
+                detail="payment_intent must be 'cash' or 'card'",
+            )
         if detail == "table_not_found":
             raise HTTPException(status_code=404, detail="Table not found")
         if detail == "table_not_active":
@@ -13310,10 +13353,13 @@ def create_offline_cash_order_endpoint(
         raise HTTPException(status_code=400, detail=str(detail))
 
     table = session.get(models.Table, order.table_id) if order.table_id else None
+    intent = outcome.get("payment_intent") or (body.payment_intent or "cash")
     return {
         "status": outcome.get("status", "created"),
         "order_id": order.id,
         "payment_method": order.payment_method,
+        "payment_intent": intent,
+        "needs_payment": bool(outcome.get("needs_payment", order.paid_at is None)),
         "paid_at": order.paid_at.isoformat() if order.paid_at else None,
         "table_id": order.table_id,
         "table_name": table.name if table else None,

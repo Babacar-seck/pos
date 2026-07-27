@@ -837,6 +837,14 @@ export interface LoyaltyProgram {
   reward_discount_cents: number;
   /** Extra units once per year when member pays on birthday (0 = off). */
   birthday_bonus_units?: number;
+  /** VIP silver threshold on lifetime earn (0 = off). */
+  vip_silver_min_lifetime_units?: number;
+  /** VIP gold threshold on lifetime earn (0 = off). */
+  vip_gold_min_lifetime_units?: number;
+  /** Units awarded to referrer on successful referred join (0 = off). */
+  referral_bonus_units?: number;
+  /** Units awarded to invitee on referred join (0 = off). */
+  referral_invitee_bonus_units?: number;
   created_at?: string | null;
   updated_at?: string | null;
   wallet?: LoyaltyWalletStatus;
@@ -851,6 +859,9 @@ export interface LoyaltyProgramPublic {
   earn_units_per_order: number;
   redemption_threshold: number;
   reward_discount_cents: number;
+  vip_silver_min_lifetime_units?: number;
+  vip_gold_min_lifetime_units?: number;
+  referral_bonus_units?: number;
   wallet?: LoyaltyWalletStatus;
 }
 
@@ -905,6 +916,10 @@ export interface LoyaltyMembership {
   email?: string | null;
   phone?: string | null;
   balance: number;
+  lifetime_earn_units?: number;
+  vip_tier?: 'silver' | 'gold' | string | null;
+  referral_code?: string | null;
+  referred_by_membership_id?: number | null;
   member_token?: string;
   birthday_month?: number | null;
   birthday_day?: number | null;
@@ -2853,7 +2868,7 @@ export class ApiService {
     }>(`${this.apiUrl}/orders/${orderId}/payments/${paymentId}`);
   }
 
-  /** Sync a cash sale queued while offline (idempotent). See docs/0063-offline-capable-client.md. */
+  /** Sync a sale queued while offline (cash paid or deferred card). See docs/0063-offline-capable-client.md. */
   syncOfflineCashOrder(body: {
     idempotency_key: string;
     table_id: number;
@@ -2861,10 +2876,13 @@ export class ApiService {
     customer_name?: string;
     notes?: string;
     client_created_at?: string;
+    payment_intent?: 'cash' | 'card';
   }): Observable<{
     status: string;
     order_id: number;
-    payment_method: string;
+    payment_method: string | null;
+    payment_intent: string;
+    needs_payment: boolean;
     paid_at: string | null;
     table_id: number | null;
     table_name: string | null;
@@ -2873,7 +2891,9 @@ export class ApiService {
     return this.http.post<{
       status: string;
       order_id: number;
-      payment_method: string;
+      payment_method: string | null;
+      payment_intent: string;
+      needs_payment: boolean;
       paid_at: string | null;
       table_id: number | null;
       table_name: string | null;
@@ -3610,6 +3630,7 @@ export class ApiService {
       phone?: string;
       birthday_month?: number | null;
       birthday_day?: number | null;
+      referral_code?: string | null;
     },
   ): Observable<{
     ok: boolean;

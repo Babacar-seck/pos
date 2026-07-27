@@ -2302,7 +2302,15 @@
     "TSE_CLIENT_ID": "TSE client / TSS id (optional)",
     "TSE_CLIENT_ID_HINT": "Provider-issued client id when using a cloud TSE.",
     "TSE_API_SECRET": "TSE API secret (optional)",
-    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets."
+    "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
+    "LOYALTY_VIP_SILVER": "VIP silver min lifetime units",
+    "LOYALTY_VIP_GOLD": "VIP gold min lifetime units",
+    "LOYALTY_VIP_HINT": "VIP tier from lifetime earn (not balance). 0 = that tier off. Gold must be ≥ silver when both set.",
+    "LOYALTY_VIP_TIER": "VIP tier",
+    "LOYALTY_REFERRAL_BONUS": "Referral bonus (referrer)",
+    "LOYALTY_REFERRAL_INVITEE": "Referral welcome bonus (invitee)",
+    "LOYALTY_REFERRAL_HINT": "Units awarded once when a new member joins with a referral code (0 = off).",
+    "LOYALTY_REFERRAL_CODE": "Referral code"
   },
   "PAYMENTS": {
     "PAYMENT": "Payment",
@@ -2772,8 +2780,9 @@
     "ERROR_FAILED": "Could not join the waiting list. Please try again."
   },
   "OFFLINE": {
-    "CASH_SALE_TITLE": "Offline cash sale",
-    "CASH_SALE_HINT": "Record a take-away cash sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate).",
+    "CASH_SALE_TITLE": "Offline sale",
+    "CASH_SALE_HINT": "Record a take-away sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate). Fiscal invoices are issued only online after payment.",
+    "CARD_DEFERRED_HINT": "Card: queue intent only (no card numbers stored). After sync, collect card/terminal payment on the open order. True offline card capture is not supported.",
     "STATUS_ONLINE": "Online",
     "STATUS_OFFLINE": "Offline",
     "STATUS_DEGRADED": "Server unreachable",
@@ -2786,12 +2795,20 @@
     "QTY": "Qty",
     "CUSTOMER": "Customer",
     "CUSTOMER_PH": "Optional name",
+    "PAYMENT": "Payment",
+    "PAYMENT_CASH": "Cash",
+    "PAYMENT_CARD_DEFERRED": "Card (pay after sync)",
     "RECORD_CASH": "Record cash sale",
     "QUEUE_CASH": "Queue cash sale",
+    "RECORD_CARD": "Queue card sale",
+    "QUEUE_CARD": "Queue card sale",
+    "NEEDS_CARD": "collect card online",
     "ENQUEUE_FAILED": "Could not queue sale (need Take Away table + product cache).",
     "QUEUED_ONLINE": "Sale submitted for sync.",
     "QUEUED_OFFLINE": "Sale queued — will sync when back online.",
-    "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
+    "QUEUED_CARD_ONLINE": "Card-intent sale submitted — collect payment on the open order after sync.",
+    "QUEUED_CARD_OFFLINE": "Card-intent sale queued — after sync, collect card on the open order.",
+    "BANNER_OFFLINE": "Offline mode — sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
   },
@@ -2811,6 +2828,9 @@
     "JOINED": "Welcome — you are in the club.",
     "BALANCE": "Balance",
     "KEEP_LINK": "Save this card link to check your balance:",
-    "CARD_NOT_FOUND": "Membership not found."
+    "CARD_NOT_FOUND": "Membership not found.",
+    "VIP_TIER": "VIP tier",
+    "REFERRAL_CODE": "Referral code (optional)",
+    "REFERRAL_SHARE": "Share this link so friends can join with your referral:"
   }
 }

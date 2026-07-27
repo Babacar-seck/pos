@@ -9,6 +9,7 @@ This document complements **`docs/0017-billing-customers-factura.md`**. It descr
 - **No production AEAT submission** is implemented as a direct AEAT HTTP/SOAP client in this codebase. Real endpoints, certificates, and payload field mapping **must** follow the **official AEAT technical documentation**, **certified middleware**, and **professional tax advice**. See **`docs/0065-verifactu-production.md`** (Phase 0 ADR: prefer buy/middleware).
 - Enabling **live** mode is **gated** (`FISCAL_LIVE_UNLOCK` + middleware URL) and does **not** by itself satisfy legal filing obligations.
 - Internal hash chain uses schema **`pos.fiscal.hash.v1`** — this is **not** a claim of the official AEAT huella algorithm until middleware supplies it.
+- **Offline POS:** Staff offline sync (`docs/0063-offline-capable-client.md`, #319/#333) **must not** allocate fiscal series or call **issue** while disconnected. Issue only when online on a **paid** order; deferred offline numbering is not approved.
 
 ## Tenant configuration
 

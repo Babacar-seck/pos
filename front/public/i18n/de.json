@@ -2146,7 +2146,15 @@
     "TSE_API_SECRET": "TSE-API-Geheimnis (optional)",
     "TSE_API_SECRET_HINT": "Leer lassen, um den aktuellen Wert zu behalten. Niemals echte Secrets committen.",
     "LOYALTY_BIRTHDAY_BONUS": "Geburtstags-Bonus-Einheiten",
-    "LOYALTY_BIRTHDAY_BONUS_HINT": "Extra-Einheiten einmal pro Jahr, wenn ein Mitglied am Geburtstag bezahlt (0 = aus)."
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Extra-Einheiten einmal pro Jahr, wenn ein Mitglied am Geburtstag bezahlt (0 = aus).",
+    "LOYALTY_VIP_SILVER": "VIP Silber: Mindest-Lebenszeit-Einheiten",
+    "LOYALTY_VIP_GOLD": "VIP Gold: Mindest-Lebenszeit-Einheiten",
+    "LOYALTY_VIP_HINT": "VIP-Stufe nach Lebenszeit-Verdienst (nicht Saldo). 0 = Stufe aus. Gold muss ≥ Silber sein, wenn beide gesetzt.",
+    "LOYALTY_VIP_TIER": "VIP-Stufe",
+    "LOYALTY_REFERRAL_BONUS": "Empfehlungsbonus (Werber)",
+    "LOYALTY_REFERRAL_INVITEE": "Willkommensbonus (Eingeladener)",
+    "LOYALTY_REFERRAL_HINT": "Einheiten einmalig, wenn ein neues Mitglied mit Empfehlungscode beitritt (0 = aus).",
+    "LOYALTY_REFERRAL_CODE": "Empfehlungscode"
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",
@@ -2772,28 +2780,37 @@
     "STATUS_CANCELLED": "Storniert"
   },
   "OFFLINE": {
-    "CASH_SALE_TITLE": "Offline-Barverkauf",
-    "CASH_SALE_HINT": "Take-away-Barverkauf online oder offline erfassen. Synchronisiert bei Wiederverbindung (gleicher Schlüssel = kein Duplikat).",
+    "CASH_SALE_TITLE": "Offline-Verkauf",
+    "CASH_SALE_HINT": "Take-Away-Verkauf online oder offline erfassen. Offline-Verkäufe synchronisieren bei Verbindung (gleicher Schlüssel = kein Duplikat). Fiskalrechnungen nur online nach Zahlung.",
+    "CARD_DEFERRED_HINT": "Karte: nur Absicht speichern (keine Kartendaten). Nach Sync Kartenzahlung am offenen Auftrag. Echte Offline-Kartenerfassung wird nicht unterstützt.",
     "STATUS_ONLINE": "Online",
     "STATUS_OFFLINE": "Offline",
     "STATUS_DEGRADED": "Server nicht erreichbar",
     "PENDING_SYNC": "{{count}} warten auf Sync",
-    "NO_TAKE_AWAY": "Kein Take-Away-Tisch im Cache. Online gehen und aktualisieren oder Take Away anlegen.",
-    "NO_PRODUCT_CACHE": "Noch keine Produkte im Cache. Verbinden und Cache aktualisieren.",
+    "NO_TAKE_AWAY": "Keine Take-Away-Tisch in Cache. Online gehen und aktualisieren oder Take Away anlegen.",
+    "NO_PRODUCT_CACHE": "Noch keine Produkte im Cache. Verbinden und Produktcache aktualisieren.",
     "REFRESH_CACHE": "Cache aktualisieren",
     "PRODUCT": "Produkt",
     "SELECT_PRODUCT": "Produkt wählen…",
     "QTY": "Menge",
     "CUSTOMER": "Kunde",
     "CUSTOMER_PH": "Optionaler Name",
-    "RECORD_CASH": "Barverkauf buchen",
+    "PAYMENT": "Zahlung",
+    "PAYMENT_CASH": "Bar",
+    "PAYMENT_CARD_DEFERRED": "Karte (nach Sync)",
+    "RECORD_CASH": "Barverkauf erfassen",
     "QUEUE_CASH": "Barverkauf in Warteschlange",
-    "ENQUEUE_FAILED": "Konnte nicht einreihen (Take-Away-Tisch + Produktcache nötig).",
-    "QUEUED_ONLINE": "Verkauf zur Synchronisation übermittelt.",
-    "QUEUED_OFFLINE": "Verkauf in Warteschlange — Sync bei Online-Verbindung.",
-    "BANNER_OFFLINE": "Offline-Modus — Barverkäufe können gespeichert und später synchronisiert werden.",
-    "BANNER_DEGRADED": "Server nicht erreichbar — Offline; Warteschlange synchronisiert später.",
-    "BANNER_PENDING": "{{count}} Offline-Verkauf(e) warten auf Sync…"
+    "RECORD_CARD": "Kartenverkauf einreihen",
+    "QUEUE_CARD": "Kartenverkauf einreihen",
+    "NEEDS_CARD": "Karte online einziehen",
+    "ENQUEUE_FAILED": "Verkauf konnte nicht eingereiht werden (Take Away + Produktcache nötig).",
+    "QUEUED_ONLINE": "Verkauf zur Synchronisation gesendet.",
+    "QUEUED_OFFLINE": "Verkauf eingereiht — Sync bei Verbindung.",
+    "QUEUED_CARD_ONLINE": "Karten-Absicht gesendet — Zahlung am offenen Auftrag nach Sync.",
+    "QUEUED_CARD_OFFLINE": "Karten-Absicht eingereiht — nach Sync Karte am offenen Auftrag einziehen.",
+    "BANNER_OFFLINE": "Offline-Modus — Verkäufe können eingereiht und später synchronisiert werden.",
+    "BANNER_DEGRADED": "Server nicht erreichbar — offline; eingereihte Verkäufe synchronisieren später.",
+    "BANNER_PENDING": "{{count}} Offline-Verkauf/Verkäufe warten auf Sync…"
   },
   "LOYALTY_PUBLIC": {
     "TITLE": "Treueclub",
@@ -2811,6 +2828,9 @@
     "CARD_NOT_FOUND": "Mitgliedschaft nicht gefunden.",
     "BIRTHDAY_MONTH": "Geburtsmonat (optional)",
     "BIRTHDAY_DAY": "Geburtstag (optional)",
-    "BIRTHDAY_HINT": "Optional Monat und Tag, damit das Restaurant einen Geburtstagsbonus vergeben kann."
+    "BIRTHDAY_HINT": "Optional Monat und Tag, damit das Restaurant einen Geburtstagsbonus vergeben kann.",
+    "VIP_TIER": "VIP-Stufe",
+    "REFERRAL_CODE": "Empfehlungscode (optional)",
+    "REFERRAL_SHARE": "Teile diesen Link, damit Freunde mit deiner Empfehlung beitreten:"
   }
 }

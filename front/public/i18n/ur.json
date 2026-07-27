@@ -2180,7 +2180,15 @@
     "TSE_API_SECRET": "TSE API secret (optional)",
     "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
     "LOYALTY_BIRTHDAY_BONUS": "سالگرہ بونس یونٹس",
-    "LOYALTY_BIRTHDAY_BONUS_HINT": "سال میں ایک بار اضافی یونٹس جب رکن اپنی سالگرہ پر ادائیگی کرے (0 = بند)۔"
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "سال میں ایک بار اضافی یونٹس جب رکن اپنی سالگرہ پر ادائیگی کرے (0 = بند)۔",
+    "LOYALTY_VIP_SILVER": "VIP سلور: کم از کم زندگی بھر یونٹس",
+    "LOYALTY_VIP_GOLD": "VIP گولڈ: کم از کم زندگی بھر یونٹس",
+    "LOYALTY_VIP_HINT": "VIP درجہ زندگی بھر کمائی پر (بیلنس نہیں)۔ 0 = بند۔ دونوں ہوں تو گولڈ ≥ سلور۔",
+    "LOYALTY_VIP_TIER": "VIP درجہ",
+    "LOYALTY_REFERRAL_BONUS": "ریفرل بونس (حوالہ دینے والا)",
+    "LOYALTY_REFERRAL_INVITEE": "خوش آمدید بونس (مدعو)",
+    "LOYALTY_REFERRAL_HINT": "نیا رکن ریفرل کوڈ سے جوائن کرے تو ایک بار یونٹس (0 = بند)۔",
+    "LOYALTY_REFERRAL_CODE": "ریفرل کوڈ"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",
@@ -2772,8 +2780,9 @@
     "STATUS_CANCELLED": "Cancelled"
   },
   "OFFLINE": {
-    "CASH_SALE_TITLE": "Offline cash sale",
-    "CASH_SALE_HINT": "Record a take-away cash sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate).",
+    "CASH_SALE_TITLE": "Offline sale",
+    "CASH_SALE_HINT": "Record a take-away sale while online or offline. Offline sales sync when the connection returns (same key = no duplicate). Fiscal invoices are issued only online after payment.",
+    "CARD_DEFERRED_HINT": "Card: queue intent only (no card numbers stored). After sync, collect card/terminal payment on the open order. True offline card capture is not supported.",
     "STATUS_ONLINE": "Online",
     "STATUS_OFFLINE": "Offline",
     "STATUS_DEGRADED": "Server unreachable",
@@ -2786,12 +2795,20 @@
     "QTY": "Qty",
     "CUSTOMER": "Customer",
     "CUSTOMER_PH": "Optional name",
+    "PAYMENT": "Payment",
+    "PAYMENT_CASH": "Cash",
+    "PAYMENT_CARD_DEFERRED": "Card (pay after sync)",
     "RECORD_CASH": "Record cash sale",
     "QUEUE_CASH": "Queue cash sale",
+    "RECORD_CARD": "Queue card sale",
+    "QUEUE_CARD": "Queue card sale",
+    "NEEDS_CARD": "collect card online",
     "ENQUEUE_FAILED": "Could not queue sale (need Take Away table + product cache).",
     "QUEUED_ONLINE": "Sale submitted for sync.",
     "QUEUED_OFFLINE": "Sale queued — will sync when back online.",
-    "BANNER_OFFLINE": "Offline mode — cash sales can be queued and will sync later.",
+    "QUEUED_CARD_ONLINE": "Card-intent sale submitted — collect payment on the open order after sync.",
+    "QUEUED_CARD_OFFLINE": "Card-intent sale queued — after sync, collect card on the open order.",
+    "BANNER_OFFLINE": "Offline mode — sales can be queued and will sync later.",
     "BANNER_DEGRADED": "Cannot reach the server — working offline; queued sales will sync when it returns.",
     "BANNER_PENDING": "{{count}} offline sale(s) waiting to sync…"
   },
@@ -2811,6 +2828,9 @@
     "CARD_NOT_FOUND": "Membership not found.",
     "BIRTHDAY_MONTH": "سالگرہ کا مہینہ (اختیاری)",
     "BIRTHDAY_DAY": "سالگرہ کا دن (اختیاری)",
-    "BIRTHDAY_HINT": "اختیاری مہینہ اور دن تاکہ ریستوراں سالگرہ بونس دے سکے۔"
+    "BIRTHDAY_HINT": "اختیاری مہینہ اور دن تاکہ ریستوراں سالگرہ بونس دے سکے۔",
+    "VIP_TIER": "VIP درجہ",
+    "REFERRAL_CODE": "ریفرل کوڈ (اختیاری)",
+    "REFERRAL_SHARE": "یہ لنک شیئر کریں تاکہ دوست آپ کے ریفرل سے جوائن کریں:"
   }
 }

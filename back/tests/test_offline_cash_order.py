@@ -154,6 +154,56 @@ class TestOfflineCashOrderApi(PgClientTestCase):
         self.assertGreaterEqual(pays.json()["amount_paid_cents"], 1)
         self.assertGreaterEqual(len(pays.json()["payments"]), 1)
 
+    def test_deferred_card_creates_unpaid_order_idempotent(self) -> None:
+        """payment_intent=card → unpaid order; no PAN; replay same order_id (#333)."""
+        headers = _bearer_headers(self.owner)
+        payload = {
+            **self._payload(key="offline-card-key-001"),
+            "payment_intent": "card",
+        }
+        r1 = self.client.post("/orders/offline-cash", json=payload, headers=headers)
+        self.assertEqual(r1.status_code, 200, r1.text)
+        body1 = r1.json()
+        self.assertEqual(body1["status"], "created")
+        self.assertEqual(body1["payment_intent"], "card")
+        self.assertTrue(body1["needs_payment"])
+        self.assertIsNone(body1["paid_at"])
+        self.assertIsNone(body1["payment_method"])
+        oid = body1["order_id"]
+
+        order = self.session.get(models.Order, oid)
+        assert order is not None
+        self.assertEqual(order.status, models.OrderStatus.pending)
+        self.assertIsNone(order.paid_at)
+        self.assertIsNone(order.payment_method)
+        self.assertIn("offline-card-intent", order.notes or "")
+
+        items = list(
+            self.session.exec(select(models.OrderItem).where(models.OrderItem.order_id == oid)).all()
+        )
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].status, models.OrderItemStatus.pending)
+
+        # No payment legs until staff collects card online.
+        pays = self.client.get(f"/orders/{oid}/payments", headers=headers)
+        self.assertEqual(pays.status_code, 200, pays.text)
+        self.assertEqual(pays.json()["amount_paid_cents"], 0)
+
+        r2 = self.client.post("/orders/offline-cash", json=payload, headers=headers)
+        self.assertEqual(r2.status_code, 200, r2.text)
+        body2 = r2.json()
+        self.assertEqual(body2["status"], "duplicate")
+        self.assertEqual(body2["order_id"], oid)
+        self.assertTrue(body2["needs_payment"])
+
+        # Invalid intent rejected.
+        bad = self.client.post(
+            "/orders/offline-cash",
+            json={**self._payload(key="offline-bad-intent-01"), "payment_intent": "crypto"},
+            headers=headers,
+        )
+        self.assertEqual(bad.status_code, 400, bad.text)
+
 
 if __name__ == "__main__":
     unittest.main()

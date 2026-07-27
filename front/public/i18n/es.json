@@ -2180,7 +2180,15 @@
     "TSE_API_SECRET": "TSE API secret (optional)",
     "TSE_API_SECRET_HINT": "Leave blank to keep the current value. Never commit real secrets.",
     "LOYALTY_BIRTHDAY_BONUS": "Unidades de bonus de cumpleaños",
-    "LOYALTY_BIRTHDAY_BONUS_HINT": "Unidades extra una vez al año cuando un miembro paga en su cumpleaños (0 = desactivado)."
+    "LOYALTY_BIRTHDAY_BONUS_HINT": "Unidades extra una vez al año cuando un miembro paga en su cumpleaños (0 = desactivado).",
+    "LOYALTY_VIP_SILVER": "VIP plata: mínimo de unidades de por vida",
+    "LOYALTY_VIP_GOLD": "VIP oro: mínimo de unidades de por vida",
+    "LOYALTY_VIP_HINT": "El nivel VIP se basa en unidades ganadas de por vida (no el saldo). 0 = nivel desactivado. Oro debe ser ≥ plata si ambos están activos.",
+    "LOYALTY_VIP_TIER": "Nivel VIP",
+    "LOYALTY_REFERRAL_BONUS": "Bonus por referido (quien invita)",
+    "LOYALTY_REFERRAL_INVITEE": "Bonus de bienvenida (invitado)",
+    "LOYALTY_REFERRAL_HINT": "Unidades otorgadas una vez cuando un nuevo miembro se une con un código de referido (0 = off).",
+    "LOYALTY_REFERRAL_CODE": "Código de referido"
   },
   "PAYMENTS": {
     "PAYMENT": "Pago",
@@ -2772,28 +2780,37 @@
     "STATUS_CANCELLED": "Cancelado"
   },
   "OFFLINE": {
-    "CASH_SALE_TITLE": "Venta en efectivo sin conexión",
-    "CASH_SALE_HINT": "Registra una venta para llevar en efectivo con o sin conexión. Se sincroniza al volver la red (misma clave = sin duplicados).",
+    "CASH_SALE_TITLE": "Venta sin conexión",
+    "CASH_SALE_HINT": "Registra una venta para llevar en línea o sin conexión. Las ventas se sincronizan al volver (misma clave = sin duplicado). Las facturas fiscales solo se emiten en línea tras el pago.",
+    "CARD_DEFERRED_HINT": "Tarjeta: solo intención (no se guardan números). Tras sincronizar, cobra en el pedido abierto. No hay captura de tarjeta real sin conexión.",
     "STATUS_ONLINE": "En línea",
     "STATUS_OFFLINE": "Sin conexión",
     "STATUS_DEGRADED": "Servidor no alcanzable",
-    "PENDING_SYNC": "{{count}} pendientes de sincronizar",
-    "NO_TAKE_AWAY": "No hay mesa Take Away en caché. Conéctate y actualiza, o crea una mesa Take Away.",
-    "NO_PRODUCT_CACHE": "Aún no hay productos en caché. Conéctate y actualiza la caché.",
+    "PENDING_SYNC": "{{count}} esperando sync",
+    "NO_TAKE_AWAY": "No hay mesa Take Away en caché. Conéctate y actualiza, o créala.",
+    "NO_PRODUCT_CACHE": "Aún no hay productos en caché. Conéctate y actualiza.",
     "REFRESH_CACHE": "Actualizar caché",
     "PRODUCT": "Producto",
     "SELECT_PRODUCT": "Seleccionar producto…",
     "QTY": "Cant.",
     "CUSTOMER": "Cliente",
     "CUSTOMER_PH": "Nombre opcional",
+    "PAYMENT": "Pago",
+    "PAYMENT_CASH": "Efectivo",
+    "PAYMENT_CARD_DEFERRED": "Tarjeta (pagar tras sync)",
     "RECORD_CASH": "Registrar venta en efectivo",
     "QUEUE_CASH": "Encolar venta en efectivo",
-    "ENQUEUE_FAILED": "No se pudo encolar (hace falta mesa Take Away y caché de productos).",
+    "RECORD_CARD": "Encolar venta con tarjeta",
+    "QUEUE_CARD": "Encolar venta con tarjeta",
+    "NEEDS_CARD": "cobrar tarjeta en línea",
+    "ENQUEUE_FAILED": "No se pudo encolar (hace falta Take Away + caché de productos).",
     "QUEUED_ONLINE": "Venta enviada para sincronizar.",
-    "QUEUED_OFFLINE": "Venta en cola — se sincronizará al volver la conexión.",
-    "BANNER_OFFLINE": "Modo sin conexión — las ventas en efectivo se pueden encolar y sincronizar después.",
-    "BANNER_DEGRADED": "No se puede alcanzar el servidor — modo sin conexión; las ventas en cola se sincronizarán al volver.",
-    "BANNER_PENDING": "{{count}} venta(s) sin conexión pendientes de sincronizar…"
+    "QUEUED_OFFLINE": "Venta en cola — se sincronizará al volver.",
+    "QUEUED_CARD_ONLINE": "Intención de tarjeta enviada — cobra en el pedido abierto tras sync.",
+    "QUEUED_CARD_OFFLINE": "Intención de tarjeta en cola — tras sync, cobra en el pedido abierto.",
+    "BANNER_OFFLINE": "Modo sin conexión — las ventas se pueden encolar y sincronizar después.",
+    "BANNER_DEGRADED": "No se alcanza el servidor — sin conexión; las ventas en cola se sincronizarán.",
+    "BANNER_PENDING": "{{count}} venta(s) sin conexión esperando sync…"
   },
   "LOYALTY_PUBLIC": {
     "TITLE": "Club de fidelidad",
@@ -2811,6 +2828,9 @@
     "CARD_NOT_FOUND": "Membresía no encontrada.",
     "BIRTHDAY_MONTH": "Mes de cumpleaños (opcional)",
     "BIRTHDAY_DAY": "Día de cumpleaños (opcional)",
-    "BIRTHDAY_HINT": "Mes y día opcionales para que el restaurante pueda otorgar un bonus de cumpleaños."
+    "BIRTHDAY_HINT": "Mes y día opcionales para que el restaurante pueda otorgar un bonus de cumpleaños.",
+    "VIP_TIER": "Nivel VIP",
+    "REFERRAL_CODE": "Código de referido (opcional)",
+    "REFERRAL_SHARE": "Comparte este enlace para que amigos se unan con tu referido:"
   }
 }
