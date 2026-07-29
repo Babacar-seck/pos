@@ -73,3 +73,6 @@ dist/
 .cursor/
 .factory/
 
+
+# Local secrets (GitHub tokens, etc. — never commit)
+.secrets
