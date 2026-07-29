@@ -30,6 +30,26 @@ ENH_PREFLIGHT="${REPO_ROOT}/scripts/enhancement-reviewer-preflight.sh"
 
 cd "$SCRIPTDIR" || exit 1
 
+# Stale GITHUB_TOKEN/GH_TOKEN in the environment override gh keyring auth and cause 401s.
+# If env tokens are present but gh cannot authenticate, drop them so keyring (gh auth login) works.
+ensure_gh_auth_env() {
+  command -v gh >/dev/null 2>&1 || return 0
+  if [[ -z "${GITHUB_TOKEN:-}${GH_TOKEN:-}" ]]; then
+    return 0
+  fi
+  if gh api user -q .login >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "----- gh: GITHUB_TOKEN/GH_TOKEN present but invalid (401) — unsetting so keyring auth can be used" >&2
+  unset GITHUB_TOKEN GH_TOKEN
+  if gh api user -q .login >/dev/null 2>&1; then
+    echo "----- gh: authenticated via keyring as $(gh api user -q .login 2>/dev/null || echo '?')" >&2
+  else
+    echo "----- gh: still not authenticated after unsetting env tokens — run: gh auth login" >&2
+  fi
+}
+ensure_gh_auth_env
+
 have_cursor_agent() {
   command -v cursor-agent >/dev/null 2>&1
 }
@@ -804,11 +824,25 @@ step_committer() {
   committer_notify_github_issues_if_new_commit "$head_before"
 }
 
+# Run a cycle step; never abort the loop on a single step failure (set -e).
+run_step() {
+  local name="$1"
+  shift
+  set +e
+  "$@"
+  local rc=$?
+  set -e
+  if ((rc != 0)); then
+    echo "----- step failed (continuing loop): ${name} exit=${rc}" >&2
+  fi
+  return 0
+}
+
 run_full_cycle() {
   echo "$(date)"
-  step_log_reviewer
-  step_marketing_repos
-  step_enhancement_reviewer
+  run_step "001 log reviewer" step_log_reviewer
+  run_step "005 marketing repos" step_marketing_repos
+  run_step "008 enhancement reviewer" step_enhancement_reviewer
   local i=0
   local has_feat
   while (( i < 5 )); do
@@ -820,14 +854,14 @@ run_full_cycle() {
       (( i == 0 )) && echo "----- feature coding (FEAT): queue empty, skipping up to 5 batch slots (saves git sync)"
       break
     fi
-    step_feat
+    run_step "006 feature coder ($((i + 1))/5)" step_feat
     ((i++)) || true
   done
-  step_coder
-  step_feature_coder_handoff
-  step_tester
-  step_closing_review
-  step_committer
+  run_step "002 coder" step_coder
+  run_step "012 feature-coder handoff" step_feature_coder_handoff
+  run_step "003 tester" step_tester
+  run_step "004 closing reviewer" step_closing_review
+  run_step "007 committer" step_committer
 }
 
 usage() {
@@ -918,7 +952,13 @@ next_cycle_eta_local() {
 }
 
 while true; do
+  set +e
   run_full_cycle
+  local_cycle_rc=$?
+  set -e
+  if ((local_cycle_rc != 0)); then
+    echo "----- full cycle error (continuing): exit=${local_cycle_rc}" >&2
+  fi
   echo "----- sleeping ${sleepminutes}m (${sleepseconds}s); next cycle ~ $(next_cycle_eta_local)"
   sleep "$sleepseconds"
 done
