@@ -2203,7 +2203,22 @@
     "LOYALTY_REFERRAL_BONUS": "ریفرل بونس (حوالہ دینے والا)",
     "LOYALTY_REFERRAL_INVITEE": "خوش آمدید بونس (مدعو)",
     "LOYALTY_REFERRAL_HINT": "نیا رکن ریفرل کوڈ سے جوائن کرے تو ایک بار یونٹس (0 = بند)۔",
-    "LOYALTY_REFERRAL_CODE": "ریفرل کوڈ"
+    "LOYALTY_REFERRAL_CODE": "ریفرل کوڈ",
+    "LOYALTY_SECTION_PROGRAM": "پروگرام",
+    "LOYALTY_SECTION_EARN_REDEEM": "کمائیں اور ریڈیم کریں",
+    "LOYALTY_SECTION_EXTRAS": "بونس اور VIP",
+    "LOYALTY_SECTION_PUBLIC": "عوامی شمولیت",
+    "LOYALTY_FIELD_HELP": "مزید معلومات",
+    "LOYALTY_ENABLED_HINT": "بند ہونے پر مہمان شامل نہیں ہو سکتے اور عملہ لائلٹی یونٹس کما یا ریڈیم نہیں کر سکتا۔",
+    "LOYALTY_PROGRAM_NAME_HINT": "عوامی جوائن صفحے اور ممبر کارڈ پر مہمانوں کو دکھایا جانے والا نام۔",
+    "LOYALTY_MODE_HINT": "پوائنٹس عددی بیلنس کے طور پر جمع ہوتے ہیں۔ اسٹیمپس اندر سے وہی کام کرتے ہیں مگر اسٹیمپ کارڈ کی شکل میں دکھتے ہیں۔ پورے پروگرام کے لیے ایک موڈ منتخب کریں۔",
+    "LOYALTY_EARN_HINT": "منسلک ممبر کو آرڈر ادا ہونے پر کتنی یونٹس ملتی ہیں (فی آرڈر ایک بار)۔",
+    "LOYALTY_THRESHOLD_HINT": "چیک آؤٹ پر انعام ریڈیم کرنے سے پہلے درکار بیلنس۔",
+    "LOYALTY_REWARD_CENTS_HINT": "ریڈیم پر آرڈر سطح کی چھوٹ سینٹس میں (مثلاً 500 = مرکزی کرنسی میں 5.00)۔",
+    "LOYALTY_JOIN_URL_HINT": "مہمانوں کے لیے یہ لنک شیئر کریں۔ اختیاری ?ref= کوڈز ریفرل ٹریک کرتے ہیں۔",
+    "LOYALTY_WALLET_NOTE": "سرٹیفکیٹ کنفیگر ہونے تک Apple/Google Wallet پاسز جاری نہیں ہوتے۔",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "مہمانوں کی اندراج کے لیے عوامی جوائن URL شیئر کریں۔",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "درست ریفرل کوڈ سے جوائن کرنے والے نئے ممبر کو ملنے والی یونٹس (0 = بند)۔"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",

@@ -2325,7 +2325,22 @@
     "LOYALTY_REFERRAL_BONUS": "Bonus per referit (qui invita)",
     "LOYALTY_REFERRAL_INVITEE": "Bonus de benvinguda (convidat)",
     "LOYALTY_REFERRAL_HINT": "Unitats atorgades un cop quan un nou membre s'uneix amb un codi de referit (0 = off).",
-    "LOYALTY_REFERRAL_CODE": "Codi de referit"
+    "LOYALTY_REFERRAL_CODE": "Codi de referit",
+    "LOYALTY_SECTION_PROGRAM": "Programa",
+    "LOYALTY_SECTION_EARN_REDEEM": "Guanyar i canviar",
+    "LOYALTY_SECTION_EXTRAS": "Bonus i VIP",
+    "LOYALTY_SECTION_PUBLIC": "Alta pública",
+    "LOYALTY_FIELD_HELP": "Més informació",
+    "LOYALTY_ENABLED_HINT": "Si està desactivat, els clients no es poden unir i el personal no pot guanyar ni canviar unitats de fidelitat.",
+    "LOYALTY_PROGRAM_NAME_HINT": "Nom mostrat als clients a la pàgina d'alta i a la targeta de membre.",
+    "LOYALTY_MODE_HINT": "Els punts s'acumulen com a saldo numèric. Els segells funcionen igual per sota, però es presenten com a targeta de segells. Trieu un mode per a tot el programa.",
+    "LOYALTY_EARN_HINT": "Quantes unitats guanya un membre enllaçat cada vegada que una comanda es marca com a pagada (un cop per comanda).",
+    "LOYALTY_THRESHOLD_HINT": "Saldo necessari abans que el personal pugui canviar una recompensa a caixa.",
+    "LOYALTY_REWARD_CENTS_HINT": "Descompte a nivell de comanda en cèntims en canviar una recompensa (p. ex. 500 = 5,00 en la moneda principal).",
+    "LOYALTY_JOIN_URL_HINT": "Compartiu aquest enllaç perquè els clients s'uneixin al club. Els codis opcionals ?ref= fan seguiment de referits.",
+    "LOYALTY_WALLET_NOTE": "Els passes d'Apple/Google Wallet no s'emeten fins a configurar certificats.",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "Compartiu l'URL pública d'alta perquè els clients es puguin registrar.",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Unitats per al nou membre que s'uneix amb un codi de referit vàlid (0 = off)."
   },
   "PAYMENTS": {
     "PAYMENT": "Pagament",

@@ -2325,7 +2325,22 @@
     "LOYALTY_REFERRAL_BONUS": "रेफ़रल बोनस (रेफ़रर)",
     "LOYALTY_REFERRAL_INVITEE": "स्वागत बोनस (आमंत्रित)",
     "LOYALTY_REFERRAL_HINT": "नया सदस्य रेफ़रल कोड से जुड़ने पर एक बार इकाइयाँ (0 = बंद)।",
-    "LOYALTY_REFERRAL_CODE": "रेफ़रल कोड"
+    "LOYALTY_REFERRAL_CODE": "रेफ़रल कोड",
+    "LOYALTY_SECTION_PROGRAM": "प्रोग्राम",
+    "LOYALTY_SECTION_EARN_REDEEM": "कमाएँ और रिडीम करें",
+    "LOYALTY_SECTION_EXTRAS": "बोनस और VIP",
+    "LOYALTY_SECTION_PUBLIC": "सार्वजनिक जॉइन",
+    "LOYALTY_FIELD_HELP": "अधिक जानकारी",
+    "LOYALTY_ENABLED_HINT": "बंद होने पर मेहमान जॉइन नहीं कर सकते और स्टाफ लॉयल्टी यूनिट कमा या रिडीम नहीं कर सकता।",
+    "LOYALTY_PROGRAM_NAME_HINT": "सार्वजनिक जॉइन पेज और सदस्य कार्ड पर मेहमानों को दिखाया जाने वाला नाम।",
+    "LOYALTY_MODE_HINT": "पॉइंट संख्यात्मक बैलेंस के रूप में जमा होते हैं। स्टैम्प अंदर से वही काम करते हैं लेकिन स्टैम्प कार्ड के रूप में दिखते हैं। पूरे प्रोग्राम के लिए एक मोड चुनें।",
+    "LOYALTY_EARN_HINT": "लिंक किए गए सदस्य को ऑर्डर पेड होने पर कितनी यूनिट मिलती हैं (प्रति ऑर्डर एक बार)।",
+    "LOYALTY_THRESHOLD_HINT": "चेकआउट पर रिवॉर्ड रिडीम करने से पहले आवश्यक बैलेंस।",
+    "LOYALTY_REWARD_CENTS_HINT": "रिडीम पर ऑर्डर-स्तरीय छूट सेंट में (जैसे 500 = मुख्य मुद्रा में 5.00)।",
+    "LOYALTY_JOIN_URL_HINT": "मेहमानों को क्लब जॉइन करने के लिए यह लिंक साझा करें। वैकल्पिक ?ref= कोड रेफ़रल ट्रैक करते हैं।",
+    "LOYALTY_WALLET_NOTE": "प्रमाणपत्र कॉन्फ़िगर होने तक Apple/Google Wallet पास जारी नहीं होते।",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "मेहमानों के नामांकन के लिए सार्वजनिक जॉइन URL साझा करें।",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "वैध रेफ़रल कोड से जॉइन करने वाले नए सदस्य को मिलने वाली यूनिट (0 = बंद)।"
   },
   "PAYMENTS": {
     "PAYMENT": "भुगतान",

@@ -2150,7 +2150,22 @@
     "LOYALTY_REFERRAL_BONUS": "Bonus de parrainage (parrain)",
     "LOYALTY_REFERRAL_INVITEE": "Bonus de bienvenue (filleul)",
     "LOYALTY_REFERRAL_HINT": "Unités attribuées une fois quand un nouveau membre rejoint avec un code de parrainage (0 = off).",
-    "LOYALTY_REFERRAL_CODE": "Code de parrainage"
+    "LOYALTY_REFERRAL_CODE": "Code de parrainage",
+    "LOYALTY_SECTION_PROGRAM": "Programme",
+    "LOYALTY_SECTION_EARN_REDEEM": "Gagner et échanger",
+    "LOYALTY_SECTION_EXTRAS": "Bonus et VIP",
+    "LOYALTY_SECTION_PUBLIC": "Inscription publique",
+    "LOYALTY_FIELD_HELP": "Plus d'informations",
+    "LOYALTY_ENABLED_HINT": "Désactivé : les clients ne peuvent pas s'inscrire et le personnel ne peut ni gagner ni échanger d'unités de fidélité.",
+    "LOYALTY_PROGRAM_NAME_HINT": "Nom affiché aux clients sur la page d'inscription et la carte de membre.",
+    "LOYALTY_MODE_HINT": "Les points s'accumulent en solde numérique. Les tampons fonctionnent de la même façon en coulisse, présentés comme une carte à tampons. Choisissez un mode pour tout le programme.",
+    "LOYALTY_EARN_HINT": "Nombre d'unités qu'un membre lié gagne chaque fois qu'une commande est marquée payée (une fois par commande).",
+    "LOYALTY_THRESHOLD_HINT": "Solde requis avant que le personnel puisse échanger une récompense en caisse.",
+    "LOYALTY_REWARD_CENTS_HINT": "Remise au niveau de la commande en centimes lors d'un échange (ex. 500 = 5,00 dans la devise principale).",
+    "LOYALTY_JOIN_URL_HINT": "Partagez ce lien pour que les clients rejoignent le club. Les codes ?ref= optionnels suivent les parrainages.",
+    "LOYALTY_WALLET_NOTE": "Les passes Apple/Google Wallet ne sont pas émises tant que les certificats ne sont pas configurés.",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "Partagez l'URL publique d'inscription pour que les clients puissent s'enrôler.",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Unités attribuées au nouveau membre qui s'inscrit avec un code de parrainage valide (0 = off)."
   },
   "PAYMENTS": {
     "PAYMENT": "Paiement",

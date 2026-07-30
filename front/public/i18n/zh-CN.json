@@ -2325,7 +2325,22 @@
     "LOYALTY_REFERRAL_BONUS": "推荐奖励（推荐人）",
     "LOYALTY_REFERRAL_INVITEE": "推荐欢迎奖励（受邀人）",
     "LOYALTY_REFERRAL_HINT": "新会员使用推荐码加入时一次性发放（0 = 关闭）。",
-    "LOYALTY_REFERRAL_CODE": "推荐码"
+    "LOYALTY_REFERRAL_CODE": "推荐码",
+    "LOYALTY_SECTION_PROGRAM": "计划",
+    "LOYALTY_SECTION_EARN_REDEEM": "赚取与兑换",
+    "LOYALTY_SECTION_EXTRAS": "奖励与 VIP",
+    "LOYALTY_SECTION_PUBLIC": "公开加入",
+    "LOYALTY_FIELD_HELP": "更多信息",
+    "LOYALTY_ENABLED_HINT": "关闭后，顾客无法加入，员工也无法赚取或兑换积分/印章。",
+    "LOYALTY_PROGRAM_NAME_HINT": "显示在公开加入页和会员卡上的名称。",
+    "LOYALTY_MODE_HINT": "积分以数字余额累积。印章底层相同，但以印章卡形式展示。整个计划只能选择一种模式。",
+    "LOYALTY_EARN_HINT": "关联会员在订单标记为已付款时获得的单位数（每个订单一次）。",
+    "LOYALTY_THRESHOLD_HINT": "员工在结账兑换奖励前所需的余额。",
+    "LOYALTY_REWARD_CENTS_HINT": "兑换奖励时的订单级折扣（分，例如 500 = 主货币 5.00）。",
+    "LOYALTY_JOIN_URL_HINT": "分享此链接供顾客加入忠诚俱乐部。可选 ?ref= 代码用于推荐追踪。",
+    "LOYALTY_WALLET_NOTE": "在配置证书之前不会签发 Apple/Google Wallet 通行证。",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "分享公开加入链接，以便顾客注册。",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "使用有效推荐码加入的新会员获得的单位（0 = 关闭）。"
   },
   "PAYMENTS": {
     "PAYMENT": "支付",

@@ -2169,7 +2169,22 @@
     "LOYALTY_REFERRAL_BONUS": "Empfehlungsbonus (Werber)",
     "LOYALTY_REFERRAL_INVITEE": "Willkommensbonus (Eingeladener)",
     "LOYALTY_REFERRAL_HINT": "Einheiten einmalig, wenn ein neues Mitglied mit Empfehlungscode beitritt (0 = aus).",
-    "LOYALTY_REFERRAL_CODE": "Empfehlungscode"
+    "LOYALTY_REFERRAL_CODE": "Empfehlungscode",
+    "LOYALTY_SECTION_PROGRAM": "Programm",
+    "LOYALTY_SECTION_EARN_REDEEM": "Sammeln & Einlösen",
+    "LOYALTY_SECTION_EXTRAS": "Boni & VIP",
+    "LOYALTY_SECTION_PUBLIC": "Öffentlicher Beitritt",
+    "LOYALTY_FIELD_HELP": "Weitere Informationen",
+    "LOYALTY_ENABLED_HINT": "Wenn deaktiviert, können Gäste nicht beitreten und Personal kann keine Treue-Einheiten sammeln oder einlösen.",
+    "LOYALTY_PROGRAM_NAME_HINT": "Name für Gäste auf der öffentlichen Beitrittsseite und der Mitgliedskarte.",
+    "LOYALTY_MODE_HINT": "Punkte sammeln sich als Zahlenkontostand. Stempel funktionieren intern gleich, werden aber als Stempelkarte dargestellt. Wählen Sie einen Modus für das gesamte Programm.",
+    "LOYALTY_EARN_HINT": "Wie viele Einheiten ein verknüpftes Mitglied erhält, wenn eine Bestellung als bezahlt markiert wird (einmal pro Bestellung).",
+    "LOYALTY_THRESHOLD_HINT": "Kontostand, der nötig ist, bevor Personal eine Belohnung an der Kasse einlösen kann.",
+    "LOYALTY_REWARD_CENTS_HINT": "Bestellrabatt in Cent beim Einlösen einer Belohnung (z. B. 500 = 5,00 in der Hauptwährung).",
+    "LOYALTY_JOIN_URL_HINT": "Teilen Sie diesen Link, damit Gäste dem Treueclub beitreten können. Optionale ?ref=-Codes verfolgen Empfehlungen.",
+    "LOYALTY_WALLET_NOTE": "Apple-/Google-Wallet-Pässe werden erst ausgestellt, wenn Zertifikate konfiguriert sind.",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "Teilen Sie die öffentliche Beitritts-URL, damit Gäste sich anmelden können.",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Einheiten für das neue Mitglied, das mit gültigem Empfehlungscode beitritt (0 = aus)."
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",

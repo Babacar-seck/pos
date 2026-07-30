@@ -18,109 +18,253 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
       @if (loading()) {
         <p class="hint">{{ 'COMMON.LOADING' | translate }}</p>
       } @else if (program()) {
-        <div class="form-grid">
-          <label class="check-row">
-            <input type="checkbox" [(ngModel)]="enabled" (ngModelChange)="dirty.set(true)" />
-            <span>{{ 'SETTINGS.LOYALTY_ENABLED' | translate }}</span>
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_PROGRAM_NAME' | translate }}</span>
-            <input type="text" [(ngModel)]="programName" (ngModelChange)="dirty.set(true)" />
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_MODE' | translate }}</span>
-            <select [(ngModel)]="mode" (ngModelChange)="dirty.set(true)">
-              <option value="points">{{ 'SETTINGS.LOYALTY_MODE_POINTS' | translate }}</option>
-              <option value="stamps">{{ 'SETTINGS.LOYALTY_MODE_STAMPS' | translate }}</option>
-            </select>
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_EARN' | translate }}</span>
-            <input type="number" min="0" [(ngModel)]="earnUnits" (ngModelChange)="dirty.set(true)" />
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_THRESHOLD' | translate }}</span>
-            <input
-              type="number"
-              min="1"
-              [(ngModel)]="threshold"
-              (ngModelChange)="dirty.set(true)"
-            />
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_REWARD_CENTS' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="rewardCents"
-              (ngModelChange)="dirty.set(true)"
-            />
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="birthdayBonus"
-              (ngModelChange)="dirty.set(true)"
-              data-testid="loyalty-birthday-bonus"
-            />
-            <span class="hint">{{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS_HINT' | translate }}</span>
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_VIP_SILVER' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="vipSilver"
-              (ngModelChange)="dirty.set(true)"
-              data-testid="loyalty-vip-silver"
-            />
-            <span class="hint">{{ 'SETTINGS.LOYALTY_VIP_HINT' | translate }}</span>
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_VIP_GOLD' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="vipGold"
-              (ngModelChange)="dirty.set(true)"
-              data-testid="loyalty-vip-gold"
-            />
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_REFERRAL_BONUS' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="referralBonus"
-              (ngModelChange)="dirty.set(true)"
-              data-testid="loyalty-referral-bonus"
-            />
-            <span class="hint">{{ 'SETTINGS.LOYALTY_REFERRAL_HINT' | translate }}</span>
-          </label>
-          <label>
-            <span>{{ 'SETTINGS.LOYALTY_REFERRAL_INVITEE' | translate }}</span>
-            <input
-              type="number"
-              min="0"
-              [(ngModel)]="referralInvitee"
-              (ngModelChange)="dirty.set(true)"
-              data-testid="loyalty-referral-invitee"
-            />
-          </label>
-        </div>
+        <section class="loyalty-block" aria-labelledby="loyalty-program-heading">
+          <h3 id="loyalty-program-heading" class="subsection-title">
+            {{ 'SETTINGS.LOYALTY_SECTION_PROGRAM' | translate }}
+          </h3>
+          <div class="form-grid">
+            <label class="check-row">
+              <input type="checkbox" [(ngModel)]="enabled" (ngModelChange)="dirty.set(true)" />
+              <span>{{ 'SETTINGS.LOYALTY_ENABLED' | translate }}</span>
+              <button
+                type="button"
+                class="field-info-btn"
+                [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                [attr.title]="'SETTINGS.LOYALTY_ENABLED_HINT' | translate"
+              >
+                <span aria-hidden="true">ⓘ</span>
+              </button>
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_PROGRAM_NAME' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_PROGRAM_NAME_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input type="text" [(ngModel)]="programName" (ngModelChange)="dirty.set(true)" />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_MODE' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  data-testid="loyalty-mode-help"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_MODE_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <select [(ngModel)]="mode" (ngModelChange)="dirty.set(true)">
+                <option value="points">{{ 'SETTINGS.LOYALTY_MODE_POINTS' | translate }}</option>
+                <option value="stamps">{{ 'SETTINGS.LOYALTY_MODE_STAMPS' | translate }}</option>
+              </select>
+              <small class="field-hint">{{ 'SETTINGS.LOYALTY_MODE_HINT' | translate }}</small>
+            </label>
+          </div>
+        </section>
 
-        @if (joinUrl()) {
-          <p class="hint join-url" data-testid="loyalty-join-url">
-            {{ 'SETTINGS.LOYALTY_JOIN_URL' | translate }}:
-            <code>{{ joinUrl() }}</code>
-          </p>
-        }
+        <section class="loyalty-block" aria-labelledby="loyalty-earn-heading">
+          <h3 id="loyalty-earn-heading" class="subsection-title">
+            {{ 'SETTINGS.LOYALTY_SECTION_EARN_REDEEM' | translate }}
+          </h3>
+          <div class="form-grid">
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_EARN' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_EARN_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input type="number" min="0" [(ngModel)]="earnUnits" (ngModelChange)="dirty.set(true)" />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_THRESHOLD' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_THRESHOLD_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="1"
+                [(ngModel)]="threshold"
+                (ngModelChange)="dirty.set(true)"
+              />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_REWARD_CENTS' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_REWARD_CENTS_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="rewardCents"
+                (ngModelChange)="dirty.set(true)"
+              />
+            </label>
+          </div>
+        </section>
 
-        @if (walletDetail()) {
-          <p class="hint">{{ walletDetail() }}</p>
-        }
+        <section class="loyalty-block" aria-labelledby="loyalty-extras-heading">
+          <h3 id="loyalty-extras-heading" class="subsection-title">
+            {{ 'SETTINGS.LOYALTY_SECTION_EXTRAS' | translate }}
+          </h3>
+          <div class="form-grid">
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_BIRTHDAY_BONUS' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_BIRTHDAY_BONUS_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="birthdayBonus"
+                (ngModelChange)="dirty.set(true)"
+                data-testid="loyalty-birthday-bonus"
+              />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_VIP_SILVER' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_VIP_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="vipSilver"
+                (ngModelChange)="dirty.set(true)"
+                data-testid="loyalty-vip-silver"
+              />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_VIP_GOLD' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_VIP_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="vipGold"
+                (ngModelChange)="dirty.set(true)"
+                data-testid="loyalty-vip-gold"
+              />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_REFERRAL_BONUS' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_REFERRAL_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="referralBonus"
+                (ngModelChange)="dirty.set(true)"
+                data-testid="loyalty-referral-bonus"
+              />
+            </label>
+            <label>
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_REFERRAL_INVITEE' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_REFERRAL_INVITEE_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <input
+                type="number"
+                min="0"
+                [(ngModel)]="referralInvitee"
+                (ngModelChange)="dirty.set(true)"
+                data-testid="loyalty-referral-invitee"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="loyalty-block" aria-labelledby="loyalty-public-heading">
+          <h3 id="loyalty-public-heading" class="subsection-title">
+            {{ 'SETTINGS.LOYALTY_SECTION_PUBLIC' | translate }}
+          </h3>
+          @if (joinUrl()) {
+            <p class="join-url" data-testid="loyalty-join-url">
+              <span class="label-row">
+                {{ 'SETTINGS.LOYALTY_JOIN_URL' | translate }}
+                <button
+                  type="button"
+                  class="field-info-btn"
+                  [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                  [attr.title]="'SETTINGS.LOYALTY_JOIN_URL_HINT' | translate"
+                >
+                  <span aria-hidden="true">ⓘ</span>
+                </button>
+              </span>
+              <code>{{ joinUrl() }}</code>
+            </p>
+          }
+          @if (walletDetail()) {
+            <p class="hint wallet-note">{{ walletDetail() }}</p>
+          } @else {
+            <p class="hint wallet-note">{{ 'SETTINGS.LOYALTY_WALLET_NOTE' | translate }}</p>
+          }
+        </section>
 
         <div class="actions">
           <button
@@ -140,35 +284,48 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
           }
         </div>
 
-        <h3>{{ 'SETTINGS.LOYALTY_MEMBERS' | translate }}</h3>
-        @if (members().length === 0) {
-          <p class="hint">{{ 'SETTINGS.LOYALTY_MEMBERS_EMPTY' | translate }}</p>
-        } @else {
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ 'COMMON.NAME' | translate }}</th>
-                <th>{{ 'COMMON.EMAIL' | translate }}</th>
-                <th>{{ 'SETTINGS.LOYALTY_BALANCE' | translate }}</th>
-                <th>{{ 'SETTINGS.LOYALTY_VIP_TIER' | translate }}</th>
-                <th>{{ 'SETTINGS.LOYALTY_REFERRAL_CODE' | translate }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (m of members(); track m.id) {
-                <tr>
-                  <td>{{ m.display_name }}</td>
-                  <td>{{ m.email || m.phone || '—' }}</td>
-                  <td>{{ m.balance }}</td>
-                  <td data-testid="loyalty-member-tier">{{ tierLabel(m.vip_tier) }}</td>
-                  <td>
-                    <code>{{ m.referral_code || '—' }}</code>
-                  </td>
-                </tr>
+        <section class="loyalty-block members-block" aria-labelledby="loyalty-members-heading">
+          <h3 id="loyalty-members-heading" class="subsection-title">
+            {{ 'SETTINGS.LOYALTY_MEMBERS' | translate }}
+          </h3>
+          @if (members().length === 0) {
+            <div class="members-empty" data-testid="loyalty-members-empty">
+              <span class="members-empty-icon" aria-hidden="true">◎</span>
+              <p>{{ 'SETTINGS.LOYALTY_MEMBERS_EMPTY' | translate }}</p>
+              <p class="hint">{{ 'SETTINGS.LOYALTY_MEMBERS_EMPTY_HINT' | translate }}</p>
+              @if (joinUrl()) {
+                <code class="members-empty-url">{{ joinUrl() }}</code>
               }
-            </tbody>
-          </table>
-        }
+            </div>
+          } @else {
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>{{ 'COMMON.NAME' | translate }}</th>
+                    <th>{{ 'COMMON.EMAIL' | translate }}</th>
+                    <th>{{ 'SETTINGS.LOYALTY_BALANCE' | translate }}</th>
+                    <th>{{ 'SETTINGS.LOYALTY_VIP_TIER' | translate }}</th>
+                    <th>{{ 'SETTINGS.LOYALTY_REFERRAL_CODE' | translate }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of members(); track m.id) {
+                    <tr>
+                      <td>{{ m.display_name }}</td>
+                      <td>{{ m.email || m.phone || '—' }}</td>
+                      <td>{{ m.balance }}</td>
+                      <td data-testid="loyalty-member-tier">{{ tierLabel(m.vip_tier) }}</td>
+                      <td>
+                        <code>{{ m.referral_code || '—' }}</code>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
       }
     </div>
   `,
@@ -179,30 +336,111 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
       }
       .section-header p,
       .hint {
-        color: var(--text-muted, #666);
+        color: var(--text-muted, var(--color-text-muted, #666));
         margin: 0 0 1rem;
+      }
+      .loyalty-block {
+        margin-bottom: 0.5rem;
+      }
+      .subsection-title {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        margin: 1rem 0 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border, var(--color-border, #ddd));
+      }
+      .loyalty-block:first-of-type .subsection-title {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
       }
       .form-grid {
         display: grid;
-        gap: 0.75rem;
-        max-width: 28rem;
-        margin-bottom: 1rem;
+        gap: 0.75rem 1rem;
+        max-width: 36rem;
+        margin-bottom: 0.5rem;
+      }
+      @media (min-width: 640px) {
+        .form-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .form-grid .check-row {
+          grid-column: 1 / -1;
+        }
       }
       .form-grid label {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+        font-size: 0.9rem;
+      }
+      .label-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
       }
       .check-row {
         flex-direction: row !important;
         align-items: center;
         gap: 0.5rem !important;
       }
+      .field-info-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.5rem;
+        height: 1.5rem;
+        padding: 0;
+        border: none;
+        border-radius: 4px;
+        background: transparent;
+        color: var(--text-muted, var(--color-text-muted, #666));
+        font-size: 0.875rem;
+        line-height: 1;
+        cursor: help;
+      }
+      .field-info-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px var(--color-primary-light, #93c5fd);
+      }
+      .field-hint {
+        color: var(--text-muted, var(--color-text-muted, #666));
+        font-size: 0.8125rem;
+        line-height: 1.35;
+      }
+      input,
+      select {
+        padding: 0.4rem 0.5rem;
+        border: 1px solid var(--border, var(--color-border, #ccc));
+        border-radius: 4px;
+        min-height: 2.5rem;
+        font: inherit;
+      }
+      .join-url {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin: 0 0 0.75rem;
+        font-size: 0.9rem;
+      }
+      .join-url code,
+      .members-empty-url {
+        word-break: break-all;
+        font-size: 0.8125rem;
+        padding: 0.35rem 0.5rem;
+        background: var(--color-bg, #f6f6f6);
+        border-radius: 4px;
+      }
+      .wallet-note {
+        margin-bottom: 0.5rem;
+      }
       .actions {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 0.75rem;
-        margin-bottom: 1.5rem;
+        margin: 1.25rem 0 0.5rem;
       }
       .error {
         color: #b00020;
@@ -210,18 +448,42 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
       .ok {
         color: #0a7a2f;
       }
-      .join-url code {
-        word-break: break-all;
+      .members-block .subsection-title {
+        margin-top: 1.25rem;
+      }
+      .members-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        max-width: 36rem;
+        margin-bottom: 1rem;
+      }
+      .members-empty p {
+        margin: 0;
+      }
+      .members-empty .hint {
+        margin: 0;
+      }
+      .members-empty-icon {
+        font-size: 1.5rem;
+        line-height: 1;
+        color: var(--text-muted, var(--color-text-muted, #666));
+      }
+      .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .data-table {
         width: 100%;
         border-collapse: collapse;
+        min-width: 28rem;
       }
       .data-table th,
       .data-table td {
         text-align: left;
         padding: 0.4rem 0.5rem;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 1px solid var(--border, var(--color-border, #ddd));
       }
     `,
   ],

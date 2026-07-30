@@ -2203,7 +2203,22 @@
     "LOYALTY_REFERRAL_BONUS": "Bonus por referido (quien invita)",
     "LOYALTY_REFERRAL_INVITEE": "Bonus de bienvenida (invitado)",
     "LOYALTY_REFERRAL_HINT": "Unidades otorgadas una vez cuando un nuevo miembro se une con un código de referido (0 = off).",
-    "LOYALTY_REFERRAL_CODE": "Código de referido"
+    "LOYALTY_REFERRAL_CODE": "Código de referido",
+    "LOYALTY_SECTION_PROGRAM": "Programa",
+    "LOYALTY_SECTION_EARN_REDEEM": "Ganar y canjear",
+    "LOYALTY_SECTION_EXTRAS": "Bonos y VIP",
+    "LOYALTY_SECTION_PUBLIC": "Alta pública",
+    "LOYALTY_FIELD_HELP": "Más información",
+    "LOYALTY_ENABLED_HINT": "Si está desactivado, los clientes no pueden unirse y el personal no puede ganar ni canjear unidades de fidelidad.",
+    "LOYALTY_PROGRAM_NAME_HINT": "Nombre mostrado a los clientes en la página de alta y en la tarjeta de miembro.",
+    "LOYALTY_MODE_HINT": "Los puntos se acumulan como saldo numérico. Los sellos funcionan igual por debajo, pero se presentan como tarjeta de sellos. Elija un modo para todo el programa.",
+    "LOYALTY_EARN_HINT": "Cuántas unidades gana un miembro vinculado cada vez que un pedido se marca como pagado (una vez por pedido).",
+    "LOYALTY_THRESHOLD_HINT": "Saldo necesario antes de que el personal pueda canjear una recompensa en caja.",
+    "LOYALTY_REWARD_CENTS_HINT": "Descuento a nivel de pedido en céntimos al canjear una recompensa (p. ej. 500 = 5,00 en la moneda principal).",
+    "LOYALTY_JOIN_URL_HINT": "Comparta este enlace para que los clientes se unan al club. Los códigos opcionales ?ref= rastrean referidos.",
+    "LOYALTY_WALLET_NOTE": "Los pases de Apple/Google Wallet no se emiten hasta configurar certificados.",
+    "LOYALTY_MEMBERS_EMPTY_HINT": "Comparta la URL pública de alta para que los clientes puedan registrarse.",
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Unidades para el nuevo miembro que se une con un código de referido válido (0 = off)."
   },
   "PAYMENTS": {
     "PAYMENT": "Pago",
