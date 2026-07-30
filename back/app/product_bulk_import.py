@@ -37,6 +37,84 @@ CSV_OPTIONAL_HEADERS = frozenset(
 )
 CSV_KNOWN_HEADERS = CSV_REQUIRED_HEADERS | CSV_OPTIONAL_HEADERS
 
+# Common vendor / locale header aliases → canonical (casefold keys).
+# Applied before the unknown-column check so staff CSV exports work without renaming.
+CSV_HEADER_ALIASES: dict[str, str] = {
+    # name
+    "product": "name",
+    "product_name": "name",
+    "product name": "name",
+    "item": "name",
+    "item_name": "name",
+    "item name": "name",
+    "dish": "name",
+    "dish_name": "name",
+    "title": "name",
+    "nombre": "name",
+    "producto": "name",
+    "plato": "name",
+    "artikel": "name",
+    "artikelname": "name",
+    "bezeichnung": "name",
+    "nom": "name",
+    "produit": "name",
+    # price
+    "unit_price": "price",
+    "unit price": "price",
+    "sale_price": "price",
+    "retail_price": "price",
+    "amount": "price",
+    "precio": "price",
+    "preis": "price",
+    "prix": "price",
+    "pvp": "price",
+    # price_cents
+    "price in cents": "price_cents",
+    "priceincents": "price_cents",
+    # cost
+    "unit_cost": "cost",
+    "cost_price": "cost",
+    "coste": "cost",
+    "kosten": "cost",
+    "cout": "cost",
+    "coût": "cost",
+    # category
+    "cat": "category",
+    "group": "category",
+    "categoria": "category",
+    "categoría": "category",
+    "kategorie": "category",
+    "categorie": "category",
+    "catégorie": "category",
+    # subcategory
+    "sub_category": "subcategory",
+    "sub category": "subcategory",
+    "subcat": "subcategory",
+    "subcategoria": "subcategory",
+    "subcategoría": "subcategory",
+    "unterkategorie": "subcategory",
+    "sous-categorie": "subcategory",
+    "sous_categorie": "subcategory",
+    # description
+    "desc": "description",
+    "details": "description",
+    "descripcion": "description",
+    "descripción": "description",
+    "beschreibung": "description",
+    # ingredients
+    "ingredient": "ingredients",
+    "ingredientes": "ingredients",
+    "zutaten": "ingredients",
+    "ingredients_list": "ingredients",
+}
+
+
+class ProductBulkImportCsvRequest(BaseModel):
+    """Staff CSV/TSV paste or file contents for preview (no writes)."""
+
+    csv: str = Field(min_length=1, max_length=2_000_000)
+    use_ai_mapping: bool = False
+
 
 class ProductBulkImportItemIn(BaseModel):
     """Single product row from JSON import or vision extraction."""
@@ -332,48 +410,253 @@ def _csv_int(row: dict[str, str], key: str) -> int | None:
         raise ValueError(f"invalid_{key}") from exc
 
 
-def parse_products_csv(text: str) -> list[ProductBulkImportItemIn]:
+def _normalize_csv_header(raw: str | None) -> str:
+    """Strip, casefold, and map known aliases to canonical header names."""
+    h = (raw or "").strip().casefold()
+    if not h:
+        return ""
+    if h in CSV_KNOWN_HEADERS:
+        return h
+    return CSV_HEADER_ALIASES.get(h, h)
+
+
+def _detect_csv_dialect(sample: str) -> csv.Dialect:
+    """Prefer comma; fall back to tab when the sample looks like TSV."""
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",\t;")
+    except csv.Error:
+        dialect = csv.excel()
+        if sample.count("\t") > sample.count(","):
+            dialect.delimiter = "\t"
+        return dialect
+
+
+def _read_csv_dicts(text: str) -> tuple[list[str], list[dict[str, str]]]:
     """
-    Parse a UTF-8 (optional BOM) products CSV into bulk-import items.
+    Return (original_headers_stripped, rows_with_original_keys).
+
+    Keys in rows match the stripped original header strings (not casefolded).
+    """
+    cleaned = text.lstrip("\ufeff")
+    if not cleaned.strip():
+        raise ValueError("empty_csv")
+    sample = cleaned[:4096]
+    dialect = _detect_csv_dialect(sample)
+    stream = io.StringIO(cleaned)
+    reader = csv.DictReader(stream, dialect=dialect)
+    if not reader.fieldnames:
+        raise ValueError("empty_csv")
+    original_headers = [(h or "").strip() for h in reader.fieldnames]
+    if not any(original_headers):
+        raise ValueError("empty_csv")
+    rows: list[dict[str, str]] = []
+    for raw_row in reader:
+        row = {
+            (k or "").strip(): ("" if v is None else str(v))
+            for k, v in raw_row.items()
+            if (k or "").strip()
+        }
+        if not any(v.strip() for v in row.values()):
+            continue
+        if len(rows) >= MAX_BULK_IMPORT_ROWS:
+            raise ValueError("too_many_rows")
+        rows.append(row)
+    return original_headers, rows
+
+
+def _apply_header_map(
+    original_headers: list[str],
+    rows: list[dict[str, str]],
+    header_map: dict[str, str],
+) -> tuple[list[str], list[dict[str, str]]]:
+    """
+    Remap columns using header_map: original_header → canonical (or skip if mapped to "").
+
+    ``header_map`` keys should match stripped original headers (exact). Values must be
+    canonical known headers, or empty string to drop the column explicitly.
+    """
+    canon_headers: list[str] = []
+    for h in original_headers:
+        if not h:
+            continue
+        target = header_map.get(h)
+        if target is None:
+            target = _normalize_csv_header(h)
+        target = (target or "").strip().casefold()
+        if not target:
+            continue  # explicit drop
+        canon_headers.append(target)
+
+    if len(canon_headers) != len(set(canon_headers)):
+        raise ValueError("duplicate_csv_headers")
+
+    out_rows: list[dict[str, str]] = []
+    for raw in rows:
+        mapped: dict[str, str] = {}
+        for h, v in raw.items():
+            target = header_map.get(h)
+            if target is None:
+                target = _normalize_csv_header(h)
+            target = (target or "").strip().casefold()
+            if not target:
+                continue
+            mapped[target] = v
+        out_rows.append(mapped)
+    return canon_headers, out_rows
+
+
+def map_csv_headers_via_ai(
+    headers: list[str],
+    sample_rows: list[dict[str, str]],
+) -> dict[str, str]:
+    """
+    Ask the configured vision/LLM API to map vendor headers to canonical fields.
+
+    Returns a map of original_header → canonical header (or "" to drop).
+    Raises RuntimeError on configuration / API / parse failures.
+    Never writes products; caller still runs preview → confirm.
+    """
+    api_key = (settings.product_vision_api_key or "").strip()
+    if not api_key:
+        raise RuntimeError("vision_not_configured")
+
+    model = (settings.product_vision_model or "gpt-4o-mini").strip()
+    url = (settings.product_vision_api_url or "https://api.openai.com/v1/chat/completions").strip()
+    known = sorted(CSV_KNOWN_HEADERS)
+    sample = sample_rows[:3]
+    system_prompt = (
+        "You map spreadsheet column headers from restaurant menu exports to a fixed schema. "
+        "Return ONLY valid JSON: {\"mapping\":{\"<original_header>\":\"<canonical_or_empty>\"}}. "
+        f"Canonical fields: {known}. "
+        "Use an empty string \"\" only when the column is clearly not a product field "
+        "(e.g. SKU, barcode, stock, id). Every input header must appear as a key."
+    )
+    user_payload = {"headers": headers, "sample_rows": sample}
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": "Map these CSV headers to the canonical product fields:\n"
+                + json.dumps(user_payload, ensure_ascii=False),
+            },
+        ],
+        "temperature": 0,
+        "max_tokens": 1024,
+    }
+    headers_http = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    resp = requests.post(url, json=payload, headers=headers_http, timeout=60)
+    if resp.status_code >= 400:
+        raise RuntimeError(f"vision_api_error:{resp.status_code}")
+
+    data = resp.json()
+    content = (
+        data.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content", "")
+        .strip()
+    )
+    if not content:
+        raise RuntimeError("vision_empty_response")
+    if content.startswith("```"):
+        content = re.sub(r"^```(?:json)?\s*", "", content)
+        content = re.sub(r"\s*```$", "", content)
+
+    parsed = json.loads(content)
+    raw_map = parsed.get("mapping") if isinstance(parsed, dict) else None
+    if not isinstance(raw_map, dict):
+        raise RuntimeError("vision_bad_mapping")
+
+    result: dict[str, str] = {}
+    for h in headers:
+        if not h:
+            continue
+        if h not in raw_map:
+            raise ValueError(f"unmapped_csv_columns:{h}")
+        target = raw_map[h]
+        if target is None:
+            target = ""
+        target_s = str(target).strip().casefold()
+        if target_s and target_s not in CSV_KNOWN_HEADERS:
+            raise ValueError(f"invalid_ai_mapping:{h}->{target_s}")
+        result[h] = target_s
+    return result
+
+
+def parse_products_csv(
+    text: str,
+    *,
+    header_map: dict[str, str] | None = None,
+    use_ai_mapping: bool = False,
+) -> list[ProductBulkImportItemIn]:
+    """
+    Parse a UTF-8 (optional BOM) products CSV/TSV into bulk-import items.
 
     Required column: ``name``.
     Price: ``price`` (major units) and/or ``price_cents`` (at least one required per row —
     enforced later by ``build_preview``).
     Optional: ``cost``, ``cost_cents``, ``category``, ``subcategory``, ``description``,
     ``ingredients``.
+
+    Unknown columns raise ``unknown_csv_columns:…`` unless ``use_ai_mapping`` is True
+    and the vision API is configured (then AI maps headers; leftover unknowns still error).
+    Common aliases (producto→name, precio→price, …) are applied automatically.
     """
     if text is None:
         raise ValueError("empty_csv")
-    # utf-8-sig strips BOM from Excel exports
-    stream = io.StringIO(text.lstrip("\ufeff"))
-    reader = csv.DictReader(stream)
-    if not reader.fieldnames:
+
+    original_headers, raw_rows = _read_csv_dicts(text)
+    if not raw_rows:
         raise ValueError("empty_csv")
 
-    headers = [((h or "").strip().casefold()) for h in reader.fieldnames]
-    if not any(headers):
-        raise ValueError("empty_csv")
-    if len(headers) != len(set(headers)):
-        raise ValueError("duplicate_csv_headers")
-    if "name" not in headers:
-        raise ValueError("missing_name_column")
+    effective_map: dict[str, str] = {}
+    for h in original_headers:
+        if not h:
+            continue
+        effective_map[h] = _normalize_csv_header(h)
 
-    unknown = [h for h in headers if h and h not in CSV_KNOWN_HEADERS]
+    if header_map:
+        for k, v in header_map.items():
+            key = (k or "").strip()
+            if key:
+                effective_map[key] = (v or "").strip().casefold()
+
+    unknown = [
+        h
+        for h, target in effective_map.items()
+        if h and target and target not in CSV_KNOWN_HEADERS
+    ]
+
+    if unknown and use_ai_mapping:
+        try:
+            ai_map = map_csv_headers_via_ai(original_headers, raw_rows)
+        except (RuntimeError, ValueError):
+            raise
+        except Exception as exc:
+            raise RuntimeError("vision_bad_mapping") from exc
+        for h, target in ai_map.items():
+            effective_map[h] = target
+        unknown = [
+            h
+            for h, target in effective_map.items()
+            if h and target and target not in CSV_KNOWN_HEADERS
+        ]
+
     if unknown:
         raise ValueError(f"unknown_csv_columns:{','.join(unknown)}")
 
-    # Remap rows to lower-case keys
+    headers, rows = _apply_header_map(original_headers, raw_rows, effective_map)
+    if "name" not in headers:
+        raise ValueError("missing_name_column")
+
     items: list[ProductBulkImportItemIn] = []
-    for row_num, raw_row in enumerate(reader, start=2):  # header is line 1
+    for row_num, row in enumerate(rows, start=2):  # header is line 1
         if len(items) >= MAX_BULK_IMPORT_ROWS:
             raise ValueError("too_many_rows")
-        row = {
-            ((k or "").strip().casefold()): (v if v is not None else "")
-            for k, v in raw_row.items()
-        }
-        # Skip fully blank lines
-        if not any(str(v).strip() for v in row.values()):
-            continue
         try:
             item = ProductBulkImportItemIn(
                 name=_csv_cell(row, "name") or "",

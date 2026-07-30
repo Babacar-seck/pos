@@ -2290,6 +2290,16 @@ export class ApiService {
     );
   }
 
+  previewProductBulkImportCsv(
+    csv: string,
+    useAiMapping = false
+  ): Observable<ProductBulkImportPreviewResponse> {
+    return this.http.post<ProductBulkImportPreviewResponse>(
+      `${this.apiUrl}/products/bulk-import/preview-csv`,
+      { csv, use_ai_mapping: useAiMapping }
+    );
+  }
+
   previewProductBulkImportVision(file: File): Observable<ProductBulkImportPreviewResponse> {
     const formData = new FormData();
     formData.append('file', file);

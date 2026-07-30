@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "Impossible de lire les articles du menu dans la réponse.",
     "VISION_NO_ITEMS_FOUND": "Aucun article avec prix trouvé dans l'image.",
     "VISION_IMAGE_TOO_LARGE": "Image trop volumineuse (max. 8 Mo).",
-    "VISION_INVALID_IMAGE_TYPE": "Type d'image invalide. Utilisez JPEG, PNG, WebP ou AVIF."
+    "VISION_INVALID_IMAGE_TYPE": "Type d'image invalide. Utilisez JPEG, PNG, WebP ou AVIF.",
+    "INVALID_IMPORT_CSV": "CSV invalide. Vérifiez les en-têtes et les valeurs.",
+    "EMPTY_CSV": "Le CSV ne contient aucune ligne produit.",
+    "MISSING_NAME_COLUMN": "Le CSV doit inclure une colonne name (ou un alias comme product / producto).",
+    "DUPLICATE_CSV_HEADERS": "Le CSV a des en-têtes en double après mapping.",
+    "TOO_MANY_ROWS": "Le CSV dépasse le maximum de 500 lignes produit.",
+    "INVALID_CSV_ROW": "Une ou plusieurs lignes CSV ont des valeurs invalides.",
+    "UNKNOWN_CSV_COLUMNS": "Colonnes CSV inconnues : {{columns}}. Renommez-les, supprimez-les ou activez le mapping IA.",
+    "UNMAPPED_CSV_COLUMNS": "L'IA n'a pas pu mapper ces colonnes CSV : {{columns}}. Renommez ou supprimez-les puis réessayez."
   },
   "NAV": {
     "HOME": "Accueil",
@@ -761,7 +769,7 @@
     "QUESTION_DELETE_CONFIRM": "Supprimer la personnalisation « {{label}} » ? Les commandes passées conservent les réponses.",
     "QUESTION_DELETE_FAILED": "Impossible de supprimer la question.",
     "BULK_IMPORT": "Import en masse",
-    "BULK_IMPORT_TITLE": "Importer des produits depuis JSON ou photo de menu",
+    "BULK_IMPORT_TITLE": "Importer des produits depuis JSON, CSV ou photo de menu",
     "BULK_IMPORT_LEDE": "Vérifiez chaque ligne avant d'enregistrer. Rien n'est publié tant que vous n'avez pas confirmé.",
     "BULK_IMPORT_TAB_JSON": "Fichier JSON ou coller",
     "BULK_IMPORT_TAB_VISION": "Photo de menu (IA)",
@@ -772,7 +780,7 @@
     "BULK_IMPORT_PREVIEW": "Aperçu de l'import",
     "BULK_IMPORT_PRIVACY_TITLE": "Notice de confidentialité",
     "BULK_IMPORT_PRIVACY_BODY": "Les photos de menu sont envoyées à l'API de vision configurée pour extraire plats et prix. Les images ne sont pas stockées sur nos serveurs. Vérifiez et modifiez l'aperçu avant toute sauvegarde.",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "L'extraction par photo n'est pas configurée sur ce serveur (PRODUCT_VISION_API_KEY). Utilisez l'import JSON.",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "L'extraction par photo n'est pas configurée sur ce serveur (PRODUCT_VISION_API_KEY). Utilisez l'import JSON ou CSV.",
     "BULK_IMPORT_MENU_PHOTO": "Photo de menu",
     "BULK_IMPORT_EXTRACT_PREVIEW": "Extraire et prévisualiser",
     "BULK_IMPORT_SUMMARY": "{{valid}} sur {{total}} lignes prêtes ({{create}} nouvelles, {{update}} mises à jour, {{invalid}} avec erreurs).",
@@ -788,7 +796,14 @@
     "BULK_IMPORT_CONFIRMING": "Enregistrement…",
     "BULK_IMPORT_JSON_EMPTY": "Collez ou téléversez du JSON d'abord.",
     "BULK_IMPORT_JSON_INVALID": "JSON invalide. Utilisez {\"items\":[...]} ou un tableau.",
-    "BULK_IMPORT_SUCCESS": "Import terminé : {{created}} créés, {{updated}} mis à jour."
+    "BULK_IMPORT_SUCCESS": "Import terminé : {{created}} créés, {{updated}} mis à jour.",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "Téléverser un fichier CSV ou TSV",
+    "BULK_IMPORT_CSV_PASTE": "Ou coller du CSV / TSV",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "Obligatoire : name. Prix via price ou price_cents. Optionnel : cost, category, subcategory, description, ingredients. Alias courants acceptés (producto, precio, …). Colonnes inconnues rejetées sauf mapping IA.",
+    "BULK_IMPORT_CSV_AI_MAPPING": "Utiliser l'IA pour mapper les colonnes inconnues (envoie en-têtes + quelques lignes à l'API vision ; vérifiez l'aperçu avant d'enregistrer)",
+    "BULK_IMPORT_CSV_EMPTY": "Collez ou téléversez d'abord un CSV."
   },
   "CATALOG": {
     "TITLE": "Catalogue produits",

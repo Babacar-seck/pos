@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "Could not read menu items from the API response.",
     "VISION_NO_ITEMS_FOUND": "No menu items with prices were found in the image.",
     "VISION_IMAGE_TOO_LARGE": "Image is too large (max 8 MB).",
-    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF."
+    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF.",
+    "INVALID_IMPORT_CSV": "Invalid CSV. Check headers and row values.",
+    "EMPTY_CSV": "CSV has no product rows.",
+    "MISSING_NAME_COLUMN": "CSV must include a name column (or a known alias such as product / producto).",
+    "DUPLICATE_CSV_HEADERS": "CSV has duplicate column headers after mapping.",
+    "TOO_MANY_ROWS": "CSV exceeds the maximum of 500 product rows.",
+    "INVALID_CSV_ROW": "One or more CSV rows have invalid values.",
+    "UNKNOWN_CSV_COLUMNS": "Unknown CSV columns: {{columns}}. Rename them to the supported headers, remove them, or enable AI column mapping.",
+    "UNMAPPED_CSV_COLUMNS": "AI could not map these CSV columns: {{columns}}. Rename or remove them and try again."
   },
   "NAV": {
     "HOME": "ہوم",
@@ -761,7 +769,7 @@
     "QUESTION_DELETE_CONFIRM": "ہٹائیں ترمیم \"{{label}}\"? Existing آرڈرز رکھیں ان کا محفوظ کر لیا گیا جوابات.",
     "QUESTION_DELETE_FAILED": "نہیں ہو سکا ہٹائیں سوال.",
     "BULK_IMPORT": "Bulk import",
-    "BULK_IMPORT_TITLE": "Import products from JSON or menu photo",
+    "BULK_IMPORT_TITLE": "Import products from JSON, CSV, or menu photo",
     "BULK_IMPORT_LEDE": "Review every row before saving. Nothing is published until you confirm.",
     "BULK_IMPORT_TAB_JSON": "JSON file or paste",
     "BULK_IMPORT_TAB_VISION": "Menu photo (AI)",
@@ -772,7 +780,7 @@
     "BULK_IMPORT_PREVIEW": "Preview import",
     "BULK_IMPORT_PRIVACY_TITLE": "Privacy notice",
     "BULK_IMPORT_PRIVACY_BODY": "Menu photos are sent to the configured vision API to extract dish names and prices. Images are not stored on our servers. Review and edit the preview before anything is saved to your menu.",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "Menu photo extraction is not configured on this server (PRODUCT_VISION_API_KEY). Use JSON import instead.",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "Menu photo extraction is not configured on this server (PRODUCT_VISION_API_KEY). Use JSON or CSV import instead.",
     "BULK_IMPORT_MENU_PHOTO": "Menu photo",
     "BULK_IMPORT_EXTRACT_PREVIEW": "Extract & preview",
     "BULK_IMPORT_SUMMARY": "{{valid}} of {{total}} rows ready ({{create}} new, {{update}} updates, {{invalid}} with errors).",
@@ -788,7 +796,14 @@
     "BULK_IMPORT_CONFIRMING": "Saving…",
     "BULK_IMPORT_JSON_EMPTY": "Paste or upload JSON first.",
     "BULK_IMPORT_JSON_INVALID": "Invalid JSON. Use {\"items\":[...]} or a raw array.",
-    "BULK_IMPORT_SUCCESS": "Import complete: {{created}} created, {{updated}} updated."
+    "BULK_IMPORT_SUCCESS": "Import complete: {{created}} created, {{updated}} updated.",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "Upload CSV or TSV file",
+    "BULK_IMPORT_CSV_PASTE": "Or paste CSV / TSV",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "Required: name. Price via price or price_cents. Optional: cost, category, subcategory, description, ingredients. Common aliases (producto, precio, …) are accepted. Unknown columns are rejected unless AI mapping is enabled.",
+    "BULK_IMPORT_CSV_AI_MAPPING": "Use AI to map unknown column headers (sends headers + a few sample rows to the configured vision API; review preview before saving)",
+    "BULK_IMPORT_CSV_EMPTY": "Paste or upload CSV first."
   },
   "CATALOG": {
     "TITLE": "پروڈکٹ کیٹلاگ",

@@ -16,12 +16,14 @@ from .product_bulk_import import (
     MAX_VISION_IMAGE_BYTES,
     ProductBulkImportConfirmRequest,
     ProductBulkImportConfirmResult,
+    ProductBulkImportCsvRequest,
     ProductBulkImportPreviewResponse,
     ProductBulkImportRequest,
     build_preview,
     confirm_import,
     extract_items_from_menu_image,
     parse_json_import_payload,
+    parse_products_csv,
     vision_api_configured,
 )
 
@@ -94,6 +96,59 @@ def bulk_import_preview_raw_json(
         items = parse_json_import_payload(payload)
     except Exception:
         raise HTTPException(status_code=400, detail="invalid_import_json")
+    if not items:
+        raise HTTPException(status_code=400, detail="import_empty")
+    return build_preview(session, current_user.tenant_id, items)
+
+
+def _http_detail_for_csv_parse_error(exc: Exception) -> tuple[int, str]:
+    """Map parse_products_csv / AI errors to HTTP status + detail string."""
+    if isinstance(exc, RuntimeError):
+        code = str(exc)
+        if code == "vision_not_configured":
+            return 503, "product_vision_not_configured"
+        if code.startswith("vision_api_error"):
+            return 502, "product_vision_api_failed"
+        return 502, "product_vision_parse_failed"
+    msg = str(exc)
+    if msg.startswith("unknown_csv_columns:"):
+        return 400, msg
+    if msg.startswith("unmapped_csv_columns:"):
+        return 400, msg
+    if msg.startswith("invalid_ai_mapping:"):
+        return 400, msg
+    if msg in {
+        "empty_csv",
+        "missing_name_column",
+        "duplicate_csv_headers",
+        "too_many_rows",
+    }:
+        return 400, msg
+    if msg.startswith("row_"):
+        return 400, "invalid_csv_row"
+    return 400, "invalid_import_csv"
+
+
+@router.post("/preview-csv", response_model=ProductBulkImportPreviewResponse)
+@admin_user_limit()
+def bulk_import_preview_csv(
+    request: Request,
+    response: Response,
+    body: ProductBulkImportCsvRequest,
+    current_user: Annotated[models.User, Depends(require_permission(Permission.PRODUCT_WRITE))],
+    session: Session = Depends(get_session),
+) -> ProductBulkImportPreviewResponse:
+    """
+    Accept CSV/TSV text (paste or file contents), parse into items, return preview.
+    No DB writes. Optional ``use_ai_mapping`` remaps unknown headers via the vision LLM.
+    """
+    if body.use_ai_mapping and not vision_api_configured():
+        raise HTTPException(status_code=503, detail="product_vision_not_configured")
+    try:
+        items = parse_products_csv(body.csv, use_ai_mapping=body.use_ai_mapping)
+    except Exception as exc:
+        status, detail = _http_detail_for_csv_parse_error(exc)
+        raise HTTPException(status_code=status, detail=detail) from exc
     if not items:
         raise HTTPException(status_code=400, detail="import_empty")
     return build_preview(session, current_user.tenant_id, items)

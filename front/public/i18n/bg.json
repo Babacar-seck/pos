@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "Could not read menu items from the API response.",
     "VISION_NO_ITEMS_FOUND": "No menu items with prices were found in the image.",
     "VISION_IMAGE_TOO_LARGE": "Image is too large (max 8 MB).",
-    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF."
+    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF.",
+    "INVALID_IMPORT_CSV": "Невалиден CSV. Проверете заглавията и стойностите.",
+    "EMPTY_CSV": "CSV няма продуктови редове.",
+    "MISSING_NAME_COLUMN": "CSV трябва да включва колона name (или псевдоним като product / producto).",
+    "DUPLICATE_CSV_HEADERS": "CSV има дублирани заглавия след съпоставяне.",
+    "TOO_MANY_ROWS": "CSV надвишава максимума от 500 продуктови реда.",
+    "INVALID_CSV_ROW": "Един или повече CSV редове имат невалидни стойности.",
+    "UNKNOWN_CSV_COLUMNS": "Неизвестни CSV колони: {{columns}}. Преименувайте ги, премахнете ги или активирайте AI съпоставяне.",
+    "UNMAPPED_CSV_COLUMNS": "AI не можа да съпостави тези CSV колони: {{columns}}. Преименувайте или премахнете ги и опитайте отново."
   },
   "NAV": {
     "HOME": "Начало",
@@ -761,7 +769,7 @@
     "QUESTION_DELETE_CONFIRM": "Премахване на персонализация „{{label}}“? Съществуващите поръчки запазват отговорите.",
     "QUESTION_DELETE_FAILED": "Въпросът не може да бъде премахнат.",
     "BULK_IMPORT": "Bulk import",
-    "BULK_IMPORT_TITLE": "Import products from JSON or menu photo",
+    "BULK_IMPORT_TITLE": "Импорт на продукти от JSON, CSV или снимка на меню",
     "BULK_IMPORT_LEDE": "Review every row before saving. Nothing is published until you confirm.",
     "BULK_IMPORT_TAB_JSON": "JSON file or paste",
     "BULK_IMPORT_TAB_VISION": "Menu photo (AI)",
@@ -772,7 +780,7 @@
     "BULK_IMPORT_PREVIEW": "Preview import",
     "BULK_IMPORT_PRIVACY_TITLE": "Privacy notice",
     "BULK_IMPORT_PRIVACY_BODY": "Menu photos are sent to the configured vision API to extract dish names and prices. Images are not stored on our servers. Review and edit the preview before anything is saved to your menu.",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "Menu photo extraction is not configured on this server (PRODUCT_VISION_API_KEY). Use JSON import instead.",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "Извличането от снимка не е конфигурирано (PRODUCT_VISION_API_KEY). Използвайте JSON или CSV импорт.",
     "BULK_IMPORT_MENU_PHOTO": "Menu photo",
     "BULK_IMPORT_EXTRACT_PREVIEW": "Extract & preview",
     "BULK_IMPORT_SUMMARY": "{{valid}} of {{total}} rows ready ({{create}} new, {{update}} updates, {{invalid}} with errors).",
@@ -788,7 +796,14 @@
     "BULK_IMPORT_CONFIRMING": "Saving…",
     "BULK_IMPORT_JSON_EMPTY": "Paste or upload JSON first.",
     "BULK_IMPORT_JSON_INVALID": "Invalid JSON. Use {\"items\":[...]} or a raw array.",
-    "BULK_IMPORT_SUCCESS": "Import complete: {{created}} created, {{updated}} updated."
+    "BULK_IMPORT_SUCCESS": "Import complete: {{created}} created, {{updated}} updated.",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "Качване на CSV или TSV файл",
+    "BULK_IMPORT_CSV_PASTE": "Или поставете CSV / TSV",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "Задължително: name. Цена чрез price или price_cents. По избор: cost, category, subcategory, description, ingredients. Приемат се често срещани псевдоними. Неизвестните колони се отхвърлят, освен ако е активирано AI съпоставяне.",
+    "BULK_IMPORT_CSV_AI_MAPPING": "Използване на AI за съпоставяне на неизвестни колони (изпраща заглавия и няколко примерни реда към vision API; прегледайте преди запис)",
+    "BULK_IMPORT_CSV_EMPTY": "Първо поставете или качете CSV."
   },
   "CATALOG": {
     "TITLE": "ПРОДУКТОВ КАТАЛОГ",

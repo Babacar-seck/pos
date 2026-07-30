@@ -53,6 +53,19 @@
   }
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  input {
+    margin-top: 0.2rem;
+  }
+}
+
 .privacy-notice {
   background: var(--color-surface-alt, rgba(0, 0, 0, 0.04));
   border: 1px solid var(--color-border);

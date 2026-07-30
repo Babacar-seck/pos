@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "Menüeinträge aus der API-Antwort konnten nicht gelesen werden.",
     "VISION_NO_ITEMS_FOUND": "Im Bild wurden keine Menüeinträge mit Preisen gefunden.",
     "VISION_IMAGE_TOO_LARGE": "Bild ist zu groß (max. 8 MB).",
-    "VISION_INVALID_IMAGE_TYPE": "Ungültiger Bildtyp. JPEG, PNG, WebP oder AVIF verwenden."
+    "VISION_INVALID_IMAGE_TYPE": "Ungültiger Bildtyp. JPEG, PNG, WebP oder AVIF verwenden.",
+    "INVALID_IMPORT_CSV": "Ungültiges CSV. Prüfen Sie Spalten und Zeilenwerte.",
+    "EMPTY_CSV": "CSV enthält keine Produktzeilen.",
+    "MISSING_NAME_COLUMN": "CSV muss eine name-Spalte enthalten (oder Alias wie product / producto).",
+    "DUPLICATE_CSV_HEADERS": "CSV hat doppelte Spaltenköpfe nach der Zuordnung.",
+    "TOO_MANY_ROWS": "CSV überschreitet das Maximum von 500 Produktzeilen.",
+    "INVALID_CSV_ROW": "Eine oder mehrere CSV-Zeilen haben ungültige Werte.",
+    "UNKNOWN_CSV_COLUMNS": "Unbekannte CSV-Spalten: {{columns}}. Umbenennen, entfernen oder KI-Spaltenzuordnung aktivieren.",
+    "UNMAPPED_CSV_COLUMNS": "KI konnte diese CSV-Spalten nicht zuordnen: {{columns}}. Umbenennen oder entfernen und erneut versuchen."
   },
   "NAV": {
     "HOME": "Startseite",
@@ -761,7 +769,7 @@
     "QUESTION_DELETE_CONFIRM": "Anpassung „{{label}}“ entfernen? Bestellungen behalten gespeicherte Antworten.",
     "QUESTION_DELETE_FAILED": "Frage konnte nicht entfernt werden.",
     "BULK_IMPORT": "Massenimport",
-    "BULK_IMPORT_TITLE": "Produkte aus JSON oder Menüfoto importieren",
+    "BULK_IMPORT_TITLE": "Produkte aus JSON, CSV oder Menüfoto importieren",
     "BULK_IMPORT_LEDE": "Prüfen Sie jede Zeile vor dem Speichern. Nichts wird veröffentlicht, bis Sie bestätigen.",
     "BULK_IMPORT_TAB_JSON": "JSON-Datei oder einfügen",
     "BULK_IMPORT_TAB_VISION": "Menüfoto (KI)",
@@ -772,7 +780,7 @@
     "BULK_IMPORT_PREVIEW": "Import-Vorschau",
     "BULK_IMPORT_PRIVACY_TITLE": "Datenschutzhinweis",
     "BULK_IMPORT_PRIVACY_BODY": "Menüfotos werden an die konfigurierte Vision-API gesendet, um Gerichte und Preise zu erkennen. Bilder werden nicht auf unseren Servern gespeichert. Prüfen und bearbeiten Sie die Vorschau, bevor etwas gespeichert wird.",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "Menüfoto-Extraktion ist auf diesem Server nicht konfiguriert (PRODUCT_VISION_API_KEY). Nutzen Sie stattdessen JSON-Import.",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "Menüfoto-Extraktion ist auf diesem Server nicht konfiguriert (PRODUCT_VISION_API_KEY). Nutzen Sie JSON- oder CSV-Import.",
     "BULK_IMPORT_MENU_PHOTO": "Menüfoto",
     "BULK_IMPORT_EXTRACT_PREVIEW": "Extrahieren & Vorschau",
     "BULK_IMPORT_SUMMARY": "{{valid}} von {{total}} Zeilen bereit ({{create}} neu, {{update}} Updates, {{invalid}} mit Fehlern).",
@@ -788,7 +796,14 @@
     "BULK_IMPORT_CONFIRMING": "Speichern…",
     "BULK_IMPORT_JSON_EMPTY": "JSON einfügen oder hochladen.",
     "BULK_IMPORT_JSON_INVALID": "Ungültiges JSON. Verwenden Sie {\"items\":[...]} oder ein Array.",
-    "BULK_IMPORT_SUCCESS": "Import abgeschlossen: {{created}} angelegt, {{updated}} aktualisiert."
+    "BULK_IMPORT_SUCCESS": "Import abgeschlossen: {{created}} angelegt, {{updated}} aktualisiert.",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "CSV- oder TSV-Datei hochladen",
+    "BULK_IMPORT_CSV_PASTE": "Oder CSV / TSV einfügen",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "Pflicht: name. Preis über price oder price_cents. Optional: cost, category, subcategory, description, ingredients. Übliche Aliase (producto, precio, …) werden akzeptiert. Unbekannte Spalten werden abgelehnt, außer KI-Zuordnung ist aktiv.",
+    "BULK_IMPORT_CSV_AI_MAPPING": "KI zur Zuordnung unbekannter Spaltenköpfe nutzen (sendet Kopfzeilen und einige Beispielzeilen an die Vision-API; Vorschau vor dem Speichern prüfen)",
+    "BULK_IMPORT_CSV_EMPTY": "Bitte zuerst CSV einfügen oder hochladen."
   },
   "CATALOG": {
     "TITLE": "Produktkatalog",

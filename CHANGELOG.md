@@ -28,6 +28,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
 - **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
 
+## [2.1.141] - 2026-07-30
+
+### Added
+
+- **Products / bulk import (#336):** Staff **Products → bulk import** accepts **CSV/TSV** (file or paste) through the same preview → confirm pipeline as JSON; common header aliases; optional AI column mapping when vision is configured (`POST /products/bulk-import/preview-csv`). Docs: `docs/0062-pos-migration-import.md`.
+
 ## [2.1.140] - 2026-07-27
 
 ### Added

@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "Could not read menu items from the API response.",
     "VISION_NO_ITEMS_FOUND": "No menu items with prices were found in the image.",
     "VISION_IMAGE_TOO_LARGE": "Image is too large (max 8 MB).",
-    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF."
+    "VISION_INVALID_IMAGE_TYPE": "Invalid image type. Use JPEG, PNG, WebP, or AVIF.",
+    "INVALID_IMPORT_CSV": "CSV invàlid. Reviseu capçaleres i valors.",
+    "EMPTY_CSV": "El CSV no té files de producte.",
+    "MISSING_NAME_COLUMN": "El CSV ha d'incloure una columna name (o un àlies com product / producto).",
+    "DUPLICATE_CSV_HEADERS": "El CSV té capçaleres duplicades després del mapatge.",
+    "TOO_MANY_ROWS": "El CSV supera el màxim de 500 files de producte.",
+    "INVALID_CSV_ROW": "Una o més files del CSV tenen valors invàlids.",
+    "UNKNOWN_CSV_COLUMNS": "Columnes CSV desconegudes: {{columns}}. Canvieu-ne el nom, elimineu-les o activeu el mapatge amb IA.",
+    "UNMAPPED_CSV_COLUMNS": "La IA no ha pogut mapar aquestes columnes CSV: {{columns}}. Canvieu-ne el nom o elimineu-les i torneu-ho a provar."
   },
   "NAV": {
     "HOME": "Inici",
@@ -883,7 +891,7 @@
     "QUESTION_DELETE_CONFIRM": "Vols treure la personalització «{{label}}»? Les comandes fetes conserven les respostes.",
     "QUESTION_DELETE_FAILED": "No s’ha pogut treure la pregunta.",
     "BULK_IMPORT": "Importació massiva",
-    "BULK_IMPORT_TITLE": "Importa productes des de JSON o foto del menú",
+    "BULK_IMPORT_TITLE": "Importar productes des de JSON, CSV o foto del menú",
     "BULK_IMPORT_LEDE": "Reviseu cada fila abans de desar. Res es publica fins que confirmeu.",
     "BULK_IMPORT_TAB_JSON": "Fitxer JSON o enganxar",
     "BULK_IMPORT_TAB_VISION": "Foto del menú (IA)",
@@ -894,7 +902,7 @@
     "BULK_IMPORT_PREVIEW": "Previsualització",
     "BULK_IMPORT_PRIVACY_TITLE": "Privacy notice",
     "BULK_IMPORT_PRIVACY_BODY": "Menu photos are sent to the configured vision API to extract dish names and prices. Images are not stored on our servers. Review and edit the preview before anything is saved to your menu.",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "Menu photo extraction is not configured on this server (PRODUCT_VISION_API_KEY). Use JSON import instead.",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "L'extracció per foto no està configurada en aquest servidor (PRODUCT_VISION_API_KEY). Useu importació JSON o CSV.",
     "BULK_IMPORT_MENU_PHOTO": "Menu photo",
     "BULK_IMPORT_EXTRACT_PREVIEW": "Extract & preview",
     "BULK_IMPORT_SUMMARY": "{{valid}} of {{total}} rows ready ({{create}} new, {{update}} updates, {{invalid}} with errors).",
@@ -910,7 +918,14 @@
     "BULK_IMPORT_CONFIRMING": "Saving…",
     "BULK_IMPORT_JSON_EMPTY": "Paste or upload JSON first.",
     "BULK_IMPORT_JSON_INVALID": "Invalid JSON. Use {\"items\":[...]} or a raw array.",
-    "BULK_IMPORT_SUCCESS": "Importació completada: {{created}} creats, {{updated}} actualitzats."
+    "BULK_IMPORT_SUCCESS": "Importació completada: {{created}} creats, {{updated}} actualitzats.",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "Pujar fitxer CSV o TSV",
+    "BULK_IMPORT_CSV_PASTE": "O enganxar CSV / TSV",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "Obligatori: name. Preu amb price o price_cents. Opcional: cost, category, subcategory, description, ingredients. S'accepten àlies comuns (producto, precio, …). Les columnes desconegudes es rebutgen tret que activeu el mapatge amb IA.",
+    "BULK_IMPORT_CSV_AI_MAPPING": "Utilitzar IA per mapar columnes desconegudes (envia capçaleres i algunes files de mostra a l'API de visió; reviseu la vista prèvia abans de desar)",
+    "BULK_IMPORT_CSV_EMPTY": "Enganxeu o pugeu CSV primer."
   },
   "CATALOG": {
     "TITLE": "Catàleg de productes",

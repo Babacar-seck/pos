@@ -83,7 +83,15 @@
     "PRODUCT_VISION_PARSE_FAILED": "无法从 API 响应中读取菜单项。",
     "VISION_NO_ITEMS_FOUND": "图片中未找到带价格的菜单项。",
     "VISION_IMAGE_TOO_LARGE": "图片过大（最大 8 MB）。",
-    "VISION_INVALID_IMAGE_TYPE": "图片类型无效。请使用 JPEG、PNG、WebP 或 AVIF。"
+    "VISION_INVALID_IMAGE_TYPE": "图片类型无效。请使用 JPEG、PNG、WebP 或 AVIF。",
+    "INVALID_IMPORT_CSV": "CSV 无效。请检查表头和行值。",
+    "EMPTY_CSV": "CSV 没有产品行。",
+    "MISSING_NAME_COLUMN": "CSV 必须包含 name 列（或已知别名，如 product / producto）。",
+    "DUPLICATE_CSV_HEADERS": "映射后 CSV 存在重复列名。",
+    "TOO_MANY_ROWS": "CSV 超过最多 500 行产品限制。",
+    "INVALID_CSV_ROW": "一个或多个 CSV 行包含无效值。",
+    "UNKNOWN_CSV_COLUMNS": "未知 CSV 列：{{columns}}。请重命名、删除，或启用 AI 列映射。",
+    "UNMAPPED_CSV_COLUMNS": "AI 无法映射这些 CSV 列：{{columns}}。请重命名或删除后重试。"
   },
   "NAV": {
     "HOME": "首页",
@@ -883,7 +891,7 @@
     "QUESTION_DELETE_CONFIRM": "要删除定制「{{label}}」吗？已有订单会保留已保存的答案。",
     "QUESTION_DELETE_FAILED": "无法删除问题。",
     "BULK_IMPORT": "批量导入",
-    "BULK_IMPORT_TITLE": "从 JSON 或菜单照片导入产品",
+    "BULK_IMPORT_TITLE": "从 JSON、CSV 或菜单照片导入产品",
     "BULK_IMPORT_LEDE": "保存前请逐行核对。确认前不会发布任何内容。",
     "BULK_IMPORT_TAB_JSON": "JSON 文件或粘贴",
     "BULK_IMPORT_TAB_VISION": "菜单照片（AI）",
@@ -894,7 +902,7 @@
     "BULK_IMPORT_PREVIEW": "预览导入",
     "BULK_IMPORT_PRIVACY_TITLE": "隐私说明",
     "BULK_IMPORT_PRIVACY_BODY": "菜单照片会发送至配置的视觉 API 以提取菜品名称和价格。图片不会存储在我们的服务器上。保存前请核对并编辑预览。",
-    "BULK_IMPORT_VISION_UNAVAILABLE": "此服务器未配置菜单照片提取（PRODUCT_VISION_API_KEY）。请使用 JSON 导入。",
+    "BULK_IMPORT_VISION_UNAVAILABLE": "此服务器未配置菜单照片提取（PRODUCT_VISION_API_KEY）。请使用 JSON 或 CSV 导入。",
     "BULK_IMPORT_MENU_PHOTO": "菜单照片",
     "BULK_IMPORT_EXTRACT_PREVIEW": "提取并预览",
     "BULK_IMPORT_SUMMARY": "{{total}} 行中 {{valid}} 行就绪（{{create}} 新建，{{update}} 更新，{{invalid}} 有误）。",
@@ -910,7 +918,14 @@
     "BULK_IMPORT_CONFIRMING": "保存中…",
     "BULK_IMPORT_JSON_EMPTY": "请先粘贴或上传 JSON。",
     "BULK_IMPORT_JSON_INVALID": "JSON 无效。请使用 {\"items\":[...]} 或数组。",
-    "BULK_IMPORT_SUCCESS": "导入完成：新建 {{created}}，更新 {{updated}}。"
+    "BULK_IMPORT_SUCCESS": "导入完成：新建 {{created}}，更新 {{updated}}。",
+    "BULK_IMPORT_TAB_CSV": "CSV / TSV",
+    "BULK_IMPORT_CSV_FILE": "上传 CSV 或 TSV 文件",
+    "BULK_IMPORT_CSV_PASTE": "或粘贴 CSV / TSV",
+    "BULK_IMPORT_CSV_PLACEHOLDER": "name,price,category\nMargherita,12.5,Main Course",
+    "BULK_IMPORT_CSV_HINT": "必填：name。价格使用 price 或 price_cents。可选：cost、category、subcategory、description、ingredients。支持常见别名。未知列会被拒绝，除非启用 AI 列映射。",
+    "BULK_IMPORT_CSV_AI_MAPPING": "使用 AI 映射未知列名（会将表头和少量示例行发送到视觉 API；保存前请核对预览）",
+    "BULK_IMPORT_CSV_EMPTY": "请先粘贴或上传 CSV。"
   },
   "CATALOG": {
     "TITLE": "产品目录",
