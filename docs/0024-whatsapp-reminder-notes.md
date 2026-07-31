@@ -2,9 +2,16 @@
 
 ## Status: shipped
 
-Reservation reminders already support **email** and/or **WhatsApp** (Twilio). Staff uses one action — **Send reminder** (`POST /reservations/{id}/send-reminder`) — and the backend sends to every available channel. Phone-only reservations work when Twilio is configured (email is not required). The same channel logic is used by the autonomous reminder heartbeat.
+Reservation reminders already support **email** and/or **WhatsApp** (Twilio). Staff uses one action — **Send reminder** (`POST /reservations/{id}/send-reminder`) — and the backend sends to every available channel. Phone-only reservations work when Twilio is configured (email is not required). The same channel logic is used by the autonomous reminder heartbeat (`reservation_reminder_heartbeat.py`, tenant flags `reservation_reminder_24h_enabled` / `reservation_reminder_2h_enabled`).
 
-**Configure** (see `config.env.example`):
+**Two different “WhatsApp” surfaces (do not confuse them):**
+
+| Surface | What it does |
+|---------|----------------|
+| **Staff Send reminder** / heartbeat | Backend Twilio API sends a reminder to the **guest’s** `customer_phone` (`whatsapp_service.py`). |
+| **Public book page CTA** | Guest opens `https://wa.me/…` to chat the **restaurant’s** `tenant.whatsapp` (Settings). Link only — no Twilio send. Smoke: `npm run test:book-whatsapp --prefix front`. |
+
+**Configure** (see `config.env.example`; never commit live secrets):
 
 | Variable | Purpose |
 |----------|---------|
@@ -17,11 +24,22 @@ Reservation reminders already support **email** and/or **WhatsApp** (Twilio). St
 
 - Phone numbers are normalized to **E.164** before send (`phone_utils.normalize_phone_to_e164`).
 - Implementation: `back/app/whatsapp_service.py`. Response includes `email_sent` / `whatsapp_sent` (and optional `to_email` / `to_phone`).
-- The service sends a plain-text body today; **production Meta/WhatsApp often requires an approved template** (`ContentSid`) for business-initiated messages — plan for that when leaving the Twilio sandbox.
+- Staff UI: Reservations list → **Send reminder** (`RESERVATIONS.SEND_REMINDER`); success alert reflects which channels delivered.
+- Manual send marks both `reminder_24h_sent_at` and `reminder_2h_sent_at` so the heartbeat will not resend.
+- The service sends a plain-text `Body` today; **no `ContentSid` wiring**. Production Meta/WhatsApp often requires an approved template for business-initiated messages — plan for that when leaving the Twilio sandbox.
+- WhatsApp body does **not** include the email `view_url` (`PUBLIC_APP_BASE_URL` + token); that link is email-only today.
+
+### Operator checklist
+
+| Item | Status / notes |
+|------|----------------|
+| **Configured?** | Set all three `TWILIO_*` in `config.env` (and restart `back`). Optional: `DEFAULT_PHONE_COUNTRY` (default `ES`). Confirm with code: `_whatsapp_configured()` requires SID + token + from. |
+| **How to test locally** | (1) Book-page CTA only: ensure tenant Settings WhatsApp is set → `BASE_URL=http://127.0.0.1:4202 npm run test:book-whatsapp --prefix front`. (2) Reminder send: Twilio sandbox + guest phone joined to sandbox → staff Reservations → **Send reminder** on a booked row with phone → expect `whatsapp_sent: true` (and/or check Twilio console / phone). Heartbeat uses the same send path when 24h/2h flags are on. |
+| **Gaps** | Sandbox: recipients must opt in to Twilio’s sandbox. Production: plain-text body likely blocked without Meta-approved template / `ContentSid` (not implemented). Global Twilio creds only (no per-tenant WhatsApp provider). No view/cancel link in WhatsApp body. Book CTA ≠ reminder channel. |
 
 ---
 
-The sections below are **historical design notes** from before shipping. Prefer the status section and code for current behaviour.
+The sections below are **historical design notes** from before shipping. Prefer the status section, operator checklist, and code for current behaviour.
 
 ---
 

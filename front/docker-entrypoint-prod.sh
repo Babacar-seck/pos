@@ -6,6 +6,7 @@ set -e
 API_URL="${API_URL:-}"
 WS_URL="${WS_URL:-}"
 STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY:-}"
+GOOGLE_ANALYTICS_MEASUREMENT_ID="${GOOGLE_ANALYTICS_MEASUREMENT_ID:-}"
 
 # Escape special characters for sed (slashes, ampersands, etc.)
 # We only do this if the variables are not empty
@@ -23,6 +24,23 @@ if [ -n "$STRIPE_PUBLISHABLE_KEY" ]; then
     STRIPE_KEY_ESCAPED=$(echo "$STRIPE_PUBLISHABLE_KEY" | sed 's/[\/&]/\\&/g')
     find /usr/share/nginx/html -name "index.html" -exec sed -i "s#window.__STRIPE_PUBLISHABLE_KEY__ = .*#window.__STRIPE_PUBLISHABLE_KEY__ = '${STRIPE_KEY_ESCAPED}';#g" {} \;
 fi
+
+# GA4: write measurement ID into runtime-config.js (from .secrets / compose env).
+# Do not put the real ID into tracked source — see docs/0073-google-analytics.md.
+case "$GOOGLE_ANALYTICS_MEASUREMENT_ID" in
+  G-[A-Za-z0-9]*)
+    GA_ESC=$(printf '%s' "$GOOGLE_ANALYTICS_MEASUREMENT_ID" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
+    printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '${GA_ESC}';" > /usr/share/nginx/html/runtime-config.js
+    echo "[entrypoint-prod] Google Analytics measurement ID written to runtime-config.js"
+    ;;
+  '')
+    printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '';" > /usr/share/nginx/html/runtime-config.js
+    ;;
+  *)
+    printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '';" > /usr/share/nginx/html/runtime-config.js
+    echo "[entrypoint-prod] WARNING: ignoring invalid GOOGLE_ANALYTICS_MEASUREMENT_ID (expected G-…)"
+    ;;
+esac
 
 # Execute the original command
 exec "$@"

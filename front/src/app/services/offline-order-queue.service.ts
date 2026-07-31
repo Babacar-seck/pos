@@ -7,17 +7,22 @@ import { ConnectivityService } from './connectivity.service';
 const QUEUE_KEY = 'pos_offline_cash_queue_v1';
 const CACHE_KEY = 'pos_offline_cache_v1';
 
+export type OfflinePaymentIntent = 'cash' | 'card';
+
 export interface OfflineCashQueueItem {
   idempotency_key: string;
   table_id: number;
   items: { product_id: number; quantity: number; notes?: string }[];
   customer_name?: string;
   notes?: string;
+  /** cash = paid on sync; card = unpaid ticket, collect card online (#333). */
+  payment_intent: OfflinePaymentIntent;
   client_created_at: string;
   product_names?: string[];
   status: 'pending' | 'syncing' | 'synced' | 'failed';
   error?: string;
   order_id?: number;
+  needs_payment?: boolean;
 }
 
 interface OfflineCache {
@@ -28,7 +33,7 @@ interface OfflineCache {
 }
 
 /**
- * Local queue + product/table cache for MVP offline cash sales (#319).
+ * Local queue + product/table cache for offline sales (#319 cash, #333 deferred card).
  */
 @Injectable({ providedIn: 'root' })
 export class OfflineOrderQueueService {
@@ -96,6 +101,7 @@ export class OfflineOrderQueueService {
     productId: number;
     quantity: number;
     customerName?: string;
+    paymentIntent?: OfflinePaymentIntent;
   }): OfflineCashQueueItem | null {
     const cache = this.cacheSignal();
     const table = cache?.take_away_table;
@@ -103,11 +109,13 @@ export class OfflineOrderQueueService {
     const product = cache?.products.find((p) => p.id === opts.productId);
     if (!product || opts.quantity < 1) return null;
 
+    const intent: OfflinePaymentIntent = opts.paymentIntent === 'card' ? 'card' : 'cash';
     const item: OfflineCashQueueItem = {
       idempotency_key: this.newKey(),
       table_id: table.id,
       items: [{ product_id: opts.productId, quantity: opts.quantity }],
       customer_name: opts.customerName?.trim() || undefined,
+      payment_intent: intent,
       client_created_at: new Date().toISOString(),
       product_names: [product.name],
       status: 'pending',
@@ -148,12 +156,14 @@ export class OfflineOrderQueueService {
               customer_name: q.customer_name,
               notes: q.notes,
               client_created_at: q.client_created_at,
+              payment_intent: q.payment_intent || 'cash',
             })
           );
           items[i] = {
             ...items[i],
             status: 'synced',
             order_id: res.order_id,
+            needs_payment: !!res.needs_payment,
             error: undefined,
           };
         } catch (err: unknown) {
@@ -201,7 +211,15 @@ export class OfflineOrderQueueService {
       const rawQ = localStorage.getItem(QUEUE_KEY);
       if (rawQ) {
         const parsed = JSON.parse(rawQ) as OfflineCashQueueItem[];
-        if (Array.isArray(parsed)) this.queueSignal.set(parsed);
+        if (Array.isArray(parsed)) {
+          // Backfill payment_intent for queue items written before #333.
+          this.queueSignal.set(
+            parsed.map((q) => ({
+              ...q,
+              payment_intent: q.payment_intent === 'card' ? 'card' : 'cash',
+            }))
+          );
+        }
       }
       const rawC = localStorage.getItem(CACHE_KEY);
       if (rawC) {

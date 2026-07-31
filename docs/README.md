@@ -24,6 +24,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Capture screenshots | [screenshots/README.md](screenshots/README.md) |
 | Security review notes (structured pass, not a pentest) | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) |
 | Browse public marketing features list (`/features`, no login) | [../README.md](../README.md) Access Points / Features — route `http://localhost:4202/features` |
+| Browse public About us (`/about`, no login; Amvara Consulting S.L.) | [../README.md](../README.md) Access Points — route `http://localhost:4202/about`; smoke: `npm run test:about --prefix front` |
 
 ---
 
@@ -32,6 +33,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Doc | Description |
 |-----|-------------|
 | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) | CI/CD: deploy to amvara9 on push to master (GitHub Actions, SSH key, secrets); daily demo data reset cron for tenant 1; hourly unpaid public Satisfecho Delivery cleanup cron (all tenants). |
+| [0073-google-analytics.md](0073-google-analytics.md) | GA4 gtag: measurement ID via gitignored `.secrets`, injected at front container start (never commit the ID). |
 | [0004-deployment.md](0004-deployment.md) | Deployment guide: configuration (API_URL, WS_URL, CORS), deploy steps (git pull, compose, migrations, seeds, optional demo reset). See also [0027](0027-amvara9-menu-images-troubleshooting.md) for uploads 404. |
 | [0057-deploy-css-fix-amvara9.md](0057-deploy-css-fix-amvara9.md) | **Shipped:** stale front build on deploy — `deploy-amvara9.sh` `--no-cache` front + `index.html` no-cache headers; historical incident notes. |
 | [0026-haproxy-ssl-amvara9.md](0026-haproxy-ssl-amvara9.md) | HAProxy SSL on amvara9: durable cert path (certbot/haproxy-certs), reload without overwriting certs. See also [0027](0027-amvara9-menu-images-troubleshooting.md) for uploads 404. |
@@ -68,6 +70,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0054-restaurant-groups.md](0054-restaurant-groups.md) | Restaurant groups: multi-location join codes; optional shared billing customers/products (issue #283). |
 | [0055-public-seo.md](0055-public-seo.md) | Public SEO for satisfecho.de: titles/meta/OG, robots.txt, sitemap.xml, noindex for staff shells (issue #307). |
 | Public `/features` page | Marketing capabilities grid for prospects (no login). Linked from landing nav; shares `app-landing-site-footer`. Indexed in root [README.md](../README.md) Features / Access Points; smoke: `npm run test:features --prefix front` ([testing.md](testing.md)). |
+| Public `/about` page | About us for Satisfecho / Amvara Consulting S.L. (no login). Linked from landing/features/pricing nav and footer Support; shares `app-landing-site-footer`. Smoke: `npm run test:about --prefix front` ([testing.md](testing.md)). |
 | [REVOLUT.md](REVOLUT.md) | Revolut Merchant API: checkout extension, sandbox CSR, redirect URLs, tenant payment setup. |
 
 ---
@@ -86,15 +89,15 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0025-reservation-overbooking-detection.md](0025-reservation-overbooking-detection.md) | Reservation overbooking: **shipped** (slot capacity, overbooking report, 400 on over capacity); historical design notes + [0058](0058-test-scenario-one-empty-table.md) scenario. |
 | [0058-test-scenario-one-empty-table.md](0058-test-scenario-one-empty-table.md) | Test scenario: all tables seated except one empty (maps 0025 overbooking requirements to this case). |
 | [0031-order-customizations-plan.md](0031-order-customizations-plan.md) | GitHub **#50**: pizza-style order modifiers — **core shipped** (staff config, public answers, kitchen/invoice summary, multi-select); optional per-option price deltas not shipped. |
-| [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella roadmap (warehouses, kitchen SLAs, marketing/comms). |
+| [0032-github-issues-roadmap.md](0032-github-issues-roadmap.md) | GitHub **#52–#54**: umbrella theme table (keep aligned with root [ROADMAP.md](../ROADMAP.md)). |
 | [0061-multi-warehouse-inventory.md](0061-multi-warehouse-inventory.md) | Multi-warehouse inventory MVP (#320): warehouses, receive/adjust attribution, stock filter. |
 | [0069-branch-hub-fulfillment.md](0069-branch-hub-fulfillment.md) | Central kitchen → branches (#323): ADR (linked tenants + hub) + hub fulfillment / prepared-at-HQ MVP. |
 | [0062-pos-migration-import.md](0062-pos-migration-import.md) | Import from existing POS (#321): products/categories CSV CLI, dry-run/apply, cutover runbook. |
-| [0063-offline-capable-client.md](0063-offline-capable-client.md) | Offline POS client (#319): ADR + threat model; MVP staff cash sale queue + idempotent sync. |
+| [0063-offline-capable-client.md](0063-offline-capable-client.md) | Offline POS client (#319/#333): ADR + threat model; staff cash + deferred card intent queue; fiscal online-only. |
 | [0064-guest-feedback-analytics.md](0064-guest-feedback-analytics.md) | Guest feedback staff trends + CSV export; receipt QR link format (#325). |
 | [0065-verifactu-production.md](0065-verifactu-production.md) | VeriFactu production path: Phase 0 build-vs-buy ADR (prefer certified middleware), certification status, live-mode gate, QR/hash/sandbox notes (#326). |
 | [0072-tse-fiscal-compliance.md](0072-tse-fiscal-compliance.md) | German TSE / KassenSichV: Phase 0 cloud-TSE ADR, `tse_mode`, stub signing, receipt fields, DSFinV-K stub; separate from VeriFactu (#316). |
-| [0066-club-loyalty.md](0066-club-loyalty.md) | Club loyalty MVP (#327): points/stamps, earn on paid, redeem at checkout, public join; Apple/Google Wallet certs as operational deps. |
+| [0066-club-loyalty.md](0066-club-loyalty.md) | Club loyalty (#327/#334): points/stamps, earn on paid, redeem, VIP lifetime tiers, referral on join; Apple/Google Wallet certs as operational deps. |
 | [0071-split-bill.md](0071-split-bill.md) | Split bill / partial payments (#318): amount-based payment legs, reconciliation API, one fiscal invoice per settled order. |
 | [0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md) | GitHub **#52** (CLOSED): **historical** child-issue drafts / phases — do not re-file without review; prefer **0032** + shipped feature docs. |
 

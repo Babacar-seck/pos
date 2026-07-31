@@ -63,6 +63,8 @@ services:
       - API_URL=${API_URL:-}
       - WS_URL=${WS_URL:-}
       - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      # GA4 measurement ID (prefer .secrets — never commit the real ID; see .secrets.example)
+      - GOOGLE_ANALYTICS_MEASUREMENT_ID=${GOOGLE_ANALYTICS_MEASUREMENT_ID:-}
       # Optional: host git short hash — bind mount is ./front only (no .git); entrypoint runs get-commit-hash.js
       - COMMIT_HASH=${COMMIT_HASH:-}
       # Marketing sites under /<slug>/ (see config/marketing-sites.json, scripts/sync-all-marketing-sites.sh)

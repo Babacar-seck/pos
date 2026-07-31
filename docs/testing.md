@@ -366,6 +366,15 @@ npm run test:pricing --prefix front
 
 - No login. Fetches `GET /api/saas/config`, opens `/pricing` (must not redirect home), asserts translated hero, price and trial text matching config, self-host card, register CTA, and billing-active vs inactive note matching `enabled`. Fails on pageerror.
 
+**Public about page (`/about`):**
+
+```bash
+npm run test:about --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-about.mjs
+```
+
+- No login. From home, asserts footer `data-testid="landing-about"` and company line with **Amvara Consulting S.L.**; opens `/about`, asserts translated hero, company section naming Amvara Consulting S.L., no pageerror.
+
 ---
 
 ### 5. Provider section
@@ -383,6 +392,16 @@ npm run test:provider-register --prefix front
 
 - **Env:** `BASE_URL`, `PROVIDER_NAME`, `PROVIDER_EMAIL` (default: `provider-<timestamp>@amvara.de`), `PROVIDER_PASSWORD`, `PROVIDER_FULL_NAME`, `HEADLESS`.
 - Opens `/provider/register`, fills form, submits; asserts success or reports error.
+
+**End-user customer register + login** (#340; creates a customer account; no cleanup):
+
+```bash
+npm run test:customer-register-login --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-customer-register-login.mjs
+```
+
+- **Env:** `BASE_URL`, `CUSTOMER_EMAIL` (default: `customer-<timestamp>@amvara.de`), `CUSTOMER_PASSWORD`, `CUSTOMER_FULL_NAME`, `HEADLESS`.
+- Opens `/customer/register`, submits, then `/customer/login` → `/customer`; asserts empty orders state.
 
 **Provider login + add product** (requires an existing provider account):
 
@@ -700,11 +719,13 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
 | `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:pricing` | `scripts/test-pricing.mjs` (public `/pricing`: live `GET /saas/config` price/trial, self-host card, billing note vs `enabled`; no login) |
+| `test:about` | `scripts/test-about.mjs` (public `/about`: footer About link, Amvara Consulting S.L. on page + footer; no login) |
 | Print agent (manual / API) | Backend: `pytest tests/test_print_jobs.py`; LAN dry-run: create agent in Settings → Printing, then `PRINT_AGENT_API_BASE=http://127.0.0.1:4202/api PRINT_AGENT_TOKEN=… PRINT_AGENT_DRY_RUN=1 python3 scripts/print-agent/print_agent.py` and enqueue via Orders → Print kitchen / invoice (`docs/0070-hardware-printing.md`) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
 | `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
+| `test:customer-register-login` | `scripts/test-customer-register-login.mjs` |
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |

@@ -10,7 +10,7 @@ import {
 } from '../services/api.service';
 import { getSubcategoryLabel as resolveSubcategoryLabel } from '../shared/product-subcategory-label.util';
 
-type ImportSource = 'json' | 'vision';
+type ImportSource = 'json' | 'csv' | 'vision';
 
 @Component({
   selector: 'app-product-bulk-import',
@@ -38,6 +38,9 @@ type ImportSource = 'json' | 'vision';
           <div class="source-tabs">
             <button type="button" class="source-tab" [class.active]="source() === 'json'" (click)="source.set('json')">
               {{ 'PRODUCTS.BULK_IMPORT_TAB_JSON' | translate }}
+            </button>
+            <button type="button" class="source-tab" [class.active]="source() === 'csv'" (click)="source.set('csv')">
+              {{ 'PRODUCTS.BULK_IMPORT_TAB_CSV' | translate }}
             </button>
             <button
               type="button"
@@ -68,6 +71,38 @@ type ImportSource = 'json' | 'vision';
             <div class="modal-actions">
               <button type="button" class="btn btn-secondary" (click)="closed.emit()">{{ 'COMMON.CANCEL' | translate }}</button>
               <button type="button" class="btn btn-primary" (click)="loadJsonPreview()" [disabled]="loading()">
+                {{ loading() ? ('COMMON.LOADING' | translate) : ('PRODUCTS.BULK_IMPORT_PREVIEW' | translate) }}
+              </button>
+            </div>
+          } @else if (source() === 'csv') {
+            <div class="form-group">
+              <label for="bulk-csv-file">{{ 'PRODUCTS.BULK_IMPORT_CSV_FILE' | translate }}</label>
+              <input
+                id="bulk-csv-file"
+                type="file"
+                accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain"
+                (change)="onCsvFileSelected($event)"
+              />
+            </div>
+            <div class="form-group">
+              <label for="bulk-csv-paste">{{ 'PRODUCTS.BULK_IMPORT_CSV_PASTE' | translate }}</label>
+              <textarea
+                id="bulk-csv-paste"
+                rows="8"
+                [(ngModel)]="csvText"
+                [placeholder]="'PRODUCTS.BULK_IMPORT_CSV_PLACEHOLDER' | translate"
+              ></textarea>
+              <small class="field-hint">{{ 'PRODUCTS.BULK_IMPORT_CSV_HINT' | translate }}</small>
+            </div>
+            @if (visionConfigured()) {
+              <label class="checkbox-row">
+                <input type="checkbox" [(ngModel)]="csvUseAiMapping" />
+                <span>{{ 'PRODUCTS.BULK_IMPORT_CSV_AI_MAPPING' | translate }}</span>
+              </label>
+            }
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closed.emit()">{{ 'COMMON.CANCEL' | translate }}</button>
+              <button type="button" class="btn btn-primary" (click)="loadCsvPreview()" [disabled]="loading()">
                 {{ loading() ? ('COMMON.LOADING' | translate) : ('PRODUCTS.BULK_IMPORT_PREVIEW' | translate) }}
               </button>
             </div>
@@ -226,6 +261,8 @@ export class ProductBulkImportComponent implements OnInit {
   summaryParams = signal<Record<string, number>>({ total: 0, valid: 0, invalid: 0, create: 0, update: 0 });
 
   jsonText = '';
+  csvText = '';
+  csvUseAiMapping = false;
 
   ngOnInit() {
     this.api.getProductBulkImportVisionStatus().subscribe({
@@ -246,6 +283,17 @@ export class ProductBulkImportComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       this.jsonText = String(reader.result || '');
+    };
+    reader.readAsText(file);
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  onCsvFileSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.csvText = String(reader.result || '');
     };
     reader.readAsText(file);
     (event.target as HTMLInputElement).value = '';
@@ -274,6 +322,24 @@ export class ProductBulkImportComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
     this.api.previewProductBulkImportJson(payload).subscribe({
+      next: (res) => this.applyPreview(res),
+      error: (err) => {
+        this.error.set(this.mapError(err));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadCsvPreview() {
+    const raw = this.csvText.trim();
+    if (!raw) {
+      this.error.set(this.translate.instant('PRODUCTS.BULK_IMPORT_CSV_EMPTY'));
+      return;
+    }
+    this.loading.set(true);
+    this.error.set('');
+    const useAi = this.csvUseAiMapping && this.visionConfigured();
+    this.api.previewProductBulkImportCsv(raw, useAi).subscribe({
       next: (res) => this.applyPreview(res),
       error: (err) => {
         this.error.set(this.mapError(err));
@@ -445,10 +511,19 @@ export class ProductBulkImportComponent implements OnInit {
   }
 
   private mapError(err: { error?: { detail?: string } }): string {
-    const code = err.error?.detail;
-    if (!code) return this.translate.instant('COMMON.API_REQUEST_FAILED');
-    const key = `API_ERRORS.${String(code).toUpperCase()}`;
+    const detail = err.error?.detail;
+    if (!detail) return this.translate.instant('COMMON.API_REQUEST_FAILED');
+    const code = String(detail);
+    if (code.startsWith('unknown_csv_columns:')) {
+      const cols = code.slice('unknown_csv_columns:'.length);
+      return this.translate.instant('API_ERRORS.UNKNOWN_CSV_COLUMNS', { columns: cols });
+    }
+    if (code.startsWith('unmapped_csv_columns:')) {
+      const cols = code.slice('unmapped_csv_columns:'.length);
+      return this.translate.instant('API_ERRORS.UNMAPPED_CSV_COLUMNS', { columns: cols });
+    }
+    const key = `API_ERRORS.${code.toUpperCase()}`;
     const translated = this.translate.instant(key);
-    return translated !== key ? translated : String(code);
+    return translated !== key ? translated : code;
   }
 }

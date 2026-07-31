@@ -73,3 +73,7 @@ dist/
 .cursor/
 .factory/
 
+
+# Local secrets (GitHub tokens, GA measurement ID, etc. — never commit)
+.secrets
+# Keep .secrets.example committed as the template

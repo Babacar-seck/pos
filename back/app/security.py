@@ -10,7 +10,7 @@ from jose import JWTError, jwt
 from sqlmodel import Session, select
 
 from .db import get_session
-from .models import User, Tenant, UserRole, Provider
+from .models import User, Tenant, UserRole, Provider, Customer
 from .settings import settings
 
 # Context variable to store the current tenant_id for the request
@@ -278,3 +278,81 @@ async def get_current_platform_operator(
             detail="Platform operator account required",
         )
     return current_user
+
+
+CUSTOMER_ACCESS_COOKIE = "customer_access_token"
+
+
+async def get_customer_token(
+    request: Request,
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+) -> str:
+    """Customer JWT from dedicated cookie (primary) or Bearer header (fallback)."""
+    cookie_token = request.cookies.get(CUSTOMER_ACCESS_COOKIE)
+    if cookie_token:
+        return cookie_token
+    if token:
+        return token
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Not authenticated",
+    )
+
+
+async def get_optional_customer_token(
+    request: Request,
+    token: Annotated[str | None, Depends(oauth2_scheme)],
+) -> str | None:
+    cookie_token = request.cookies.get(CUSTOMER_ACCESS_COOKIE)
+    if cookie_token:
+        return cookie_token
+    return token
+
+
+def _customer_from_payload(session: Session, payload: dict) -> Customer | None:
+    if payload.get("type") != "customer":
+        return None
+    email = payload.get("sub")
+    customer_id = payload.get("customer_id")
+    token_version: int = payload.get("token_version", 0)
+    if email is None or customer_id is None:
+        return None
+    customer = session.get(Customer, customer_id)
+    if (
+        customer is None
+        or customer.email != email
+        or customer.token_version != token_version
+    ):
+        return None
+    return customer
+
+
+async def get_current_customer(
+    token: Annotated[str, Depends(get_customer_token)],
+    session: Annotated[Session, Depends(get_session)],
+) -> Customer:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+    )
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        customer = _customer_from_payload(session, payload)
+        if customer is None:
+            raise credentials_exception
+        return customer
+    except JWTError:
+        raise credentials_exception
+
+
+async def get_current_customer_optional(
+    token: Annotated[str | None, Depends(get_optional_customer_token)],
+    session: Annotated[Session, Depends(get_session)],
+) -> Customer | None:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        return _customer_from_payload(session, payload)
+    except JWTError:
+        return None

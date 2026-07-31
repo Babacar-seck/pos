@@ -2,7 +2,10 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { ConnectivityService } from '../services/connectivity.service';
-import { OfflineOrderQueueService } from '../services/offline-order-queue.service';
+import {
+  OfflineOrderQueueService,
+  OfflinePaymentIntent,
+} from '../services/offline-order-queue.service';
 import { PermissionService } from '../services/permission.service';
 import { ApiService } from '../services/api.service';
 
@@ -33,6 +36,7 @@ import { ApiService } from '../services/api.service';
         }
       </div>
       <p class="offline-cash-hint">{{ 'OFFLINE.CASH_SALE_HINT' | translate }}</p>
+      <p class="offline-cash-hint offline-cash-hint--secondary">{{ 'OFFLINE.CARD_DEFERRED_HINT' | translate }}</p>
       @if (!hasTakeAway()) {
         <p class="offline-cash-error">{{ 'OFFLINE.NO_TAKE_AWAY' | translate }}</p>
       } @else if ((cacheProducts().length === 0)) {
@@ -61,13 +65,20 @@ import { ApiService } from '../services/api.service';
             <span>{{ 'OFFLINE.CUSTOMER' | translate }}</span>
             <input type="text" [(ngModel)]="customerName" [placeholder]="'OFFLINE.CUSTOMER_PH' | translate" />
           </label>
+          <label>
+            <span>{{ 'OFFLINE.PAYMENT' | translate }}</span>
+            <select [(ngModel)]="paymentIntent">
+              <option value="cash">{{ 'OFFLINE.PAYMENT_CASH' | translate }}</option>
+              <option value="card">{{ 'OFFLINE.PAYMENT_CARD_DEFERRED' | translate }}</option>
+            </select>
+          </label>
           <button
             type="button"
             class="btn btn-primary"
             [disabled]="!canSubmit() || submitting()"
             (click)="submit()"
           >
-            {{ connectivity.isOnline() ? ('OFFLINE.RECORD_CASH' | translate) : ('OFFLINE.QUEUE_CASH' | translate) }}
+            {{ submitLabelKey() | translate }}
           </button>
         </div>
       }
@@ -79,8 +90,10 @@ import { ApiService } from '../services/api.service';
           @for (q of recent(); track q.idempotency_key) {
             <li [class]="'st-' + q.status">
               {{ q.product_names?.join(', ') || '—' }} ×{{ q.items[0]?.quantity || 1 }}
+              · {{ q.payment_intent === 'card' ? ('OFFLINE.PAYMENT_CARD_DEFERRED' | translate) : ('OFFLINE.PAYMENT_CASH' | translate) }}
               — {{ q.status }}
               @if (q.order_id) { (#{{ q.order_id }}) }
+              @if (q.needs_payment) { — {{ 'OFFLINE.NEEDS_CARD' | translate }} }
               @if (q.error) { — {{ q.error }} }
             </li>
           }
@@ -130,9 +143,13 @@ import { ApiService } from '../services/api.service';
       color: #92400e;
     }
     .offline-cash-hint {
-      margin: 0.35rem 0 0.75rem;
+      margin: 0.35rem 0 0.35rem;
       font-size: 0.8125rem;
       color: var(--color-text-muted, #6b7280);
+    }
+    .offline-cash-hint--secondary {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
     }
     .offline-cash-error {
       color: #991b1b;
@@ -190,6 +207,7 @@ export class OfflineCashSaleComponent implements OnInit {
   productId: number | null = null;
   quantity = 1;
   customerName = '';
+  paymentIntent: OfflinePaymentIntent = 'cash';
   readonly submitting = signal(false);
   readonly messageKey = signal<string | null>(null);
 
@@ -214,6 +232,14 @@ export class OfflineCashSaleComponent implements OnInit {
     return this.canUse() && this.productId != null && this.quantity >= 1 && this.hasTakeAway();
   }
 
+  submitLabelKey(): string {
+    const online = this.connectivity.isOnline();
+    if (this.paymentIntent === 'card') {
+      return online ? 'OFFLINE.RECORD_CARD' : 'OFFLINE.QUEUE_CARD';
+    }
+    return online ? 'OFFLINE.RECORD_CASH' : 'OFFLINE.QUEUE_CASH';
+  }
+
   refreshCache(): void {
     this.queue.refreshCacheFromServer();
   }
@@ -230,15 +256,22 @@ export class OfflineCashSaleComponent implements OnInit {
       productId: this.productId,
       quantity: this.quantity,
       customerName: this.customerName,
+      paymentIntent: this.paymentIntent,
     });
     this.submitting.set(false);
     if (!item) {
       this.messageKey.set('OFFLINE.ENQUEUE_FAILED');
       return;
     }
-    this.messageKey.set(
-      this.connectivity.isOnline() ? 'OFFLINE.QUEUED_ONLINE' : 'OFFLINE.QUEUED_OFFLINE'
-    );
+    if (this.paymentIntent === 'card') {
+      this.messageKey.set(
+        this.connectivity.isOnline() ? 'OFFLINE.QUEUED_CARD_ONLINE' : 'OFFLINE.QUEUED_CARD_OFFLINE'
+      );
+    } else {
+      this.messageKey.set(
+        this.connectivity.isOnline() ? 'OFFLINE.QUEUED_ONLINE' : 'OFFLINE.QUEUED_OFFLINE'
+      );
+    }
     this.quantity = 1;
     this.customerName = '';
   }

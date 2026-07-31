@@ -66,6 +66,7 @@ remove_all() {
         ENV_FILE=""
     else
         ENV_FILE="--env-file config.env"
+        [ -f .secrets ] && ENV_FILE="$ENV_FILE --env-file .secrets"
     fi
     
     # Stop and remove containers with volumes
@@ -128,6 +129,7 @@ run_migrations() {
         ENV_FILE=""
     else
         ENV_FILE="--env-file config.env"
+        [ -f .secrets ] && ENV_FILE="$ENV_FILE --env-file .secrets"
     fi
     
     # Check if backend container is running
@@ -235,6 +237,7 @@ if [ ! -f "config.env" ]; then
 fi
 
 ENV_FILE="--env-file config.env"
+[ -f .secrets ] && ENV_FILE="$ENV_FILE --env-file .secrets"
 
 # Export UID and GID for Docker Compose (using different names because UID is readonly in bash)
 # This ensures the backend container runs as the host user

@@ -5,6 +5,7 @@ import { uiModuleGuard } from './auth/ui-module.guard';
 import { reservationAccessGuard } from './auth/reservation-access.guard';
 import { providerGuard } from './auth/provider.guard';
 import { courierGuard } from './auth/courier.guard';
+import { customerGuard } from './auth/customer.guard';
 import { platformGuard } from './auth/platform.guard';
 import { permissionGuard } from './auth/permission.guard';
 import { tablesCanvasCanDeactivate } from './tables/tables-canvas-deactivate.guard';
@@ -14,6 +15,7 @@ export const routes: Routes = [
   { path: '', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent) },
   { path: 'features', loadComponent: () => import('./features/features.component').then(m => m.FeaturesComponent) },
   { path: 'pricing', loadComponent: () => import('./pricing/pricing-page.component').then(m => m.PricingPageComponent) },
+  { path: 'about', loadComponent: () => import('./about/about-page.component').then(m => m.AboutPageComponent) },
   { path: 'login', loadComponent: () => import('./auth/login.component').then(m => m.LoginComponent) },
   { path: 'register', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },
   { path: 'signup', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },
@@ -48,6 +50,11 @@ export const routes: Routes = [
   { path: 'courier/login', loadComponent: () => import('./courier/courier-login.component').then(m => m.CourierLoginComponent) },
   { path: 'courier/orders/:id', canActivate: [courierGuard], loadComponent: () => import('./courier/courier-order-detail.component').then(m => m.CourierOrderDetailComponent) },
   { path: 'courier', canActivate: [courierGuard], loadComponent: () => import('./courier/courier-home.component').then(m => m.CourierHomeComponent) },
+  // End-user customer portal (separate from staff User and Factura /customers)
+  { path: 'customer/login', loadComponent: () => import('./customer/customer-login.component').then(m => m.CustomerLoginComponent) },
+  { path: 'customer/register', loadComponent: () => import('./customer/customer-register.component').then(m => m.CustomerRegisterComponent) },
+  { path: 'customer/verify-email', loadComponent: () => import('./customer/customer-verify-email.component').then(m => m.CustomerVerifyEmailComponent) },
+  { path: 'customer', canActivate: [customerGuard], loadComponent: () => import('./customer/customer-home.component').then(m => m.CustomerHomeComponent) },
   // Platform operator portal (public auth + protected dashboard)
   { path: 'platform/login', loadComponent: () => import('./platform/platform-login.component').then(m => m.PlatformLoginComponent) },
   { path: 'platform/tenants/:tenantId', canActivate: [platformGuard], loadComponent: () => import('./platform/platform-tenant-detail.component').then(m => m.PlatformTenantDetailComponent) },

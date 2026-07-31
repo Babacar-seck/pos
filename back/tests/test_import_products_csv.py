@@ -69,6 +69,30 @@ class TestParseProductsCsv(unittest.TestCase):
         items = parse_products_csv('name,price\nCake,"6,50"\n')
         self.assertEqual(items[0].price, 6.5)
 
+    def test_header_aliases_locale(self):
+        text = "producto,precio,categoria\nGazpacho,4.5,Starters\n"
+        items = parse_products_csv(text)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].name, "Gazpacho")
+        self.assertEqual(items[0].price, 4.5)
+        self.assertEqual(items[0].category, "Starters")
+
+    def test_tsv_delimiter(self):
+        text = "name\tprice\tcategory\nSoup\t5.5\tStarters\n"
+        items = parse_products_csv(text)
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0].name, "Soup")
+        self.assertEqual(items[0].price, 5.5)
+
+    def test_explicit_header_map_drops_sku(self):
+        text = "Dish,Retail Price,SKU\nTea,2.5,X1\n"
+        items = parse_products_csv(
+            text,
+            header_map={"Dish": "name", "Retail Price": "price", "SKU": ""},
+        )
+        self.assertEqual(items[0].name, "Tea")
+        self.assertEqual(items[0].price, 2.5)
+
 
 class TestImportProductsCsvPipeline(PgClientTestCase):
     def setUp(self) -> None:

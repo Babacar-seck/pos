@@ -40,3 +40,6 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# GA / secrets injected at container start (see runtime-config.js.example)
+/public/runtime-config.js

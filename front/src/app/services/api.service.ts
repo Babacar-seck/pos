@@ -374,6 +374,28 @@ export interface CourierInfo {
   tenant_name?: string | null;
 }
 
+export interface CustomerInfo {
+  id: number;
+  email: string;
+  full_name?: string | null;
+  phone?: string | null;
+  business_name?: string | null;
+  tax_id?: string | null;
+  address?: string | null;
+  email_verified: boolean;
+  created_at?: string | null;
+}
+
+export interface CustomerOrderSummary {
+  id: number;
+  tenant_id: number;
+  status: string;
+  order_channel: string;
+  customer_name?: string | null;
+  created_at?: string | null;
+  paid_at?: string | null;
+}
+
 export interface PlatformInfo {
   id: number;
   email: string;
@@ -835,6 +857,16 @@ export interface LoyaltyProgram {
   earn_units_per_order: number;
   redemption_threshold: number;
   reward_discount_cents: number;
+  /** Extra units once per year when member pays on birthday (0 = off). */
+  birthday_bonus_units?: number;
+  /** VIP silver threshold on lifetime earn (0 = off). */
+  vip_silver_min_lifetime_units?: number;
+  /** VIP gold threshold on lifetime earn (0 = off). */
+  vip_gold_min_lifetime_units?: number;
+  /** Units awarded to referrer on successful referred join (0 = off). */
+  referral_bonus_units?: number;
+  /** Units awarded to invitee on referred join (0 = off). */
+  referral_invitee_bonus_units?: number;
   created_at?: string | null;
   updated_at?: string | null;
   wallet?: LoyaltyWalletStatus;
@@ -849,6 +881,9 @@ export interface LoyaltyProgramPublic {
   earn_units_per_order: number;
   redemption_threshold: number;
   reward_discount_cents: number;
+  vip_silver_min_lifetime_units?: number;
+  vip_gold_min_lifetime_units?: number;
+  referral_bonus_units?: number;
   wallet?: LoyaltyWalletStatus;
 }
 
@@ -903,7 +938,14 @@ export interface LoyaltyMembership {
   email?: string | null;
   phone?: string | null;
   balance: number;
+  lifetime_earn_units?: number;
+  vip_tier?: 'silver' | 'gold' | string | null;
+  referral_code?: string | null;
+  referred_by_membership_id?: number | null;
   member_token?: string;
+  birthday_month?: number | null;
+  birthday_day?: number | null;
+  birthday_bonus_year?: number | null;
   joined_at?: string | null;
   updated_at?: string | null;
 }
@@ -1480,6 +1522,8 @@ export interface OrderPaymentLeg {
   paid_at?: string | null;
   voided_at?: string | null;
   note?: string | null;
+  /** Present when this leg was recorded as split-by-line (#331). */
+  order_item_ids?: number[];
 }
 
 export interface Order {
@@ -2168,6 +2212,73 @@ export class ApiService {
     return this.http.get<CourierInfo>(`${this.apiUrl}/courier/me`);
   }
 
+  /** End-user customer account (#340) — uses customer_access_token cookie. */
+  customerRegister(body: {
+    email: string;
+    password: string;
+    full_name?: string;
+  }): Observable<{
+    status: string;
+    id: number;
+    email: string;
+    email_verified: boolean;
+    verification_email_sent: boolean;
+  }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{
+      status: string;
+      id: number;
+      email: string;
+      email_verified: boolean;
+      verification_email_sent: boolean;
+    }>(`${this.apiUrl}/customer/register`, body, { params });
+  }
+
+  customerLogin(email: string, password: string): Observable<{ status: string; email_verified: boolean }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{ status: string; email_verified: boolean }>(
+      `${this.apiUrl}/customer/token`,
+      { email, password },
+      { params, withCredentials: true },
+    );
+  }
+
+  customerLogout(): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/customer/logout`, {}, { withCredentials: true }).pipe(
+      catchError(() => of(undefined)),
+    );
+  }
+
+  getCustomerMe(): Observable<CustomerInfo> {
+    return this.http.get<CustomerInfo>(`${this.apiUrl}/customer/me`, { withCredentials: true });
+  }
+
+  customerVerifyEmail(token: string): Observable<{ status: string; email: string; email_verified: boolean }> {
+    const params = new HttpParams()
+      .set('token', token)
+      .set('lang', this.language.getLanguage());
+    return this.http.get<{ status: string; email: string; email_verified: boolean }>(
+      `${this.apiUrl}/customer/verify-email`,
+      { params },
+    );
+  }
+
+  customerResendVerification(email: string): Observable<{ status: string; message: string }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{ status: string; message: string }>(
+      `${this.apiUrl}/customer/resend-verification`,
+      { email },
+      { params },
+    );
+  }
+
+  getCustomerOrders(): Observable<{ orders: CustomerOrderSummary[]; count: number }> {
+    return this.http.get<{ orders: CustomerOrderSummary[]; count: number }>(
+      `${this.apiUrl}/customer/orders`,
+      { withCredentials: true },
+    );
+  }
+
   // Platform operator portal
   getPlatformMe(): Observable<PlatformInfo> {
     return this.http.get<PlatformInfo>(`${this.apiUrl}/platform/me`);
@@ -2265,6 +2376,16 @@ export class ApiService {
     return this.http.post<ProductBulkImportPreviewResponse>(
       `${this.apiUrl}/products/bulk-import/preview-json`,
       payload
+    );
+  }
+
+  previewProductBulkImportCsv(
+    csv: string,
+    useAiMapping = false
+  ): Observable<ProductBulkImportPreviewResponse> {
+    return this.http.post<ProductBulkImportPreviewResponse>(
+      `${this.apiUrl}/products/bulk-import/preview-csv`,
+      { csv, use_ai_mapping: useAiMapping }
     );
   }
 
@@ -2799,11 +2920,12 @@ export class ApiService {
   recordOrderPayment(
     orderId: number,
     body: {
-      amount_cents: number;
+      amount_cents?: number | null;
       payment_method: string;
       payer_label?: string | null;
       tip_amount_cents?: number | null;
       note?: string | null;
+      order_item_ids?: number[] | null;
     }
   ): Observable<{
     status: string;
@@ -2815,6 +2937,7 @@ export class ApiService {
     payments: OrderPaymentLeg[];
     paid_at?: string | null;
     payment_method?: string | null;
+    unallocated_order_item_ids?: number[];
   }> {
     return this.http.post<{
       status: string;
@@ -2826,6 +2949,7 @@ export class ApiService {
       payments: OrderPaymentLeg[];
       paid_at?: string | null;
       payment_method?: string | null;
+      unallocated_order_item_ids?: number[];
     }>(`${this.apiUrl}/orders/${orderId}/payments`, body);
   }
 
@@ -2843,7 +2967,7 @@ export class ApiService {
     }>(`${this.apiUrl}/orders/${orderId}/payments/${paymentId}`);
   }
 
-  /** Sync a cash sale queued while offline (idempotent). See docs/0063-offline-capable-client.md. */
+  /** Sync a sale queued while offline (cash paid or deferred card). See docs/0063-offline-capable-client.md. */
   syncOfflineCashOrder(body: {
     idempotency_key: string;
     table_id: number;
@@ -2851,10 +2975,13 @@ export class ApiService {
     customer_name?: string;
     notes?: string;
     client_created_at?: string;
+    payment_intent?: 'cash' | 'card';
   }): Observable<{
     status: string;
     order_id: number;
-    payment_method: string;
+    payment_method: string | null;
+    payment_intent: string;
+    needs_payment: boolean;
     paid_at: string | null;
     table_id: number | null;
     table_name: string | null;
@@ -2863,7 +2990,9 @@ export class ApiService {
     return this.http.post<{
       status: string;
       order_id: number;
-      payment_method: string;
+      payment_method: string | null;
+      payment_intent: string;
+      needs_payment: boolean;
       paid_at: string | null;
       table_id: number | null;
       table_name: string | null;
@@ -3594,7 +3723,14 @@ export class ApiService {
 
   joinPublicLoyalty(
     tenantId: number,
-    body: { display_name: string; email?: string; phone?: string },
+    body: {
+      display_name: string;
+      email?: string;
+      phone?: string;
+      birthday_month?: number | null;
+      birthday_day?: number | null;
+      referral_code?: string | null;
+    },
   ): Observable<{
     ok: boolean;
     membership: LoyaltyMembership;

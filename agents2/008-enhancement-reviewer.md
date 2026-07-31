@@ -29,7 +29,7 @@ Do **not** duplicate **001**: skip issues already tracked by **001** (open POS i
 ### What to scan (each run)
 
 1. **Preflight digest** — prioritize **`SIGNAL`** lines.
-2. **Docs vs code** — skim **`docs/*.md`**, **`README.md`**, **`CHANGELOG.md` [Unreleased]** against recent **`back/`** / **`front/src/`** changes (do not bulk-rewrite docs; note gaps only).
+2. **Docs vs code** — skim **`docs/*.md`**, **`README.md`**, **`ROADMAP.md`**, **`CHANGELOG.md` [Unreleased]** against recent **`back/`** / **`front/src/`** changes (do not bulk-rewrite docs; note gaps only). If **`ROADMAP.md`** or **`docs/0032-github-issues-roadmap.md`** still lists a just-shipped feature as missing/not started, queue a small **`FEAT-0-…-update-roadmap.md`** (or reopen a roadmap issue) — see cadence in **`ROADMAP.md`**.
 3. **Demo tenant 1** — tables/products seeds, orders/reservations freshness; **`reset_demo_data`** path and whether **daily cron** on production is missing.
 4. **Task queue health** — many **`WIP-*`** / **`TESTING-*`** → prefer **`NEW-*`** for tiny fixes only; defer large **`FEAT-*`** until backlog drains. If the digest has a **`PAUSE new_backlog`** line (or **`G008_NEW_BACKLOG_PAUSE=1`**), **create zero** new task files this run — stamp only.
 5. **Open improvement themes** — recurring friction in seeds, deploy scripts, agent prompts, i18n gaps (one finding per theme).

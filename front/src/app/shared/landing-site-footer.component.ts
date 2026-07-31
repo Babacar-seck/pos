@@ -37,6 +37,7 @@ import { environment } from '../../environments/environment';
           </div>
           <div class="landing-footer__group">
             <span class="landing-footer__group-label">{{ 'LANDING.FOOTER_SUPPORT' | translate }}</span>
+            <a routerLink="/about" data-testid="landing-about">{{ 'LANDING.NAV_ABOUT' | translate }}</a>
             <a href="mailto:hello@satisfecho.de" data-testid="landing-contact-us">{{ 'LANDING.CONTACT_US' | translate }}</a>
             <a routerLink="/terms" data-testid="landing-terms">{{ 'LEGAL.TERMS_OF_SERVICE' | translate }}</a>
             <a routerLink="/privacy" data-testid="landing-privacy">{{ 'LEGAL.PRIVACY_POLICY' | translate }}</a>
@@ -72,6 +73,9 @@ import { environment } from '../../environments/environment';
             </svg>
           </a>
         </div>
+        <p class="landing-version-company" data-testid="landing-company">
+          {{ 'LANDING.COMPANY_OPERATOR' | translate }}
+        </p>
         <p class="landing-version-tagline">{{ 'LANDING.OPEN_SOURCE_TAGLINE' | translate }}</p>
       </div>
     </footer>
@@ -241,6 +245,14 @@ import { environment } from '../../environments/environment';
 
     .landing-github-icon {
       display: block;
+    }
+
+    .landing-version-company {
+      margin: 0;
+      max-width: 36rem;
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      color: rgba(250, 250, 250, 0.78);
     }
 
     .landing-version-tagline {

@@ -268,3 +268,286 @@ class TestClubLoyalty(PgClientTestCase):
         self.assertEqual(r.status_code, 200)
         self.assertFalse(r.json()["apple_wallet_available"])
         self.assertFalse(r.json()["google_wallet_available"])
+
+    def test_birthday_bonus_on_paid_order(self):
+        """Birthday bonus folds into earn once per year (#331)."""
+        from datetime import datetime, timezone
+
+        today = datetime.now(timezone.utc).date()
+        self._enable_program(earn_units_per_order=1, birthday_bonus_units=5)
+        join = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Bday",
+                "email": "bday.loyalty@amvara.de",
+                "birthday_month": today.month,
+                "birthday_day": today.day,
+            },
+        )
+        self.assertEqual(join.status_code, 200, join.text)
+        mid = join.json()["membership"]["id"]
+        self.assertEqual(join.json()["membership"]["birthday_month"], today.month)
+        self.assertEqual(join.json()["membership"]["birthday_day"], today.day)
+
+        order = models.Order(
+            tenant_id=self.tenant.id,
+            table_id=self.table.id,
+            status=models.OrderStatus.pending,
+            loyalty_membership_id=mid,
+        )
+        self.session.add(order)
+        self.session.commit()
+        self.session.refresh(order)
+        self.session.add(
+            models.OrderItem(
+                order_id=order.id,
+                product_id=self.product.id,
+                product_name="Coffee",
+                quantity=1,
+                price_cents=400,
+                status=models.OrderItemStatus.pending,
+            )
+        )
+        self.session.commit()
+
+        r = self.client.put(
+            f"/orders/{order.id}/mark-paid",
+            json={"payment_method": "cash"},
+            headers=_bearer_headers(self.waiter),
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        membership = self.session.get(models.LoyaltyMembership, mid)
+        self.session.refresh(membership)
+        self.assertEqual(membership.balance, 6)  # 1 earn + 5 birthday
+        self.assertEqual(membership.birthday_bonus_year, today.year)
+        earns = self.session.exec(
+            select(models.LoyaltyLedgerEntry).where(
+                models.LoyaltyLedgerEntry.order_id == order.id,
+                models.LoyaltyLedgerEntry.entry_type == "earn",
+            )
+        ).all()
+        self.assertEqual(len(earns), 1)
+        self.assertEqual(earns[0].units, 6)
+        self.assertIn("birthday bonus", (earns[0].note or "").lower())
+
+    def test_vip_tier_from_lifetime_earn(self):
+        """VIP uses lifetime earn, not current balance (#334)."""
+        self._enable_program(
+            earn_units_per_order=1,
+            vip_silver_min_lifetime_units=3,
+            vip_gold_min_lifetime_units=5,
+            redemption_threshold=10,
+        )
+        join = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={"display_name": "Vip", "email": "vip.loyalty@amvara.de"},
+        )
+        self.assertEqual(join.status_code, 200, join.text)
+        mid = join.json()["membership"]["id"]
+        self.assertIsNone(join.json()["membership"].get("vip_tier"))
+
+        adj = self.client.post(
+            f"/loyalty/memberships/{mid}/adjust",
+            json={"delta_units": 5, "note": "seed balance only"},
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(adj.status_code, 200, adj.text)
+        # Adjust does not count toward lifetime earn / VIP.
+        self.assertIsNone(adj.json()["membership"].get("vip_tier"))
+        self.assertEqual(adj.json()["membership"]["lifetime_earn_units"], 0)
+
+        # Three paid earns → silver
+        for i in range(3):
+            order = models.Order(
+                tenant_id=self.tenant.id,
+                table_id=self.table.id,
+                status=models.OrderStatus.pending,
+                loyalty_membership_id=mid,
+            )
+            self.session.add(order)
+            self.session.commit()
+            self.session.refresh(order)
+            self.session.add(
+                models.OrderItem(
+                    order_id=order.id,
+                    product_id=self.product.id,
+                    product_name="Coffee",
+                    quantity=1,
+                    price_cents=400,
+                    status=models.OrderItemStatus.pending,
+                )
+            )
+            self.session.commit()
+            r = self.client.put(
+                f"/orders/{order.id}/mark-paid",
+                json={"payment_method": "cash"},
+                headers=_bearer_headers(self.waiter),
+            )
+            self.assertEqual(r.status_code, 200, r.text)
+
+        detail = self.client.get(
+            f"/loyalty/memberships/{mid}",
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()["membership"]["vip_tier"], "silver")
+        self.assertEqual(detail.json()["membership"]["lifetime_earn_units"], 3)
+
+        # Two more → gold
+        for _ in range(2):
+            order = models.Order(
+                tenant_id=self.tenant.id,
+                table_id=self.table.id,
+                status=models.OrderStatus.pending,
+                loyalty_membership_id=mid,
+            )
+            self.session.add(order)
+            self.session.commit()
+            self.session.refresh(order)
+            self.session.add(
+                models.OrderItem(
+                    order_id=order.id,
+                    product_id=self.product.id,
+                    product_name="Coffee",
+                    quantity=1,
+                    price_cents=400,
+                    status=models.OrderItemStatus.pending,
+                )
+            )
+            self.session.commit()
+            r = self.client.put(
+                f"/orders/{order.id}/mark-paid",
+                json={"payment_method": "cash"},
+                headers=_bearer_headers(self.waiter),
+            )
+            self.assertEqual(r.status_code, 200, r.text)
+
+        detail = self.client.get(
+            f"/loyalty/memberships/{mid}",
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(detail.json()["membership"]["vip_tier"], "gold")
+        token = join.json()["membership"]["member_token"]
+        card = self.client.get(f"/public/loyalty/members/{token}")
+        self.assertEqual(card.status_code, 200)
+        self.assertEqual(card.json()["membership"]["vip_tier"], "gold")
+
+        # Other tenant program does not see this member
+        iso = self.client.get(
+            f"/loyalty/memberships/{mid}",
+            headers=_bearer_headers(self.other_admin),
+        )
+        self.assertEqual(iso.status_code, 404)
+
+    def test_referral_award_once_on_join(self):
+        """Referral bonus once per new invitee; no self-referral; no double-claim (#334)."""
+        self._enable_program(
+            referral_bonus_units=4,
+            referral_invitee_bonus_units=1,
+        )
+        referrer = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={"display_name": "Ref", "email": "ref.loyalty@amvara.de"},
+        )
+        self.assertEqual(referrer.status_code, 200, referrer.text)
+        ref_code = referrer.json()["membership"]["referral_code"]
+        ref_id = referrer.json()["membership"]["id"]
+        self.assertTrue(ref_code)
+
+        # Returning existing member with own code — no second award / no error
+        self_ref = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Ref Self",
+                "email": "ref.loyalty@amvara.de",
+                "referral_code": ref_code,
+            },
+        )
+        self.assertEqual(self_ref.status_code, 200, self_ref.text)
+        self.assertEqual(self_ref.json()["membership"]["id"], ref_id)
+
+        # Same phone as referrer → existing member returned (no new award)
+        ref_phone = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={"display_name": "PhRef", "phone": "+34600111000"},
+        )
+        self.assertEqual(ref_phone.status_code, 200, ref_phone.text)
+        phone_code = ref_phone.json()["membership"]["referral_code"]
+        self_via_phone = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "PhSelf",
+                "phone": "+34600111000",
+                "email": "phself.loyalty@amvara.de",
+                "referral_code": phone_code,
+            },
+        )
+        self.assertEqual(self_via_phone.status_code, 200)
+        self.assertEqual(
+            self_via_phone.json()["membership"]["id"], ref_phone.json()["membership"]["id"]
+        )
+
+        invitee = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Invitee",
+                "email": "invitee.loyalty@amvara.de",
+                "referral_code": ref_code,
+            },
+        )
+        self.assertEqual(invitee.status_code, 200, invitee.text)
+        self.assertEqual(invitee.json()["membership"]["balance"], 1)
+        self.assertEqual(
+            invitee.json()["membership"]["referred_by_membership_id"], ref_id
+        )
+
+        ref_detail = self.client.get(
+            f"/loyalty/memberships/{ref_id}",
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(ref_detail.status_code, 200)
+        self.assertEqual(ref_detail.json()["membership"]["balance"], 4)
+        self.assertEqual(ref_detail.json()["membership"]["lifetime_earn_units"], 4)
+
+        # Re-join invitee does not award again
+        again = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Invitee",
+                "email": "invitee.loyalty@amvara.de",
+                "referral_code": ref_code,
+            },
+        )
+        self.assertEqual(again.status_code, 200)
+        ref_detail2 = self.client.get(
+            f"/loyalty/memberships/{ref_id}",
+            headers=_bearer_headers(self.admin),
+        )
+        self.assertEqual(ref_detail2.json()["membership"]["balance"], 4)
+
+        # Invalid code
+        bad_code = self.client.post(
+            f"/public/tenants/{self.tenant.id}/loyalty/join",
+            json={
+                "display_name": "Nope",
+                "email": "nope.loyalty@amvara.de",
+                "referral_code": "not-a-real-code",
+            },
+        )
+        self.assertEqual(bad_code.status_code, 400)
+
+        # Cross-tenant referral code must not work
+        self.client.put(
+            "/loyalty/program",
+            json={"enabled": True, "referral_bonus_units": 2},
+            headers=_bearer_headers(self.other_admin),
+        )
+        cross = self.client.post(
+            f"/public/tenants/{self.other.id}/loyalty/join",
+            json={
+                "display_name": "Cross",
+                "email": "cross.loyalty@amvara.de",
+                "referral_code": ref_code,
+            },
+        )
+        self.assertEqual(cross.status_code, 400)

@@ -8,8 +8,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.145] - 2026-07-31
+
+### Added
+
+- **Google Analytics 4:** Optional gtag in the Angular shell; measurement ID from gitignored `.secrets` (`GOOGLE_ANALYTICS_MEASUREMENT_ID`), injected at front container start via `runtime-config.js`. See `docs/0073-google-analytics.md`.
+- **Secrets env overlay:** Optional gitignored `.secrets` (template `.secrets.example`) loaded by `./run.sh`, `deploy-amvara9.sh`, and `scripts/compose-env-file-args.sh` after `config.env`.
+
 ### Changed
 
+- **Marketing sites:** Synced static builds into `front/sites/` (replaced placeholders for Dilruba, Hakone, Flama Napolitana, La Moca, La Bella Toscana, Wimpi, Boss Kebab, and related `/es` deploy paths).
+- **End-user customer accounts (#340):** Archived the verified agents2 task after PASS checks (migrate, 7 pytest, API smoke, Puppeteer register→login→empty orders, staff Factura intact, front build). The feature itself shipped in 2.1.144.
+
+## [2.1.144] - 2026-07-31
+
+### Added
+
+- **End-user customer accounts (#340):** First vertical slice — `Customer` model (separate from staff `User` and Factura `BillingCustomer`), register/login with `customer_access_token`, email verification + resend, `/customer` portal (profile + order list), nullable `order.customer_id`. MFA and self-serve invoices deferred. Smoke: `npm run test:customer-register-login --prefix front`.
+
+### Fixed
+
+- **GitHub license detection (#339):** Root file is now canonical `LICENSE` with the verbatim AGPL-3.0 text (project notice moved to README) so GitHub/Licensee can identify AGPL-3.0 instead of `NOASSERTION`.
+
+## [2.1.143] - 2026-07-31
+
+### Added
+
+- **Public About us (#338):** Marketing `/about` page (no login) for Satisfecho / Amvara Consulting S.L., linked from landing/features/pricing nav and footer Support; company line in the shared marketing footer; SEO/sitemap and `npm run test:about`.
+
+### Changed
+
+- **WhatsApp reservation reminders (#335):** Clarified shipped Twilio send vs book-page `wa.me` CTA in `docs/0024-whatsapp-reminder-notes.md` (operator checklist, env vars, sandbox/template gaps); archived the verified audit task after PASS checks.
+
+## [2.1.142] - 2026-07-30
+
+### Changed
+
+- **Loyalty Club settings (#337):** Settings → Loyalty Club is reorganized into Program / Earn & redeem / Bonuses & VIP / Public join / Members sections with per-field ⓘ tooltips (including clear Points vs Stamps Mode help), an improved members empty state, and matching i18n in all locales. UI/i18n only; earn/redeem behavior unchanged.
+- **Agent loop:** `pos-cursor-loop.sh` drops invalid env `GITHUB_TOKEN`/`GH_TOKEN` so `gh` keyring auth works, and continues the cycle when a single step fails.
+- **Offline deferred card (#333):** Archived the verified agents2 task after PASS checks (4 offline-cash pytest, landing smoke, i18n parity, staff queue→sync→mark-paid, API idempotency, no PAN/CVV or offline fiscal). The feature itself shipped in 2.1.140.
+- **Roadmap (#332):** Archived the verified agents2 docs task after PASS checks (ROADMAP structure, no stale Missing for 2026-07-26 CLOSED features, required doc links, recurring 008 cadence, changelog line). The rewrite itself shipped in 2.1.139.
+- **Production promote (#330):** Archived the verified agents2 ops task after PASS checks (GitHub release v2.1.138, `master` merge `f39127d7`, Deploy to amvara9 success, production landing/health/version smoke on satisfecho.de). Release/ops only; no new product code.
 - **Day close-out (#329):** Archived the verified agents2 meta task after PASS checks (GitHub open issues empty, live queue clear of leftover product work, day archives #311–#328 present, landing + loyalty public API smoke). Status inventory only; no product code.
 - **VeriFactu (#326):** Archived the verified agents2 task after PASS checks (hash-chain migration, 7 fiscal pytest, Settings Test save + Live 400, issue/cancel ValidarQR + sandbox, immutability 409→anulacion, landing smoke, docs 0018/0065). The feature itself shipped in 2.1.134.
 - **Price promotions (#322):** Archived the verified agents2 task after PASS checks (7 pytest, Settings → Promotions create/toggle, QR menu live prices, order-line promo audit/tax, tenant isolation, landing smoke, front build). The feature itself shipped in 2.1.135.
@@ -22,6 +61,29 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 - **Docs (0030):** Archived the verified agents2 task after PASS checks confirming `docs/README.md` lists the reservation confirmation email troubleshooting runbook under Email & SMTP and Quick links. The index itself shipped with the 0030 refresh in 2.1.100.
 - **Hardware printing (#317):** Archived the verified agents2 task after PASS checks (print_jobs migration/API, Settings → Printing, dry-run LAN agent kitchen ticket, offline browser fallback, 401 without agent token, landing smoke). The feature itself shipped in 2.1.136.
 - **Public pricing (#328):** Archived the verified agents2 task after PASS checks on the live `/pricing` page (saas config price/trial, paywall-inactive note, DE/ES i18n, `test:pricing`, and saas billing unit tests). The page itself shipped in 2.1.136.
+
+## [2.1.141] - 2026-07-30
+
+### Added
+
+- **Products / bulk import (#336):** Staff **Products → bulk import** accepts **CSV/TSV** (file or paste) through the same preview → confirm pipeline as JSON; common header aliases; optional AI column mapping when vision is configured (`POST /products/bulk-import/preview-csv`). Docs: `docs/0062-pos-migration-import.md`.
+
+## [2.1.140] - 2026-07-27
+
+### Added
+
+- **Loyalty VIP + referral (#334):** Tenant-configurable VIP silver/gold thresholds on **lifetime earn** (not balance), surfaced on staff member list and public card; referral codes/links award referrer (and optional invitee) units once on successful referred join. Settings → Loyalty club; see `docs/0066-club-loyalty.md`.
+- **Offline deferred card (#333):** Staff offline sale panel can queue `payment_intent=card` (intent metadata only — no PAN/CVV). Sync creates an unpaid take-away order; card is collected online after reconnect. True offline card capture and offline fiscal numbering remain blocked; ADR updated in `docs/0063-offline-capable-client.md`.
+
+## [2.1.139] - 2026-07-26
+
+### Added
+
+- **Overnight completeness (#331):** Split bill **by line** (pick order items in the payment modal; tracked via `order_payment_item`), loyalty **birthday bonus** units (program setting + optional birthday on join; awarded once per year on a paid order), and German **TSE auto-sign** when offline-cash sales sync (plus a payment audit leg). See `docs/0071-split-bill.md`, `docs/0066-club-loyalty.md`, `docs/0072-tse-fiscal-compliance.md`.
+
+### Changed
+
+- **Roadmap (#332):** Rewrote root `ROADMAP.md` into short Shipped / In progress / Deferred tables (links to `docs/` + issues); removed the inline rate-limit strategy draft (still in `docs/0020`); synced `docs/0032` #52 statuses for split bill, promos, join tables, and birthdays; documented recurring refresh with agent **008** / `docs/agent-loop.md`.
 
 ## [2.1.138] - 2026-07-26
 

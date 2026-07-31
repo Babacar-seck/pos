@@ -317,6 +317,65 @@ class PasswordResetToken(SQLModel, table=True):
     )
 
 
+class Customer(SQLModel, table=True):
+    """
+    End-user diner account (registration / login / order history).
+    Separate from staff User and from tenant-scoped BillingCustomer (Factura CRM).
+    """
+
+    __tablename__ = "customer"
+
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True, max_length=255)
+    hashed_password: str
+    full_name: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=64)
+    business_name: str | None = Field(default=None, max_length=255)
+    tax_id: str | None = Field(default=None, max_length=64)
+    address: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    email_verified: bool = Field(default=False)
+    email_verification_token_hash: str | None = Field(default=None, max_length=64, index=True)
+    email_verification_sent_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    token_version: int = Field(default=0)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class CustomerRegister(SQLModel):
+    email: str
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str | None = Field(default=None, max_length=255)
+
+
+class CustomerLogin(SQLModel):
+    email: str
+    password: str
+
+
+class CustomerResendVerification(SQLModel):
+    email: str
+
+
+class CustomerResponse(SQLModel):
+    id: int
+    email: str
+    full_name: str | None = None
+    phone: str | None = None
+    business_name: str | None = None
+    tax_id: str | None = None
+    address: str | None = None
+    email_verified: bool = False
+    created_at: datetime | None = None
+
+
 class LoginEvent(SQLModel, table=True):
     """Successful login audit row for platform operator metrics (no PII in API responses)."""
 
@@ -852,6 +911,14 @@ class LoyaltyProgram(TenantMixin, table=True):
     earn_units_per_order: int = Field(default=1, ge=0)
     redemption_threshold: int = Field(default=10, ge=1)
     reward_discount_cents: int = Field(default=500, ge=0)
+    # Extra units once per year when member pays on their birthday (0 = disabled).
+    birthday_bonus_units: int = Field(default=0, ge=0)
+    # VIP thresholds on lifetime earn units (0 = that tier disabled). Gold should be >= silver when both set.
+    vip_silver_min_lifetime_units: int = Field(default=0, ge=0)
+    vip_gold_min_lifetime_units: int = Field(default=0, ge=0)
+    # Referral: units awarded to referrer (and optionally invitee) on successful referred join (0 = off).
+    referral_bonus_units: int = Field(default=0, ge=0)
+    referral_invitee_bonus_units: int = Field(default=0, ge=0)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -871,6 +938,16 @@ class LoyaltyMembership(TenantMixin, table=True):
     phone: str | None = Field(default=None, max_length=40, index=True)
     member_token: str = Field(max_length=64, unique=True, index=True)
     balance: int = Field(default=0, ge=0)
+    # Cumulative positive earn units (VIP tiers); redeem/adjust do not change this.
+    lifetime_earn_units: int = Field(default=0, ge=0)
+    referral_code: str = Field(max_length=32, unique=True, index=True)
+    referred_by_membership_id: int | None = Field(
+        default=None, foreign_key="loyalty_membership.id", index=True
+    )
+    referral_reward_granted: bool = Field(default=False)
+    birthday_month: int | None = Field(default=None)  # 1–12
+    birthday_day: int | None = Field(default=None)  # 1–31
+    birthday_bonus_year: int | None = Field(default=None)  # last calendar year bonus awarded
     joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -1057,6 +1134,8 @@ class Order(TenantMixin, table=True):
     session_id: str | None = Field(default=None, index=True)  # Unique session identifier per browser
     customer_name: str | None = Field(default=None, index=True)  # Optional customer name for restaurant staff
     billing_customer_id: int | None = Field(default=None, foreign_key="billing_customer.id", index=True)  # For Factura
+    # End-user account (Customer); optional — distinct from billing_customer_id
+    customer_id: int | None = Field(default=None, foreign_key="customer.id", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Cancellation tracking
@@ -1109,6 +1188,7 @@ class Order(TenantMixin, table=True):
 
     items: list["OrderItem"] = Relationship(back_populates="order")
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
+    customer: Customer | None = Relationship()
 
 
 class OrderPayment(TenantMixin, table=True):
@@ -1127,6 +1207,17 @@ class OrderPayment(TenantMixin, table=True):
     paid_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     voided_at: datetime | None = None
     note: str | None = Field(default=None, max_length=500)
+
+
+class OrderPaymentItem(TenantMixin, table=True):
+    """Line allocation for a split-by-line payment leg (#318 / #331)."""
+
+    __tablename__ = "order_payment_item"
+
+    id: int | None = Field(default=None, primary_key=True)
+    order_payment_id: int = Field(foreign_key="order_payment.id", index=True)
+    order_item_id: int = Field(foreign_key="orderitem.id", index=True)
+    amount_cents: int = Field(ge=1)
 
 
 class OfflineOrderIdempotency(TenantMixin, table=True):
@@ -1393,6 +1484,11 @@ class LoyaltyProgramUpdate(SQLModel):
     earn_units_per_order: int | None = Field(default=None, ge=0)
     redemption_threshold: int | None = Field(default=None, ge=1)
     reward_discount_cents: int | None = Field(default=None, ge=0)
+    birthday_bonus_units: int | None = Field(default=None, ge=0)
+    vip_silver_min_lifetime_units: int | None = Field(default=None, ge=0)
+    vip_gold_min_lifetime_units: int | None = Field(default=None, ge=0)
+    referral_bonus_units: int | None = Field(default=None, ge=0)
+    referral_invitee_bonus_units: int | None = Field(default=None, ge=0)
 
 
 class LoyaltyJoinCreate(SQLModel):
@@ -1401,6 +1497,10 @@ class LoyaltyJoinCreate(SQLModel):
     display_name: str = Field(max_length=200)
     email: str | None = Field(default=None, max_length=320)
     phone: str | None = Field(default=None, max_length=40)
+    birthday_month: int | None = Field(default=None, ge=1, le=12)
+    birthday_day: int | None = Field(default=None, ge=1, le=31)
+    # Opaque referral code from an existing member (optional).
+    referral_code: str | None = Field(default=None, max_length=32)
 
 
 class LoyaltyAdjustCreate(SQLModel):
@@ -1606,17 +1706,28 @@ class OrderMarkPaid(SQLModel):
 
 
 class OrderPaymentCreate(SQLModel):
-    """Staff records a partial or settling payment leg (#318)."""
+    """Staff records a partial or settling payment leg (#318).
 
-    amount_cents: int = Field(ge=1)
+    Provide either ``amount_cents`` (split by amount) or non-empty ``order_item_ids``
+    (split by line; amount is derived from those lines).
+    """
+
+    amount_cents: int | None = Field(default=None, ge=1)
     payment_method: str = "cash"
     payer_label: str | None = Field(default=None, max_length=120)
     tip_amount_cents: int | None = Field(default=None, ge=0)
     note: str | None = Field(default=None, max_length=500)
+    order_item_ids: list[int] | None = None
 
 
 class OfflineCashOrderCreate(SQLModel):
-    """Staff offline → online cash sale sync (idempotent). See docs/0063-offline-capable-client.md."""
+    """Staff offline → online sale sync (idempotent). See docs/0063-offline-capable-client.md.
+
+    ``payment_intent``:
+    - ``cash`` (default): create paid cash order on sync (MVP #319).
+    - ``card``: create unpaid order; staff collects card online after reconnect (#333).
+      Never stores PAN/CVV — intent metadata only.
+    """
 
     idempotency_key: str = Field(min_length=8, max_length=64)
     table_id: int
@@ -1625,6 +1736,7 @@ class OfflineCashOrderCreate(SQLModel):
     customer_name: str | None = None
     # Client clock at queue time (advisory only; server timestamps win).
     client_created_at: datetime | None = None
+    payment_intent: str = "cash"  # cash | card
 
 
 class OrderBillingCustomerSet(SQLModel):

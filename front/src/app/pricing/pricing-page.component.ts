@@ -24,6 +24,7 @@ import { LandingSiteFooterComponent } from '../shared/landing-site-footer.compon
           <a routerLink="/pricing" class="pricing-nav__link pricing-nav__link--active">{{
             'LANDING.NAV_PRICING' | translate
           }}</a>
+          <a routerLink="/about" class="pricing-nav__link">{{ 'LANDING.NAV_ABOUT' | translate }}</a>
           <a routerLink="/" fragment="guests" class="pricing-nav__link">{{ 'LANDING.NAV_GUESTS' | translate }}</a>
           <a routerLink="/" fragment="demo" class="pricing-nav__link">{{ 'LANDING.NAV_DEMO' | translate }}</a>
         </div>

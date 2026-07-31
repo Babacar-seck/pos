@@ -133,6 +133,48 @@ class TestProductBulkImport(PgClientTestCase):
         self.assertEqual(result.created, 1)
         self.assertEqual(result.skipped, 1)
 
+    def test_preview_csv_api(self):
+        csv_text = "name,price,category\nPaella,14.5,Main Course\n"
+        r = self.client.post(
+            "/products/bulk-import/preview-csv",
+            json={"csv": csv_text},
+            headers=self.headers,
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        body = r.json()
+        self.assertEqual(body["summary"]["valid"], 1)
+        self.assertEqual(body["items"][0]["name"], "Paella")
+        self.assertEqual(body["items"][0]["price_cents"], 1450)
+
+    def test_preview_csv_api_aliases(self):
+        csv_text = "producto,precio\nTortilla,5.0\n"
+        r = self.client.post(
+            "/products/bulk-import/preview-csv",
+            json={"csv": csv_text},
+            headers=self.headers,
+        )
+        self.assertEqual(r.status_code, 200, r.text)
+        self.assertEqual(r.json()["items"][0]["name"], "Tortilla")
+
+    def test_preview_csv_rejects_unknown_columns(self):
+        r = self.client.post(
+            "/products/bulk-import/preview-csv",
+            json={"csv": "name,price,sku\nA,1.0,X\n"},
+            headers=self.headers,
+        )
+        self.assertEqual(r.status_code, 400, r.text)
+        self.assertIn("unknown_csv_columns", r.json()["detail"])
+
+    def test_preview_csv_ai_requires_vision(self):
+        r = self.client.post(
+            "/products/bulk-import/preview-csv",
+            json={"csv": "name,price,sku\nA,1.0,X\n", "use_ai_mapping": True},
+            headers=self.headers,
+        )
+        # Without PRODUCT_VISION_API_KEY this must not silently import.
+        self.assertEqual(r.status_code, 503, r.text)
+        self.assertEqual(r.json()["detail"], "product_vision_not_configured")
+
 
 if __name__ == "__main__":
     unittest.main()

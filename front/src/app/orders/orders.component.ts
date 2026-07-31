@@ -1314,6 +1314,34 @@ ModuleRegistry.registerModules([
                       </ul>
                     }
                     @if (!paymentModalFinishMode() && paymentAmountRemainingCents(payOrder) > 0) {
+                      <div class="form-group" data-testid="split-by-line">
+                        <label>{{ 'ORDERS.SPLIT_BY_LINE' | translate }}</label>
+                        <p class="modal-hint">{{ 'ORDERS.SPLIT_BY_LINE_HINT' | translate }}</p>
+                        <ul class="split-line-list">
+                          @for (item of payableSplitLines(payOrder); track item.id) {
+                            <li>
+                              <label class="split-line-row">
+                                <input
+                                  type="checkbox"
+                                  [checked]="isSplitLineSelected(item.id)"
+                                  (change)="toggleSplitLine(item.id)"
+                                  [attr.data-testid]="'split-line-' + item.id"
+                                />
+                                <span>
+                                  {{ item.quantity }}× {{ item.product_name }}
+                                  — {{ formatPrice((item.price_cents || 0) * (item.quantity || 0)) }}
+                                </span>
+                              </label>
+                            </li>
+                          }
+                        </ul>
+                        @if (selectedSplitLineTotalCents(payOrder) > 0) {
+                          <p class="modal-hint" data-testid="split-line-total">
+                            {{ 'ORDERS.SPLIT_LINE_TOTAL' | translate }}:
+                            {{ formatPrice(selectedSplitLineTotalCents(payOrder)) }}
+                          </p>
+                        }
+                      </div>
                       <div class="form-group">
                         <label for="partial-pay-amount">{{ 'ORDERS.PARTIAL_PAYMENT_AMOUNT' | translate }}</label>
                         <input
@@ -1324,6 +1352,7 @@ ModuleRegistry.registerModules([
                           [(ngModel)]="partialPaymentAmountInput"
                           name="partialPaymentAmount"
                           data-testid="partial-pay-amount"
+                          [disabled]="selectedSplitLineIds.size > 0"
                         />
                       </div>
                       <div class="form-group">
@@ -2413,6 +2442,21 @@ ModuleRegistry.registerModules([
       font-size: 0.875rem;
       color: var(--color-text-muted, #666);
     }
+    .split-line-list {
+      list-style: none;
+      margin: 0.35rem 0 0.5rem;
+      padding: 0;
+      max-height: 10rem;
+      overflow: auto;
+    }
+    .split-line-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
     .split-pay-summary .btn {
       margin-bottom: var(--space-3);
     }
@@ -2535,6 +2579,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
   /** Split-bill partial payment amount (major units) */
   partialPaymentAmountInput = '';
   partialPaymentPayerLabel = '';
+  /** Split-by-line: selected order item ids in the payment modal (#331). */
+  selectedSplitLineIds = new Set<number>();
   processingPayment = signal(false);
   statusDropdownOpen = signal<number | null>(null); // Order ID for which dropdown is open
   itemStatusDropdownOpen = signal<string | null>(null); // "orderId-itemId" for which dropdown is open
@@ -4396,6 +4442,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipAmountInput = '';
     this.partialPaymentAmountInput = '';
     this.partialPaymentPayerLabel = '';
+    this.selectedSplitLineIds = new Set();
   }
 
   openFinishPaymentModal(order: Order) {
@@ -4408,6 +4455,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipAmountInput = '';
     this.partialPaymentAmountInput = '';
     this.partialPaymentPayerLabel = '';
+    this.selectedSplitLineIds = new Set();
   }
 
   closePaymentModal() {
@@ -4419,6 +4467,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.paymentTipAmountInput = '';
     this.partialPaymentAmountInput = '';
     this.partialPaymentPayerLabel = '';
+    this.selectedSplitLineIds = new Set();
   }
 
   paymentAmountDueCents(order: Order): number {
@@ -4436,54 +4485,123 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return Math.max(0, this.paymentAmountDueCents(order) - paid);
   }
 
+  payableSplitLines(order: Order): OrderItem[] {
+    const allocated = new Set<number>();
+    for (const p of order.payments || []) {
+      for (const id of p.order_item_ids || []) {
+        allocated.add(id);
+      }
+    }
+    return (order.items || []).filter(
+      (i) =>
+        i.id != null &&
+        !i.removed_by_customer &&
+        i.status !== 'cancelled' &&
+        !allocated.has(i.id),
+    );
+  }
+
+  isSplitLineSelected(itemId: number | undefined | null): boolean {
+    return itemId != null && this.selectedSplitLineIds.has(itemId);
+  }
+
+  toggleSplitLine(itemId: number | undefined | null): void {
+    if (itemId == null) return;
+    if (this.selectedSplitLineIds.has(itemId)) {
+      this.selectedSplitLineIds.delete(itemId);
+    } else {
+      this.selectedSplitLineIds.add(itemId);
+    }
+    // Force change detection for Set mutations.
+    this.selectedSplitLineIds = new Set(this.selectedSplitLineIds);
+    if (this.selectedSplitLineIds.size > 0) {
+      this.partialPaymentAmountInput = '';
+    }
+  }
+
+  selectedSplitLineTotalCents(order: Order): number {
+    const selected = this.selectedSplitLineIds;
+    if (selected.size === 0) return 0;
+    return this.payableSplitLines(order)
+      .filter((i) => i.id != null && selected.has(i.id))
+      .reduce((s, i) => s + (i.price_cents || 0) * (i.quantity || 0), 0);
+  }
+
   confirmPartialPayment() {
     const order = this.orderToMarkPaid();
     if (!order || !this.paymentMethod) return;
-    const cents = this.parseMoneyMajorToCents(this.partialPaymentAmountInput);
-    if (cents < 1) {
-      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_AMOUNT_REQUIRED'), 'error');
-      return;
-    }
+    const lineIds = Array.from(this.selectedSplitLineIds);
     const remaining = this.paymentAmountRemainingCents(order);
-    if (cents > remaining) {
-      this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_EXCEEDS'), 'error');
-      return;
-    }
-    this.processingPayment.set(true);
-    this.api
-      .recordOrderPayment(order.id, {
+    let body: {
+      amount_cents?: number;
+      payment_method: string;
+      payer_label?: string | null;
+      order_item_ids?: number[];
+    };
+    if (lineIds.length > 0) {
+      const lineTotal = this.selectedSplitLineTotalCents(order);
+      if (lineTotal < 1) {
+        this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_AMOUNT_REQUIRED'), 'error');
+        return;
+      }
+      if (lineTotal > remaining) {
+        this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_EXCEEDS'), 'error');
+        return;
+      }
+      body = {
+        order_item_ids: lineIds,
+        payment_method: this.paymentMethod,
+        payer_label: this.partialPaymentPayerLabel.trim() || null,
+      };
+    } else {
+      const cents = this.parseMoneyMajorToCents(this.partialPaymentAmountInput);
+      if (cents < 1) {
+        this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_AMOUNT_REQUIRED'), 'error');
+        return;
+      }
+      if (cents > remaining) {
+        this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_EXCEEDS'), 'error');
+        return;
+      }
+      body = {
         amount_cents: cents,
         payment_method: this.paymentMethod,
         payer_label: this.partialPaymentPayerLabel.trim() || null,
-      })
-      .subscribe({
-        next: (res) => {
-          this.processingPayment.set(false);
-          this.partialPaymentAmountInput = '';
-          this.partialPaymentPayerLabel = '';
-          if (res.status === 'paid' || res.paid_at) {
-            this.showToast(this.translate.instant('COMMON.SUCCESS'), 'success');
-            this.closePaymentModal();
-            this.loadOrders();
-            return;
-          }
-          const updated: Order = {
-            ...order,
-            amount_due_cents: res.amount_due_cents,
-            amount_paid_cents: res.amount_paid_cents,
-            amount_remaining_cents: res.amount_remaining_cents,
-            payments: res.payments,
-          };
-          this.orderToMarkPaid.set(updated);
-          this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_RECORDED'), 'success');
+      };
+    }
+    this.processingPayment.set(true);
+    this.api.recordOrderPayment(order.id, body).subscribe({
+      next: (res) => {
+        this.processingPayment.set(false);
+        this.partialPaymentAmountInput = '';
+        this.partialPaymentPayerLabel = '';
+        this.selectedSplitLineIds = new Set();
+        if (res.status === 'paid' || res.paid_at) {
+          this.showToast(this.translate.instant('COMMON.SUCCESS'), 'success');
+          this.closePaymentModal();
           this.loadOrders();
-        },
-        error: (err) => {
-          this.processingPayment.set(false);
-          const detail = err?.error?.detail || this.translate.instant('ORDERS.FAILED_TO_MARK_PAID');
-          this.showToast(typeof detail === 'string' ? detail : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'), 'error');
-        },
-      });
+          return;
+        }
+        const updated: Order = {
+          ...order,
+          amount_due_cents: res.amount_due_cents,
+          amount_paid_cents: res.amount_paid_cents,
+          amount_remaining_cents: res.amount_remaining_cents,
+          payments: res.payments,
+        };
+        this.orderToMarkPaid.set(updated);
+        this.showToast(this.translate.instant('ORDERS.PARTIAL_PAYMENT_RECORDED'), 'success');
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.processingPayment.set(false);
+        const detail = err?.error?.detail || this.translate.instant('ORDERS.FAILED_TO_MARK_PAID');
+        this.showToast(
+          typeof detail === 'string' ? detail : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'),
+          'error',
+        );
+      },
+    });
   }
 
   orderPaymentSubtotal(order: Order): number {

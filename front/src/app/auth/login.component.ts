@@ -122,6 +122,8 @@ import { LegalLinksComponent } from '../shared/legal-links.component';
           <span class="auth-foot-sep" aria-hidden="true">·</span>
           <a routerLink="/courier/login" data-testid="login-courier-login">{{ 'LANDING.COURIER_LOGIN' | translate }}</a>
           <span class="auth-foot-sep" aria-hidden="true">·</span>
+          <a routerLink="/customer/login" data-testid="login-customer-login">{{ 'CUSTOMER_AUTH.TITLE' | translate }}</a>
+          <span class="auth-foot-sep" aria-hidden="true">·</span>
           <a routerLink="/provider/register" data-testid="login-provider-register">{{ 'LANDING.REGISTER_AS_PROVIDER' | translate }}</a>
           <span class="auth-foot-sep" aria-hidden="true">·</span>
           <a href="mailto:hello@satisfecho.de" data-testid="login-contact-us">{{ 'LANDING.CONTACT_US' | translate }}</a>

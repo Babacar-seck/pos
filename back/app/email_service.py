@@ -274,6 +274,58 @@ async def send_password_reset_email(
     return await send_email(to_email, subject, html_content, text_content, tenant=tenant)
 
 
+async def send_customer_verification_email(
+    to_email: str,
+    verify_url: str,
+    lang: str = "en",
+) -> bool:
+    """Send end-user customer email verification link (global SMTP)."""
+    subject = get_message("email_customer_verify_subject", lang)
+    heading = get_message("email_customer_verify_heading", lang)
+    intro = get_message("email_customer_verify_intro", lang)
+    button = get_message("email_customer_verify_button", lang)
+    copy_link = get_message("email_customer_verify_copy_link", lang)
+    disclaimer = get_message("email_customer_verify_disclaimer", lang)
+    automated = get_message("email_customer_verify_automated_footer", lang)
+    safe_url = html.escape(verify_url, quote=True)
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .button {{ display: inline-block; padding: 12px 24px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>{html.escape(heading)}</h1>
+            <p>{html.escape(intro)}</p>
+            <p style="text-align: center;">
+                <a href="{safe_url}" class="button">{html.escape(button)}</a>
+            </p>
+            <p>{html.escape(copy_link)}</p>
+            <p style="word-break: break-all; color: #666;">{safe_url}</p>
+            <p>{html.escape(disclaimer)}</p>
+            <hr>
+            <p style="color: #666; font-size: 12px;">{html.escape(automated)}</p>
+        </div>
+    </body>
+    </html>
+    """
+    text_content = f"""{heading}
+
+{intro}
+
+{verify_url}
+
+{disclaimer}
+"""
+    return await send_email(to_email, subject, html_content, text_content)
+
+
 async def send_reservation_confirmation(
     to_email: str,
     customer_name: str,

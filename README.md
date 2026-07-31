@@ -4,7 +4,7 @@
 
 [![version](https://img.shields.io/github/v/release/satisfecho/pos?style=flat-square&label=version)](https://github.com/satisfecho/pos/releases)
 [![build](https://img.shields.io/github/check-runs/satisfecho/pos/master?style=flat-square&label=build)](https://github.com/satisfecho/pos/actions)
-[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE.md)
+[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE)
 [![last commit](https://img.shields.io/github/last-commit/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/commits)
 [![stars](https://img.shields.io/github/stars/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/stargazers)
 
@@ -78,6 +78,7 @@ Staff dashboard, kitchen display, and customer menu — a quick visual sense of 
 | **Provider portal** | Suppliers register at `/provider/register`, log in at `/provider/login`, and manage their catalog at `/provider` (tile/list view, search, add/edit/delete products, company details). See [docs/0014-provider-portal.md](docs/0014-provider-portal.md). |
 | **Tenant branding (public)** | Per-tenant **background colour** (hex, e.g. RAL5002 Azul) and **header background image** for book, menu, and reservation-view pages. Set in Settings → Business profile; optional dark overlay when a header image is used. See [docs/0028-tenant-public-branding.md](docs/0028-tenant-public-branding.md). |
 | **Public features (marketing)** | Product capabilities for prospects at **`/features`** (no login). Linked from the landing nav (“View all features”); uses the same landing site footer as the home page. |
+| **Public about** | Company / About us at **`/about`** (no login). Names **Amvara Consulting S.L.**; linked from marketing nav and footer Support. |
 
 Planned but not yet implemented: batch order operations, and stricter “must pay before continuing” flow. See [ROADMAP.md](ROADMAP.md).
 
@@ -147,6 +148,7 @@ The quickest way to try POS out is to head over to [https://satisfecho.de/](http
 | **Public waiting list** | http://localhost:4202/waitlist/{tenantId} |
 | **Public features (marketing)** | http://localhost:4202/features |
 | **Public pricing** | http://localhost:4202/pricing |
+| **Public about** | http://localhost:4202/about |
 | **Public guest feedback** | http://localhost:4202/feedback/{tenantId} |
 | **Public Satisfecho Delivery (example tenant 1)** | http://localhost:4202/delivery/1 |
 | **Provider login** | http://localhost:4202/provider/login |
@@ -352,6 +354,27 @@ Full guide: [docs/0004-deployment.md](docs/0004-deployment.md).
 | **DB connection errors** | Ensure `db` is healthy (`docker compose -f docker-compose.yml -f docker-compose.dev.yml ps`); with Compose, use `DB_HOST=db`. Check credentials in `config.env`. |
 
 More: [docs/0004-deployment.md](docs/0004-deployment.md) and [AGENTS.md](AGENTS.md).
+
+---
+
+## License
+
+Copyright (C) 2025 POS2 contributors.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+The full license text is in [`LICENSE`](LICENSE) (GNU Affero General Public License v3.0).
 
 ---
 
