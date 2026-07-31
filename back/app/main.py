@@ -59,6 +59,7 @@ from .delivery_integration_routes import (
 )
 from .social_routes import router as social_router
 from .print_routes import staff_router as print_staff_router, agent_router as print_agent_router
+from .customer_routes import router as customer_router
 from .work_session_serialization import serialize_work_session, work_session_net_duration_minutes
 from .clock_qr_util import (
     clock_qr_tokens_equal,
@@ -584,6 +585,7 @@ app.include_router(
 )
 app.include_router(print_staff_router, tags=["Print jobs"])
 app.include_router(print_agent_router, tags=["Print agent"])
+app.include_router(customer_router, prefix="/customer", tags=["Customer accounts"])
 
 
 # ============ IMAGE OPTIMIZATION ============

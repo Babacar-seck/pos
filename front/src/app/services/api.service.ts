@@ -374,6 +374,28 @@ export interface CourierInfo {
   tenant_name?: string | null;
 }
 
+export interface CustomerInfo {
+  id: number;
+  email: string;
+  full_name?: string | null;
+  phone?: string | null;
+  business_name?: string | null;
+  tax_id?: string | null;
+  address?: string | null;
+  email_verified: boolean;
+  created_at?: string | null;
+}
+
+export interface CustomerOrderSummary {
+  id: number;
+  tenant_id: number;
+  status: string;
+  order_channel: string;
+  customer_name?: string | null;
+  created_at?: string | null;
+  paid_at?: string | null;
+}
+
 export interface PlatformInfo {
   id: number;
   email: string;
@@ -2188,6 +2210,73 @@ export class ApiService {
   // Courier portal (courier-scoped auth)
   getCourierMe(): Observable<CourierInfo> {
     return this.http.get<CourierInfo>(`${this.apiUrl}/courier/me`);
+  }
+
+  /** End-user customer account (#340) — uses customer_access_token cookie. */
+  customerRegister(body: {
+    email: string;
+    password: string;
+    full_name?: string;
+  }): Observable<{
+    status: string;
+    id: number;
+    email: string;
+    email_verified: boolean;
+    verification_email_sent: boolean;
+  }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{
+      status: string;
+      id: number;
+      email: string;
+      email_verified: boolean;
+      verification_email_sent: boolean;
+    }>(`${this.apiUrl}/customer/register`, body, { params });
+  }
+
+  customerLogin(email: string, password: string): Observable<{ status: string; email_verified: boolean }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{ status: string; email_verified: boolean }>(
+      `${this.apiUrl}/customer/token`,
+      { email, password },
+      { params, withCredentials: true },
+    );
+  }
+
+  customerLogout(): Observable<unknown> {
+    return this.http.post(`${this.apiUrl}/customer/logout`, {}, { withCredentials: true }).pipe(
+      catchError(() => of(undefined)),
+    );
+  }
+
+  getCustomerMe(): Observable<CustomerInfo> {
+    return this.http.get<CustomerInfo>(`${this.apiUrl}/customer/me`, { withCredentials: true });
+  }
+
+  customerVerifyEmail(token: string): Observable<{ status: string; email: string; email_verified: boolean }> {
+    const params = new HttpParams()
+      .set('token', token)
+      .set('lang', this.language.getLanguage());
+    return this.http.get<{ status: string; email: string; email_verified: boolean }>(
+      `${this.apiUrl}/customer/verify-email`,
+      { params },
+    );
+  }
+
+  customerResendVerification(email: string): Observable<{ status: string; message: string }> {
+    const params = new HttpParams().set('lang', this.language.getLanguage());
+    return this.http.post<{ status: string; message: string }>(
+      `${this.apiUrl}/customer/resend-verification`,
+      { email },
+      { params },
+    );
+  }
+
+  getCustomerOrders(): Observable<{ orders: CustomerOrderSummary[]; count: number }> {
+    return this.http.get<{ orders: CustomerOrderSummary[]; count: number }>(
+      `${this.apiUrl}/customer/orders`,
+      { withCredentials: true },
+    );
   }
 
   // Platform operator portal

@@ -91,7 +91,10 @@
     "TOO_MANY_ROWS": "CSV 超过最多 500 行产品限制。",
     "INVALID_CSV_ROW": "一个或多个 CSV 行包含无效值。",
     "UNKNOWN_CSV_COLUMNS": "未知 CSV 列：{{columns}}。请重命名、删除，或启用 AI 列映射。",
-    "UNMAPPED_CSV_COLUMNS": "AI 无法映射这些 CSV 列：{{columns}}。请重命名或删除后重试。"
+    "UNMAPPED_CSV_COLUMNS": "AI 无法映射这些 CSV 列：{{columns}}。请重命名或删除后重试。",
+    "CUSTOMER_PASSWORD_TOO_SHORT": "密码至少需要 {{min_length}} 个字符。",
+    "CUSTOMER_VERIFICATION_INVALID": "无效或未知的邮箱验证链接。",
+    "CUSTOMER_VERIFICATION_EXPIRED": "此邮箱验证链接已过期。请重新申请。"
   },
   "NAV": {
     "HOME": "首页",
@@ -2877,5 +2880,39 @@
     "OPEN_SOURCE_BODY": "产品以开源方式开发。您可以查看代码、按 AGPLv3 自托管，或使用 satisfecho.de 上的托管服务。",
     "CONTACT_TITLE": "联系",
     "CONTACT_BODY": "有关平台或托管服务的问题："
+  },
+  "CUSTOMER_AUTH": {
+    "TITLE": "Customer account",
+    "SUBTITLE": "Sign in to view your orders",
+    "REGISTER_TITLE": "Create customer account",
+    "REGISTER_SUBTITLE": "Register to track orders across restaurants",
+    "FULL_NAME": "Full name",
+    "FULL_NAME_PLACEHOLDER": "Your name",
+    "HAVE_ACCOUNT": "Already have an account?",
+    "NO_ACCOUNT": "Don't have an account?",
+    "BACK_STAFF_LOGIN": "Staff login",
+    "REGISTER_SUCCESS": "Account created. Check your email to verify, then sign in.",
+    "VERIFY_TITLE": "Verify email",
+    "VERIFY_WORKING": "Verifying your email…",
+    "VERIFY_SUCCESS": "Email verified. You can sign in now.",
+    "VERIFY_FAILED": "Could not verify this link.",
+    "GO_LOGIN": "Sign in",
+    "EMAIL_NOT_VERIFIED": "Your email is not verified yet. Check your inbox or resend the link.",
+    "RESEND_VERIFICATION": "Resend verification email",
+    "RESEND_SENT": "If an unverified account exists, a new link was sent."
+  },
+  "CUSTOMER_HOME": {
+    "TITLE": "My account",
+    "SIGNED_IN_AS": "Signed in as",
+    "LOGOUT": "Log out",
+    "ORDERS_TITLE": "Your orders",
+    "ORDERS_EMPTY": "No orders linked to this account yet.",
+    "ORDERS_HINT": "Orders you place while signed in will appear here.",
+    "EMAIL_VERIFIED": "Email verified",
+    "EMAIL_UNVERIFIED": "Email not verified",
+    "COL_ID": "Order",
+    "COL_STATUS": "Status",
+    "COL_DATE": "Date",
+    "COL_CHANNEL": "Channel"
   }
 }

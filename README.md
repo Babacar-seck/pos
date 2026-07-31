@@ -4,7 +4,7 @@
 
 [![version](https://img.shields.io/github/v/release/satisfecho/pos?style=flat-square&label=version)](https://github.com/satisfecho/pos/releases)
 [![build](https://img.shields.io/github/check-runs/satisfecho/pos/master?style=flat-square&label=build)](https://github.com/satisfecho/pos/actions)
-[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE.md)
+[![license](https://img.shields.io/github/license/satisfecho/pos?style=flat-square)](LICENSE)
 [![last commit](https://img.shields.io/github/last-commit/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/commits)
 [![stars](https://img.shields.io/github/stars/satisfecho/pos?style=flat-square)](https://github.com/satisfecho/pos/stargazers)
 
@@ -354,6 +354,27 @@ Full guide: [docs/0004-deployment.md](docs/0004-deployment.md).
 | **DB connection errors** | Ensure `db` is healthy (`docker compose -f docker-compose.yml -f docker-compose.dev.yml ps`); with Compose, use `DB_HOST=db`. Check credentials in `config.env`. |
 
 More: [docs/0004-deployment.md](docs/0004-deployment.md) and [AGENTS.md](AGENTS.md).
+
+---
+
+## License
+
+Copyright (C) 2025 POS2 contributors.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License
+for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+The full license text is in [`LICENSE`](LICENSE) (GNU Affero General Public License v3.0).
 
 ---
 

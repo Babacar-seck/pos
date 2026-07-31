@@ -393,6 +393,16 @@ npm run test:provider-register --prefix front
 - **Env:** `BASE_URL`, `PROVIDER_NAME`, `PROVIDER_EMAIL` (default: `provider-<timestamp>@amvara.de`), `PROVIDER_PASSWORD`, `PROVIDER_FULL_NAME`, `HEADLESS`.
 - Opens `/provider/register`, fills form, submits; asserts success or reports error.
 
+**End-user customer register + login** (#340; creates a customer account; no cleanup):
+
+```bash
+npm run test:customer-register-login --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-customer-register-login.mjs
+```
+
+- **Env:** `BASE_URL`, `CUSTOMER_EMAIL` (default: `customer-<timestamp>@amvara.de`), `CUSTOMER_PASSWORD`, `CUSTOMER_FULL_NAME`, `HEADLESS`.
+- Opens `/customer/register`, submits, then `/customer/login` → `/customer`; asserts empty orders state.
+
 **Provider login + add product** (requires an existing provider account):
 
 ```bash
@@ -715,6 +725,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
+| `test:customer-register-login` | `scripts/test-customer-register-login.mjs` |
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |

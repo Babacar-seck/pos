@@ -215,4 +215,5 @@ Exit 0 means tenant 1 has T01–T10 with the correct seat counts; exit 1 reports
 - **Public Satisfecho Delivery:** http://localhost:4202/delivery/{tenantId}
 - **Public features (marketing):** http://localhost:4202/features — no login
 - **Courier portal:** http://localhost:4202/courier (login `/courier/login`; seed env `COURIER_EMAIL` / `COURIER_PASSWORD`, see Courier portal above)
+- **End-user customer portal:** http://localhost:4202/customer (register `/customer/register`, login `/customer/login`, verify `/customer/verify-email`) — separate from staff `/customers` Factura CRM
 - **Platform operator:** http://localhost:4202/platform (login `/platform/login`)

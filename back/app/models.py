@@ -317,6 +317,65 @@ class PasswordResetToken(SQLModel, table=True):
     )
 
 
+class Customer(SQLModel, table=True):
+    """
+    End-user diner account (registration / login / order history).
+    Separate from staff User and from tenant-scoped BillingCustomer (Factura CRM).
+    """
+
+    __tablename__ = "customer"
+
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True, max_length=255)
+    hashed_password: str
+    full_name: str | None = Field(default=None, max_length=255)
+    phone: str | None = Field(default=None, max_length=64)
+    business_name: str | None = Field(default=None, max_length=255)
+    tax_id: str | None = Field(default=None, max_length=64)
+    address: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    email_verified: bool = Field(default=False)
+    email_verification_token_hash: str | None = Field(default=None, max_length=64, index=True)
+    email_verification_sent_at: datetime | None = Field(
+        default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
+    )
+    token_version: int = Field(default=0)
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class CustomerRegister(SQLModel):
+    email: str
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str | None = Field(default=None, max_length=255)
+
+
+class CustomerLogin(SQLModel):
+    email: str
+    password: str
+
+
+class CustomerResendVerification(SQLModel):
+    email: str
+
+
+class CustomerResponse(SQLModel):
+    id: int
+    email: str
+    full_name: str | None = None
+    phone: str | None = None
+    business_name: str | None = None
+    tax_id: str | None = None
+    address: str | None = None
+    email_verified: bool = False
+    created_at: datetime | None = None
+
+
 class LoginEvent(SQLModel, table=True):
     """Successful login audit row for platform operator metrics (no PII in API responses)."""
 
@@ -1075,6 +1134,8 @@ class Order(TenantMixin, table=True):
     session_id: str | None = Field(default=None, index=True)  # Unique session identifier per browser
     customer_name: str | None = Field(default=None, index=True)  # Optional customer name for restaurant staff
     billing_customer_id: int | None = Field(default=None, foreign_key="billing_customer.id", index=True)  # For Factura
+    # End-user account (Customer); optional — distinct from billing_customer_id
+    customer_id: int | None = Field(default=None, foreign_key="customer.id", index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     
     # Cancellation tracking
@@ -1127,6 +1188,7 @@ class Order(TenantMixin, table=True):
 
     items: list["OrderItem"] = Relationship(back_populates="order")
     billing_customer: BillingCustomer | None = Relationship(back_populates="orders")
+    customer: Customer | None = Relationship()
 
 
 class OrderPayment(TenantMixin, table=True):

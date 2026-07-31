@@ -8,6 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.144] - 2026-07-31
+
+### Added
+
+- **End-user customer accounts (#340):** First vertical slice — `Customer` model (separate from staff `User` and Factura `BillingCustomer`), register/login with `customer_access_token`, email verification + resend, `/customer` portal (profile + order list), nullable `order.customer_id`. MFA and self-serve invoices deferred. Smoke: `npm run test:customer-register-login --prefix front`.
+
+### Fixed
+
+- **GitHub license detection (#339):** Root file is now canonical `LICENSE` with the verbatim AGPL-3.0 text (project notice moved to README) so GitHub/Licensee can identify AGPL-3.0 instead of `NOASSERTION`.
+
 ## [2.1.143] - 2026-07-31
 
 ### Added

@@ -91,7 +91,10 @@
     "TOO_MANY_ROWS": "El CSV supera el màxim de 500 files de producte.",
     "INVALID_CSV_ROW": "Una o més files del CSV tenen valors invàlids.",
     "UNKNOWN_CSV_COLUMNS": "Columnes CSV desconegudes: {{columns}}. Canvieu-ne el nom, elimineu-les o activeu el mapatge amb IA.",
-    "UNMAPPED_CSV_COLUMNS": "La IA no ha pogut mapar aquestes columnes CSV: {{columns}}. Canvieu-ne el nom o elimineu-les i torneu-ho a provar."
+    "UNMAPPED_CSV_COLUMNS": "La IA no ha pogut mapar aquestes columnes CSV: {{columns}}. Canvieu-ne el nom o elimineu-les i torneu-ho a provar.",
+    "CUSTOMER_PASSWORD_TOO_SHORT": "La contrasenya ha de tenir com a mínim {{min_length}} caràcters.",
+    "CUSTOMER_VERIFICATION_INVALID": "Enllaç de verificació de correu no vàlid o desconegut.",
+    "CUSTOMER_VERIFICATION_EXPIRED": "Aquest enllaç de verificació ha caducat. Sol·liciteu-ne un de nou."
   },
   "NAV": {
     "HOME": "Inici",
@@ -2877,5 +2880,39 @@
     "OPEN_SOURCE_BODY": "El producte es desenvolupa en obert. Podeu revisar el codi, autoallotjar-lo sota AGPLv3 o usar el servei gestionat a satisfecho.de.",
     "CONTACT_TITLE": "Contacte",
     "CONTACT_BODY": "Preguntes sobre la plataforma o el servei allotjat:"
+  },
+  "CUSTOMER_AUTH": {
+    "TITLE": "Customer account",
+    "SUBTITLE": "Sign in to view your orders",
+    "REGISTER_TITLE": "Create customer account",
+    "REGISTER_SUBTITLE": "Register to track orders across restaurants",
+    "FULL_NAME": "Full name",
+    "FULL_NAME_PLACEHOLDER": "Your name",
+    "HAVE_ACCOUNT": "Already have an account?",
+    "NO_ACCOUNT": "Don't have an account?",
+    "BACK_STAFF_LOGIN": "Staff login",
+    "REGISTER_SUCCESS": "Account created. Check your email to verify, then sign in.",
+    "VERIFY_TITLE": "Verify email",
+    "VERIFY_WORKING": "Verifying your email…",
+    "VERIFY_SUCCESS": "Email verified. You can sign in now.",
+    "VERIFY_FAILED": "Could not verify this link.",
+    "GO_LOGIN": "Sign in",
+    "EMAIL_NOT_VERIFIED": "Your email is not verified yet. Check your inbox or resend the link.",
+    "RESEND_VERIFICATION": "Resend verification email",
+    "RESEND_SENT": "If an unverified account exists, a new link was sent."
+  },
+  "CUSTOMER_HOME": {
+    "TITLE": "My account",
+    "SIGNED_IN_AS": "Signed in as",
+    "LOGOUT": "Log out",
+    "ORDERS_TITLE": "Your orders",
+    "ORDERS_EMPTY": "No orders linked to this account yet.",
+    "ORDERS_HINT": "Orders you place while signed in will appear here.",
+    "EMAIL_VERIFIED": "Email verified",
+    "EMAIL_UNVERIFIED": "Email not verified",
+    "COL_ID": "Order",
+    "COL_STATUS": "Status",
+    "COL_DATE": "Date",
+    "COL_CHANNEL": "Channel"
   }
 }

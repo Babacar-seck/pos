@@ -91,7 +91,10 @@
     "TOO_MANY_ROWS": "CSV exceeds the maximum of 500 product rows.",
     "INVALID_CSV_ROW": "One or more CSV rows have invalid values.",
     "UNKNOWN_CSV_COLUMNS": "Unknown CSV columns: {{columns}}. Rename them to the supported headers, remove them, or enable AI column mapping.",
-    "UNMAPPED_CSV_COLUMNS": "AI could not map these CSV columns: {{columns}}. Rename or remove them and try again."
+    "UNMAPPED_CSV_COLUMNS": "AI could not map these CSV columns: {{columns}}. Rename or remove them and try again.",
+    "CUSTOMER_PASSWORD_TOO_SHORT": "پاس ورڈ کم از کم {{min_length}} حروف کا ہونا چاہیے۔",
+    "CUSTOMER_VERIFICATION_INVALID": "غلط یا نامعلوم ای میل تصدیقی لنک۔",
+    "CUSTOMER_VERIFICATION_EXPIRED": "یہ ای میل تصدیقی لنک ختم ہو چکا ہے۔ نیا درخواست کریں۔"
   },
   "NAV": {
     "HOME": "ہوم",
@@ -2877,5 +2880,39 @@
     "OPEN_SOURCE_BODY": "پروڈکٹ کھلے طور پر تیار ہوتا ہے۔ آپ کوڈ دیکھ سکتے ہیں، AGPLv3 کے تحت خود میزبانی کر سکتے ہیں، یا satisfecho.de پر منظم سروس استعمال کر سکتے ہیں۔",
     "CONTACT_TITLE": "رابطہ",
     "CONTACT_BODY": "پلیٹ فارم یا میزبانی شدہ سروس کے بارے میں سوالات:"
+  },
+  "CUSTOMER_AUTH": {
+    "TITLE": "Customer account",
+    "SUBTITLE": "Sign in to view your orders",
+    "REGISTER_TITLE": "Create customer account",
+    "REGISTER_SUBTITLE": "Register to track orders across restaurants",
+    "FULL_NAME": "Full name",
+    "FULL_NAME_PLACEHOLDER": "Your name",
+    "HAVE_ACCOUNT": "Already have an account?",
+    "NO_ACCOUNT": "Don't have an account?",
+    "BACK_STAFF_LOGIN": "Staff login",
+    "REGISTER_SUCCESS": "Account created. Check your email to verify, then sign in.",
+    "VERIFY_TITLE": "Verify email",
+    "VERIFY_WORKING": "Verifying your email…",
+    "VERIFY_SUCCESS": "Email verified. You can sign in now.",
+    "VERIFY_FAILED": "Could not verify this link.",
+    "GO_LOGIN": "Sign in",
+    "EMAIL_NOT_VERIFIED": "Your email is not verified yet. Check your inbox or resend the link.",
+    "RESEND_VERIFICATION": "Resend verification email",
+    "RESEND_SENT": "If an unverified account exists, a new link was sent."
+  },
+  "CUSTOMER_HOME": {
+    "TITLE": "My account",
+    "SIGNED_IN_AS": "Signed in as",
+    "LOGOUT": "Log out",
+    "ORDERS_TITLE": "Your orders",
+    "ORDERS_EMPTY": "No orders linked to this account yet.",
+    "ORDERS_HINT": "Orders you place while signed in will appear here.",
+    "EMAIL_VERIFIED": "Email verified",
+    "EMAIL_UNVERIFIED": "Email not verified",
+    "COL_ID": "Order",
+    "COL_STATUS": "Status",
+    "COL_DATE": "Date",
+    "COL_CHANNEL": "Channel"
   }
 }
