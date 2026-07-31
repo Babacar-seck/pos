@@ -234,7 +234,9 @@
     "QR_DEMO_SCAN_HINT": "Escanear con el móvil",
     "QR_DEMO_OPEN_MENU": "Abrir carta demo",
     "FEATURES_VIEW_ALL": "Ver todas las funciones",
-    "NAV_PRICING": "Precios"
+    "NAV_PRICING": "Precios",
+    "NAV_ABOUT": "Sobre nosotros",
+    "COMPANY_OPERATOR": "Operado por Amvara Consulting S.L."
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Carta",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "Nivel VIP",
     "REFERRAL_CODE": "Código de referido (opcional)",
     "REFERRAL_SHARE": "Comparte este enlace para que amigos se unan con tu referido:"
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "Empresa",
+    "TITLE": "Sobre Satisfecho",
+    "SUBTITLE": "Una plataforma open source para restaurantes: menús QR, pedidos, reservas y operaciones del día a día.",
+    "PRODUCT_TITLE": "Qué construimos",
+    "PRODUCT_BODY": "Satisfecho ayuda a los restaurantes a sustituir varias apps sueltas por una sola plataforma: menús digitales, pedidos, pantallas de cocina y barra, reservas, pagos e informes — alojada o autoalojada.",
+    "COMPANY_TITLE": "Quién la opera",
+    "COMPANY_BODY": "Satisfecho es operada por Amvara Consulting S.L., una empresa con sede en El Masnou (Barcelona), España.",
+    "OPEN_SOURCE_TITLE": "Código abierto",
+    "OPEN_SOURCE_BODY": "El producto se desarrolla en abierto. Puedes revisar el código, autoalojarlo bajo AGPLv3 o usar el servicio gestionado en satisfecho.de.",
+    "CONTACT_TITLE": "Contacto",
+    "CONTACT_BODY": "Preguntas sobre la plataforma o el servicio alojado:"
   }
 }

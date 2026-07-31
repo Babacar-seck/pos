@@ -234,7 +234,9 @@
     "QR_DEMO_STEP_3": "菜单更新一次 — 每个印刷二维码始终显示最新版本。",
     "QR_DEMO_SCAN_HINT": "用手机扫描",
     "QR_DEMO_OPEN_MENU": "打开演示菜单",
-    "NAV_PRICING": "定价"
+    "NAV_PRICING": "定价",
+    "NAV_ABOUT": "关于我们",
+    "COMPANY_OPERATOR": "由 Amvara Consulting S.L. 运营"
   },
   "FEATURES_PAGE": {
     "BADGE": "Full feature list",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "VIP 等级",
     "REFERRAL_CODE": "推荐码（可选）",
     "REFERRAL_SHARE": "分享此链接，让好友用你的推荐加入："
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "公司",
+    "TITLE": "关于 Satisfecho",
+    "SUBTITLE": "面向餐厅的开源平台：二维码菜单、点餐、预订与日常运营。",
+    "PRODUCT_TITLE": "我们做什么",
+    "PRODUCT_BODY": "Satisfecho 帮助餐厅用一个平台替代多种专用应用：数字菜单、客人点餐、厨吧显示、预订、支付与报表——可托管或自托管。",
+    "COMPANY_TITLE": "运营方",
+    "COMPANY_BODY": "Satisfecho 由 Amvara Consulting S.L. 运营，该公司位于西班牙巴塞罗那埃尔马斯诺（El Masnou）。",
+    "OPEN_SOURCE_TITLE": "开源",
+    "OPEN_SOURCE_BODY": "产品以开源方式开发。您可以查看代码、按 AGPLv3 自托管，或使用 satisfecho.de 上的托管服务。",
+    "CONTACT_TITLE": "联系",
+    "CONTACT_BODY": "有关平台或托管服务的问题："
   }
 }

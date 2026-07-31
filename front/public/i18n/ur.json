@@ -234,7 +234,9 @@
     "QR_DEMO_SCAN_HINT": "Scan with your phone",
     "QR_DEMO_OPEN_MENU": "Open demo menu",
     "FEATURES_VIEW_ALL": "View all features",
-    "NAV_PRICING": "قیمتیں"
+    "NAV_PRICING": "قیمتیں",
+    "NAV_ABOUT": "ہمارے بارے میں",
+    "COMPANY_OPERATOR": "Amvara Consulting S.L. کے زیر چلایا جاتا ہے"
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "مینو",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "VIP درجہ",
     "REFERRAL_CODE": "ریفرل کوڈ (اختیاری)",
     "REFERRAL_SHARE": "یہ لنک شیئر کریں تاکہ دوست آپ کے ریفرل سے جوائن کریں:"
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "کمپنی",
+    "TITLE": "Satisfecho کے بارے میں",
+    "SUBTITLE": "ریستورانوں کے لیے اوپن سورس پلیٹ فارم — QR مینو، آرڈر، ریزرویشن اور روزمرہ آپریشنز۔",
+    "PRODUCT_TITLE": "ہم کیا بناتے ہیں",
+    "PRODUCT_BODY": "Satisfecho ریستورانوں کو کئی الگ ایپس کی جگہ ایک پلیٹ فارم دیتا ہے: ڈیجیٹل مینو، آرڈرنگ، کچن اور بار ڈسپلے، ریزرویشن، ادائیگیاں اور رپورٹس — میزبانی شدہ یا خود میزبانی۔",
+    "COMPANY_TITLE": "کون چلاتا ہے",
+    "COMPANY_BODY": "Satisfecho کو Amvara Consulting S.L. چلاتا ہے، جو El Masnou (Barcelona)، اسپین میں واقع کمپنی ہے۔",
+    "OPEN_SOURCE_TITLE": "اوپن سورس",
+    "OPEN_SOURCE_BODY": "پروڈکٹ کھلے طور پر تیار ہوتا ہے۔ آپ کوڈ دیکھ سکتے ہیں، AGPLv3 کے تحت خود میزبانی کر سکتے ہیں، یا satisfecho.de پر منظم سروس استعمال کر سکتے ہیں۔",
+    "CONTACT_TITLE": "رابطہ",
+    "CONTACT_BODY": "پلیٹ فارم یا میزبانی شدہ سروس کے بارے میں سوالات:"
   }
 }

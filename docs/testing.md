@@ -366,6 +366,15 @@ npm run test:pricing --prefix front
 
 - No login. Fetches `GET /api/saas/config`, opens `/pricing` (must not redirect home), asserts translated hero, price and trial text matching config, self-host card, register CTA, and billing-active vs inactive note matching `enabled`. Fails on pageerror.
 
+**Public about page (`/about`):**
+
+```bash
+npm run test:about --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 node front/scripts/test-about.mjs
+```
+
+- No login. From home, asserts footer `data-testid="landing-about"` and company line with **Amvara Consulting S.L.**; opens `/about`, asserts translated hero, company section naming Amvara Consulting S.L., no pageerror.
+
 ---
 
 ### 5. Provider section
@@ -700,6 +709,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
 | `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:pricing` | `scripts/test-pricing.mjs` (public `/pricing`: live `GET /saas/config` price/trial, self-host card, billing note vs `enabled`; no login) |
+| `test:about` | `scripts/test-about.mjs` (public `/about`: footer About link, Amvara Consulting S.L. on page + footer; no login) |
 | Print agent (manual / API) | Backend: `pytest tests/test_print_jobs.py`; LAN dry-run: create agent in Settings → Printing, then `PRINT_AGENT_API_BASE=http://127.0.0.1:4202/api PRINT_AGENT_TOKEN=… PRINT_AGENT_DRY_RUN=1 python3 scripts/print-agent/print_agent.py` and enqueue via Orders → Print kitchen / invoice (`docs/0070-hardware-printing.md`) |
 | `test:feedback-public-i18n` | `scripts/test-feedback-public-i18n.mjs` (public `/feedback/:tenant` and `?token=`; locale picker en/de/fr/es/ca/zh-CN/hi; invalid `/feedback/0`; no raw `FEEDBACK.*` in DOM; document titles localized) |
 | `test:guest-feedback-staff` | `scripts/test-guest-feedback-staff.mjs` (staff `/guest-feedback`: login → shell + list GET; empty OK; no raw `FEEDBACK.*`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |

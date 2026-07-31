@@ -1,6 +1,6 @@
 {
   "name": "front",
-  "version": "2.1.142",
+  "version": "2.1.143",
   "scripts": {
     "ng": "ng",
     "prebuild": "node scripts/get-commit-hash.js",
@@ -21,6 +21,7 @@
     "test:landing-provider-links": "node scripts/test-landing-provider-links.mjs",
     "test:features": "node scripts/test-features.mjs",
     "test:pricing": "node scripts/test-pricing.mjs",
+    "test:about": "node scripts/test-about.mjs",
     "test:provider-register": "node scripts/test-provider-register.mjs",
     "test:provider-add-product": "node scripts/test-provider-add-product.mjs",
     "test:catalog": "node scripts/test-catalog.mjs",

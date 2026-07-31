@@ -24,6 +24,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Capture screenshots | [screenshots/README.md](screenshots/README.md) |
 | Security review notes (structured pass, not a pentest) | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) |
 | Browse public marketing features list (`/features`, no login) | [../README.md](../README.md) Access Points / Features — route `http://localhost:4202/features` |
+| Browse public About us (`/about`, no login; Amvara Consulting S.L.) | [../README.md](../README.md) Access Points — route `http://localhost:4202/about`; smoke: `npm run test:about --prefix front` |
 
 ---
 
@@ -68,6 +69,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0054-restaurant-groups.md](0054-restaurant-groups.md) | Restaurant groups: multi-location join codes; optional shared billing customers/products (issue #283). |
 | [0055-public-seo.md](0055-public-seo.md) | Public SEO for satisfecho.de: titles/meta/OG, robots.txt, sitemap.xml, noindex for staff shells (issue #307). |
 | Public `/features` page | Marketing capabilities grid for prospects (no login). Linked from landing nav; shares `app-landing-site-footer`. Indexed in root [README.md](../README.md) Features / Access Points; smoke: `npm run test:features --prefix front` ([testing.md](testing.md)). |
+| Public `/about` page | About us for Satisfecho / Amvara Consulting S.L. (no login). Linked from landing/features/pricing nav and footer Support; shares `app-landing-site-footer`. Smoke: `npm run test:about --prefix front` ([testing.md](testing.md)). |
 | [REVOLUT.md](REVOLUT.md) | Revolut Merchant API: checkout extension, sandbox CSR, redirect URLs, tenant payment setup. |
 
 ---

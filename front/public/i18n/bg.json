@@ -234,7 +234,9 @@
     "QR_DEMO_SCAN_HINT": "Scan with your phone",
     "QR_DEMO_OPEN_MENU": "Open demo menu",
     "FEATURES_VIEW_ALL": "View all features",
-    "NAV_PRICING": "Цени"
+    "NAV_PRICING": "Цени",
+    "NAV_ABOUT": "За нас",
+    "COMPANY_OPERATOR": "Управлявано от Amvara Consulting S.L."
   },
   "PUBLIC_MENU": {
     "PAGE_TITLE": "Меню",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "VIP ниво",
     "REFERRAL_CODE": "Код за препоръка (по избор)",
     "REFERRAL_SHARE": "Споделете тази връзка, за да се присъединят приятели с вашата препоръка:"
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "Компания",
+    "TITLE": "За Satisfecho",
+    "SUBTITLE": "Отворена платформа за ресторанти — QR менюта, поръчки, резервации и ежедневни операции.",
+    "PRODUCT_TITLE": "Какво създаваме",
+    "PRODUCT_BODY": "Satisfecho помага на ресторантите да заменят много отделни приложения с една платформа: дигитални менюта, поръчки, кухненски и бар дисплеи, резервации, плащания и отчети — хоствана или самостоятелно хоствана.",
+    "COMPANY_TITLE": "Кой я управлява",
+    "COMPANY_BODY": "Satisfecho се управлява от Amvara Consulting S.L., компания със седалище в El Masnou (Барселона), Испания.",
+    "OPEN_SOURCE_TITLE": "Отворен код",
+    "OPEN_SOURCE_BODY": "Продуктът се разработва открито. Можете да прегледате кода, да го хоствате сами под AGPLv3 или да ползвате управляваната услуга на satisfecho.de.",
+    "CONTACT_TITLE": "Контакт",
+    "CONTACT_BODY": "Въпроси за платформата или хостваната услуга:"
   }
 }

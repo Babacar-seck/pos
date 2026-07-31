@@ -234,7 +234,9 @@
     "QR_DEMO_STEP_3": "Actualitzeu la carta una vegada — cada QR imprès mostra sempre l'última versió.",
     "QR_DEMO_SCAN_HINT": "Escanejar amb el mòbil",
     "QR_DEMO_OPEN_MENU": "Obrir carta demo",
-    "NAV_PRICING": "Preus"
+    "NAV_PRICING": "Preus",
+    "NAV_ABOUT": "Qui som",
+    "COMPANY_OPERATOR": "Operat per Amvara Consulting S.L."
   },
   "FEATURES_PAGE": {
     "BADGE": "Llista completa de funcions",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "Nivell VIP",
     "REFERRAL_CODE": "Codi de referit (opcional)",
     "REFERRAL_SHARE": "Comparteix aquest enllaç perquè amics s'uneixin amb el teu referit:"
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "Empresa",
+    "TITLE": "Sobre Satisfecho",
+    "SUBTITLE": "Una plataforma de codi obert per a restaurants: menús QR, comandes, reserves i operacions del dia a dia.",
+    "PRODUCT_TITLE": "Què construïm",
+    "PRODUCT_BODY": "Satisfecho ajuda els restaurants a substituir diverses apps soltes per una sola plataforma: menús digitals, comandes, pantalles de cuina i barra, reserves, pagaments i informes — allotjada o autoallotjada.",
+    "COMPANY_TITLE": "Qui l’opera",
+    "COMPANY_BODY": "Satisfecho l’opera Amvara Consulting S.L., una empresa amb seu a El Masnou (Barcelona), Espanya.",
+    "OPEN_SOURCE_TITLE": "Codi obert",
+    "OPEN_SOURCE_BODY": "El producte es desenvolupa en obert. Podeu revisar el codi, autoallotjar-lo sota AGPLv3 o usar el servei gestionat a satisfecho.de.",
+    "CONTACT_TITLE": "Contacte",
+    "CONTACT_BODY": "Preguntes sobre la plataforma o el servei allotjat:"
   }
 }

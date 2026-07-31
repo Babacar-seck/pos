@@ -8,6 +8,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.143] - 2026-07-31
+
+### Added
+
+- **Public About us (#338):** Marketing `/about` page (no login) for Satisfecho / Amvara Consulting S.L., linked from landing/features/pricing nav and footer Support; company line in the shared marketing footer; SEO/sitemap and `npm run test:about`.
+
 ### Changed
 
 - **WhatsApp reservation reminders (#335):** Clarified shipped Twilio send vs book-page `wa.me` CTA in `docs/0024-whatsapp-reminder-notes.md` (operator checklist, env vars, sandbox/template gaps); archived the verified audit task after PASS checks.

@@ -14,6 +14,7 @@ export const routes: Routes = [
   { path: '', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent) },
   { path: 'features', loadComponent: () => import('./features/features.component').then(m => m.FeaturesComponent) },
   { path: 'pricing', loadComponent: () => import('./pricing/pricing-page.component').then(m => m.PricingPageComponent) },
+  { path: 'about', loadComponent: () => import('./about/about-page.component').then(m => m.AboutPageComponent) },
   { path: 'login', loadComponent: () => import('./auth/login.component').then(m => m.LoginComponent) },
   { path: 'register', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },
   { path: 'signup', loadComponent: () => import('./auth/register.component').then(m => m.RegisterComponent) },

@@ -234,7 +234,9 @@
     "QR_DEMO_STEP_3": "Update your menu once — every printed QR always shows the latest version.",
     "QR_DEMO_SCAN_HINT": "Scan with your phone",
     "QR_DEMO_OPEN_MENU": "Open demo menu",
-    "NAV_PRICING": "Pricing"
+    "NAV_PRICING": "Pricing",
+    "NAV_ABOUT": "About us",
+    "COMPANY_OPERATOR": "Operated by Amvara Consulting S.L."
   },
   "FEATURES_PAGE": {
     "BADGE": "Full feature list",
@@ -2862,5 +2864,18 @@
     "VIP_TIER": "VIP tier",
     "REFERRAL_CODE": "Referral code (optional)",
     "REFERRAL_SHARE": "Share this link so friends can join with your referral:"
+  },
+  "ABOUT_PAGE": {
+    "BADGE": "Company",
+    "TITLE": "About Satisfecho",
+    "SUBTITLE": "An open-source restaurant platform for QR menus, ordering, reservations, and day-to-day operations.",
+    "PRODUCT_TITLE": "What we build",
+    "PRODUCT_BODY": "Satisfecho helps restaurants replace a stack of single-purpose apps with one platform: digital menus, guest ordering, kitchen and bar displays, reservations, payments, and reports — hosted or self-hosted.",
+    "COMPANY_TITLE": "Who operates it",
+    "COMPANY_BODY": "Satisfecho is operated by Amvara Consulting S.L., a company based in El Masnou (Barcelona), Spain.",
+    "OPEN_SOURCE_TITLE": "Open source",
+    "OPEN_SOURCE_BODY": "The product is developed in the open. You can inspect the code, self-host under AGPLv3, or use the managed service at satisfecho.de.",
+    "CONTACT_TITLE": "Contact",
+    "CONTACT_BODY": "Questions about the platform or hosted service:"
   }
 }

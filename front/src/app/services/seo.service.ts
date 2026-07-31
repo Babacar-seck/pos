@@ -28,6 +28,11 @@ const MARKETING_PAGES: Record<string, Omit<SeoPageConfig, 'path'>> = {
     description:
       'Everything Satisfecho offers: QR menus, online payments, kitchen displays, shift planning, inventory, and more — one platform for guests, staff, and owners.',
   },
+  '/about': {
+    title: `About us — ${BRAND}`,
+    description:
+      'Satisfecho is an open-source restaurant platform operated by Amvara Consulting S.L. Learn who we are and how the product helps restaurants.',
+  },
   '/register': {
     title: `Create your restaurant — ${BRAND}`,
     description: `Sign up for ${BRAND} and launch QR menus, ordering, and reservations for your restaurant.`,
