@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **End-user customer accounts (#340):** Archived the verified agents2 task after PASS checks (migrate, 7 pytest, API smoke, Puppeteer register→login→empty orders, staff Factura intact, front build). The feature itself shipped in 2.1.144.
+
 ## [2.1.144] - 2026-07-31
 
 ### Added

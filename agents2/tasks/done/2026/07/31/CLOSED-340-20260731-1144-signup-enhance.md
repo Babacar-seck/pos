@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** First-slice end-user customer accounts (register/login/verify/orders home) were implemented and handed off for verification.
+- **What was done:** Shipped `customer` table + `/customer/*` API and SPA routes with a separate `customer_access_token`; docs/CHANGELOG/tests updated; MFA, self-serve invoices, and order auto-link deferred.
+- **What was tested:** Migrate, 7 pytest, API smoke (401/201), Puppeteer register→login→empty orders, staff Factura intact, front build — overall **PASS** (email verify skipped when PUBLIC_APP_BASE_URL unset).
+- **Why closed:** All pass criteria for the agreed first slice passed.
+- **Closed at (UTC):** 2026-07-31 12:06
+---
+
 # Signup enhance (end-user customer accounts)
 
 ## GitHub Issues
@@ -58,3 +68,38 @@ Issue body summarized for product intent only; no secrets copied.
 5. **Staff Factura intact:** open `/customers` as staff (existing login) — still Billing Customers CRM; must not require end-user `Customer` cookie.
 6. **Optional email verify:** with `PUBLIC_APP_BASE_URL` and SMTP set, register and open the emailed `/customer/verify-email?token=…` link; `/customer` should show email verified.
 7. **Front build:** `docker logs --since 10m pos-front` — no TS/NG compile errors after customer pages load.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-07-31 12:04:14 start → 12:05:08 end. Log window: `pos-back` / `pos-front` `--since 15m` around verification.
+2. **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:4202`; branch `development` @ `f156fd7d`.
+3. **What was tested:** Testing instructions §1–7 (migrate, pytest, API smoke, Puppeteer customer register/login, staff Factura `/customers`, optional email verify, front build).
+4. **Results:**
+   - Migrate `20260731114840_add_end_user_customer`: **PASS** — `Database is up to date (version 20260731114840)`.
+   - Backend pytest `tests/test_customer_accounts.py`: **PASS** — `7 passed` in 2.71s.
+   - API `GET /api/customer/me` unauthenticated: **PASS** — HTTP **401** `{"detail":"Not authenticated"}`.
+   - API `POST /api/customer/register`: **PASS** — HTTP **201**, `email_verified: false`, `verification_email_sent: false` (PUBLIC_APP_BASE_URL unset).
+   - Puppeteer `test:customer-register-login`: **PASS** — Register OK → Login → `/customer` → empty orders.
+   - Staff Factura `/customers`: **PASS** — staff login → `/customers` (Customers Invoice CRM); `access_token` present, no `customer_access_token`; `GET /billing-customers` 200.
+   - Optional email verify: **SKIP** — `PUBLIC_APP_BASE_URL` unset locally; register correctly skips send (warning in back logs). Not a fail for this slice.
+   - Front build: **PASS** — latest `Application bundle generation complete` (11:57:13Z); customer routes load; mid-edit TS2339 noise ~11:51 cleared before verification. NG8107 warnings only on unrelated `menu.component.html`.
+5. **Overall:** **PASS**
+6. **Product owner feedback:** First end-user customer slice is usable: register/login/home with separate cookie from staff, orders empty-state wired, and staff Billing Customers untouched. Email verification is correctly deferred when base URL/SMTP are missing; MFA, self-serve invoices, and auto-link on public orders remain follow-ups as noted in the task.
+7. **URLs tested:**
+   1. http://127.0.0.1:4202/
+   2. http://127.0.0.1:4202/api/customer/me
+   3. http://127.0.0.1:4202/api/customer/register
+   4. http://127.0.0.1:4202/customer/register
+   5. http://127.0.0.1:4202/customer/login
+   6. http://127.0.0.1:4202/customer
+   7. http://127.0.0.1:4202/login
+   8. http://127.0.0.1:4202/dashboard
+   9. http://127.0.0.1:4202/customers
+8. **Relevant log excerpts:**
+   ```
+   pos-back: GET /customer/me → 401 Unauthorized
+   pos-back: POST /customer/register → 201 Created (verification email skipped: PUBLIC_APP_BASE_URL unset)
+   pos-back: POST /customer/token → 200; GET /customer/me → 200; GET /customer/orders → 200
+   pos-back: GET /billing-customers → 200 OK
+   pos-front: Application bundle generation complete. [1.338 seconds] - 2026-07-31T11:57:13.212Z
+   ```
