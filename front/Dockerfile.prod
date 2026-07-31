@@ -14,6 +14,12 @@ RUN npm ci --ignore-scripts
 # Copy source code
 COPY . .
 
+# Ensure runtime-config.js exists for the static build (real ID injected at container start)
+RUN if [ ! -f public/runtime-config.js ]; then \
+      cp public/runtime-config.js.example public/runtime-config.js 2>/dev/null \
+      || printf '%s\n' "window.__GA_MEASUREMENT_ID__ = '';" > public/runtime-config.js; \
+    fi
+
 # Accept commit hash as build argument (can be passed from parent directory)
 # If not provided, the script will try git or use "unknown"
 ARG COMMIT_HASH=

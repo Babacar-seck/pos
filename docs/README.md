@@ -33,6 +33,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Doc | Description |
 |-----|-------------|
 | [0001-ci-cd-amvara9.md](0001-ci-cd-amvara9.md) | CI/CD: deploy to amvara9 on push to master (GitHub Actions, SSH key, secrets); daily demo data reset cron for tenant 1; hourly unpaid public Satisfecho Delivery cleanup cron (all tenants). |
+| [0073-google-analytics.md](0073-google-analytics.md) | GA4 gtag: measurement ID via gitignored `.secrets`, injected at front container start (never commit the ID). |
 | [0004-deployment.md](0004-deployment.md) | Deployment guide: configuration (API_URL, WS_URL, CORS), deploy steps (git pull, compose, migrations, seeds, optional demo reset). See also [0027](0027-amvara9-menu-images-troubleshooting.md) for uploads 404. |
 | [0057-deploy-css-fix-amvara9.md](0057-deploy-css-fix-amvara9.md) | **Shipped:** stale front build on deploy — `deploy-amvara9.sh` `--no-cache` front + `index.html` no-cache headers; historical incident notes. |
 | [0026-haproxy-ssl-amvara9.md](0026-haproxy-ssl-amvara9.md) | HAProxy SSL on amvara9: durable cert path (certbot/haproxy-certs), reload without overwriting certs. See also [0027](0027-amvara9-menu-images-troubleshooting.md) for uploads 404. |

@@ -20,6 +20,10 @@
 set -e
 # Expect to be run from repo root on server, e.g. cd /development/pos && bash -s
 COMPOSE_OPTS="--env-file config.env -f docker-compose.yml -f docker-compose.prod.yml"
+# Optional gitignored secrets (e.g. GOOGLE_ANALYTICS_MEASUREMENT_ID) — never commit .secrets
+if [ -f .secrets ]; then
+  COMPOSE_OPTS="--env-file config.env --env-file .secrets -f docker-compose.yml -f docker-compose.prod.yml"
+fi
 echo "Deploy path: $(pwd)"
 if [ ! -f config.env ]; then
   echo "Creating config.env from config.env.example (virgin deploy)..."

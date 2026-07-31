@@ -5,6 +5,7 @@ set -e
 API_URL="${API_URL:-http://localhost:8020}"
 WS_URL="${WS_URL:-ws://localhost:8021}"
 STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY:-}"
+GOOGLE_ANALYTICS_MEASUREMENT_ID="${GOOGLE_ANALYTICS_MEASUREMENT_ID:-}"
 
 # Replace placeholders in index.html with actual values
 # Use # as delimiter to avoid conflicts with URLs and || operator
@@ -24,6 +25,30 @@ fi
 if [ -n "$STRIPE_PUBLISHABLE_KEY" ] && [ "$STRIPE_PUBLISHABLE_KEY" != "" ]; then
     sed -i "s#window.__STRIPE_PUBLISHABLE_KEY__ || '[^']*'#window.__STRIPE_PUBLISHABLE_KEY__ || '${STRIPE_KEY_ESCAPED}'#g" /app/src/index.html
 fi
+# GA4 measurement ID from .secrets / env (never commit the real ID).
+# Write gitignored public/runtime-config.js so bind-mounted index.html stays clean.
+write_ga_runtime_config() {
+  local target="$1"
+  local id="${GOOGLE_ANALYTICS_MEASUREMENT_ID:-}"
+  mkdir -p "$(dirname "$target")"
+  case "$id" in
+    G-[A-Za-z0-9]*)
+      # Escape backslashes and single quotes for a single-quoted JS string
+      local esc
+      esc=$(printf '%s' "$id" | sed "s/\\\\/\\\\\\\\/g; s/'/\\\\'/g")
+      printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '${esc}';" >"$target"
+      echo "[entrypoint] Google Analytics measurement ID written to $(basename "$target")"
+      ;;
+    '')
+      printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '';" >"$target"
+      ;;
+    *)
+      printf "%s\n" "window.__GA_MEASUREMENT_ID__ = '';" >"$target"
+      echo "[entrypoint] WARNING: ignoring invalid GOOGLE_ANALYTICS_MEASUREMENT_ID (expected G-…)"
+      ;;
+  esac
+}
+write_ga_runtime_config /app/public/runtime-config.js
 
 # Sync version in commit-hash.ts from package.json (preserve existing git hash if .git is missing, e.g. Docker bind-mount of ./front only).
 # Keep the container startable on failure, but never stay silent about regen outcome.

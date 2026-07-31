@@ -8,8 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.145] - 2026-07-31
+
+### Added
+
+- **Google Analytics 4:** Optional gtag in the Angular shell; measurement ID from gitignored `.secrets` (`GOOGLE_ANALYTICS_MEASUREMENT_ID`), injected at front container start via `runtime-config.js`. See `docs/0073-google-analytics.md`.
+- **Secrets env overlay:** Optional gitignored `.secrets` (template `.secrets.example`) loaded by `./run.sh`, `deploy-amvara9.sh`, and `scripts/compose-env-file-args.sh` after `config.env`.
+
 ### Changed
 
+- **Marketing sites:** Synced static builds into `front/sites/` (replaced placeholders for Dilruba, Hakone, Flama Napolitana, La Moca, La Bella Toscana, Wimpi, Boss Kebab, and related `/es` deploy paths).
 - **End-user customer accounts (#340):** Archived the verified agents2 task after PASS checks (migrate, 7 pytest, API smoke, Puppeteer register→login→empty orders, staff Factura intact, front build). The feature itself shipped in 2.1.144.
 
 ## [2.1.144] - 2026-07-31
