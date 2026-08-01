@@ -1,3 +1,13 @@
+---
+## Closing summary (TOP)
+
+- **What happened:** VeriFactu and TSE live mode were gated on certified middleware; the MVP delivered provider selection, adapters, live guards, and honest marketing/docs.
+- **What was done:** ADR chose Fiskaly SIGN ES/DE; fiscal/TSE adapters and unlock guards landed; docs (0065/0072/0074), ROADMAP, README, and features/Settings copy were updated. Real AEAT/BSI remisión remains an ops follow-up with commercial credentials.
+- **What was tested:** Fiscal + TSE pytest (17 passed, including live gates and mock-live slice); HTTP smoke on `/`, `/features`, `/pricing`, `/api/health`; marketing/Settings honesty — overall **PASS**.
+- **Why closed:** All MVP pass criteria verified; safe to close the verification slice.
+- **Closed at (UTC):** 2026-08-01 11:32
+---
+
 # Certified middleware to unblock VeriFactu + TSE live mode
 
 ## GitHub Issues
@@ -59,3 +69,29 @@ Expect **17 passed**, including:
 ### Ops note for real LIVE
 
 Configure Fiskaly TEST keys (`FISCAL_MIDDLEWARE_PROVIDER=fiskaly_sign_es`, `TSE_PROVIDER=fiskaly_sign_de`, secrets via `config.env`), verify against Fiskaly TEST, then unlock LIVE only after sign-off. See `docs/0074-fiscal-certified-middleware.md` renewal cadence.
+
+## Test report
+
+1. **Date/time (UTC):** 2026-08-01 11:30:41 – 11:31:24 UTC. Log window: `docker logs --since 25m` on `pos-back` / `pos-front`.
+2. **Environment:** `docker-compose.yml` + `docker-compose.dev.yml`; `BASE_URL=http://127.0.0.1:4202`; branch `development` @ `748f7763`. Running back had `FISCAL_LIVE_UNLOCK` / `TSE_LIVE_UNLOCK` / providers **unset** (no live unlock in this env).
+3. **What was tested:** Automated fiscal + TSE suite (live gates + mock live vertical slice); home/features/pricing HTTP smoke; marketing/Settings honesty copy; docs ADR 0074 + 0065/0072 spot-check. Optional env restart mock slice skipped (pytest already covers mock live; do not enable mock on production).
+4. **Results:**
+   - Pytest `tests/test_fiscal_invoice_api.py` + `tests/test_tse_api.py`: **PASS** — 17 passed in 6.50s (incl. named live-gate + mock-live tests re-run: 4/4).
+   - `test_live_mode_blocked_without_unlock` / `test_live_mode_gated`: **PASS** — PUT `fiscal_mode`/`tse_mode`=`live` → 400 without unlock.
+   - `test_live_issue_with_mock_middleware` / `test_live_sign_with_mock_provider`: **PASS** — mock middleware vertical slice.
+   - App responds `/` and `/features` and `/pricing`: **PASS** — HTTP 200; `/api/health` → `{"status":"ok"}`.
+   - Features / Settings copy honesty: **PASS** — browser `/features` shows preparation / locked-live language; no “AEAT certified” / “BSI certified” claims; `en.json` Settings strings mention Fiskaly unlock + “not marketed as certified”.
+   - Pricing: **PASS** — no fiscal/TSE certified claims on `/pricing`.
+   - Docs: **PASS** — `docs/0074-fiscal-certified-middleware.md` picks Fiskaly SIGN ES/DE; 0065/0072 reference gates + renewal.
+   - Front compile: **PASS** — no bundle/TS errors in 25m front logs (only pre-existing NG8107 warnings).
+5. **Overall:** **PASS**
+6. **Product owner feedback:** Certified-middleware adapters and live unlocks behave as designed in CI/mock; marketing stays honest until commercial Fiskaly credentials exist. Real AEAT/BSI remisión remains an ops follow-up with TEST keys, not a code gap for this MVP. Safe to close the verification slice.
+7. **URLs tested:**
+   1. http://127.0.0.1:4202/
+   2. http://127.0.0.1:4202/features
+   3. http://127.0.0.1:4202/pricing
+   4. http://127.0.0.1:4202/api/health
+8. **Relevant log excerpts (last section):**
+   - pytest: `17 passed, 1 warning in 6.50s` / named re-run `4 passed in 2.33s`.
+   - back: no error/exception/traceback lines in the 25m window for this verification.
+   - front: no `Application bundle generation failed` / `ERROR TS`; only NG8107 optional-chain warnings unrelated to this task.
