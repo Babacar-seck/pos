@@ -783,6 +783,31 @@ step_closing_review() {
     "closing"
 }
 
+# 009 — promote development → master on a daily cadence (shell only; no cursor-agent).
+# Pushing master triggers Deploy to amvara9. See scripts/promote-development-to-master.sh.
+step_daily_promote() {
+  if [[ "${AGENT_PROMOTE:-1}" == "0" ]]; then
+    echo "----- daily promote (009) (skip: AGENT_PROMOTE=0)"
+    return 0
+  fi
+  local script="${REPO_ROOT}/scripts/promote-development-to-master.sh"
+  if [[ ! -x "$script" && ! -f "$script" ]]; then
+    echo "----- daily promote (009) (skip: missing ${script})" >&2
+    return 0
+  fi
+  echo "-----> daily promote (009) <----"
+  set +e
+  bash "$script"
+  local rc=$?
+  set -e
+  # 0 = promoted or already up to date; 2 = cadence skip / disabled — both OK for the loop
+  if ((rc == 0 || rc == 2)); then
+    return 0
+  fi
+  echo "----- daily promote (009) failed exit=${rc}" >&2
+  return "$rc"
+}
+
 step_committer() {
   if ! has_pos_repo_uncommitted_changes; then
     echo "----- committer (changelog + commit) (skip: no uncommitted changes — no sync, no agent)"
@@ -862,6 +887,7 @@ run_full_cycle() {
   run_step "003 tester" step_tester
   run_step "004 closing reviewer" step_closing_review
   run_step "007 committer" step_committer
+  run_step "009 daily promote" step_daily_promote
 }
 
 usage() {
@@ -880,11 +906,15 @@ Usage: $(basename "$0") [COMMAND]
     tester          Tester (UNTESTED-*.md or in-progress TESTING-*.md)
     closing-review  Closing reviewer (CLOSED-*.md still in agents2/tasks/)
     committer       Changelog + commit when POS repo has local changes
+    promote, 009, deploy  Daily promote development → master (shell; triggers Deploy to amvara9)
 
     help, -h, --help   Show this help
 
 Environment:
   AGENT_LOOP_SLEEP_MINUTES   Sleep between full cycles when looping (default: 5).
+  AGENT_PROMOTE              If 0, skip 009 daily promote (default: 1).
+  AGENT_PROMOTE_INTERVAL_HOURS  Min hours since last master tip before promote (default: 24).
+  AGENT_PROMOTE_FORCE=1      Promote even if cadence not due (still no-ops if already up to date).
   AGENT_GIT_SYNC             If 0, skip git fetch/pull before each step (default: 1).
   AGENT_LOOP_TMP             Directory for 001 preflight digest (default: \$TMPDIR/pos-agent-loop).
   AGENT_GH_REPO              Repo for gh issue list (default: satisfecho/pos).
@@ -930,6 +960,7 @@ if [[ -n "${1:-}" ]]; then
     tester) step_tester ;;
     closing-review | closing-closed) step_closing_review ;;
     committer) step_committer ;;
+    promote | 009 | deploy) step_daily_promote ;;
     *)
       usage
       exit 1

@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Changed
 
+- **Agent loop daily promote:** Step **009** runs **`scripts/promote-development-to-master.sh`** after the committer so **`development` → `master`** (and Deploy to amvara9) happens at least once per day when there are pending commits (`AGENT_PROMOTE_INTERVAL_HOURS` default 24). Background helper: **`scripts/start-pos-cursor-loop-background.sh`**.
 - **Loyalty wallet passes (#343):** Archived the verified agents2 task after PASS checks (migrate `20260801131339`, 5 wallet + 8 club-loyalty pytest, unconfigured join/fallback, staff `wallet_passes_enabled` toggle, i18n/landing/front compile, docs 0066). The feature itself shipped in 2.1.146; production Apple/Google issuer certs remain an ops follow-up.
 - **Certified fiscal middleware (#342):** Archived the verified agents2 task after PASS checks (17 fiscal/TSE pytest including live gates and mock-live slice, HTTP smoke on `/` `/features` `/pricing` `/api/health`, marketing/Settings honesty). The feature itself shipped in 2.1.146; real AEAT/BSI remisión remains an ops follow-up with commercial Fiskaly credentials.
 
