@@ -1,17 +1,33 @@
 # Promo videos (short marketing walkthroughs)
 
-How we produce short Satisfecho promo clips: live browser click-around + **copyleft** background music, letterboxed to 1080p.
+How we produce short Satisfecho promo clips: live browser click-around + **copyleft** background music + optional **Loom-style talking-head PiP**, letterboxed to 1080p.
 
-**Pattern (mac-stats):** The companion project [mac-stats](https://github.com/raro42/mac-stats/) ships `screens/mac-stats-features.mp4` — a live window capture with an ambient bed (see that repo’s `screens/README.md`). For this **web** app we use the same idea with **Puppeteer screencast** instead of ScreenCaptureKit.
+**Pattern (mac-stats):** The companion project [mac-stats](https://github.com/raro42/mac-stats/) ships `screens/mac-stats-features.mp4` — a live window capture with an ambient bed (see that repo’s `screens/README.md`). For this **web** app we use the same idea with **Puppeteer screencast** instead of ScreenCaptureKit. The social “product demo + corner face cam” layout matches common Loom / X-style clips (screen full-frame, circular head overlay, music bed — **no** mic narration required).
 
-## Recorder
+## Working set (`tmp/promo/`, gitignored)
+
+Keep only what you need (large binaries eat disk):
+
+| File | Role |
+|------|------|
+| `satisfecho-promo-latest.mp4` | Current deliverable |
+| `talking-head.mov` | Face-cam source (looped into PiP; audio discarded) |
+| `Homage-by-Kjartan-Abel.mp3` | CC BY-SA music bed |
+| `MUSIC-LICENSE.txt` | Attribution / ShareAlike notes |
+| `README.txt` | Short local reminder |
+
+Delete intermediate PiP/loop/round MP4s, raw `.webm`, and `frames/` when done iterating.
+
+---
+
+## 1. Screencast + music bed
 
 | Item | Path / command |
 |------|----------------|
 | Script | `front/scripts/record-promo-video.mjs` |
 | npm | `npm run record-promo-video --prefix front` |
-| Outputs (gitignored) | `tmp/promo/*.webm`, `tmp/promo/*.mp4` |
-| Default latest alias | `tmp/promo/satisfecho-promo-latest.mp4` |
+| Outputs | under `tmp/promo/` |
+| Default latest alias | `tmp/promo/satisfecho-promo-latest.mp4` (overwritten by remux steps below if you re-compose) |
 
 ```bash
 # App must be up (local or production)
@@ -24,7 +40,7 @@ BASE_URL=https://www.satisfecho.de npm run record-promo-video --prefix front
 
 ### What the script does
 
-1. Launches Chrome via **puppeteer-core** and starts `page.screencast({ path: …webm })` (VP9 / 30fps family; needs ffmpeg).
+1. Launches Chrome via **puppeteer-core** and starts `page.screencast({ path: …webm })` (VP9; needs ffmpeg).
 2. Walks public marketing / guest surfaces with short holds and smooth scrolls:
    `/` → `/features` → `/pricing` → `/book/{tenant}` → `/delivery/{tenant}` → `/about` → `/`
 3. Stops the screencast, then **ffmpeg**-muxes:
@@ -34,7 +50,87 @@ BASE_URL=https://www.satisfecho.de npm run record-promo-video --prefix front
 
 Do **not** full-desktop capture for marketing assets (same privacy rule as mac-stats window-only shots).
 
-## Music (copyleft only)
+**Tip:** Puppeteer often produces a short black/white lead-in. When compositing the PiP, **trim ~0.5s** from the start (`-ss 0.5`) so frame 0 is already the Satisfecho UI.
+
+---
+
+## 2. Talking-head overlay (Loom-style PiP)
+
+Goal: product screencast full-frame; **small circular face** bottom-right; **music only** (mute webcam audio). Voiceover is optional and not used in the default Satisfecho cut.
+
+### Record the face clip (macOS QuickTime)
+
+1. Open **QuickTime Player** → **File → New Movie Recording**.
+2. Click **▾** next to the record button:
+   - Camera: built-in or Continuity Camera
+   - **Microphone: None** (preferred — we keep the music bed only). If you record with mic on, discard that track at mux time.
+3. Frame head + shoulders; look at the lens; plain background helps.
+4. Record ~20–40s (shorter is fine — we **loop** it for the full promo length).
+5. Save as `tmp/promo/talking-head.mov`.
+
+No spoken script is required when the bed is music-only. If you later want narration, record mic on and map that track instead of (or under) the bed.
+
+### Compose: circular PiP + loop + trim + music (no border)
+
+Inputs:
+
+- Screencast+music master from step 1 (e.g. `tmp/promo/satisfecho-promo-*.mp4` produced by `record-promo-video`, **without** an earlier PiP baked in), **or** re-run the recorder then use that file as `-i` base before PiP.
+- `tmp/promo/talking-head.mov`
+
+Final parameters we settled on:
+
+| Parameter | Value | Why |
+|-----------|--------|-----|
+| Start trim | `-ss 0.5` on base | Skip black/flash so first frame is Satisfecho UI |
+| Face scale | `200×200` crop (cover) | Smaller corner PiP |
+| Shape | Circular alpha via `geq` + `hypot` | No rectangular card; **no** white ring |
+| Loop | `-stream_loop -1` on face | Endless loop instead of freezing last frame |
+| Position | `overlay=W-w-40:H-h-40` | Bottom-right, 40px margin |
+| Audio | `-map 0:a` only | Keep music bed; drop talking-head mic |
+| Output size | 1920×1080 (from base) | Matches letterboxed master |
+| Video encode | `libx264` `-crf 20` `-preset medium` | Good quality / size |
+| Audio encode | `aac` `-b:a 160k` | Stereo bed |
+| Container | `-movflags +faststart` | Web / YouTube friendly |
+
+Example (from repo root; adjust `BASE` to your music-only master **without** PiP):
+
+```bash
+cd tmp/promo
+BASE=satisfecho-promo-MUSIC-ONLY.mp4   # rename/use your recorder output before PiP
+OUT=satisfecho-promo-latest.mp4
+
+ffmpeg -y \
+  -ss 0.5 -i "$BASE" \
+  -stream_loop -1 -i talking-head.mov \
+  -filter_complex "
+    [1:v]scale=200:200:force_original_aspect_ratio=increase,crop=200:200,setsar=1,format=yuva420p,
+    geq=lum='p(X,Y)':cb='p(X,Y)':cr='p(X,Y)':a='if(lte(hypot(X-W/2,Y-H/2),W/2-1),255,0)'[pip];
+    [0:v][pip]overlay=W-w-40:H-h-40:shortest=1[v]
+  " \
+  -map '[v]' -map 0:a \
+  -c:v libx264 -preset medium -crf 20 \
+  -c:a aac -b:a 160k \
+  -shortest \
+  -movflags +faststart \
+  "$OUT"
+```
+
+**Do not** feed an already-PiP’d `latest.mp4` back in as `BASE` — you will stack two faces. Keep a music-only master, or re-run `record-promo-video` and PiP once.
+
+### Optional tweaks
+
+| Want | Change |
+|------|--------|
+| Larger / smaller face | `scale=N:N` / `crop=N:N` (e.g. `160` or `280`) |
+| More / less margin | `overlay=W-w-M:H-h-M` (e.g. `M=24` or `64`) |
+| Soft edge | Feather alpha in `geq` (ramp `a` near `W/2`) |
+| Freeze last frame instead of loop | Drop `-stream_loop -1`; use `tpad=stop_mode=clone:stop_duration=…` on face |
+| White ring (older look) | Composite a slightly larger white circle under the face (we removed this) |
+| Voiceover | Map talking-head audio (or a separate VO) and duck the bed |
+
+---
+
+## 3. Music (copyleft only)
 
 **Requirement:** beds must be **copyleft** (e.g. **CC BY-SA**), not “mystery free MP3” or unverified example tracks.
 
@@ -60,7 +156,7 @@ https://kjartan-abel.com/library
 Licensed under CC BY-SA 4.0.
 ```
 
-**ShareAlike:** distributed derivatives that include the bed (including the promo MP4) must be shared under **CC BY-SA 4.0** (or compatible). Do not claim Content ID on the track. Full notes: keep a local `tmp/promo/MUSIC-LICENSE.txt` when producing cuts (template below).
+**ShareAlike:** distributed derivatives that include the bed (including the promo MP4) must be shared under **CC BY-SA 4.0** (or compatible). Do not claim Content ID on the track.
 
 ### MUSIC-LICENSE.txt template
 
@@ -72,12 +168,16 @@ License: CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
 Attribution: Homage by Kjartan Abel. https://kjartan-abel.com/library — CC BY-SA 4.0.
 ```
 
-## Publishing checklist
+---
+
+## 4. Publishing checklist
 
 1. Confirm bed license is copyleft (CC BY-SA or similar) and credit is in the description / credits.
 2. Prefer production `BASE_URL` for public-facing cuts when demo content looks better there.
-3. Keep large binaries out of git (`tmp/` is ignored); store published assets where marketing hosts them.
-4. If you change the walkthrough routes, update this doc and the script’s `runWalkthrough` in lockstep.
+3. Keep large binaries out of git (`tmp/` is ignored); archive masters on KM0 Cloud / YouTube as needed.
+4. YouTube: music attribution + ShareAlike note in the description; do not claim Content ID on Homage.
+5. If you change the walkthrough routes, update this doc and the script’s `runWalkthrough` in lockstep.
+6. After iterating PiP cuts, delete intermediate MP4s; keep `latest` + `talking-head.mov` + bed + license files.
 
 ## Related
 
