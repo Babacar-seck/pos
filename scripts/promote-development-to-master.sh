@@ -73,6 +73,42 @@ if [[ -n "$blockers" ]]; then
   exit 1
 fi
 
+STAMP_PATHS=(
+  agents2/001-gh-reviewer/time-of-last-review.txt
+  agents2/005-marketing-repos-reviewer/time-of-last-review.txt
+  agents2/005-marketing-repos-reviewer/last-scan.json
+  agents2/008-enhancement-reviewer/time-of-last-review.txt
+  agents2/008-enhancement-reviewer/last-scan.json
+)
+STASHED_STAMPS=0
+
+stash_stamps_if_needed() {
+  local existing=()
+  local p
+  for p in "${STAMP_PATHS[@]}"; do
+    if ! git diff --quiet -- "$p" 2>/dev/null || ! git diff --staged --quiet -- "$p" 2>/dev/null; then
+      existing+=("$p")
+    elif [[ -n "$(git ls-files --others --exclude-standard -- "$p" 2>/dev/null || true)" ]]; then
+      existing+=("$p")
+    fi
+  done
+  if ((${#existing[@]} == 0)); then
+    return 0
+  fi
+  log "stashing allowlisted reviewer stamps for branch switch (${#existing[@]} file(s))"
+  git stash push -u -m "promote-tmp-stamps" -- "${existing[@]}" >/dev/null
+  STASHED_STAMPS=1
+}
+
+restore_stamps_stash() {
+  if [[ "$STASHED_STAMPS" != "1" ]]; then
+    return 0
+  fi
+  log "restoring stashed reviewer stamps"
+  git stash pop --index >/dev/null 2>&1 || git stash pop >/dev/null 2>&1 || log "warning: could not restore stamp stash (check git stash list)"
+  STASHED_STAMPS=0
+}
+
 log "git fetch origin development master"
 git fetch origin development master
 
@@ -117,11 +153,14 @@ cleanup() {
   if git rev-parse --verify "refs/heads/${RESTORE_BRANCH}" >/dev/null 2>&1; then
     git checkout -q "$RESTORE_BRANCH" 2>/dev/null || true
   fi
+  restore_stamps_stash
   if [[ "$rc" -ne 0 ]]; then
     log "failed (exit ${rc}); restored branch ${RESTORE_BRANCH}"
   fi
 }
 trap cleanup EXIT
+
+stash_stamps_if_needed
 
 log "checkout master @ origin/master"
 git checkout -B master origin/master
@@ -140,6 +179,7 @@ git push origin master
 
 # Restore prior branch (development tip is unchanged; do not reset --hard).
 git checkout -q "$RESTORE_BRANCH"
+restore_stamps_stash
 trap - EXIT
 
 log "promoted: master=${MERGE_SHA} (from development ${DEV_SHA}, version ${VERSION})"
