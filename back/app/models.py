@@ -919,6 +919,8 @@ class LoyaltyProgram(TenantMixin, table=True):
     # Referral: units awarded to referrer (and optionally invitee) on successful referred join (0 = off).
     referral_bonus_units: int = Field(default=0, ge=0)
     referral_invitee_bonus_units: int = Field(default=0, ge=0)
+    # When False, join/balance stay available but Apple/Google pass issuance is off for this tenant.
+    wallet_passes_enabled: bool = Field(default=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -948,7 +950,32 @@ class LoyaltyMembership(TenantMixin, table=True):
     birthday_month: int | None = Field(default=None)  # 1–12
     birthday_day: int | None = Field(default=None)  # 1–31
     birthday_bonus_year: int | None = Field(default=None)  # last calendar year bonus awarded
+    # Apple PassKit / Google Wallet (#343) — set when platform certs/issuer are configured.
+    apple_pass_serial: str | None = Field(default=None, max_length=64, index=True)
+    apple_auth_token: str | None = Field(default=None, max_length=64)
+    apple_pass_updated_tag: str | None = Field(default=None, max_length=64)
+    google_loyalty_object_id: str | None = Field(default=None, max_length=200)
     joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class LoyaltyAppleDevice(SQLModel, table=True):
+    """PassKit device registration for push-update of an existing loyalty pass (#343)."""
+
+    __tablename__ = "loyalty_apple_device"
+    __table_args__ = (
+        UniqueConstraint(
+            "membership_id",
+            "device_library_identifier",
+            name="uq_loyalty_apple_device_membership_device",
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    membership_id: int = Field(foreign_key="loyalty_membership.id", index=True)
+    device_library_identifier: str = Field(max_length=128, index=True)
+    push_token: str = Field(max_length=255)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -1489,6 +1516,7 @@ class LoyaltyProgramUpdate(SQLModel):
     vip_gold_min_lifetime_units: int | None = Field(default=None, ge=0)
     referral_bonus_units: int | None = Field(default=None, ge=0)
     referral_invitee_bonus_units: int | None = Field(default=None, ge=0)
+    wallet_passes_enabled: bool | None = None
 
 
 class LoyaltyJoinCreate(SQLModel):

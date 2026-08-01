@@ -2170,7 +2170,9 @@
     "LOYALTY_JOIN_URL_HINT": "Partagez ce lien pour que les clients rejoignent le club. Les codes ?ref= optionnels suivent les parrainages.",
     "LOYALTY_WALLET_NOTE": "Les passes Apple/Google Wallet ne sont pas émises tant que les certificats ne sont pas configurés.",
     "LOYALTY_MEMBERS_EMPTY_HINT": "Partagez l'URL publique d'inscription pour que les clients puissent s'enrôler.",
-    "LOYALTY_REFERRAL_INVITEE_HINT": "Unités attribuées au nouveau membre qui s'inscrit avec un code de parrainage valide (0 = off)."
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Unités attribuées au nouveau membre qui s'inscrit avec un code de parrainage valide (0 = off).",
+    "LOYALTY_WALLET_ENABLED": "Proposer des passes Apple / Google Wallet",
+    "LOYALTY_WALLET_ENABLED_HINT": "Si les certificats plateforme sont configurés, les membres peuvent ajouter une passe à l’inscription. Désactivez pour le lien solde seul."
   },
   "PAYMENTS": {
     "PAYMENT": "Paiement",
@@ -2866,7 +2868,9 @@
     "BIRTHDAY_HINT": "Mois et jour facultatifs pour qu’un bonus d’anniversaire puisse être accordé.",
     "VIP_TIER": "Niveau VIP",
     "REFERRAL_CODE": "Code de parrainage (optionnel)",
-    "REFERRAL_SHARE": "Partagez ce lien pour que vos amis rejoignent avec votre parrainage :"
+    "REFERRAL_SHARE": "Partagez ce lien pour que vos amis rejoignent avec votre parrainage :",
+    "ADD_APPLE_WALLET": "Ajouter à Apple Wallet",
+    "ADD_GOOGLE_WALLET": "Ajouter à Google Wallet"
   },
   "ABOUT_PAGE": {
     "BADGE": "Entreprise",

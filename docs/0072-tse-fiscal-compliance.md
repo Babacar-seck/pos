@@ -29,10 +29,12 @@ Multi-tenant SaaS POS (cloud backend, restaurants on LAN) cannot reliably attach
 
 **Prefer B — cloud certified TSE** for production. POS owns tenant config, transaction persistence, receipt fields, and DSFinV-K export shape. The cloud provider owns the certified signing module and storage.
 
+**Phase 1 vendor pick (#342):** primary **Fiskaly SIGN DE**; runner-up Epson/Swissbit cloud; generic HTTP adapter retained. Details: **`docs/0074-fiscal-certified-middleware.md`**.
+
 ### Consequences
 
-- `tse_mode: live` is **gated** by `TSE_LIVE_UNLOCK=true` **and** `TSE_PROVIDER_BASE_URL` (provider/middleware base).
-- `tse_mode: test` records local stub signatures (+ optional provider POST when URL set). Not production compliance.
+- `tse_mode: live` is **gated** by `TSE_LIVE_UNLOCK=true` **and** provider credentials ready (`live_credentials_ready`). Live signing **requires** provider acceptance (502 otherwise). `mock` is non-production only.
+- `tse_mode: test` records local stub signatures (+ optional provider POST when configured). Not production compliance.
 - Public `/features` and Settings copy must describe **preparation / test**, not certified live.
 
 ## Tenant configuration
@@ -77,13 +79,17 @@ When a TSE sale exists, receipt payloads (print-bridge + browser Factura/receipt
 
 | Variable | Meaning |
 |----------|---------|
-| `TSE_PROVIDER_BASE_URL` | Optional cloud TSE / adapter base; empty = local stub only |
-| `TSE_PROVIDER_API_KEY` | Platform-level provider key (never commit secrets) |
-| `TSE_LIVE_UNLOCK` | Must be true with provider URL before `tse_mode: live` |
+| `TSE_PROVIDER` | `fiskaly_sign_de` (chosen) \| `generic` \| `mock` |
+| `TSE_PROVIDER_BASE_URL` | Optional cloud TSE base override; empty → Fiskaly defaults when provider is SIGN DE |
+| `TSE_PROVIDER_API_KEY` / `TSE_PROVIDER_API_SECRET` | Platform-level Fiskaly (or generic) credentials (never commit) |
+| `TSE_FISKALY_TSS_ID` | Fiskaly TSS UUID for SIGN DE |
+| `TSE_LIVE_UNLOCK` | Must be true with provider credentials ready before `tse_mode: live` |
+
+Per-tenant `tse_client_id` = Fiskaly client UUID. See **`docs/0074-fiscal-certified-middleware.md`** for renewal cadence.
 
 ## Testing
 
-See task **#316** Testing instructions and pytest `back/tests/test_tse_api.py`.
+See task **#316** / **#342** Testing instructions and pytest `back/tests/test_tse_api.py`.
 
 ## Certification status
 
@@ -93,6 +99,6 @@ See task **#316** Testing instructions and pytest `back/tests/test_tse_api.py`.
 | Local stub signed sale + storno records | **Yes** (test) |
 | Receipt TSE fields + print payload | **Yes** |
 | DSFinV-K date-range stub export | **Yes** (stub) |
-| Cloud provider certified signing | **Hook only** — not claimed certified |
-| `tse_mode: live` | **Blocked** until unlock + provider URL |
+| Cloud provider certified signing | **Fiskaly SIGN DE adapter wired**; needs commercial TSS credentials |
+| `tse_mode: live` | **Gated** — unlock + provider credentials; mock OK only non-prod |
 | Kassenmeldepflicht UI | **Deferred** (Phase 2) |

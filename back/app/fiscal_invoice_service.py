@@ -14,11 +14,11 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 
-import requests
 from fastapi import HTTPException
 from sqlmodel import Session, col, select
 
 from app import models
+from app.fiscal_providers import LIVE_OK_STATUSES, live_credentials_ready, submit_fiscal_record
 from app.order_discounts import order_level_discount_cents
 from app.settings import settings
 
@@ -228,8 +228,7 @@ def assert_order_fiscally_mutable(session: Session, tenant_id: int, order_id: in
 
 def live_mode_allowed() -> bool:
     unlock = bool(getattr(settings, "fiscal_live_unlock", False))
-    base = (getattr(settings, "fiscal_middleware_base_url", None) or "").strip()
-    return unlock and bool(base)
+    return unlock and live_credentials_ready()
 
 
 def assert_fiscal_mode_allowed(mode: str) -> None:
@@ -238,59 +237,30 @@ def assert_fiscal_mode_allowed(mode: str) -> None:
             status_code=400,
             detail=(
                 "fiscal_mode live is blocked until FISCAL_LIVE_UNLOCK=true and "
-                "FISCAL_MIDDLEWARE_BASE_URL are set (see docs/0065-verifactu-production.md)"
+                "certified middleware credentials are ready "
+                "(FISCAL_MIDDLEWARE_PROVIDER=fiskaly_sign_es|generic|mock; "
+                "see docs/0065-verifactu-production.md and docs/0074-fiscal-certified-middleware.md)"
             ),
         )
-
-
-def _post_middleware(payload: dict[str, Any]) -> dict[str, Any]:
-    base = (settings.fiscal_middleware_base_url or "").strip().rstrip("/")
-    if not base:
-        return {"status": "sandbox_recorded", "channel": "local"}
-    url = f"{base}/fiscal/submit"
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
-    key = (settings.fiscal_middleware_api_key or "").strip()
-    if key:
-        headers["Authorization"] = f"Bearer {key}"
-    try:
-        resp = requests.post(url, json=payload, headers=headers, timeout=8)
-        body: dict[str, Any]
-        try:
-            parsed = resp.json()
-            body = parsed if isinstance(parsed, dict) else {"raw": parsed}
-        except Exception:
-            body = {"raw": (resp.text or "")[:500]}
-        if resp.status_code >= 400:
-            logger.warning("fiscal middleware HTTP %s: %s", resp.status_code, body)
-            return {
-                "status": "middleware_error",
-                "http_status": resp.status_code,
-                "channel": "middleware",
-                "body": body,
-            }
-        return {
-            "status": "middleware_accepted",
-            "http_status": resp.status_code,
-            "channel": "middleware",
-            "body": body,
-        }
-    except requests.RequestException as exc:
-        logger.warning("fiscal middleware request failed: %s", exc)
-        return {"status": "middleware_unreachable", "channel": "middleware", "error": str(exc)[:200]}
 
 
 def submit_sandbox(
     session: Session,
     fi: models.FiscalInvoice,
     tenant: models.Tenant,
+    *,
+    require_live_success: bool = False,
 ) -> models.FiscalInvoice:
-    """Near-real-time sandbox path for test mode (local record and/or middleware hook)."""
+    """Near-real-time sandbox/live path (local record and/or certified middleware)."""
     if fi.sandbox_submitted_at and fi.submission_status not in (
         "local_only",
         "middleware_error",
         "middleware_unreachable",
+        "provider_error",
+        "provider_unreachable",
     ):
-        return fi
+        if not require_live_success or fi.submission_status in LIVE_OK_STATUSES:
+            return fi
 
     payload = {
         "schema": "pos.fiscal.sandbox_submit.v1",
@@ -303,8 +273,11 @@ def submit_sandbox(
         "amount_cents": fi.amount_cents,
         "mode": fi.mode,
         "request_payload": fi.request_payload,
+        "cancels_full_number": (fi.request_payload or {}).get("cancels_full_number")
+        if isinstance(fi.request_payload, dict)
+        else None,
     }
-    result = _post_middleware(payload)
+    result = submit_fiscal_record(payload, tenant, mode=fi.mode or "test")
     now = datetime.now(timezone.utc)
     status = str(result.get("status") or "sandbox_recorded")
     fi.submission_status = status
@@ -314,9 +287,22 @@ def submit_sandbox(
         "sandbox": result,
         "submitted_at": now.isoformat(),
     }
+    qr = result.get("verification_qr")
+    if qr:
+        fi.verification_qr_content = str(qr)[:2000]
     fi.verification_text = _verification_text(fi.mode, fi.submission_status)
     session.add(fi)
     session.flush()
+
+    if require_live_success and status not in LIVE_OK_STATUSES:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                f"Certified VeriFactu middleware rejected or unreachable live submission "
+                f"(status={status}). Fix provider credentials / connectivity and retry. "
+                f"See docs/0074-fiscal-certified-middleware.md"
+            ),
+        )
     return fi
 
 
@@ -335,8 +321,14 @@ def issue_or_get_fiscal_invoice(
 
     existing = get_fiscal_alta(session, tenant.id, order.id)
     if existing:
-        if mode == "test" and not existing.sandbox_submitted_at:
+        if mode == "test" and (
+            not existing.sandbox_submitted_at
+            or existing.submission_status
+            in ("local_only", "middleware_error", "middleware_unreachable")
+        ):
             submit_sandbox(session, existing, tenant)
+        elif mode == "live" and existing.submission_status not in LIVE_OK_STATUSES:
+            submit_sandbox(session, existing, tenant, require_live_success=True)
         return existing
 
     if order.deleted_at is not None:
@@ -428,8 +420,8 @@ def issue_or_get_fiscal_invoice(
     if mode == "test":
         submit_sandbox(session, fi, tenant_locked)
     elif mode == "live":
-        # Live still goes through middleware hook only (never invent AEAT endpoints).
-        submit_sandbox(session, fi, tenant_locked)
+        # Live requires certified middleware acceptance (never invent AEAT endpoints).
+        submit_sandbox(session, fi, tenant_locked, require_live_success=True)
 
     return fi
 
@@ -531,8 +523,10 @@ def cancel_fiscal_invoice(
     session.add(tenant_locked)
     session.flush()
 
-    if mode == "test" or (mode == "live" and live_mode_allowed()):
+    if mode == "test":
         submit_sandbox(session, cancel_fi, tenant_locked)
+    elif mode == "live":
+        submit_sandbox(session, cancel_fi, tenant_locked, require_live_success=True)
 
     return cancel_fi
 

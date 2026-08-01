@@ -8,6 +8,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Agent loop daily promote:** Step **009** runs **`scripts/promote-development-to-master.sh`** after the committer so **`development` → `master`** (and Deploy to amvara9) happens at least once per day when there are pending commits (`AGENT_PROMOTE_INTERVAL_HOURS` default 24). Background helper: **`scripts/start-pos-cursor-loop-background.sh`**.
+- **Loyalty wallet passes (#343):** Archived the verified agents2 task after PASS checks (migrate `20260801131339`, 5 wallet + 8 club-loyalty pytest, unconfigured join/fallback, staff `wallet_passes_enabled` toggle, i18n/landing/front compile, docs 0066). The feature itself shipped in 2.1.146; production Apple/Google issuer certs remain an ops follow-up.
+- **Certified fiscal middleware (#342):** Archived the verified agents2 task after PASS checks (17 fiscal/TSE pytest including live gates and mock-live slice, HTTP smoke on `/` `/features` `/pricing` `/api/health`, marketing/Settings honesty). The feature itself shipped in 2.1.146; real AEAT/BSI remisión remains an ops follow-up with commercial Fiskaly credentials.
+
+## [2.1.146] - 2026-08-01
+
+### Added
+
+- **Loyalty wallet passes (#343):** Apple PassKit `.pkpass` signing and PassKit web-service updates, plus Google Wallet loyalty object create/PATCH, when platform certs/issuer env are configured; per-tenant `wallet_passes_enabled` with balance-card fallback; Add-to-Wallet on join/card; setup steps in `docs/0066`. Real device acceptance still needs Apple/Google issuer credentials in each environment.
+- **Certified fiscal middleware (#342):** Provider ADR (`docs/0074`) choosing Fiskaly SIGN ES (VeriFactu) and SIGN DE (TSE); adapters with `mock` / `generic` / Fiskaly modes; live issue and TSE sign require middleware acceptance (502 otherwise); mock blocked when `PRODUCTION=true`; Settings and `/features` stay honest until production credentials are verified.
+
+### Changed
+
+- **Roadmap (#341):** Moved end-user customer accounts (#340) from Deferred into Shipped; noted remaining MFA / self-serve invoice deferrals; refreshed Offline / loyalty / migration notes; added a short weekly ROADMAP review checklist; synced the offline row in `docs/0032`.
+
 ## [2.1.145] - 2026-07-31
 
 ### Added

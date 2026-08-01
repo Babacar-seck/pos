@@ -214,9 +214,13 @@ class TestFiscalInvoiceApi(PgClientTestCase):
         with mock.patch("app.fiscal_invoice_service.settings") as s:
             s.fiscal_live_unlock = False
             s.fiscal_middleware_base_url = ""
-            with self.assertRaises(HTTPException) as ctx:
-                assert_fiscal_mode_allowed("live")
-            self.assertEqual(ctx.exception.status_code, 400)
+            s.fiscal_middleware_provider = "generic"
+            with mock.patch(
+                "app.fiscal_invoice_service.live_credentials_ready", return_value=False
+            ):
+                with self.assertRaises(HTTPException) as ctx:
+                    assert_fiscal_mode_allowed("live")
+                self.assertEqual(ctx.exception.status_code, 400)
 
         h = _bearer_headers(self.owner)
         r = self.client.put(
@@ -225,6 +229,43 @@ class TestFiscalInvoiceApi(PgClientTestCase):
             json={"fiscal_mode": "live"},
         )
         self.assertEqual(r.status_code, 400, r.text)
+
+    def test_live_issue_with_mock_middleware(self) -> None:
+        """Vertical slice: live + mock provider accepts issue (non-prod)."""
+        h = _bearer_headers(self.owner)
+        with mock.patch("app.fiscal_invoice_service.settings") as s, mock.patch(
+            "app.fiscal_providers.settings"
+        ) as ps:
+            s.fiscal_live_unlock = True
+            s.is_production = False
+            s.fiscal_middleware_provider = "mock"
+            ps.fiscal_live_unlock = True
+            ps.is_production = False
+            ps.fiscal_middleware_provider = "mock"
+            ps.fiscal_middleware_base_url = ""
+            ps.fiscal_middleware_api_key = ""
+            ps.fiscal_middleware_api_secret = ""
+            ps.fiscal_fiskaly_client_id = ""
+            with mock.patch(
+                "app.fiscal_invoice_service.live_credentials_ready", return_value=True
+            ), mock.patch(
+                "app.fiscal_providers.live_credentials_ready", return_value=True
+            ), mock.patch(
+                "app.fiscal_providers.fiscal_provider_name", return_value="mock"
+            ):
+                r = self.client.put(
+                    "/tenant/settings",
+                    headers=h,
+                    json={"fiscal_mode": "live"},
+                )
+                self.assertEqual(r.status_code, 200, r.text)
+                issue = self.client.post(
+                    f"/orders/{self.order_paid.id}/fiscal-invoice/issue", headers=h
+                )
+                self.assertEqual(issue.status_code, 200, issue.text)
+                body = issue.json()
+                self.assertEqual(body["mode"], "live")
+                self.assertEqual(body["submission_status"], "mock_accepted")
 
     def test_issue_pending_order_400(self) -> None:
         h = _bearer_headers(self.owner)

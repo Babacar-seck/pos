@@ -13,13 +13,13 @@ from datetime import date, datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 
-import requests
 from fastapi import HTTPException
 from sqlmodel import Session, col, select
 
 from app import models
 from app.fiscal_invoice_service import order_fiscal_amount_cents
 from app.settings import settings
+from app.tse_providers import LIVE_OK_STATUSES, live_credentials_ready, sign_tse_transaction
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +36,7 @@ _PAID_STATUSES = frozenset(
 
 def live_mode_allowed() -> bool:
     unlock = bool(getattr(settings, "tse_live_unlock", False))
-    base = (getattr(settings, "tse_provider_base_url", None) or "").strip()
-    return unlock and bool(base)
+    return unlock and live_credentials_ready()
 
 
 def assert_tse_mode_allowed(mode: str) -> None:
@@ -46,7 +45,9 @@ def assert_tse_mode_allowed(mode: str) -> None:
             status_code=400,
             detail=(
                 "tse_mode live is blocked until TSE_LIVE_UNLOCK=true and "
-                "TSE_PROVIDER_BASE_URL are set (see docs/0072-tse-fiscal-compliance.md)"
+                "certified TSE provider credentials are ready "
+                "(TSE_PROVIDER=fiskaly_sign_de|generic|mock; "
+                "see docs/0072-tse-fiscal-compliance.md and docs/0074-fiscal-certified-middleware.md)"
             ),
         )
 
@@ -159,41 +160,6 @@ def _build_qr_content(
     )
 
 
-def _post_provider(payload: dict[str, Any]) -> dict[str, Any]:
-    base = (settings.tse_provider_base_url or "").strip().rstrip("/")
-    if not base:
-        return {"status": "local_stub", "channel": "local"}
-    url = f"{base}/tse/sign"
-    headers = {"Content-Type": "application/json", "Accept": "application/json"}
-    key = (settings.tse_provider_api_key or "").strip()
-    if key:
-        headers["Authorization"] = f"Bearer {key}"
-    try:
-        resp = requests.post(url, json=payload, headers=headers, timeout=8)
-        try:
-            parsed = resp.json()
-            body = parsed if isinstance(parsed, dict) else {"raw": parsed}
-        except Exception:
-            body = {"raw": (resp.text or "")[:500]}
-        if resp.status_code >= 400:
-            logger.warning("TSE provider HTTP %s: %s", resp.status_code, body)
-            return {
-                "status": "provider_error",
-                "http_status": resp.status_code,
-                "channel": "provider",
-                "body": body,
-            }
-        return {
-            "status": "provider_accepted",
-            "http_status": resp.status_code,
-            "channel": "provider",
-            "body": body,
-        }
-    except requests.RequestException as exc:
-        logger.warning("TSE provider request failed: %s", exc)
-        return {"status": "provider_unreachable", "channel": "provider", "error": str(exc)[:200]}
-
-
 def tse_transaction_public_dict(row: models.TseTransaction) -> dict[str, Any]:
     return {
         "id": row.id,
@@ -213,8 +179,8 @@ def tse_transaction_public_dict(row: models.TseTransaction) -> dict[str, Any]:
         "submission_status": row.submission_status,
         "storno_of_tse_transaction_id": row.storno_of_tse_transaction_id,
         "disclaimer": (
-            "Stub/test TSE record — not a claim of BSI TR-03153 certification. "
-            "See docs/0072-tse-fiscal-compliance.md"
+            "TSE record via configured provider — not a claim of BSI certification by Satisfecho alone. "
+            "See docs/0072-tse-fiscal-compliance.md and docs/0074-fiscal-certified-middleware.md"
         ),
     }
 
@@ -297,6 +263,7 @@ def issue_or_get_sale(
         process_type="sale",
     )
     process_data = f"Beleg^0.00_0.00_0.00_0.00_{amount / 100:.2f}^Bar"
+    cert_serial = f"CERT-STUB-{serial}"[:128]
 
     req = {
         "schema": STUB_SCHEMA,
@@ -306,27 +273,41 @@ def issue_or_get_sale(
         "tse_serial": serial,
         "signature_counter": counter,
     }
-    provider = _post_provider(
+    provider = sign_tse_transaction(
         {
             **req,
             "tenant_id": tenant_locked.id,
             "client_id": getattr(tenant_locked, "tse_client_id", None),
             "mode": mode,
-        }
+        },
+        tenant_locked,
+        mode=mode,
     )
-    # Prefer provider-supplied fields when present (still not claiming certification here)
-    body = provider.get("body") if isinstance(provider.get("body"), dict) else {}
-    if isinstance(body, dict):
-        if body.get("signature"):
-            signature = str(body["signature"])[:512]
-        if body.get("qr_content"):
-            qr = str(body["qr_content"])[:2000]
-        if body.get("tse_serial"):
-            serial = str(body["tse_serial"])[:128]
+    if provider.get("signature"):
+        signature = str(provider["signature"])[:512]
+    if provider.get("qr_content"):
+        qr = str(provider["qr_content"])[:2000]
+    if provider.get("tse_serial"):
+        serial = str(provider["tse_serial"])[:128]
+    if provider.get("certificate_serial"):
+        cert_serial = str(provider["certificate_serial"])[:128]
+    if provider.get("signature_counter") is not None:
+        counter = int(provider["signature_counter"])
+
+    status = str(provider.get("status") or "local_stub")
+    if mode == "live" and status not in LIVE_OK_STATUSES:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                f"Certified TSE provider rejected or unreachable live signing "
+                f"(status={status}). Fix TSE credentials / connectivity and retry. "
+                f"See docs/0074-fiscal-certified-middleware.md"
+            ),
+        )
 
     submission = "local_stub"
-    if provider.get("channel") == "provider":
-        submission = str(provider.get("status") or "provider")
+    if provider.get("channel") in ("provider", "mock", "fiskaly_sign_de"):
+        submission = status
 
     row = models.TseTransaction(
         tenant_id=tenant_locked.id,  # type: ignore[arg-type]
@@ -339,7 +320,7 @@ def issue_or_get_sale(
         qr_content=qr,
         process_data=process_data,
         transaction_number=counter,
-        certificate_serial=f"CERT-STUB-{serial}"[:128],
+        certificate_serial=cert_serial,
         time_start=now,
         time_end=now,
         amount_cents=amount,
@@ -399,17 +380,42 @@ def issue_storno_for_sale(
         amount_cents=amount,
         process_type="storno",
     )
+    cert_serial = f"CERT-STUB-{serial}"[:128]
     req = {
         "schema": STUB_SCHEMA,
         "process_type": "storno",
         "order_id": order.id,
         "storno_of": sale.id,
         "amount_cents": amount,
+        "signature_counter": counter,
     }
-    provider = _post_provider({**req, "tenant_id": tenant_locked.id, "mode": mode})
+    provider = sign_tse_transaction(
+        {**req, "tenant_id": tenant_locked.id, "mode": mode},
+        tenant_locked,
+        mode=mode,
+    )
+    if provider.get("signature"):
+        signature = str(provider["signature"])[:512]
+    if provider.get("qr_content"):
+        qr = str(provider["qr_content"])[:2000]
+    if provider.get("tse_serial"):
+        serial = str(provider["tse_serial"])[:128]
+    if provider.get("certificate_serial"):
+        cert_serial = str(provider["certificate_serial"])[:128]
+
+    status = str(provider.get("status") or "local_stub")
+    if mode == "live" and status not in LIVE_OK_STATUSES:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                f"Certified TSE provider rejected or unreachable live storno "
+                f"(status={status}). See docs/0074-fiscal-certified-middleware.md"
+            ),
+        )
+
     submission = "local_stub"
-    if provider.get("channel") == "provider":
-        submission = str(provider.get("status") or "provider")
+    if provider.get("channel") in ("provider", "mock", "fiskaly_sign_de"):
+        submission = status
 
     row = models.TseTransaction(
         tenant_id=tenant_locked.id,  # type: ignore[arg-type]
@@ -422,7 +428,7 @@ def issue_storno_for_sale(
         qr_content=qr,
         process_data=f"Storno^{sale.transaction_number}",
         transaction_number=counter,
-        certificate_serial=f"CERT-STUB-{serial}"[:128],
+        certificate_serial=cert_serial,
         time_start=now,
         time_end=now,
         amount_cents=amount,

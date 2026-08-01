@@ -25,15 +25,17 @@ Inventing SOAP/XML payloads or hash “huella” fields without the official AEA
 
 **Prefer B — certified middleware** for AEAT submission and official huella/QR when going production.
 
+**Phase 1 vendor pick (#342):** primary **Fiskaly SIGN ES**; runner-up Verifacti; generic HTTP adapter retained. Details: **`docs/0074-fiscal-certified-middleware.md`**.
+
 POS owns:
 
 - Tenant `fiscal_mode` / series / sequential numbering
 - Append-only fiscal records with **internal** hash chain (`pos.fiscal.hash.v1`)
 - Immutability of orders after an **alta** is issued (edit/delete blocked; cancel via **anulación** / credit-note path)
 - AEAT **ValidarQR** URL **shape** (nif, numserie, fecha, importe) for printed QR content
-- Optional HTTP hook to middleware when `FISCAL_MIDDLEWARE_BASE_URL` is set (test/sandbox)
+- Middleware adapter (`app/fiscal_providers.py`: `fiskaly_sign_es` | `generic` | `mock`)
 
-Middleware (future contract) owns:
+Middleware (chosen provider) owns:
 
 - Official AEAT registro XML/hash per current AEAT packs
 - Certificates / XAdES where required
@@ -42,7 +44,7 @@ Middleware (future contract) owns:
 
 ### Consequences
 
-- Do **not** set or market **`fiscal_mode: live`** until middleware is integrated **and** verified against official sandbox/prod docs. Live is **gated** by `FISCAL_LIVE_UNLOCK=true` plus a configured middleware base URL.
+- Do **not** set or market **`fiscal_mode: live`** until middleware credentials are verified against official sandbox/prod docs. Live is **gated** by `FISCAL_LIVE_UNLOCK=true` **and** provider credentials ready (`live_credentials_ready`). Live issue/cancel **requires** middleware acceptance (502 otherwise). `mock` is non-production only.
 - `fiscal_mode: test` runs local/sandbox submission (near-real-time local record + optional middleware POST). That is **not** a claim of AEAT acceptance.
 - Public `/features` and Settings copy must describe preparation + test mode, not “AEAT certified live”.
 
@@ -55,19 +57,21 @@ Middleware (future contract) owns:
 | AEAT ValidarQR URL parameters for print QR | **Yes** (shape; cotejo only works after real remisión) |
 | Near-real-time **sandbox** submission in `test` mode | **Yes** (local sandbox status + optional middleware HTTP) |
 | Order immutability after fiscal alta; anulación (credit-note) path | **Yes** (#326) |
-| Official AEAT huella algorithm / SOAP remisión | **No** — middleware / official packs |
-| `fiscal_mode: live` production remisión | **Blocked** until unlock + middleware verified |
+| Official AEAT huella algorithm / SOAP remisión | **Via middleware** (Fiskaly SIGN ES adapter wired; needs commercial credentials) |
+| `fiscal_mode: live` production remisión | **Gated** — unlock + provider credentials; mock OK only non-prod |
 | Software-vendor `declaración responsable` for Satisfecho as SIF | **Not claimed** in this doc; legal/ops follow-up |
 
 ## Configuration
 
 | Variable | Meaning |
 |----------|---------|
-| `FISCAL_MIDDLEWARE_BASE_URL` | Optional HTTPS base for certified adapter (e.g. `https://api.example-middleware/v1`). Empty = local sandbox only. |
-| `FISCAL_MIDDLEWARE_API_KEY` | Bearer/API key for middleware (never commit real values). |
-| `FISCAL_LIVE_UNLOCK` | Must be `true` **and** middleware URL set before tenants may select `fiscal_mode: live`. |
+| `FISCAL_MIDDLEWARE_PROVIDER` | `fiskaly_sign_es` (chosen) \| `generic` \| `mock` |
+| `FISCAL_MIDDLEWARE_BASE_URL` | Optional HTTPS base override. Empty → Fiskaly TEST/LIVE defaults when provider is SIGN ES. |
+| `FISCAL_MIDDLEWARE_API_KEY` / `FISCAL_MIDDLEWARE_API_SECRET` | Fiskaly (or generic) credentials (never commit). |
+| `FISCAL_FISKALY_CLIENT_ID` | Default SIGN ES client UUID if tenant credential unset. |
+| `FISCAL_LIVE_UNLOCK` | Must be `true` **and** provider credentials ready before tenants may select `fiscal_mode: live`. |
 
-Per-tenant `fiscal_aeat_api_secret` remains a placeholder for issuer credentials when the chosen middleware needs them.
+Per-tenant `fiscal_aeat_api_secret` may hold the Fiskaly **client UUID** (or other issuer credential the adapter needs). See **`docs/0074-fiscal-certified-middleware.md`** for renewal cadence.
 
 ## QR URL (documented shape)
 

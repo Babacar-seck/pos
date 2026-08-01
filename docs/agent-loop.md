@@ -29,15 +29,15 @@ This is **part of the agent strategy**, not optional tooling guidance.
 
 Merge **only** if **at least one** applies:
 
-1. **~2-hour cadence** — Batch integrate tested commits from **`development`** into **`master`** about every **two hours** (operator or scheduler). Avoid merging **every** small commit individually.
-2. **Big production change** — Material impact: security, payments, data integrity, critical user-visible breakage, blocking migrations, multi-tenant risk, etc. Document why in commit/PR.
+1. **Daily cadence (default)** — At least once per day, batch-integrate tested commits from **`development`** into **`master`** and push (triggers **Deploy to amvara9**). Implemented by **`scripts/promote-development-to-master.sh`**, invoked as loop step **009** after the committer (`AGENT_PROMOTE_INTERVAL_HOURS` default **24**). Avoid merging **every** small commit individually.
+2. **Big production change** — Material impact: security, payments, data integrity, critical user-visible breakage, blocking migrations, multi-tenant risk, etc. Document why in commit/PR. Force with **`AGENT_PROMOTE_FORCE=1`** or a manual merge.
 3. **Urgent / explicit production** — The **GitHub issue** or **human** says **urgent**, **hotfix**, **production**, **deploy now**, or similar. Use label **`production-urgent`** on the issue when applicable so agents and humans agree on intent.
 
-If **none** of the above applies: **push `development` only**; do **not** merge to **`master`**.
+If **none** of the above applies: **push `development` only**; do **not** merge to **`master`** (the next daily promote will ship pending commits).
 
 **Cursor / agents:** **`.cursor/rules/git-development-branch-workflow.mdc`** (`alwaysApply: true`) encodes this; it overrides looser “push master every time” habits.
 
-**Committer agent:** Changelog and version bumps happen on **`development`**; merging to **`master`** is a **separate** step that follows the table above.
+**Committer agent:** Changelog and version bumps happen on **`development`**; merging to **`master`** is a **separate** step (**009** / promote script) that follows the table above.
 
 ### Sync before edits (multi-agent)
 
@@ -124,7 +124,10 @@ Same idea as **mac-stats-reviewer** `agents/run.sh`, but named for clarity: one 
 | **`./agents2/pos-cursor-loop.sh feat`** | Run feature coder if **`FEAT-*.md`** exists. |
 | **`./agents2/pos-cursor-loop.sh closing-review`** | Run closer if **`CLOSED-*.md`** still in **`agents2/tasks/`**. |
 | **`./agents2/pos-cursor-loop.sh committer`** | Run committer if POS repo has unstaged/staged changes. |
+| **`./agents2/pos-cursor-loop.sh promote`** (or **`009`**, **`deploy`**) | Run **009** daily promote: merge **`development` → `master`** via **`scripts/promote-development-to-master.sh`** when cadence allows (default ≥24h since last master tip and development is ahead). No **`cursor-agent`**. Disable with **`AGENT_PROMOTE=0`**. |
 | **`./agents2/pos-cursor-loop.sh help`** | Usage. |
+
+**Background loop:** **`./scripts/start-pos-cursor-loop-background.sh`** (or **`--restart`**) runs the full cycle under **`nohup`**; pid **`tmp/pos-cursor-loop.pid`**, log **`tmp/pos-cursor-loop.log`**.
 
 **001 — if `gh issue list` fails:** preflight retries with **`gh api repos/<owner>/<repo>/issues?state=open&per_page=40`** (issues only, PRs excluded) so **`G001_UNTRACKED_ISSUES`** and the digest can still see new work when the REST call succeeds.
 
@@ -234,7 +237,7 @@ The **reviewer** uses the [issue list](https://github.com/satisfecho/pos/issues)
 | **`agent:planned`** | Task file exists; scoped for implementation (reviewer handoff). |
 | **`agent:wip`** | Coder or feature coder is implementing (rename task to **wip** in sync with this). |
 | **`agent:testing`** | Tester is running **Testing instructions** (task in **testing**). |
-| **`production-urgent`** | Issue may be merged to **`master`** immediately (bypasses normal 2h batch only in the sense of *intent* — still follow tests/review). |
+| **`production-urgent`** | Issue may be merged to **`master`** immediately (bypasses normal daily batch only in the sense of *intent* — still follow tests/review). |
 
 Adjust names to taste (`status/planned`, etc.); keep them **documented here** so every agent uses the same set.
 
@@ -307,7 +310,7 @@ mac-stats-reviewer’s **`agents/autoresearch/README.md`** describes **Track A**
 
 - **`AGENTS.md`** — Docker, smoke tests, **`development` / `master`**, frontend log checks.
 - **`.cursor/rules/git-development-branch-workflow.mdc`** — always-on branch and promotion rules for agents.
-- **`ROADMAP.md`** — high-level shipped / next / deferred; refresh after CLOSED product batches or when **008** sees drift (see “How to keep this current” in that file).
+- **`ROADMAP.md`** — high-level shipped / next / deferred; refresh **~weekly** (checklist in that file) after CLOSED product batches or when **008** sees drift.
 - **`docs/0032-github-issues-roadmap.md`** — Umbrella issues **#52–#54** and links (keep the #52 table aligned with `ROADMAP.md`).
 - **`docs/testing.md`** — Puppeteer scripts, **`go-ahead-loop.sh`**.
 - **`.cursor/rules/error-investigation-workflow.mdc`** — log order for incidents.
