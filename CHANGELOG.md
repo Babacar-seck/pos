@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Changed
+
+- **Roadmap (#341):** Moved end-user customer accounts (#340) from Deferred into Shipped; documented remaining MFA / self-serve invoice deferrals; refreshed Offline / loyalty / migration notes from July 30–31 changelog; added a short weekly ROADMAP review checklist; synced offline row in `docs/0032`.
+
 ## [2.1.145] - 2026-07-31
 
 ### Added
