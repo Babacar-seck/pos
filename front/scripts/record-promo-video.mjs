@@ -150,14 +150,122 @@ async function runWalkthrough(page, baseUrl, tenantId) {
   });
 }
 
-function encodeWithMusic({ webmPath, musicPath, mp4Path }) {
-  const ffmpeg =
+function resolveFfmpeg() {
+  return (
     process.env.FFMPEG ||
     (existsSync('/opt/homebrew/bin/ffmpeg')
       ? '/opt/homebrew/bin/ffmpeg'
       : existsSync('/usr/local/bin/ffmpeg')
         ? '/usr/local/bin/ffmpeg'
-        : 'ffmpeg');
+        : 'ffmpeg')
+  );
+}
+
+function resolveFfprobe() {
+  return (
+    process.env.FFPROBE ||
+    (existsSync('/opt/homebrew/bin/ffprobe')
+      ? '/opt/homebrew/bin/ffprobe'
+      : existsSync('/usr/local/bin/ffprobe')
+        ? '/usr/local/bin/ffprobe'
+        : 'ffprobe')
+  );
+}
+
+/** Bottom music attribution (Homage / Kjartan Abel). PNG overlay — no drawtext needed. */
+const MUSIC_CREDIT_TEXT = 'Music: Homage by Kjartan Abel · CC BY-SA 4.0';
+const MUSIC_CREDIT_LAST_SECONDS = 6;
+
+function writeMusicCreditPng(pngPath) {
+  const py = `
+from PIL import Image, ImageDraw, ImageFont
+text = ${JSON.stringify(MUSIC_CREDIT_TEXT)}
+W, H = 1920, 64
+img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+draw = ImageDraw.Draw(img)
+font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial.ttf", 20)
+bbox = draw.textbbox((0, 0), text, font=font)
+tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+x, y = (W - tw) // 2, (H - th) // 2 - 2
+draw.text((x + 1, y + 1), text, font=font, fill=(0, 0, 0, 140))
+draw.text((x, y), text, font=font, fill=(255, 255, 255, 235))
+img.save(${JSON.stringify(pngPath)})
+`;
+  const res = spawnSync('python3', ['-c', py], { encoding: 'utf8' });
+  if (res.status !== 0) {
+    throw new Error(`credit PNG failed: ${res.stderr || res.stdout || res.status}`);
+  }
+}
+
+function probeDurationSeconds(mediaPath) {
+  const res = spawnSync(
+    resolveFfprobe(),
+    [
+      '-v',
+      'error',
+      '-show_entries',
+      'format=duration',
+      '-of',
+      'default=noprint_wrappers=1:nokey=1',
+      mediaPath,
+    ],
+    { encoding: 'utf8' }
+  );
+  if (res.status !== 0) {
+    throw new Error(`ffprobe failed: ${res.stderr || res.status}`);
+  }
+  const dur = parseFloat(String(res.stdout).trim());
+  if (!Number.isFinite(dur) || dur <= 0) {
+    throw new Error(`bad duration from ffprobe: ${res.stdout}`);
+  }
+  return dur;
+}
+
+/** Burn small bottom credit for the last N seconds (in-place via temp file). */
+function burnMusicCredit({ mp4Path, outDir }) {
+  const ffmpeg = resolveFfmpeg();
+  const pngPath = join(outDir, 'credit-overlay.png');
+  const tmpOut = join(outDir, 'satisfecho-promo-with-credit.mp4');
+  writeMusicCreditPng(pngPath);
+  const dur = probeDurationSeconds(mp4Path);
+  const start = Math.max(0, dur - MUSIC_CREDIT_LAST_SECONDS);
+  console.log(`Burning music credit (last ${MUSIC_CREDIT_LAST_SECONDS}s, from t=${start.toFixed(2)})…`);
+  const res = spawnSync(
+    ffmpeg,
+    [
+      '-y',
+      '-i',
+      mp4Path,
+      '-i',
+      pngPath,
+      '-filter_complex',
+      `[0:v][1:v]overlay=0:H-h-12:enable='gte(t\\,${start})'[v]`,
+      '-map',
+      '[v]',
+      '-map',
+      '0:a',
+      '-c:v',
+      'libx264',
+      '-preset',
+      'medium',
+      '-crf',
+      '20',
+      '-c:a',
+      'copy',
+      '-movflags',
+      '+faststart',
+      tmpOut,
+    ],
+    { stdio: 'inherit' }
+  );
+  if (res.status !== 0) {
+    throw new Error(`ffmpeg credit burn exited with ${res.status}`);
+  }
+  spawnSync('mv', ['-f', tmpOut, mp4Path], { stdio: 'inherit' });
+}
+
+function encodeWithMusic({ webmPath, musicPath, mp4Path, outDir }) {
+  const ffmpeg = resolveFfmpeg();
 
   // Letterbox to 1920x1080, soft music bed with fade in/out, AAC audio.
   const vf =
@@ -200,6 +308,7 @@ function encodeWithMusic({ webmPath, musicPath, mp4Path }) {
   if (res.status !== 0) {
     throw new Error(`ffmpeg exited with ${res.status}`);
   }
+  burnMusicCredit({ mp4Path, outDir });
 }
 
 async function main() {
@@ -282,11 +391,12 @@ async function main() {
     return;
   }
 
-  encodeWithMusic({ webmPath, musicPath, mp4Path });
+  encodeWithMusic({ webmPath, musicPath, mp4Path, outDir });
   spawnSync('cp', ['-f', mp4Path, latestMp4], { stdio: 'inherit' });
   console.log('---');
   console.log('Draft MP4:', mp4Path);
   console.log('Latest:   ', latestMp4);
+  console.log('Music credit (bottom, last 6s):', MUSIC_CREDIT_TEXT);
   console.log('Open: open', latestMp4);
 }
 
