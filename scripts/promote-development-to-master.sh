@@ -216,15 +216,14 @@ if [[ "$WAIT_DEPLOY" == "1" ]] && command -v gh >/dev/null 2>&1; then
   run_conclusion=""
   run_id=""
   while (( $(date +%s) < deadline )); do
-    run_json="$(gh run list --repo "$GH_REPO" --workflow "Deploy to amvara9" --branch master --limit 8 \
+    run_json="$(gh run list --repo "$GH_REPO" --workflow "Deploy to amvara9" --branch master --limit 15 \
       --json databaseId,headSha,status,conclusion 2>/dev/null || echo '[]')"
     eval "$(python3 -c '
-import json, os, sys
+import json, sys
 runs = json.loads(sys.argv[1] or "[]")
 want = sys.argv[2]
+# Exact SHA only — never fall back to an older successful run.
 pick = next((r for r in runs if r.get("headSha") == want), None)
-if pick is None and runs:
-    pick = runs[0]
 if not pick:
     print("run_id=\"\"; run_status=\"\"; run_conclusion=\"\"")
 else:
@@ -244,12 +243,12 @@ else:
         exit 1
       fi
     else
-      log "waiting for workflow run to appear…"
+      log "waiting for workflow run for ${MERGE_FULL:0:12}…"
     fi
     sleep 20
   done
   if [[ "${run_status:-}" != "completed" || "${run_conclusion:-}" != "success" ]]; then
-    log "timed out waiting for successful deploy"
+    log "timed out waiting for successful deploy of ${MERGE_FULL}"
     exit 1
   fi
 fi
