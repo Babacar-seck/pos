@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+### Added
+
+- **Promo video recorder:** `front/scripts/record-promo-video.mjs` (`npm run record-promo-video`) captures a short public-page walkthrough via Puppeteer screencast, letterboxes to 1080p with ffmpeg, and muxes a **CC BY-SA 4.0** music bed (default: Homage by Kjartan Abel). Documented in `docs/0075-promo-videos.md` (mac-stats-style live capture pattern).
+
 ### Changed
 
 - **Agent loop daily promote:** Step **009** runs **`scripts/promote-development-to-master.sh`** after the committer so **`development` → `master`** (and Deploy to amvara9) happens at least once per day when there are pending commits (`AGENT_PROMOTE_INTERVAL_HOURS` default 24). Background helper: **`scripts/start-pos-cursor-loop-background.sh`**.

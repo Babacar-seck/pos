@@ -717,6 +717,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:tables-canvas-open-orders` | `scripts/test-tables-canvas-open-orders.mjs` (Floor plan: select table → staff orders shortcut link with `focusOrder` / `focusTableId`; .env demo user) |
 | `test:tables-waiter-assignment` | `scripts/test-tables-waiter-assignment.mjs` (Waiter: Table view has read-only assignment cells, no `select.waiter-select-inline`; requires `WAITER_LOGIN_EMAIL` / `WAITER_LOGIN_PASSWORD`, else skips with exit 0) |
 | `test:landing-version` | `scripts/test-landing-version.mjs` |
+| `record-promo-video` | `scripts/record-promo-video.mjs` (marketing walkthrough screencast → 1080p MP4 + copyleft bed; see `docs/0075-promo-videos.md`; outputs under `tmp/promo/`) |
 | `test:features` | `scripts/test-features.mjs` (public `/features`: hero title, category sections, home/register nav; no login) |
 | `test:pricing` | `scripts/test-pricing.mjs` (public `/pricing`: live `GET /saas/config` price/trial, self-host card, billing note vs `enabled`; no login) |
 | `test:about` | `scripts/test-about.mjs` (public `/about`: footer About link, Amvara Consulting S.L. on page + footer; no login) |

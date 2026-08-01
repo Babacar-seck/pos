@@ -22,6 +22,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Manage multi-location restaurant groups | [0054-restaurant-groups.md](0054-restaurant-groups.md) |
 | Rate limits (production) | [0020-rate-limiting-production.md](0020-rate-limiting-production.md) |
 | Capture screenshots | [screenshots/README.md](screenshots/README.md) |
+| Record short promo videos (Puppeteer + copyleft bed) | [0075-promo-videos.md](0075-promo-videos.md) |
 | Security review notes (structured pass, not a pentest) | [SECURITY-REVIEW.md](SECURITY-REVIEW.md) |
 | Browse public marketing features list (`/features`, no login) | [../README.md](../README.md) Access Points / Features — route `http://localhost:4202/features` |
 | Browse public About us (`/about`, no login; Amvara Consulting S.L.) | [../README.md](../README.md) Access Points — route `http://localhost:4202/about`; smoke: `npm run test:about --prefix front` |
@@ -137,6 +138,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | Doc | Description |
 |-----|-------------|
 | [screenshots/README.md](screenshots/README.md) | How to capture screenshots (Puppeteer script, manual), file list and where each is used (README, feature docs). |
+| [0075-promo-videos.md](0075-promo-videos.md) | Short promo MP4s: Puppeteer screencast walkthrough + **CC BY-SA** music bed (mac-stats-style); `npm run record-promo-video --prefix front`. |
 
 ---
 

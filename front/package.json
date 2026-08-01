@@ -65,7 +65,8 @@
     "test:menu-logo": "node scripts/test-menu-logo.mjs",
     "test:settings-contact-tax": "node scripts/test-settings-contact-tax-dropdown.mjs",
     "test:staff-menu-link": "node scripts/test-staff-menu-link-puppeteer.mjs",
-    "capture-screenshots": "node scripts/capture-screenshots.mjs"
+    "capture-screenshots": "node scripts/capture-screenshots.mjs",
+    "record-promo-video": "node scripts/record-promo-video.mjs"
   },
   "prettier": {
     "printWidth": 100,
