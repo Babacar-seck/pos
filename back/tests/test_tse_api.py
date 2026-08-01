@@ -229,8 +229,10 @@ class TestTseApi(PgClientTestCase):
         with mock.patch("app.tse_service.settings") as s:
             s.tse_live_unlock = False
             s.tse_provider_base_url = ""
-            with self.assertRaises(Exception):
-                assert_tse_mode_allowed("live")
+            s.tse_provider = "generic"
+            with mock.patch("app.tse_service.live_credentials_ready", return_value=False):
+                with self.assertRaises(Exception):
+                    assert_tse_mode_allowed("live")
 
         h = _bearer_headers(self.owner)
         r = self.client.put(
@@ -239,6 +241,35 @@ class TestTseApi(PgClientTestCase):
             json={"tse_mode": "live"},
         )
         self.assertEqual(r.status_code, 400, r.text)
+
+    def test_live_sign_with_mock_provider(self) -> None:
+        """Vertical slice: live + mock TSE provider yields accepted signature."""
+        h = _bearer_headers(self.owner)
+        with mock.patch("app.tse_service.settings") as s, mock.patch(
+            "app.tse_service.live_credentials_ready", return_value=True
+        ), mock.patch("app.tse_providers.tse_provider_name", return_value="mock"), mock.patch(
+            "app.tse_providers.settings"
+        ) as ps:
+            s.tse_live_unlock = True
+            s.tse_provider = "mock"
+            s.is_production = False
+            ps.is_production = False
+            ps.tse_provider = "mock"
+            r = self.client.put(
+                "/tenant/settings",
+                headers=h,
+                json={"tse_mode": "live"},
+            )
+            self.assertEqual(r.status_code, 200, r.text)
+            sign = self.client.post(
+                f"/orders/{self.order_paid.id}/tse-transaction/sign", headers=h
+            )
+            self.assertEqual(sign.status_code, 200, sign.text)
+            body = sign.json()
+            self.assertEqual(body["mode"], "live")
+            self.assertEqual(body["submission_status"], "mock_accepted")
+            self.assertTrue(str(body.get("signature_value") or "").startswith("mock-sig-"))
+            self.assertTrue(str(body.get("tse_serial") or "").startswith("MOCK-TSE-"))
 
     def test_verifactu_untouched(self) -> None:
         """TSE must not require or alter fiscal_mode."""

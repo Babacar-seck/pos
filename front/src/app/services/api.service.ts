@@ -818,7 +818,7 @@ export interface GuestFeedbackSummary {
   by_day: Array<{ date: string; count: number; average_rating: number | null }>;
 }
 
-/** Club loyalty (#327) */
+/** Club loyalty (#327 / #343) */
 export interface LoyaltyWalletStatus {
   apple_wallet_configured?: boolean;
   google_wallet_configured?: boolean;
@@ -826,6 +826,8 @@ export interface LoyaltyWalletStatus {
   google_wallet_available?: boolean;
   detail?: string;
   membership_id?: number;
+  apple_pkpass_path?: string;
+  google_save_url?: string;
 }
 
 /** Price promotions (#322) */
@@ -867,6 +869,8 @@ export interface LoyaltyProgram {
   referral_bonus_units?: number;
   /** Units awarded to invitee on referred join (0 = off). */
   referral_invitee_bonus_units?: number;
+  /** When false, Apple/Google pass issuance is off; balance card still works (#343). */
+  wallet_passes_enabled?: boolean;
   created_at?: string | null;
   updated_at?: string | null;
   wallet?: LoyaltyWalletStatus;
@@ -3735,12 +3739,29 @@ export class ApiService {
     ok: boolean;
     membership: LoyaltyMembership;
     wallet?: LoyaltyWalletStatus;
+    apple_pkpass_path?: string;
+    google_save_url?: string;
   }> {
     return this.http.post<{
       ok: boolean;
       membership: LoyaltyMembership;
       wallet?: LoyaltyWalletStatus;
+      apple_pkpass_path?: string;
+      google_save_url?: string;
     }>(`${this.apiUrl}/public/tenants/${tenantId}/loyalty/join`, body);
+  }
+
+  getPublicLoyaltyApplePkpassUrl(memberToken: string): string {
+    return `${this.apiUrl}/public/loyalty/members/${encodeURIComponent(memberToken)}/wallet/apple.pkpass`;
+  }
+
+  getPublicLoyaltyGoogleSave(memberToken: string): Observable<{
+    ok: boolean;
+    google_save_url: string;
+  }> {
+    return this.http.get<{ ok: boolean; google_save_url: string }>(
+      `${this.apiUrl}/public/loyalty/members/${encodeURIComponent(memberToken)}/wallet/google`,
+    );
   }
 
   getPublicLoyaltyBalance(memberToken: string): Observable<{

@@ -2345,7 +2345,9 @@
     "LOYALTY_JOIN_URL_HINT": "Compartiu aquest enllaç perquè els clients s'uneixin al club. Els codis opcionals ?ref= fan seguiment de referits.",
     "LOYALTY_WALLET_NOTE": "Els passes d'Apple/Google Wallet no s'emeten fins a configurar certificats.",
     "LOYALTY_MEMBERS_EMPTY_HINT": "Compartiu l'URL pública d'alta perquè els clients es puguin registrar.",
-    "LOYALTY_REFERRAL_INVITEE_HINT": "Unitats per al nou membre que s'uneix amb un codi de referit vàlid (0 = off)."
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Unitats per al nou membre que s'uneix amb un codi de referit vàlid (0 = off).",
+    "LOYALTY_WALLET_ENABLED": "Oferir passis d’Apple / Google Wallet",
+    "LOYALTY_WALLET_ENABLED_HINT": "Si hi ha certificats de plataforma, els membres poden afegir un pass en unir-se. Desactiva per deixar només l’enllaç de saldo."
   },
   "PAYMENTS": {
     "PAYMENT": "Pagament",
@@ -2866,7 +2868,9 @@
     "BIRTHDAY_HINT": "Mes i dia opcionals perquè el restaurant pugui atorgar un bonus d’aniversari.",
     "VIP_TIER": "Nivell VIP",
     "REFERRAL_CODE": "Codi de referit (opcional)",
-    "REFERRAL_SHARE": "Comparteix aquest enllaç perquè amics s'uneixin amb el teu referit:"
+    "REFERRAL_SHARE": "Comparteix aquest enllaç perquè amics s'uneixin amb el teu referit:",
+    "ADD_APPLE_WALLET": "Afegir a Apple Wallet",
+    "ADD_GOOGLE_WALLET": "Afegir a Google Wallet"
   },
   "ABOUT_PAGE": {
     "BADGE": "Empresa",

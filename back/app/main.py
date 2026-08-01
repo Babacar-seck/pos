@@ -108,6 +108,7 @@ from .tenant_currency import (
 from . import restaurant_groups as rg
 from . import branch_fulfillment as hub_ff
 from . import loyalty_service as loyalty_svc
+from . import loyalty_wallet
 from . import promo_service as promo_svc
 from . import order_payment_service as order_pay_svc
 from .order_discounts import order_level_discount_cents
@@ -1910,7 +1911,7 @@ def public_loyalty_program_info(
             getattr(program, "vip_gold_min_lifetime_units", 0) or 0
         ),
         "referral_bonus_units": int(getattr(program, "referral_bonus_units", 0) or 0),
-        "wallet": loyalty_svc.wallet_pass_status(),
+        "wallet": loyalty_svc.wallet_pass_status(program),
     }
 
 
@@ -1946,16 +1947,27 @@ def public_loyalty_join(
         birthday_day=body.birthday_day,
         referral_code=body.referral_code,
     )
+    program = loyalty_svc.get_program(session, tenant_id)
+    pass_info = {}
+    if program:
+        pass_info = loyalty_wallet.prepare_passes_on_join(
+            session, membership=membership, program=program, tenant=tenant
+        )
     session.commit()
     session.refresh(membership)
     program = loyalty_svc.get_program(session, tenant_id)
-    return {
+    payload = {
         "ok": True,
         "membership": loyalty_svc.membership_to_dict(
             membership, include_token=True, program=program
         ),
-        "wallet": loyalty_svc.wallet_pass_status(),
+        "wallet": pass_info.get("wallet") or loyalty_svc.wallet_pass_status(program),
     }
+    if pass_info.get("apple_pkpass_path"):
+        payload["apple_pkpass_path"] = pass_info["apple_pkpass_path"]
+    if pass_info.get("google_save_url"):
+        payload["google_save_url"] = pass_info["google_save_url"]
+    return payload
 
 
 @app.get("/public/loyalty/members/{member_token}")
@@ -1979,7 +1991,7 @@ def public_loyalty_balance(
             membership, include_token=False, program=program
         ),
         "program": loyalty_svc.program_to_dict(program) if program else None,
-        "wallet": loyalty_svc.wallet_pass_status(),
+        "wallet": loyalty_svc.wallet_pass_status(program),
     }
 
 
@@ -1998,9 +2010,244 @@ def public_loyalty_wallet_status(
     ).first()
     if not membership:
         raise HTTPException(status_code=404, detail="Membership not found")
-    status_payload = loyalty_svc.wallet_pass_status()
+    program = session.get(models.LoyaltyProgram, membership.program_id)
+    status_payload = loyalty_svc.wallet_pass_status(program)
     status_payload["membership_id"] = membership.id
+    if status_payload.get("apple_wallet_available"):
+        status_payload["apple_pkpass_path"] = (
+            f"/public/loyalty/members/{member_token}/wallet/apple.pkpass"
+        )
+    if status_payload.get("google_wallet_available") and getattr(
+        membership, "google_loyalty_object_id", None
+    ):
+        try:
+            status_payload["google_save_url"] = loyalty_wallet.google_save_url(
+                membership.google_loyalty_object_id  # type: ignore[arg-type]
+            )
+        except Exception:
+            pass
+    elif status_payload.get("google_wallet_available"):
+        tenant = session.get(models.Tenant, membership.tenant_id)
+        if program and tenant:
+            oid = loyalty_wallet.ensure_google_loyalty_object(
+                session, membership=membership, program=program, tenant=tenant
+            )
+            session.commit()
+            if oid:
+                try:
+                    status_payload["google_save_url"] = loyalty_wallet.google_save_url(oid)
+                except Exception:
+                    pass
     return status_payload
+
+
+@app.get("/public/loyalty/members/{member_token}/wallet/apple.pkpass")
+@public_menu_ip_limit()
+def public_loyalty_apple_pkpass(
+    request: Request,
+    response: Response,
+    member_token: str,
+    session: Session = Depends(get_session),
+):
+    """Download a signed Apple Wallet .pkpass when platform certs are configured."""
+    membership = session.exec(
+        select(models.LoyaltyMembership).where(
+            models.LoyaltyMembership.member_token == member_token
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    program = session.get(models.LoyaltyProgram, membership.program_id)
+    tenant = session.get(models.Tenant, membership.tenant_id)
+    if not program or not tenant:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    status = loyalty_svc.wallet_pass_status(program)
+    if not status.get("apple_wallet_available"):
+        raise HTTPException(
+            status_code=503,
+            detail=status.get("detail") or "Apple Wallet passes are not available",
+        )
+    try:
+        data = loyalty_wallet.build_pkpass_bytes(
+            membership=membership, program=program, tenant=tenant
+        )
+        session.add(membership)
+        session.commit()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to build pass: {exc}") from exc
+    return Response(
+        content=data,
+        media_type="application/vnd.apple.pkpass",
+        headers={
+            "Content-Disposition": f'attachment; filename="loyalty-{membership.id}.pkpass"',
+        },
+    )
+
+
+@app.get("/public/loyalty/members/{member_token}/wallet/google")
+@public_menu_ip_limit()
+def public_loyalty_google_save(
+    request: Request,
+    response: Response,
+    member_token: str,
+    session: Session = Depends(get_session),
+) -> dict:
+    """Return Google Wallet save URL (JWT) when issuer is configured."""
+    membership = session.exec(
+        select(models.LoyaltyMembership).where(
+            models.LoyaltyMembership.member_token == member_token
+        )
+    ).first()
+    if not membership:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    program = session.get(models.LoyaltyProgram, membership.program_id)
+    tenant = session.get(models.Tenant, membership.tenant_id)
+    if not program or not tenant:
+        raise HTTPException(status_code=404, detail="Membership not found")
+    status = loyalty_svc.wallet_pass_status(program)
+    if not status.get("google_wallet_available"):
+        raise HTTPException(
+            status_code=503,
+            detail=status.get("detail") or "Google Wallet passes are not available",
+        )
+    oid = loyalty_wallet.ensure_google_loyalty_object(
+        session, membership=membership, program=program, tenant=tenant
+    )
+    session.commit()
+    if not oid:
+        raise HTTPException(status_code=503, detail="Could not create Google Wallet object")
+    try:
+        save_url = loyalty_wallet.google_save_url(oid)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to build save URL: {exc}") from exc
+    return {"ok": True, "google_save_url": save_url, "object_id": oid}
+
+
+# ---- PassKit web service (Apple Wallet push-update) ----
+# webServiceURL = {PUBLIC_APP_BASE_URL}{ROOT_PATH}/public/passkit
+
+
+class _PassKitRegisterBody(_BaseModel):
+    pushToken: str = Field(min_length=1, max_length=255)
+
+
+@app.post(
+    "/public/passkit/v1/devices/{device_library_identifier}/registrations/"
+    "{pass_type_identifier}/{serial_number}"
+)
+def passkit_register_device(
+    device_library_identifier: str,
+    pass_type_identifier: str,
+    serial_number: str,
+    body: _PassKitRegisterBody,
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    membership = loyalty_wallet.membership_by_apple_serial(session, serial_number)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Pass not found")
+    auth = request.headers.get("Authorization")
+    if not loyalty_wallet.verify_apple_pass_auth(membership, auth):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if pass_type_identifier != (settings.loyalty_apple_pass_type_id or "").strip():
+        raise HTTPException(status_code=404, detail="Pass type not found")
+    already = session.exec(
+        select(models.LoyaltyAppleDevice).where(
+            models.LoyaltyAppleDevice.membership_id == membership.id,
+            models.LoyaltyAppleDevice.device_library_identifier == device_library_identifier,
+        )
+    ).first()
+    loyalty_wallet.register_apple_device(
+        session,
+        membership=membership,
+        device_library_identifier=device_library_identifier,
+        push_token=body.pushToken,
+    )
+    session.commit()
+    return Response(status_code=200 if already else 201)
+
+
+@app.delete(
+    "/public/passkit/v1/devices/{device_library_identifier}/registrations/"
+    "{pass_type_identifier}/{serial_number}"
+)
+def passkit_unregister_device(
+    device_library_identifier: str,
+    pass_type_identifier: str,
+    serial_number: str,
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    membership = loyalty_wallet.membership_by_apple_serial(session, serial_number)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Pass not found")
+    auth = request.headers.get("Authorization")
+    if not loyalty_wallet.verify_apple_pass_auth(membership, auth):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    loyalty_wallet.unregister_apple_device(
+        session,
+        membership=membership,
+        device_library_identifier=device_library_identifier,
+    )
+    session.commit()
+    return Response(status_code=200)
+
+
+@app.get(
+    "/public/passkit/v1/devices/{device_library_identifier}/registrations/{pass_type_identifier}"
+)
+def passkit_list_updatable_passes(
+    device_library_identifier: str,
+    pass_type_identifier: str,
+    passesUpdatedSince: str | None = None,
+    session: Session = Depends(get_session),
+):
+    serials, last_updated = loyalty_wallet.apple_serials_updated_since(
+        session,
+        device_library_identifier=device_library_identifier,
+        pass_type_id=pass_type_identifier,
+        passes_updated_since=passesUpdatedSince,
+    )
+    if not serials:
+        return Response(status_code=204)
+    return {"serialNumbers": serials, "lastUpdated": last_updated}
+
+
+@app.get("/public/passkit/v1/passes/{pass_type_identifier}/{serial_number}")
+def passkit_get_latest_pass(
+    pass_type_identifier: str,
+    serial_number: str,
+    request: Request,
+    session: Session = Depends(get_session),
+):
+    membership = loyalty_wallet.membership_by_apple_serial(session, serial_number)
+    if not membership:
+        raise HTTPException(status_code=404, detail="Pass not found")
+    auth = request.headers.get("Authorization")
+    if not loyalty_wallet.verify_apple_pass_auth(membership, auth):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    if pass_type_identifier != (settings.loyalty_apple_pass_type_id or "").strip():
+        raise HTTPException(status_code=404, detail="Pass type not found")
+    program = session.get(models.LoyaltyProgram, membership.program_id)
+    tenant = session.get(models.Tenant, membership.tenant_id)
+    if not program or not tenant:
+        raise HTTPException(status_code=404, detail="Pass not found")
+    data = loyalty_wallet.build_pkpass_bytes(
+        membership=membership, program=program, tenant=tenant
+    )
+    session.commit()
+    return Response(
+        content=data,
+        media_type="application/vnd.apple.pkpass",
+        headers={
+            "Last-Modified": datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S GMT")
+        },
+    )
+
+
+@app.post("/public/passkit/v1/log")
+def passkit_log() -> dict:
+    return {"ok": True}
 
 
 @app.get("/loyalty/program")
@@ -2013,7 +2260,7 @@ def get_loyalty_program(
     session.refresh(program)
     return {
         **loyalty_svc.program_to_dict(program),
-        "wallet": loyalty_svc.wallet_pass_status(),
+        "wallet": loyalty_svc.wallet_pass_status(program),
         "join_path": f"/loyalty/{current_user.tenant_id}",
     }
 
@@ -2053,6 +2300,8 @@ def update_loyalty_program(
         program.referral_bonus_units = body.referral_bonus_units
     if body.referral_invitee_bonus_units is not None:
         program.referral_invitee_bonus_units = body.referral_invitee_bonus_units
+    if body.wallet_passes_enabled is not None:
+        program.wallet_passes_enabled = body.wallet_passes_enabled
     silver = int(getattr(program, "vip_silver_min_lifetime_units", 0) or 0)
     gold = int(getattr(program, "vip_gold_min_lifetime_units", 0) or 0)
     if silver > 0 and gold > 0 and gold < silver:

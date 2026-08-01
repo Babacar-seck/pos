@@ -251,39 +251,82 @@ class Settings(BaseSettings):
         validation_alias="LOYALTY_GOOGLE_SERVICE_ACCOUNT_JSON",
         description="Path to Google service-account JSON (never commit real keys)",
     )
+    # Optional APNs .p8 for PassKit push-update (HTTP/2). When empty, Apple pass still
+    # downloads/updates via web service; devices only learn of changes after a push or re-open.
+    loyalty_apple_apns_key_path: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_APNS_KEY_PATH"
+    )
+    loyalty_apple_apns_key_id: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_APNS_KEY_ID"
+    )
+    # Override PassKit webServiceURL base (must be https in production). Empty → derived from
+    # PUBLIC_APP_BASE_URL + ROOT_PATH + /public/passkit
+    loyalty_apple_web_service_base_url: str = Field(
+        default="", validation_alias="LOYALTY_APPLE_WEB_SERVICE_BASE_URL"
+    )
 
-    # VeriFactu / fiscal middleware (see docs/0065-verifactu-production.md)
+    # VeriFactu / fiscal middleware (see docs/0065 + docs/0074)
+    fiscal_middleware_provider: str = Field(
+        default="generic",
+        validation_alias="FISCAL_MIDDLEWARE_PROVIDER",
+        description="mock | generic | fiskaly_sign_es (chosen primary: Fiskaly SIGN ES)",
+    )
     fiscal_middleware_base_url: str = Field(
         default="",
         validation_alias="FISCAL_MIDDLEWARE_BASE_URL",
-        description="Optional certified middleware base URL; empty = local sandbox only",
+        description="Optional middleware base URL override; empty uses Fiskaly defaults when provider=fiskaly_sign_es",
     )
     fiscal_middleware_api_key: str = Field(
         default="",
         validation_alias="FISCAL_MIDDLEWARE_API_KEY",
         description="API key / bearer for fiscal middleware (never commit real values)",
     )
+    fiscal_middleware_api_secret: str = Field(
+        default="",
+        validation_alias="FISCAL_MIDDLEWARE_API_SECRET",
+        description="API secret for Fiskaly SIGN ES auth (never commit real values)",
+    )
+    fiscal_fiskaly_client_id: str = Field(
+        default="",
+        validation_alias="FISCAL_FISKALY_CLIENT_ID",
+        description="Default Fiskaly SIGN ES client UUID when tenant credential unset",
+    )
     fiscal_live_unlock: bool = Field(
         default=False,
         validation_alias="FISCAL_LIVE_UNLOCK",
-        description="When true and middleware URL set, tenants may select fiscal_mode=live",
+        description="When true and provider credentials ready, tenants may select fiscal_mode=live",
     )
 
-    # German TSE / KassenSichV (see docs/0072-tse-fiscal-compliance.md)
+    # German TSE / KassenSichV (see docs/0072 + docs/0074)
+    tse_provider: str = Field(
+        default="generic",
+        validation_alias="TSE_PROVIDER",
+        description="mock | generic | fiskaly_sign_de (chosen primary: Fiskaly SIGN DE)",
+    )
     tse_provider_base_url: str = Field(
         default="",
         validation_alias="TSE_PROVIDER_BASE_URL",
-        description="Optional cloud TSE provider base URL; empty = local stub only",
+        description="Optional cloud TSE base URL override; empty uses Fiskaly defaults when provider=fiskaly_sign_de",
     )
     tse_provider_api_key: str = Field(
         default="",
         validation_alias="TSE_PROVIDER_API_KEY",
         description="API key for cloud TSE provider (never commit real values)",
     )
+    tse_provider_api_secret: str = Field(
+        default="",
+        validation_alias="TSE_PROVIDER_API_SECRET",
+        description="API secret for Fiskaly SIGN DE auth (never commit real values)",
+    )
+    tse_fiskaly_tss_id: str = Field(
+        default="",
+        validation_alias="TSE_FISKALY_TSS_ID",
+        description="Fiskaly SIGN DE TSS UUID (platform or shared TSS for MVP)",
+    )
     tse_live_unlock: bool = Field(
         default=False,
         validation_alias="TSE_LIVE_UNLOCK",
-        description="When true and provider URL set, tenants may select tse_mode=live",
+        description="When true and provider credentials ready, tenants may select tse_mode=live",
     )
 
     @model_validator(mode="after")

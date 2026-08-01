@@ -8,9 +8,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ## [Unreleased]
 
+## [2.1.146] - 2026-08-01
+
+### Added
+
+- **Loyalty wallet passes (#343):** Apple PassKit `.pkpass` signing and PassKit web-service updates, plus Google Wallet loyalty object create/PATCH, when platform certs/issuer env are configured; per-tenant `wallet_passes_enabled` with balance-card fallback; Add-to-Wallet on join/card; setup steps in `docs/0066`. Real device acceptance still needs Apple/Google issuer credentials in each environment.
+- **Certified fiscal middleware (#342):** Provider ADR (`docs/0074`) choosing Fiskaly SIGN ES (VeriFactu) and SIGN DE (TSE); adapters with `mock` / `generic` / Fiskaly modes; live issue and TSE sign require middleware acceptance (502 otherwise); mock blocked when `PRODUCTION=true`; Settings and `/features` stay honest until production credentials are verified.
+
 ### Changed
 
-- **Roadmap (#341):** Moved end-user customer accounts (#340) from Deferred into Shipped; documented remaining MFA / self-serve invoice deferrals; refreshed Offline / loyalty / migration notes from July 30–31 changelog; added a short weekly ROADMAP review checklist; synced offline row in `docs/0032`.
+- **Roadmap (#341):** Moved end-user customer accounts (#340) from Deferred into Shipped; noted remaining MFA / self-serve invoice deferrals; refreshed Offline / loyalty / migration notes; added a short weekly ROADMAP review checklist; synced the offline row in `docs/0032`.
 
 ## [2.1.145] - 2026-07-31
 

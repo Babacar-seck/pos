@@ -2345,7 +2345,9 @@
     "LOYALTY_JOIN_URL_HINT": "मेहमानों को क्लब जॉइन करने के लिए यह लिंक साझा करें। वैकल्पिक ?ref= कोड रेफ़रल ट्रैक करते हैं।",
     "LOYALTY_WALLET_NOTE": "प्रमाणपत्र कॉन्फ़िगर होने तक Apple/Google Wallet पास जारी नहीं होते।",
     "LOYALTY_MEMBERS_EMPTY_HINT": "मेहमानों के नामांकन के लिए सार्वजनिक जॉइन URL साझा करें।",
-    "LOYALTY_REFERRAL_INVITEE_HINT": "वैध रेफ़रल कोड से जॉइन करने वाले नए सदस्य को मिलने वाली यूनिट (0 = बंद)।"
+    "LOYALTY_REFERRAL_INVITEE_HINT": "वैध रेफ़रल कोड से जॉइन करने वाले नए सदस्य को मिलने वाली यूनिट (0 = बंद)।",
+    "LOYALTY_WALLET_ENABLED": "Apple / Google Wallet पास दें",
+    "LOYALTY_WALLET_ENABLED_HINT": "प्लेटफ़ॉर्म प्रमाणपत्र सेट होने पर सदस्य जॉइन पर वॉलेट पास जोड़ सकते हैं। केवल बैलेंस कार्ड के लिए बंद करें।"
   },
   "PAYMENTS": {
     "PAYMENT": "भुगतान",
@@ -2866,7 +2868,9 @@
     "BIRTHDAY_HINT": "वैकल्पिक माह और दिन ताकि रेस्तराँ जन्मदिन बोनस दे सके।",
     "VIP_TIER": "VIP स्तर",
     "REFERRAL_CODE": "रेफ़रल कोड (वैकल्पिक)",
-    "REFERRAL_SHARE": "यह लिंक साझा करें ताकि मित्र आपके रेफ़रल से जुड़ें:"
+    "REFERRAL_SHARE": "यह लिंक साझा करें ताकि मित्र आपके रेफ़रल से जुड़ें:",
+    "ADD_APPLE_WALLET": "Apple Wallet में जोड़ें",
+    "ADD_GOOGLE_WALLET": "Google Wallet में जोड़ें"
   },
   "ABOUT_PAGE": {
     "BADGE": "कंपनी",

@@ -53,8 +53,8 @@ Core POS and recent 2026-07 slices (through **2026-07-31**). Links are the sourc
 | **#52 remaining slices** | Partial — see table in `docs/0032` | Transfers/WMS, deeper offline (SW write queue), more migration entities, Uber Eats |
 | **#53 Kitchen SLAs / stations** | Not started | Age gradients, category SLAs, station views — `docs/0015`, issue [#53](https://github.com/satisfecho/pos/issues/53) |
 | **#54 Post-visit campaigns** | Partial feedback shipped; SMS/email automation open | [#54](https://github.com/satisfecho/pos/issues/54) |
-| **TSE live / VeriFactu live** | Test/stub paths shipped; live gated on certified middleware | `docs/0072`, `docs/0065`; [#342](https://github.com/satisfecho/pos/issues/342) |
-| **Wallet pass issuance (Loyalty Club)** | Status/stub only until Apple/Google certs wired | `docs/0066`; [#343](https://github.com/satisfecho/pos/issues/343) |
+| **TSE live / VeriFactu live** | Adapters wired (Fiskaly SIGN ES / SIGN DE + mock/generic); live gated on unlock + credentials — prod certs still ops | `docs/0074`, `docs/0072`, `docs/0065`; [#342](https://github.com/satisfecho/pos/issues/342) |
+| **Wallet pass issuance (Loyalty Club)** | Issuance + push wired (#343); needs live Apple/Google certs in env for production | `docs/0066`; [#343](https://github.com/satisfecho/pos/issues/343) |
 | **Order customizations price deltas** | Core customizations shipped; priced modifiers optional | [#50](https://github.com/satisfecho/pos/issues/50), `docs/0031` |
 
 Open issues: [github.com/satisfecho/pos/issues](https://github.com/satisfecho/pos/issues).

@@ -2223,7 +2223,9 @@
     "LOYALTY_JOIN_URL_HINT": "مہمانوں کے لیے یہ لنک شیئر کریں۔ اختیاری ?ref= کوڈز ریفرل ٹریک کرتے ہیں۔",
     "LOYALTY_WALLET_NOTE": "سرٹیفکیٹ کنفیگر ہونے تک Apple/Google Wallet پاسز جاری نہیں ہوتے۔",
     "LOYALTY_MEMBERS_EMPTY_HINT": "مہمانوں کی اندراج کے لیے عوامی جوائن URL شیئر کریں۔",
-    "LOYALTY_REFERRAL_INVITEE_HINT": "درست ریفرل کوڈ سے جوائن کرنے والے نئے ممبر کو ملنے والی یونٹس (0 = بند)۔"
+    "LOYALTY_REFERRAL_INVITEE_HINT": "درست ریفرل کوڈ سے جوائن کرنے والے نئے ممبر کو ملنے والی یونٹس (0 = بند)۔",
+    "LOYALTY_WALLET_ENABLED": "Apple / Google Wallet پاس پیش کریں",
+    "LOYALTY_WALLET_ENABLED_HINT": "پلیٹ فارم سرٹیفکیٹ سیٹ ہونے پر ممبرز جوائن پر والیٹ پاس شامل کر سکتے ہیں۔ صرف بیلنس کارڈ کے لیے بند کریں۔"
   },
   "PAYMENTS": {
     "PAYMENT": "ادائیگی",
@@ -2866,7 +2868,9 @@
     "BIRTHDAY_HINT": "اختیاری مہینہ اور دن تاکہ ریستوراں سالگرہ بونس دے سکے۔",
     "VIP_TIER": "VIP درجہ",
     "REFERRAL_CODE": "ریفرل کوڈ (اختیاری)",
-    "REFERRAL_SHARE": "یہ لنک شیئر کریں تاکہ دوست آپ کے ریفرل سے جوائن کریں:"
+    "REFERRAL_SHARE": "یہ لنک شیئر کریں تاکہ دوست آپ کے ریفرل سے جوائن کریں:",
+    "ADD_APPLE_WALLET": "Apple Wallet میں شامل کریں",
+    "ADD_GOOGLE_WALLET": "Google Wallet میں شامل کریں"
   },
   "ABOUT_PAGE": {
     "BADGE": "کمپنی",

@@ -69,6 +69,7 @@ def program_to_dict(program: models.LoyaltyProgram) -> dict:
         "referral_invitee_bonus_units": int(
             getattr(program, "referral_invitee_bonus_units", 0) or 0
         ),
+        "wallet_passes_enabled": bool(getattr(program, "wallet_passes_enabled", True)),
         "created_at": program.created_at.isoformat() if program.created_at else None,
         "updated_at": program.updated_at.isoformat() if program.updated_at else None,
     }
@@ -181,6 +182,16 @@ def _apply_ledger(
     session.add(membership)
     session.add(entry)
     session.flush()
+    # Best-effort wallet push (Apple tag/APNs + Google PATCH); never fail the ledger.
+    try:
+        from . import loyalty_wallet
+
+        program = session.get(models.LoyaltyProgram, membership.program_id)
+        loyalty_wallet.notify_balance_changed(
+            session, membership=membership, program=program
+        )
+    except Exception:
+        pass
     return entry
 
 
@@ -561,28 +572,8 @@ def adjust_balance(
     )
 
 
-def wallet_pass_status() -> dict:
+def wallet_pass_status(program: models.LoyaltyProgram | None = None) -> dict:
     """Operational status for Apple/Google Wallet (certs required; see docs/0066)."""
-    from .settings import settings
+    from . import loyalty_wallet
 
-    apple_ready = bool(
-        getattr(settings, "loyalty_apple_pass_cert_path", "")
-        and getattr(settings, "loyalty_apple_pass_key_path", "")
-        and getattr(settings, "loyalty_apple_wwdr_cert_path", "")
-        and getattr(settings, "loyalty_apple_pass_type_id", "")
-        and getattr(settings, "loyalty_apple_team_id", "")
-    )
-    google_ready = bool(
-        getattr(settings, "loyalty_google_issuer_id", "")
-        and getattr(settings, "loyalty_google_service_account_json", "")
-    )
-    return {
-        "apple_wallet_configured": apple_ready,
-        "google_wallet_configured": google_ready,
-        "apple_wallet_available": False,  # signing not shipped until certs + PassKit packager
-        "google_wallet_available": False,
-        "detail": (
-            "Wallet pass issuance requires Apple PassKit signing certificates and/or a Google Wallet "
-            "issuer + service account. See docs/0066-club-loyalty.md. Do not invent signing formats."
-        ),
-    }
+    return loyalty_wallet.wallet_pass_status(program)

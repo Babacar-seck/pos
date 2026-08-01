@@ -47,7 +47,26 @@
               <code>{{ origin }}/loyalty/card/{{ memberToken() }}</code>
             </p>
           }
-          @if (walletNote()) {
+          @if (applePkpassUrl() || googleSaveUrl()) {
+            <div class="wallet-actions" data-testid="loyalty-wallet-actions">
+              @if (applePkpassUrl(); as appleUrl) {
+                <a class="btn primary" [href]="appleUrl" data-testid="loyalty-add-apple-wallet">
+                  {{ 'LOYALTY_PUBLIC.ADD_APPLE_WALLET' | translate }}
+                </a>
+              }
+              @if (googleSaveUrl(); as gUrl) {
+                <a
+                  class="btn primary"
+                  [href]="gUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="loyalty-add-google-wallet"
+                >
+                  {{ 'LOYALTY_PUBLIC.ADD_GOOGLE_WALLET' | translate }}
+                </a>
+              }
+            </div>
+          } @else if (walletNote()) {
             <p class="hint">{{ walletNote() }}</p>
           }
         </div>

@@ -2189,7 +2189,9 @@
     "LOYALTY_JOIN_URL_HINT": "Teilen Sie diesen Link, damit Gäste dem Treueclub beitreten können. Optionale ?ref=-Codes verfolgen Empfehlungen.",
     "LOYALTY_WALLET_NOTE": "Apple-/Google-Wallet-Pässe werden erst ausgestellt, wenn Zertifikate konfiguriert sind.",
     "LOYALTY_MEMBERS_EMPTY_HINT": "Teilen Sie die öffentliche Beitritts-URL, damit Gäste sich anmelden können.",
-    "LOYALTY_REFERRAL_INVITEE_HINT": "Einheiten für das neue Mitglied, das mit gültigem Empfehlungscode beitritt (0 = aus)."
+    "LOYALTY_REFERRAL_INVITEE_HINT": "Einheiten für das neue Mitglied, das mit gültigem Empfehlungscode beitritt (0 = aus).",
+    "LOYALTY_WALLET_ENABLED": "Apple-/Google-Wallet-Pässe anbieten",
+    "LOYALTY_WALLET_ENABLED_HINT": "Wenn Plattform-Zertifikate konfiguriert sind, können Mitglieder beim Beitritt einen Wallet-Pass hinzufügen. Deaktivieren für nur Guthaben-Link."
   },
   "PAYMENTS": {
     "PAYMENT": "Zahlung",
@@ -2866,7 +2868,9 @@
     "BIRTHDAY_HINT": "Optional Monat und Tag, damit das Restaurant einen Geburtstagsbonus vergeben kann.",
     "VIP_TIER": "VIP-Stufe",
     "REFERRAL_CODE": "Empfehlungscode (optional)",
-    "REFERRAL_SHARE": "Teile diesen Link, damit Freunde mit deiner Empfehlung beitreten:"
+    "REFERRAL_SHARE": "Teile diesen Link, damit Freunde mit deiner Empfehlung beitreten:",
+    "ADD_APPLE_WALLET": "Zu Apple Wallet hinzufügen",
+    "ADD_GOOGLE_WALLET": "Zu Google Wallet hinzufügen"
   },
   "ABOUT_PAGE": {
     "BADGE": "Unternehmen",

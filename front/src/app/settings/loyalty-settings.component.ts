@@ -259,6 +259,25 @@ import { ApiService, LoyaltyMembership, LoyaltyProgram } from '../services/api.s
               <code>{{ joinUrl() }}</code>
             </p>
           }
+          <label class="check">
+            <input
+              type="checkbox"
+              [(ngModel)]="walletPassesEnabled"
+              (ngModelChange)="dirty.set(true)"
+              data-testid="loyalty-wallet-passes-enabled"
+            />
+            <span class="label-row">
+              <span>{{ 'SETTINGS.LOYALTY_WALLET_ENABLED' | translate }}</span>
+              <button
+                type="button"
+                class="field-info-btn"
+                [attr.aria-label]="'SETTINGS.LOYALTY_FIELD_HELP' | translate"
+                [attr.title]="'SETTINGS.LOYALTY_WALLET_ENABLED_HINT' | translate"
+              >
+                <span aria-hidden="true">ⓘ</span>
+              </button>
+            </span>
+          </label>
           @if (walletDetail()) {
             <p class="hint wallet-note">{{ walletDetail() }}</p>
           } @else {
@@ -512,6 +531,7 @@ export class LoyaltySettingsComponent implements OnInit {
   vipGold = 0;
   referralBonus = 0;
   referralInvitee = 0;
+  walletPassesEnabled = true;
 
   ngOnInit(): void {
     this.reload();
@@ -539,6 +559,7 @@ export class LoyaltySettingsComponent implements OnInit {
         this.vipGold = p.vip_gold_min_lifetime_units ?? 0;
         this.referralBonus = p.referral_bonus_units ?? 0;
         this.referralInvitee = p.referral_invitee_bonus_units ?? 0;
+        this.walletPassesEnabled = p.wallet_passes_enabled !== false;
         this.joinUrl.set(
           typeof window !== 'undefined' && p.join_path
             ? `${window.location.origin}${p.join_path}`
@@ -576,6 +597,7 @@ export class LoyaltySettingsComponent implements OnInit {
         vip_gold_min_lifetime_units: Math.max(0, Number(this.vipGold) || 0),
         referral_bonus_units: Math.max(0, Number(this.referralBonus) || 0),
         referral_invitee_bonus_units: Math.max(0, Number(this.referralInvitee) || 0),
+        wallet_passes_enabled: this.walletPassesEnabled,
       })
       .subscribe({
         next: () => {
