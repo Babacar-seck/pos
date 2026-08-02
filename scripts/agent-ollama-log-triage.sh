@@ -14,6 +14,8 @@
 #   AGENT_001_LOG_TRIAGE_DEBUG If 1, print llama.cpp / ollama stderr (default suppresses stderr)
 #   OLLAMA_MODEL           Default Gemma4:latest
 #   OLLAMA_HOST            Defaults to http://127.0.0.1:11434 only when unset; if set in the environment (e.g. remote daemon), that value is used.
+#   OLLAMA_REQUEST_TIMEOUT Seconds for Ollama HTTP /api/chat (default 90). Uses HTTP, not `ollama run`
+#                          (CLI spinners on stdout and long cold-loads were stalling/killing the agent loop).
 #
 # Exit: 0 = ESCALATE (keep log incident flag for 001)
 #       1 = SKIP    (clear log flag; do not call cursor for logs-only triage)
@@ -33,6 +35,7 @@ _err_sink=/dev/null
 llama_base="${LLAMA_CPP_BASE_URL:-http://127.0.0.1:8080/v1}"
 llama_model="${LLAMA_CPP_MODEL:-Bonsai-8B.gguf}"
 llama_timeout="${LLAMA_CPP_REQUEST_TIMEOUT:-180}"
+ollama_timeout="${OLLAMA_REQUEST_TIMEOUT:-90}"
 
 if [[ ! -f "$ctx" ]]; then
   echo "agent-ollama-log-triage: missing context file: $ctx" >&2
@@ -107,7 +110,46 @@ sys.stdout.write(str(text))
 
 run_ollama() {
   out=""
+  # Prefer HTTP /api/chat (timeout + no TTY spinner pollution). Fall back to CLI only if python3 missing.
+  if command -v python3 >/dev/null 2>&1; then
+    out=$(
+      printf '%s' "$prompt" | python3 -c '
+import json, sys, urllib.error, urllib.request
+
+host, model, timeout = sys.argv[1].rstrip("/"), sys.argv[2], float(sys.argv[3])
+prompt = sys.stdin.read()
+url = host + "/api/chat"
+payload = {
+    "model": model,
+    "messages": [{"role": "user", "content": prompt}],
+    "stream": False,
+    "options": {"temperature": 0.2},
+}
+body = json.dumps(payload).encode("utf-8")
+req = urllib.request.Request(
+    url, data=body, headers={"Content-Type": "application/json"}, method="POST"
+)
+try:
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        raw = r.read().decode("utf-8", errors="replace")
+except (urllib.error.URLError, TimeoutError, OSError):
+    sys.exit(1)
+try:
+    j = json.loads(raw)
+    text = j.get("message", {}).get("content") or ""
+except (TypeError, json.JSONDecodeError, AttributeError):
+    sys.exit(1)
+if not str(text).strip():
+    sys.exit(1)
+sys.stdout.write(str(text))
+' "$OLLAMA_HOST" "$ollama_model" "$ollama_timeout" 2>"$_err_sink"
+    ) || true
+    out=$(printf '%s' "$out" | tr -d '\r')
+    [[ -n "$(printf '%s' "$out" | tr -d ' \t\n\r')" ]]
+    return
+  fi
   command -v ollama >/dev/null 2>&1 || return 1
+  # Last resort: CLI (can hang on cold load; avoid in the agent loop when possible).
   out=$(printf '%s' "$prompt" | ollama run "$ollama_model" 2>"$_err_sink" | tr -d '\r' || true)
   [[ -n "$(printf '%s' "$out" | tr -d ' \t\n\r')" ]]
 }

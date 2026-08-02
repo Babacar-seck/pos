@@ -59,8 +59,52 @@ fi
   echo "===== loop start $(date) ====="
 } >>"$LOG"
 
-nohup "$REPO_ROOT/agents2/pos-cursor-loop.sh" >>"$LOG" 2>&1 &
-echo $! >"$PID_FILE"
+# Double-fork daemon so IDE/agent shells cannot reap the loop when their
+# command session ends (plain nohup/disown is not enough under Cursor).
+LOOP_SCRIPT="$REPO_ROOT/agents2/pos-cursor-loop.sh"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "python3 required to daemonize pos-cursor-loop" >&2
+  exit 1
+fi
+python3 - "$LOOP_SCRIPT" "$REPO_ROOT" "$LOG" "$PID_FILE" <<'PY'
+import os
+import sys
+
+script, repo, log_path, pid_file = sys.argv[1:5]
+if os.fork() > 0:
+    sys.exit(0)
+os.setsid()
+if os.fork() > 0:
+    sys.exit(0)
+os.chdir(repo)
+os.umask(0o022)
+devnull = os.open(os.devnull, os.O_RDWR)
+os.dup2(devnull, 0)
+logfd = os.open(log_path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+os.dup2(logfd, 1)
+os.dup2(logfd, 2)
+if devnull > 2:
+    os.close(devnull)
+if logfd > 2:
+    os.close(logfd)
+with open(pid_file, "w", encoding="utf-8") as fh:
+    fh.write(str(os.getpid()))
+os.environ["PWD"] = repo
+os.execve(script, [script], os.environ)
+PY
+
+# Wait briefly for grandchild to write the pid file
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
+    break
+  fi
+  sleep 0.2
+done
+
+if [ ! -f "$PID_FILE" ] || ! kill -0 "$(cat "$PID_FILE" 2>/dev/null)" 2>/dev/null; then
+  echo "Failed to start pos-cursor-loop (see $LOG)" >&2
+  exit 1
+fi
 
 echo "Started pos-cursor-loop pid=$(cat "$PID_FILE")"
 echo "Log: $LOG  (tail -f \"$LOG\")"
