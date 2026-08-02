@@ -59,8 +59,11 @@ fi
   echo "===== loop start $(date) ====="
 } >>"$LOG"
 
+# detach fully so IDE/agent shells exiting cannot reap the loop
 nohup "$REPO_ROOT/agents2/pos-cursor-loop.sh" >>"$LOG" 2>&1 &
-echo $! >"$PID_FILE"
+LOOP_PID=$!
+disown "$LOOP_PID" 2>/dev/null || true
+echo "$LOOP_PID" >"$PID_FILE"
 
 echo "Started pos-cursor-loop pid=$(cat "$PID_FILE")"
 echo "Log: $LOG  (tail -f \"$LOG\")"

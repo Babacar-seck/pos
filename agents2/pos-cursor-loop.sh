@@ -876,7 +876,9 @@ run_full_cycle() {
     for _ in "$TASKDIR"/FEAT-*.md; do has_feat=true; break; done
     shopt -u nullglob
     if ! $has_feat; then
-      (( i == 0 )) && echo "----- feature coding (FEAT): queue empty, skipping up to 5 batch slots (saves git sync)"
+      if (( i == 0 )); then
+        echo "----- feature coding (FEAT): queue empty, skipping up to 5 batch slots (saves git sync)"
+      fi
       break
     fi
     run_step "006 feature coder ($((i + 1))/5)" step_feat
