@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Catalogue et stock",
     "GROUP_ADMIN": "Administration",
     "CONTRACTS": "Contrats",
-    "WAREHOUSES": "Entrepôts"
+    "WAREHOUSES": "Entrepôts",
+    "TALK": "Parler"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navigation du personnel",
@@ -2918,5 +2919,23 @@
     "COL_STATUS": "Status",
     "COL_DATE": "Date",
     "COL_CHANNEL": "Channel"
+  },
+  "TALK": {
+    "TITLE": "Parler au POS",
+    "SUBTITLE": "Dites ou tapez une courte commande pour ouvrir un écran staff. Navigation uniquement — pas de modification de commande ou de paiement.",
+    "HINT": "Utilise le micro du navigateur si disponible. Les transcriptions restent sur cette page et ne sont pas envoyées au serveur.",
+    "EXAMPLES_LABEL": "Essayez l’un de ceux-ci",
+    "LISTEN": "Écouter",
+    "STOP": "Arrêter",
+    "GO": "OK",
+    "TYPED_LABEL": "Ou tapez une commande",
+    "TYPED_PLACEHOLDER": "ex. kitchen, tables, orders",
+    "NO_SPEECH": "La saisie vocale n’est pas disponible dans ce navigateur. Utilisez la commande écrite.",
+    "LISTENING": "Écoute…",
+    "LAST_HEARD": "Entendu : {{text}}",
+    "MATCHED": "Ouverture de {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Saisissez d’abord une commande.",
+    "ERR_NO_MATCH": "Aucun écran correspondant. Essayez kitchen, tables, orders ou reservations.",
+    "ERR_SPEECH": "Erreur vocale ({{code}}). Essayez de taper."
   }
 }

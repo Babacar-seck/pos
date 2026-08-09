@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Каталог и склад",
     "GROUP_ADMIN": "Администрация",
     "CONTRACTS": "Договори",
-    "WAREHOUSES": "Складове"
+    "WAREHOUSES": "Складове",
+    "TALK": "Говор"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Навигация за персонал",
@@ -2918,5 +2919,23 @@
     "COL_STATUS": "Status",
     "COL_DATE": "Date",
     "COL_CHANNEL": "Channel"
+  },
+  "TALK": {
+    "TITLE": "Talk to POS",
+    "SUBTITLE": "Say or type a short command to open a staff screen. Navigation only — no order or payment changes.",
+    "HINT": "Uses the browser microphone when available. Transcripts stay in this page and are not sent to the server.",
+    "EXAMPLES_LABEL": "Try one of these",
+    "LISTEN": "Listen",
+    "STOP": "Stop",
+    "GO": "Go",
+    "TYPED_LABEL": "Or type a command",
+    "TYPED_PLACEHOLDER": "e.g. kitchen, tables, orders",
+    "NO_SPEECH": "Voice input is not available in this browser. Use the typed command instead.",
+    "LISTENING": "Listening…",
+    "LAST_HEARD": "Heard: {{text}}",
+    "MATCHED": "Opening {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Enter a command first.",
+    "ERR_NO_MATCH": "No matching screen. Try kitchen, tables, orders, or reservations.",
+    "ERR_SPEECH": "Speech error ({{code}}). Try typing instead."
   }
 }

@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Catàleg i inventari",
     "GROUP_ADMIN": "Administració",
     "CONTRACTS": "Contractes",
-    "WAREHOUSES": "Magatzems"
+    "WAREHOUSES": "Magatzems",
+    "TALK": "Parlar"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navegació de personal",
@@ -2918,5 +2919,23 @@
     "COL_STATUS": "Status",
     "COL_DATE": "Date",
     "COL_CHANNEL": "Channel"
+  },
+  "TALK": {
+    "TITLE": "Parlar amb el POS",
+    "SUBTITLE": "Digues o escriu una ordre curta per obrir una pantalla de personal. Només navegació: sense canvis de comandes ni pagaments.",
+    "HINT": "Usa el micròfon del navegador quan estigui disponible. Les transcripcions es queden en aquesta pàgina i no s’envien al servidor.",
+    "EXAMPLES_LABEL": "Prova’n un d’aquests",
+    "LISTEN": "Escoltar",
+    "STOP": "Aturar",
+    "GO": "Anar",
+    "TYPED_LABEL": "O escriu una ordre",
+    "TYPED_PLACEHOLDER": "p. ex. kitchen, tables, orders",
+    "NO_SPEECH": "L’entrada de veu no està disponible en aquest navegador. Usa l’ordre escrita.",
+    "LISTENING": "Escoltant…",
+    "LAST_HEARD": "Sentit: {{text}}",
+    "MATCHED": "Obrint {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Introdueix una ordre primer.",
+    "ERR_NO_MATCH": "Cap pantalla coincideix. Prova kitchen, tables, orders o reservations.",
+    "ERR_SPEECH": "Error de veu ({{code}}). Prova a escriure."
   }
 }

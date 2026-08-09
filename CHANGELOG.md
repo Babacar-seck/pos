@@ -10,6 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [2.1.147] - 2026-08-09
+
+### Added
+
+- **Talk to POS (#344):** Staff demo at `/talk` — browser voice (Web Speech) or typed commands map to navigation only (kitchen, tables, orders, etc.). No LLM, no API keys, no order/payment mutations. Doc: `docs/0076-talk-to-pos.md`. Smoke: `npm run test:talk --prefix front`.
 - **Promo video recorder:** `front/scripts/record-promo-video.mjs` (`npm run record-promo-video`) captures a short public-page walkthrough via Puppeteer screencast, letterboxes to 1080p with ffmpeg, and muxes a **CC BY-SA 4.0** music bed (default: Homage by Kjartan Abel). Documented in `docs/0075-promo-videos.md` (mac-stats-style live capture pattern), including Loom-style **circular talking-head PiP** (QuickTime record, ffmpeg loop/overlay parameters, trim lead-in, music-only) and a small **bottom end-credit** for the music author (last ~6s).
 
 ### Changed

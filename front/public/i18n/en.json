@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Catalog & inventory",
     "GROUP_ADMIN": "Administration",
     "CONTRACTS": "Contracts",
-    "WAREHOUSES": "Warehouses"
+    "WAREHOUSES": "Warehouses",
+    "TALK": "Talk"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Staff navigation",
@@ -2918,5 +2919,23 @@
     "OPEN_SOURCE_BODY": "The product is developed in the open. You can inspect the code, self-host under AGPLv3, or use the managed service at satisfecho.de.",
     "CONTACT_TITLE": "Contact",
     "CONTACT_BODY": "Questions about the platform or hosted service:"
+  },
+  "TALK": {
+    "TITLE": "Talk to POS",
+    "SUBTITLE": "Say or type a short command to open a staff screen. Navigation only — no order or payment changes.",
+    "HINT": "Uses the browser microphone when available. Transcripts stay in this page and are not sent to the server.",
+    "EXAMPLES_LABEL": "Try one of these",
+    "LISTEN": "Listen",
+    "STOP": "Stop",
+    "GO": "Go",
+    "TYPED_LABEL": "Or type a command",
+    "TYPED_PLACEHOLDER": "e.g. kitchen, tables, orders",
+    "NO_SPEECH": "Voice input is not available in this browser. Use the typed command instead.",
+    "LISTENING": "Listening…",
+    "LAST_HEARD": "Heard: {{text}}",
+    "MATCHED": "Opening {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Enter a command first.",
+    "ERR_NO_MATCH": "No matching screen. Try kitchen, tables, orders, or reservations.",
+    "ERR_SPEECH": "Speech error ({{code}}). Try typing instead."
   }
 }

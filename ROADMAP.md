@@ -42,6 +42,7 @@ Core POS and recent 2026-07 slices (through **2026-07-31**). Links are the sourc
 | Hardware | LAN print agent / kitchen+receipt jobs ([#317](https://github.com/satisfecho/pos/issues/317)) — `docs/0070` |
 | SaaS / platform | Signup paywall; `/pricing`; `/about`; platform portal — `docs/0052`, `docs/0059` |
 | Security | Rate limiting (Redis/slowapi) — `docs/0020`; CAPTCHA still deferred |
+| Talk to POS | Staff voice/text **navigation** demo at `/talk` ([#344](https://github.com/satisfecho/pos/issues/344)) — no LLM / no mutations — `docs/0076` |
 | Other | Provider portal, reports, i18n, table PIN, deploy — `docs/0014`, `docs/0016`, `docs/0012`, `docs/0009`, `docs/0004` |
 
 ---
