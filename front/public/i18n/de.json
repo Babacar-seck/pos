@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Katalog & Lager",
     "GROUP_ADMIN": "Verwaltung",
     "CONTRACTS": "Verträge",
-    "WAREHOUSES": "Lager"
+    "WAREHOUSES": "Lager",
+    "TALK": "Sprechen"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Personal-Navigation",
@@ -2918,5 +2919,23 @@
     "COL_STATUS": "Status",
     "COL_DATE": "Date",
     "COL_CHANNEL": "Channel"
+  },
+  "TALK": {
+    "TITLE": "Mit POS sprechen",
+    "SUBTITLE": "Sagen oder tippen Sie einen kurzen Befehl, um einen Mitarbeiterbildschirm zu öffnen. Nur Navigation — keine Bestell- oder Zahlungsänderungen.",
+    "HINT": "Nutzt das Mikrofon des Browsers, wenn verfügbar. Transkripte bleiben auf dieser Seite und werden nicht an den Server gesendet.",
+    "EXAMPLES_LABEL": "Probieren Sie eines davon",
+    "LISTEN": "Zuhören",
+    "STOP": "Stopp",
+    "GO": "Los",
+    "TYPED_LABEL": "Oder Befehl tippen",
+    "TYPED_PLACEHOLDER": "z. B. kitchen, tables, orders",
+    "NO_SPEECH": "Spracheingabe ist in diesem Browser nicht verfügbar. Nutzen Sie den getippten Befehl.",
+    "LISTENING": "Höre zu…",
+    "LAST_HEARD": "Gehört: {{text}}",
+    "MATCHED": "Öffne {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Zuerst einen Befehl eingeben.",
+    "ERR_NO_MATCH": "Kein passender Bildschirm. Versuchen Sie kitchen, tables, orders oder reservations.",
+    "ERR_SPEECH": "Sprachafehler ({{code}}). Tippen Sie stattdessen."
   }
 }

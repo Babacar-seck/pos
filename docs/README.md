@@ -101,6 +101,7 @@ This folder contains deployment guides, feature documentation, implementation pl
 | [0074-fiscal-certified-middleware.md](0074-fiscal-certified-middleware.md) | Phase 1 provider ADR (#342): Fiskaly SIGN ES + SIGN DE picks, live guards, renewal cadence, mock/generic adapters. |
 | [0066-club-loyalty.md](0066-club-loyalty.md) | Club loyalty (#327/#334/#343): points/stamps, earn on paid, redeem, VIP/referral; Apple PassKit + Google Wallet issuance when platform certs/issuer configured. |
 | [0071-split-bill.md](0071-split-bill.md) | Split bill / partial payments (#318): amount-based payment legs, reconciliation API, one fiscal invoice per settled order. |
+| [0076-talk-to-pos.md](0076-talk-to-pos.md) | Talk to POS (#344): staff voice/text **navigation** demo at `/talk` (Web Speech + typed fallback; no LLM, no mutations). |
 | [0050-github-issue-52-split-plan.md](0050-github-issue-52-split-plan.md) | GitHub **#52** (CLOSED): **historical** child-issue drafts / phases — do not re-file without review; prefer **0032** + shipped feature docs. |
 
 ---

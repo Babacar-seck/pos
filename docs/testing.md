@@ -403,6 +403,16 @@ npm run test:customer-register-login --prefix front
 - **Env:** `BASE_URL`, `CUSTOMER_EMAIL` (default: `customer-<timestamp>@amvara.de`), `CUSTOMER_PASSWORD`, `CUSTOMER_FULL_NAME`, `HEADLESS`.
 - Opens `/customer/register`, submits, then `/customer/login` → `/customer`; asserts empty orders state.
 
+**Talk to POS** (#344; staff voice/text navigation demo):
+
+```bash
+LOGIN_EMAIL=… LOGIN_PASSWORD=… npm run test:talk --prefix front
+# Or: BASE_URL=http://127.0.0.1:4202 HEADLESS=1 node front/scripts/test-talk.mjs
+```
+
+- **Env:** `BASE_URL`, `LOGIN_EMAIL` / `LOGIN_PASSWORD` (or `DEMO_LOGIN_*`), `HEADLESS`.
+- Logs in, opens `/talk`, types `kitchen`, asserts navigation to `/kitchen`. See `docs/0076-talk-to-pos.md`.
+
 **Provider login + add product** (requires an existing provider account):
 
 ```bash
@@ -727,6 +737,7 @@ From repo root: `npm run <script> --prefix front`. From `front/`: `npm run <scri
 | `test:landing-provider-links` | `scripts/test-landing-provider-links.mjs` |
 | `test:provider-register` | `scripts/test-provider-register.mjs` |
 | `test:customer-register-login` | `scripts/test-customer-register-login.mjs` |
+| `test:talk` | `scripts/test-talk.mjs` (staff `/talk`: typed `kitchen` → `/kitchen`; needs `LOGIN_*` / `DEMO_LOGIN_*`) |
 | `test:provider-add-product` | `scripts/test-provider-add-product.mjs` |
 | `test:catalog` | `scripts/test-catalog.mjs` |
 | `test:order-8-status` | `scripts/test-order-8-status.mjs` |

@@ -125,7 +125,8 @@
     "GROUP_CATALOG": "Catálogo e inventario",
     "GROUP_ADMIN": "Administración",
     "CONTRACTS": "Contratos",
-    "WAREHOUSES": "Almacenes"
+    "WAREHOUSES": "Almacenes",
+    "TALK": "Hablar"
   },
   "STAFF_FLOW": {
     "TOOLBAR_ARIA": "Navegación de personal",
@@ -2918,5 +2919,23 @@
     "COL_STATUS": "Status",
     "COL_DATE": "Date",
     "COL_CHANNEL": "Channel"
+  },
+  "TALK": {
+    "TITLE": "Hablar con el POS",
+    "SUBTITLE": "Di o escribe un comando corto para abrir una pantalla de personal. Solo navegación: sin cambios de pedidos ni pagos.",
+    "HINT": "Usa el micrófono del navegador cuando esté disponible. Las transcripciones se quedan en esta página y no se envían al servidor.",
+    "EXAMPLES_LABEL": "Prueba uno de estos",
+    "LISTEN": "Escuchar",
+    "STOP": "Detener",
+    "GO": "Ir",
+    "TYPED_LABEL": "O escribe un comando",
+    "TYPED_PLACEHOLDER": "p. ej. kitchen, tables, orders",
+    "NO_SPEECH": "La entrada de voz no está disponible en este navegador. Usa el comando escrito.",
+    "LISTENING": "Escuchando…",
+    "LAST_HEARD": "Oído: {{text}}",
+    "MATCHED": "Abriendo {{intent}} ({{route}})…",
+    "ERR_EMPTY": "Introduce un comando primero.",
+    "ERR_NO_MATCH": "Ninguna pantalla coincide. Prueba kitchen, tables, orders o reservations.",
+    "ERR_SPEECH": "Error de voz ({{code}}). Prueba a escribir."
   }
 }

@@ -63,6 +63,7 @@ const NOINDEX_PREFIXES = [
   '/paywall',
   '/dashboard',
   '/my-shift',
+  '/talk',
   '/products',
   '/catalog',
   '/tables',

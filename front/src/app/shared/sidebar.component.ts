@@ -72,6 +72,15 @@ type NavGroupKey = 'operations' | 'planning' | 'catalog' | 'admin';
               <span>{{ 'NAV.MY_SHIFT' | translate }}</span>
             </a>
           }
+          <a routerLink="/talk" routerLinkActive="active" class="nav-link" data-testid="nav-talk" (click)="closeSidebar()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/>
+              <path d="M19 10v2a7 7 0 01-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <span>{{ 'NAV.TALK' | translate }}</span>
+          </a>
           <a routerLink="/staff/orders" routerLinkActive="active" class="nav-link" (click)="closeSidebar()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
