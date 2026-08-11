@@ -5,6 +5,16 @@
 #
 # Marketing local build without token: clone NNN_slug beside pos (e.g. ../083_wimpi); sync-all-marketing-sites.sh auto-discovers siblings.
 services:
+  back:
+    # macOS Docker Desktop (virtiofs) cannot bind-mount a file inside an already
+    # bind-mounted directory (./config.env:/app/config.env under ./back:/app).
+    # Load config.env via env_file instead (pydantic env vars take precedence).
+    volumes: !override
+      - ./back:/app
+      - ./back/uploads:/app/uploads
+    env_file:
+      - ./config.env
+
   front:
     environment:
       - POS_REPO_ROOT=/repo
