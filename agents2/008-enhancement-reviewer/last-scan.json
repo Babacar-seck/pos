@@ -186,12 +186,18 @@
       "iso": "2026-07-25T18:23:36Z",
       "new": 0,
       "note": "stamp-only: owned docs_stale\u00d713; Unreleased=3; NEW=121; no new tasks"
+    },
+    {
+      "feat": 0,
+      "iso": "2026-08-12T00:05:21Z",
+      "new": 1,
+      "note": "changelog_sparse false positive post-2.1.147 (empty Unreleased, 0 commits after version date); queued NEW-0-20260812-0005 preflight suppress; demo ok; weekly_due=no; NEW backlog=0"
     }
   ],
-  "g008_signals": 13,
-  "last_agent_iso": "2026-07-25T18:23:36Z",
-  "last_agent_run_iso": "2026-07-25T18:23:36Z",
-  "last_run": "2026-08-09T16:23:11Z",
-  "last_signals": 0,
-  "new_created": 0
+  "g008_signals": 1,
+  "last_agent_iso": "2026-08-12T00:05:21Z",
+  "last_agent_run_iso": "2026-08-12T00:05:21Z",
+  "last_run": "2026-08-12T00:05:39Z",
+  "last_signals": 1,
+  "new_created": 1
 }

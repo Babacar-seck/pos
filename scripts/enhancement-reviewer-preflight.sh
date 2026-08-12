@@ -161,6 +161,33 @@ changelog_sparse_fresh_cut() {
   return 1
 }
 
+# Count back/ + front/src/ commits strictly after YYYY-MM-DD (UTC day boundary:
+# since the next calendar day 00:00). Empty/unparseable date → 0.
+code_commits_after_version_date() {
+  local version_date="$1"
+  local since n
+  [[ -n "$version_date" ]] || { echo 0; return; }
+  if ! git rev-parse HEAD >/dev/null 2>&1; then
+    echo 0
+    return
+  fi
+  since=$(python3 - "$version_date" <<'PY'
+import sys
+from datetime import date, timedelta
+raw = sys.argv[1].strip()[:10]
+try:
+    d = date.fromisoformat(raw)
+except ValueError:
+    print("")
+    raise SystemExit(0)
+print((d + timedelta(days=1)).isoformat())
+PY
+)
+  [[ -n "$since" ]] || { echo 0; return; }
+  n=$(git log --since="${since}" --oneline -- back/ front/src/ 2>/dev/null | wc -l | tr -d ' ')
+  echo "${n:-0}"
+}
+
 # First open root task that owns a stale docs/*.md stem (task basename), or empty.
 # stem = file basename without .md (e.g. 0026-haproxy-ssl-amvara9, PRINTING).
 # Match: filename contains stem, or body mentions docs/<stem> / <stem>.md (case-insensitive).
@@ -303,11 +330,14 @@ if [[ -f CHANGELOG.md ]]; then
     emit "changelog_unreleased_bullets=${unreleased_lines:-0} changelog_last_touch=${changelog_touch:-unknown}"
     emit "changelog_newest_version_date=${newest_ver_date:-unknown}"
     if (( code_commits_14d > 5 && unreleased_lines < 2 )); then
+      post_cut_commits="$(code_commits_after_version_date "$newest_ver_date")"
       if changelog_sparse_fresh_cut "$unreleased_lines"; then
         emit "changelog_sparse=suppressed (recent version cut; newest=${newest_ver_date:-unknown}, unreleased=${unreleased_lines})"
+      elif (( post_cut_commits == 0 )); then
+        emit "changelog_sparse=suppressed (no commits after version date; newest=${newest_ver_date:-unknown}, unreleased=${unreleased_lines})"
       else
         G008_DOC_DRIFT=$((G008_DOC_DRIFT + 1))
-        emit "SIGNAL changelog_sparse Unreleased may lag recent code (${code_commits_14d} commits, ${unreleased_lines} bullets)"
+        emit "SIGNAL changelog_sparse Unreleased may lag recent code (${code_commits_14d} commits, ${unreleased_lines} bullets, ${post_cut_commits} after ${newest_ver_date:-unknown})"
       fi
     fi
   fi

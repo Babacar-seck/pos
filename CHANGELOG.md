@@ -14,6 +14,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Ver
 
 ### Fixed
 
+- **Enhancement preflight:** After a version cut, suppress `SIGNAL changelog_sparse` when Unreleased is empty and no `back/` / `front/src/` commits landed after the newest `## [X.Y.Z]` date (keeps the existing 2-day / 48h fresh-cut suppress).
+
 ## [2.1.147] - 2026-08-09
 
 ### Added
