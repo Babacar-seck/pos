@@ -80,5 +80,6 @@ PROVIDER_REGISTRY: dict[str, type[DeliveryAdapter]] = {
     "uber_eats": _adapter_class("uber_eats", "Uber Eats"),
     "glovo": _adapter_class("glovo", "Glovo"),
     "deliveroo": _adapter_class("deliveroo", "Deliveroo"),
+    "just_eat": _adapter_class("just_eat", "Just Eat"),
     "stub": StubDeliveryAdapter,
 }

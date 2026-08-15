@@ -12,7 +12,11 @@ from sqlmodel import Session, select
 from . import models
 from . import promo_service as promo_svc
 from .category_codes import get_public_category_display_label
-from .tenant_currency import normalize_tenant_currency_fields
+from .tenant_currency import (
+    normalize_tenant_currency_fields,
+    resolve_tenant_decimal_places,
+    to_display_amount,
+)
 from .translation_service import TranslationService
 
 _UPLOADS_DIR = Path(__file__).resolve().parent.parent / "uploads"
@@ -49,10 +53,15 @@ _SENSITIVE_PRODUCT_KEYS = frozenset(
 )
 
 
-def format_public_price(price_cents: int, lang: str = "en") -> str:
-    """Format cents as a decimal string (e.g. 250 -> '2,50' for es/ca)."""
-    amount = price_cents / 100
-    formatted = f"{amount:.2f}"
+def format_public_price(price_cents: int, lang: str = "en", decimal_places: int = 2) -> str:
+    """Format a stored integer amount as a decimal string (e.g. 250 -> '2,50' for es/ca).
+
+    ``decimal_places`` must match the tenant's currency (see tenant_currency.py:
+    resolve_tenant_decimal_places) — for a zero-decimal currency like XOF, 1500 -> '1500',
+    not '15.00'.
+    """
+    amount = to_display_amount(price_cents, decimal_places)
+    formatted = f"{amount:.{decimal_places}f}"
     if lang.startswith(("es", "ca")):
         return formatted.replace(".", ",")
     return formatted
@@ -174,6 +183,7 @@ def _load_flat_products(
     tenant_id: int,
     lang: str,
     currency_code: str,
+    decimal_places: int = 2,
 ) -> list[dict]:
     """Load customer-visible products using the same sources/filters as GET /menu/{table_token}."""
     tenant_products = session.exec(
@@ -242,7 +252,7 @@ def _load_flat_products(
                 "id": tp.id,
                 "name": name,
                 "price_cents": tp.price_cents,
-                "price_formatted": format_public_price(tp.price_cents, lang),
+                "price_formatted": format_public_price(tp.price_cents, lang, decimal_places),
                 "description": description,
                 "category": category,
                 "subcategory": subcategory,
@@ -265,7 +275,7 @@ def _load_flat_products(
                 "id": lp.id,
                 "name": name,
                 "price_cents": lp.price_cents,
-                "price_formatted": format_public_price(lp.price_cents, lang),
+                "price_formatted": format_public_price(lp.price_cents, lang, decimal_places),
                 "description": description,
                 "category": lp.category,
                 "subcategory": lp.subcategory,
@@ -288,9 +298,11 @@ def _load_flat_products(
             eligible=eligible,
         )
         if product.get("list_price_cents") is not None:
-            product["price_formatted"] = format_public_price(product["price_cents"], lang)
+            product["price_formatted"] = format_public_price(
+                product["price_cents"], lang, decimal_places
+            )
             product["list_price_formatted"] = format_public_price(
-                product["list_price_cents"], lang
+                product["list_price_cents"], lang, decimal_places
             )
 
     return products
@@ -392,6 +404,9 @@ def build_public_tenant_menu(
         tenant.currency_code,
         tenant.currency,
     )
+    decimal_places = resolve_tenant_decimal_places(
+        currency_code, tenant.currency_decimal_places
+    )
     tenant_name = tenant.name or ""
     if lang != "en":
         translated = TranslationService.get_translated_field(
@@ -400,13 +415,14 @@ def build_public_tenant_menu(
         if translated:
             tenant_name = translated
 
-    products = _load_flat_products(session, tenant_id, lang, currency_code)
+    products = _load_flat_products(session, tenant_id, lang, currency_code, decimal_places)
     categories = group_products_into_categories(products, lang)
 
     return {
         "tenant_id": tenant_id,
         "tenant_name": tenant_name,
         "currency": currency_code,
+        "currency_decimal_places_resolved": decimal_places,
         "lang": lang,
         "categories": categories,
     }

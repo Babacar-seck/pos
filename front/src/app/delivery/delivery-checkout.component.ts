@@ -27,6 +27,7 @@ import { LanguagePickerComponent } from '../shared/language-picker.component';
 import { LanguageService } from '../services/language.service';
 import { LegalLinksComponent } from '../shared/legal-links.component';
 import { contactPhoneValid } from '../shared/contact-validators';
+import { resolveDecimalPlaces, toDisplayAmount } from '../shared/currency-format';
 
 interface CartLine {
   product: PublicTenantMenuProduct;
@@ -258,16 +259,35 @@ export class DeliveryCheckoutComponent implements OnInit, OnDestroy {
     return this.translate.instant(key, { category: label });
   }
 
+  decimalPlaces = computed(() => {
+    const code = this.menu()?.currency || this.deliveryConfig()?.currency_code || null;
+    const resolved =
+      this.menu()?.currency_decimal_places_resolved ??
+      this.deliveryConfig()?.currency_decimal_places_resolved ??
+      null;
+    return resolveDecimalPlaces(code, resolved);
+  });
+
   formatPrice(product: PublicTenantMenuProduct): string {
-    return product.price_formatted || `${(product.price_cents / 100).toFixed(2)}`;
+    return (
+      product.price_formatted ||
+      toDisplayAmount(product.price_cents, this.decimalPlaces()).toFixed(this.decimalPlaces())
+    );
   }
 
   formatCents(cents: number): string {
     const currency = this.menu()?.currency || 'EUR';
+    const decimalPlaces = this.decimalPlaces();
+    const amount = toDisplayAmount(cents, decimalPlaces);
     try {
-      return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(cents / 100);
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }).format(amount);
     } catch {
-      return `${(cents / 100).toFixed(2)} ${currency}`;
+      return `${amount.toFixed(decimalPlaces)} ${currency}`;
     }
   }
 

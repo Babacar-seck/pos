@@ -16,7 +16,16 @@ import { environment } from '../../environments/environment';
 import { LanguageService } from './language.service';
 
 // Interfaces
-export type UserRole = 'owner' | 'admin' | 'kitchen' | 'bartender' | 'waiter' | 'receptionist' | 'courier' | 'provider' | 'platform_operator';
+export type UserRole =
+  | 'owner'
+  | 'admin'
+  | 'kitchen'
+  | 'bartender'
+  | 'waiter'
+  | 'receptionist'
+  | 'courier'
+  | 'provider'
+  | 'platform_operator';
 
 /** Staff sidebar/dashboard/route modules (tenant owner toggles in Settings). */
 export type TenantUiModuleKey =
@@ -68,11 +77,7 @@ export interface UserUpdate {
 
 export type StaffContractKind = 'employee' | 'freelancer';
 export type StaffContractStatus =
-  | 'draft'
-  | 'pending_signature'
-  | 'active'
-  | 'expired'
-  | 'superseded';
+  'draft' | 'pending_signature' | 'active' | 'expired' | 'superseded';
 export type StaffContractPaymentStructure = 'payroll' | 'invoice';
 
 export interface StaffContract {
@@ -489,7 +494,6 @@ export interface CourierOrderDetail extends CourierOrderSummary {
 
 export type CourierOrderAction = 'accept' | 'reject' | 'picked_up' | 'delivered';
 
-
 export interface ProviderRegisterData {
   provider_name: string;
   email: string;
@@ -632,6 +636,7 @@ export interface PublicTenantMenuResponse {
   tenant_id: number;
   tenant_name: string;
   currency: string;
+  currency_decimal_places_resolved?: number;
   lang: string;
   categories: PublicTenantMenuCategory[];
 }
@@ -724,12 +729,7 @@ export interface ReservationBookCalendarResponse {
 
 /** GET /reservations/book-week-slots — Mon–Sun grid of slot states for public booking. */
 export type ReservationBookWeekSlotState =
-  | 'available'
-  | 'full'
-  | 'past'
-  | 'closed_day'
-  | 'out_of_hours'
-  | 'out_of_range';
+  'available' | 'full' | 'past' | 'closed_day' | 'out_of_hours' | 'out_of_range';
 
 export interface ReservationBookWeekDay {
   date: string;
@@ -1022,12 +1022,17 @@ export interface DeliveryProviderCatalogRow {
   configured?: boolean;
 }
 
+/** status_badge: disconnected | pending_test | connected | error (see CONTEXT.md: Statut de connexion) */
+export type DeliveryConnectionBadge = 'disconnected' | 'pending_test' | 'connected' | 'error';
+
 export interface DeliveryIntegrationPublic {
   id: number;
   tenant_id: number;
+  tenant_name: string;
   provider_key: string;
   display_name: string;
   connection_status: string;
+  status_badge: DeliveryConnectionBadge;
   enabled: boolean;
   external_store_id: string | null;
   credentials_configured: boolean;
@@ -1035,6 +1040,10 @@ export interface DeliveryIntegrationPublic {
   webhook_ingest_token: string;
   last_test_at: string | null;
   last_test_ok: boolean | null;
+  last_order_received_at: string | null;
+  mapping_count: number;
+  mapping_last_modified_at: string | null;
+  unmapped_rejections_7d: number;
   updated_at: string;
 }
 
@@ -1236,11 +1245,7 @@ export interface UpcomingReservationOnTable {
 }
 
 export type TableOperationalStatus =
-  | 'available'
-  | 'reserved'
-  | 'occupied'
-  | 'open_order'
-  | 'ready_to_serve';
+  'available' | 'reserved' | 'occupied' | 'open_order' | 'ready_to_serve';
 
 /** Payment/collection indicator for floor chip; separate from operational_status (service fill). */
 export type TablePaymentStatus = 'none' | 'pending' | 'paid';
@@ -1410,7 +1415,7 @@ export interface OrderItem {
   line_modifiers?: OrderLineModifiers | null;
   /** Human-readable remove/add/sub snapshot for kitchen and invoices */
   line_modifiers_summary?: string | null;
-  status?: string;  // pending, preparing, ready, delivered, cancelled
+  status?: string; // pending, preparing, ready, delivered, cancelled
   removed_by_customer?: boolean;
   removed_at?: string;
   removed_reason?: string;
@@ -1645,6 +1650,7 @@ export interface PublicSatisfechoDeliveryConfig {
   restaurant_longitude: number | null;
   currency_code?: string | null;
   currency?: string | null;
+  currency_decimal_places_resolved?: number;
 }
 
 export interface PublicDeliveryTrackStatus {
@@ -1682,6 +1688,7 @@ export interface MenuResponse {
   tenant_website?: string | null;
   tenant_currency?: string | null;
   tenant_currency_code?: string | null;
+  tenant_currency_decimal_places_resolved?: number;
   tenant_stripe_publishable_key?: string | null;
   tenant_revolut_configured?: boolean;
   tenant_immediate_payment_required?: boolean;
@@ -1726,6 +1733,10 @@ export interface TenantSettings {
   immediate_payment_required?: boolean;
   currency?: string | null;
   currency_code?: string | null;
+  /** Explicit decimal-places override (0-4); null = derive from currency_code. */
+  currency_decimal_places?: number | null;
+  /** Server-resolved decimal places (override if set, else derived from currency_code) — read-only. */
+  currency_decimal_places_resolved?: number;
   default_language?: string | null;
   timezone?: string | null;
   /** ISO 3166-1 alpha-2 (e.g. ES, IN); optional, improves contract template suggestions */
@@ -1825,12 +1836,12 @@ export interface OrderItemCreate {
 export interface OrderCreate {
   items: OrderItemCreate[];
   notes?: string;
-  session_id?: string;  // Session identifier for order isolation
-  customer_name?: string;  // Optional customer name
-  pin?: string;  // Required PIN for table ordering
-  staff_access?: string;  // Staff link token: when valid, PIN is not required
-  latitude?: number | null;  // Optional GPS latitude for location verification
-  longitude?: number | null;  // Optional GPS longitude for location verification
+  session_id?: string; // Session identifier for order isolation
+  customer_name?: string; // Optional customer name
+  pin?: string; // Required PIN for table ordering
+  staff_access?: string; // Staff link token: when valid, PIN is not required
+  latitude?: number | null; // Optional GPS latitude for location verification
+  longitude?: number | null; // Optional GPS longitude for location verification
 }
 
 export interface OrderHistoryItem {
@@ -1862,9 +1873,29 @@ export interface SalesReport {
       order_count: number;
     }[];
   };
-  by_product: { product_id: number; product_name: string; category?: string; quantity: number; revenue_cents: number; cost_cents?: number; profit_cents?: number }[];
-  by_category: { category: string; quantity: number; revenue_cents: number; cost_cents?: number; profit_cents?: number }[];
-  by_table: { table_name: string; revenue_cents: number; cost_cents?: number; profit_cents?: number; order_count: number }[];
+  by_product: {
+    product_id: number;
+    product_name: string;
+    category?: string;
+    quantity: number;
+    revenue_cents: number;
+    cost_cents?: number;
+    profit_cents?: number;
+  }[];
+  by_category: {
+    category: string;
+    quantity: number;
+    revenue_cents: number;
+    cost_cents?: number;
+    profit_cents?: number;
+  }[];
+  by_table: {
+    table_name: string;
+    revenue_cents: number;
+    cost_cents?: number;
+    profit_cents?: number;
+    order_count: number;
+  }[];
   by_waiter: {
     waiter_name: string;
     revenue_cents: number;
@@ -1988,14 +2019,13 @@ export interface TenantProduct {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ApiService {
   private http = inject(HttpClient);
   private language = inject(LanguageService);
   private apiUrl = environment.apiUrl;
   private wsUrl = environment.wsUrl;
-
 
   private userSubject = new BehaviorSubject<User | null>(null);
   /** Set true after the constructor's first `checkAuth()` completes (used to avoid duplicate `/users/me` on landing). */
@@ -2046,7 +2076,7 @@ export class ApiService {
       catchError(() => {
         this.userSubject.next(null);
         return of(null); // Return null on error
-      })
+      }),
     );
   }
 
@@ -2057,7 +2087,7 @@ export class ApiService {
   // Auth
   register(data: any): Observable<RegisterResponse> {
     let params = new HttpParams();
-    Object.keys(data).forEach(key => {
+    Object.keys(data).forEach((key) => {
       if (data[key] !== null && data[key] !== undefined && data[key] !== '') {
         params = params.set(key, data[key]);
       }
@@ -2067,11 +2097,14 @@ export class ApiService {
 
   seedOnboardingStarterProducts(
     products: { name: string; price_cents: number; enabled: boolean }[],
-  ): Observable<{ status: string; products: { id: number; name: string; price_cents: number; image_filename: string | null }[] }> {
-    return this.http.post<{ status: string; products: { id: number; name: string; price_cents: number; image_filename: string | null }[] }>(
-      `${this.apiUrl}/onboarding/starter-products`,
-      { products },
-    );
+  ): Observable<{
+    status: string;
+    products: { id: number; name: string; price_cents: number; image_filename: string | null }[];
+  }> {
+    return this.http.post<{
+      status: string;
+      products: { id: number; name: string; price_cents: number; image_filename: string | null }[];
+    }>(`${this.apiUrl}/onboarding/starter-products`, { products });
   }
 
   getSaasConfig(): Observable<SaasSubscription> {
@@ -2100,7 +2133,12 @@ export class ApiService {
   }
 
   /** Login: sends username/password as application/x-www-form-urlencoded (required by backend OAuth2PasswordRequestForm). May return 403 with require_otp + temp_token when OTP is enabled. */
-  login(username: string, password: string, tenantId?: number, scope?: 'tenant' | 'provider' | 'courier' | 'platform'): Observable<any> {
+  login(
+    username: string,
+    password: string,
+    tenantId?: number,
+    scope?: 'tenant' | 'provider' | 'courier' | 'platform',
+  ): Observable<any> {
     let queryParams = new HttpParams();
     if (scope === 'provider') {
       queryParams = queryParams.set('scope', 'provider');
@@ -2112,14 +2150,16 @@ export class ApiService {
       queryParams = queryParams.set('tenant_id', tenantId.toString());
     }
     const body = new HttpParams().set('username', username).set('password', password).toString();
-    return this.http.post<any>(`${this.apiUrl}/token`, body, {
-      params: queryParams,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    }).pipe(
-      tap(() => {
-        this.checkAuth().subscribe();
+    return this.http
+      .post<any>(`${this.apiUrl}/token`, body, {
+        params: queryParams,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
-    );
+      .pipe(
+        tap(() => {
+          this.checkAuth().subscribe();
+        }),
+      );
   }
 
   /** After login returned 403 with require_otp, submit OTP code to get tokens. */
@@ -2127,7 +2167,7 @@ export class ApiService {
     return this.http.post<any>(`${this.apiUrl}/token/otp`, { temp_token: tempToken, code }).pipe(
       tap(() => {
         this.checkAuth().subscribe();
-      })
+      }),
     );
   }
 
@@ -2165,15 +2205,24 @@ export class ApiService {
   }
 
   setupOtp(): Observable<{ secret: string; provisioning_uri: string }> {
-    return this.http.post<{ secret: string; provisioning_uri: string }>(`${this.apiUrl}/users/me/otp/setup`, {});
+    return this.http.post<{ secret: string; provisioning_uri: string }>(
+      `${this.apiUrl}/users/me/otp/setup`,
+      {},
+    );
   }
 
   confirmOtp(code: string): Observable<{ status: string; otp_enabled: boolean }> {
-    return this.http.post<{ status: string; otp_enabled: boolean }>(`${this.apiUrl}/users/me/otp/confirm`, { code });
+    return this.http.post<{ status: string; otp_enabled: boolean }>(
+      `${this.apiUrl}/users/me/otp/confirm`,
+      { code },
+    );
   }
 
   disableOtp(code: string): Observable<{ status: string; otp_enabled: boolean }> {
-    return this.http.post<{ status: string; otp_enabled: boolean }>(`${this.apiUrl}/users/me/otp/disable`, { code });
+    return this.http.post<{ status: string; otp_enabled: boolean }>(
+      `${this.apiUrl}/users/me/otp/disable`,
+      { code },
+    );
   }
 
   registerProvider(data: ProviderRegisterData): Observable<RegisterResponse> {
@@ -2191,9 +2240,7 @@ export class ApiService {
     this.tenantUiModules.set({ ...DEFAULT_TENANT_UI_MODULES });
     this.tenantDisplayName.set(null);
     this.disconnectWebSocket();
-    return this.http.post(`${this.apiUrl}/logout`, {}).pipe(
-      catchError(() => of(undefined))
-    );
+    return this.http.post(`${this.apiUrl}/logout`, {}).pipe(catchError(() => of(undefined)));
   }
 
   // Refresh token - exchange valid refresh token for new access token
@@ -2202,7 +2249,7 @@ export class ApiService {
       tap(() => {
         // Re-check auth to update user state with new token
         this.checkAuth().subscribe();
-      })
+      }),
     );
   }
 
@@ -2217,11 +2264,7 @@ export class ApiService {
   }
 
   /** End-user customer account (#340) — uses customer_access_token cookie. */
-  customerRegister(body: {
-    email: string;
-    password: string;
-    full_name?: string;
-  }): Observable<{
+  customerRegister(body: { email: string; password: string; full_name?: string }): Observable<{
     status: string;
     id: number;
     email: string;
@@ -2238,7 +2281,10 @@ export class ApiService {
     }>(`${this.apiUrl}/customer/register`, body, { params });
   }
 
-  customerLogin(email: string, password: string): Observable<{ status: string; email_verified: boolean }> {
+  customerLogin(
+    email: string,
+    password: string,
+  ): Observable<{ status: string; email_verified: boolean }> {
     const params = new HttpParams().set('lang', this.language.getLanguage());
     return this.http.post<{ status: string; email_verified: boolean }>(
       `${this.apiUrl}/customer/token`,
@@ -2248,19 +2294,19 @@ export class ApiService {
   }
 
   customerLogout(): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/customer/logout`, {}, { withCredentials: true }).pipe(
-      catchError(() => of(undefined)),
-    );
+    return this.http
+      .post(`${this.apiUrl}/customer/logout`, {}, { withCredentials: true })
+      .pipe(catchError(() => of(undefined)));
   }
 
   getCustomerMe(): Observable<CustomerInfo> {
     return this.http.get<CustomerInfo>(`${this.apiUrl}/customer/me`, { withCredentials: true });
   }
 
-  customerVerifyEmail(token: string): Observable<{ status: string; email: string; email_verified: boolean }> {
-    const params = new HttpParams()
-      .set('token', token)
-      .set('lang', this.language.getLanguage());
+  customerVerifyEmail(
+    token: string,
+  ): Observable<{ status: string; email: string; email_verified: boolean }> {
+    const params = new HttpParams().set('token', token).set('lang', this.language.getLanguage());
     return this.http.get<{ status: string; email: string; email_verified: boolean }>(
       `${this.apiUrl}/customer/verify-email`,
       { params },
@@ -2328,7 +2374,10 @@ export class ApiService {
     return this.http.post<ProviderProduct>(`${this.apiUrl}/provider/products`, data);
   }
 
-  updateProviderProduct(id: number, data: Partial<ProviderProductUpdate>): Observable<ProviderProduct> {
+  updateProviderProduct(
+    id: number,
+    data: Partial<ProviderProductUpdate>,
+  ): Observable<ProviderProduct> {
     return this.http.put<ProviderProduct>(`${this.apiUrl}/provider/products/${id}`, data);
   }
 
@@ -2336,12 +2385,15 @@ export class ApiService {
     return this.http.delete<{ status: string }>(`${this.apiUrl}/provider/products/${id}`);
   }
 
-  uploadProviderProductImage(productId: number, file: File): Observable<{ id: number; image_filename: string; image_url: string }> {
+  uploadProviderProductImage(
+    productId: number,
+    file: File,
+  ): Observable<{ id: number; image_filename: string; image_url: string }> {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ id: number; image_filename: string; image_url: string }>(
       `${this.apiUrl}/provider/products/${productId}/image`,
-      formData
+      formData,
     );
   }
 
@@ -2373,23 +2425,25 @@ export class ApiService {
   }
 
   getProductBulkImportVisionStatus(): Observable<{ configured: boolean }> {
-    return this.http.get<{ configured: boolean }>(`${this.apiUrl}/products/bulk-import/vision-status`);
+    return this.http.get<{ configured: boolean }>(
+      `${this.apiUrl}/products/bulk-import/vision-status`,
+    );
   }
 
   previewProductBulkImportJson(payload: unknown): Observable<ProductBulkImportPreviewResponse> {
     return this.http.post<ProductBulkImportPreviewResponse>(
       `${this.apiUrl}/products/bulk-import/preview-json`,
-      payload
+      payload,
     );
   }
 
   previewProductBulkImportCsv(
     csv: string,
-    useAiMapping = false
+    useAiMapping = false,
   ): Observable<ProductBulkImportPreviewResponse> {
     return this.http.post<ProductBulkImportPreviewResponse>(
       `${this.apiUrl}/products/bulk-import/preview-csv`,
-      { csv, use_ai_mapping: useAiMapping }
+      { csv, use_ai_mapping: useAiMapping },
     );
   }
 
@@ -2398,14 +2452,19 @@ export class ApiService {
     formData.append('file', file);
     return this.http.post<ProductBulkImportPreviewResponse>(
       `${this.apiUrl}/products/bulk-import/vision/preview`,
-      formData
+      formData,
     );
   }
 
-  confirmProductBulkImport(items: ProductBulkImportPreviewRow[]): Observable<ProductBulkImportConfirmResult> {
-    return this.http.post<ProductBulkImportConfirmResult>(`${this.apiUrl}/products/bulk-import/confirm`, {
-      items,
-    });
+  confirmProductBulkImport(
+    items: ProductBulkImportPreviewRow[],
+  ): Observable<ProductBulkImportConfirmResult> {
+    return this.http.post<ProductBulkImportConfirmResult>(
+      `${this.apiUrl}/products/bulk-import/confirm`,
+      {
+        items,
+      },
+    );
   }
 
   getProductQuestions(productId: number): Observable<ProductQuestionStaff[]> {
@@ -2414,32 +2473,44 @@ export class ApiService {
 
   createProductQuestion(
     productId: number,
-    body: ProductQuestionCreatePayload
+    body: ProductQuestionCreatePayload,
   ): Observable<ProductQuestionStaff> {
-    return this.http.post<ProductQuestionStaff>(`${this.apiUrl}/products/${productId}/questions`, body);
+    return this.http.post<ProductQuestionStaff>(
+      `${this.apiUrl}/products/${productId}/questions`,
+      body,
+    );
   }
 
   updateProductQuestion(
     productId: number,
     questionId: number,
-    body: ProductQuestionUpdatePayload
+    body: ProductQuestionUpdatePayload,
   ): Observable<ProductQuestionStaff> {
     return this.http.patch<ProductQuestionStaff>(
       `${this.apiUrl}/products/${productId}/questions/${questionId}`,
-      body
+      body,
     );
   }
 
-  deleteProductQuestion(productId: number, questionId: number): Observable<{ status: string; id: number }> {
+  deleteProductQuestion(
+    productId: number,
+    questionId: number,
+  ): Observable<{ status: string; id: number }> {
     return this.http.delete<{ status: string; id: number }>(
-      `${this.apiUrl}/products/${productId}/questions/${questionId}`
+      `${this.apiUrl}/products/${productId}/questions/${questionId}`,
     );
   }
 
-  reorderProductQuestions(productId: number, questionIds: number[]): Observable<ProductQuestionStaff[]> {
-    return this.http.put<ProductQuestionStaff[]>(`${this.apiUrl}/products/${productId}/questions/reorder`, {
-      question_ids: questionIds,
-    });
+  reorderProductQuestions(
+    productId: number,
+    questionIds: number[],
+  ): Observable<ProductQuestionStaff[]> {
+    return this.http.put<ProductQuestionStaff[]>(
+      `${this.apiUrl}/products/${productId}/questions/reorder`,
+      {
+        question_ids: questionIds,
+      },
+    );
   }
 
   getProductImageUrl(product: Product): string | null {
@@ -2482,7 +2553,11 @@ export class ApiService {
   }
 
   // Reservations (staff)
-  getReservations(params?: { date?: string; status?: string; phone?: string }): Observable<Reservation[]> {
+  getReservations(params?: {
+    date?: string;
+    status?: string;
+    phone?: string;
+  }): Observable<Reservation[]> {
     let httpParams = new HttpParams();
     if (params?.date) httpParams = httpParams.set('reservation_date', params.date);
     if (params?.status) httpParams = httpParams.set('status', params.status);
@@ -2490,7 +2565,11 @@ export class ApiService {
     return this.http.get<Reservation[]>(`${this.apiUrl}/reservations`, { params: httpParams });
   }
 
-  getWaitingList(params?: { status?: string; phone?: string; active_only?: boolean }): Observable<WaitingListEntry[]> {
+  getWaitingList(params?: {
+    status?: string;
+    phone?: string;
+    active_only?: boolean;
+  }): Observable<WaitingListEntry[]> {
     let httpParams = new HttpParams();
     if (params?.status) httpParams = httpParams.set('status', params.status);
     if (params?.phone) httpParams = httpParams.set('phone', params.phone);
@@ -2510,35 +2589,43 @@ export class ApiService {
   getReservationPrefillByPhone(phone: string): Observable<Reservation | null> {
     const trimmed = phone?.trim();
     if (!trimmed) return of(null);
-    return this.http.get<Reservation>(`${this.apiUrl}/reservations/prefill-by-phone`, {
-      params: { phone: trimmed },
-    }).pipe(
-      catchError(() => of(null)),
-    );
+    return this.http
+      .get<Reservation>(`${this.apiUrl}/reservations/prefill-by-phone`, {
+        params: { phone: trimmed },
+      })
+      .pipe(catchError(() => of(null)));
   }
 
   getReservation(id: number): Observable<Reservation> {
     return this.http.get<Reservation>(`${this.apiUrl}/reservations/${id}`);
   }
 
-  getOverbookingReport(date: string, timeFrom?: string, timeTo?: string): Observable<OverbookingReport> {
+  getOverbookingReport(
+    date: string,
+    timeFrom?: string,
+    timeTo?: string,
+  ): Observable<OverbookingReport> {
     let params = new HttpParams().set('date_str', date);
     if (timeFrom) params = params.set('time_from', timeFrom);
     if (timeTo) params = params.set('time_to', timeTo);
-    return this.http.get<OverbookingReport>(`${this.apiUrl}/reservations/overbooking-report`, { params });
+    return this.http.get<OverbookingReport>(`${this.apiUrl}/reservations/overbooking-report`, {
+      params,
+    });
   }
 
   getUpcomingNoTableCount(date: string, reservationId?: number): Observable<{ count: number }> {
     let params = new HttpParams().set('date_str', date);
     if (reservationId != null) params = params.set('reservation_id', reservationId.toString());
-    return this.http.get<{ count: number }>(`${this.apiUrl}/reservations/upcoming-no-table-count`, { params });
+    return this.http.get<{ count: number }>(`${this.apiUrl}/reservations/upcoming-no-table-count`, {
+      params,
+    });
   }
 
   getSlotCapacity(
     date: string,
     time: string,
     excludeReservationId?: number,
-    floorId?: number | null
+    floorId?: number | null,
   ): Observable<{
     total_seats: number;
     total_tables: number;
@@ -2548,7 +2635,8 @@ export class ApiService {
     tables_left: number;
   }> {
     let params = new HttpParams().set('date_str', date).set('time_str', time);
-    if (excludeReservationId != null) params = params.set('exclude_reservation_id', excludeReservationId.toString());
+    if (excludeReservationId != null)
+      params = params.set('exclude_reservation_id', excludeReservationId.toString());
     if (floorId != null && floorId > 0) params = params.set('floor_id', String(floorId));
     return this.http.get<{
       total_seats: number;
@@ -2573,7 +2661,9 @@ export class ApiService {
   }
 
   seatReservation(id: number, tableId: number): Observable<Reservation> {
-    return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}/seat`, { table_id: tableId });
+    return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}/seat`, {
+      table_id: tableId,
+    });
   }
 
   finishReservation(id: number): Observable<Reservation> {
@@ -2597,7 +2687,9 @@ export class ApiService {
 
   // Reservations (public - no auth)
   getReservationByToken(token: string): Observable<Reservation> {
-    return this.http.get<Reservation>(`${this.apiUrl}/reservations/by-token`, { params: { token } });
+    return this.http.get<Reservation>(`${this.apiUrl}/reservations/by-token`, {
+      params: { token },
+    });
   }
 
   createReservationPublic(data: ReservationCreate): Observable<Reservation> {
@@ -2612,28 +2704,34 @@ export class ApiService {
     minLeadMinutes?: number,
     /** lunch|dinner when opening hours have a break */
     service?: 'lunch' | 'dinner' | null,
-    floorId?: number | null
+    floorId?: number | null,
   ): Observable<{ date: string; time: string }> {
     let params: Record<string, string> = { tenant_id: tenantId.toString(), date };
     if (partySize != null && partySize > 0) params['party_size'] = String(partySize);
     if (minLeadMinutes !== undefined) params['min_lead_minutes'] = String(minLeadMinutes);
     if (service === 'lunch' || service === 'dinner') params['service'] = service;
     if (floorId != null && floorId > 0) params['floor_id'] = String(floorId);
-    return this.http.get<{ date: string; time: string }>(`${this.apiUrl}/reservations/next-available`, { params });
+    return this.http.get<{ date: string; time: string }>(
+      `${this.apiUrl}/reservations/next-available`,
+      { params },
+    );
   }
 
   getReservationBookCalendar(
     tenantId: number,
     year: number,
-    month: number
+    month: number,
   ): Observable<ReservationBookCalendarResponse> {
-    return this.http.get<ReservationBookCalendarResponse>(`${this.apiUrl}/reservations/book-calendar`, {
-      params: {
-        tenant_id: String(tenantId),
-        year: String(year),
-        month: String(month),
+    return this.http.get<ReservationBookCalendarResponse>(
+      `${this.apiUrl}/reservations/book-calendar`,
+      {
+        params: {
+          tenant_id: String(tenantId),
+          year: String(year),
+          month: String(month),
+        },
       },
-    });
+    );
   }
 
   getReservationBookWeekSlots(
@@ -2642,7 +2740,7 @@ export class ApiService {
     weekAnchor?: string | null,
     excludeReservationId?: number | null,
     service?: 'lunch' | 'dinner' | null,
-    floorId?: number | null
+    floorId?: number | null,
   ): Observable<ReservationBookWeekSlotsResponse> {
     const params: Record<string, string> = {
       tenant_id: String(tenantId),
@@ -2654,9 +2752,12 @@ export class ApiService {
     }
     if (service === 'lunch' || service === 'dinner') params['service'] = service;
     if (floorId != null && floorId > 0) params['floor_id'] = String(floorId);
-    return this.http.get<ReservationBookWeekSlotsResponse>(`${this.apiUrl}/reservations/book-week-slots`, {
-      params,
-    });
+    return this.http.get<ReservationBookWeekSlotsResponse>(
+      `${this.apiUrl}/reservations/book-week-slots`,
+      {
+        params,
+      },
+    );
   }
 
   getReservationBookMonthDayStates(
@@ -2666,7 +2767,7 @@ export class ApiService {
     partySize: number,
     excludeReservationId?: number | null,
     service?: 'lunch' | 'dinner' | null,
-    floorId?: number | null
+    floorId?: number | null,
   ): Observable<ReservationBookMonthDayStatesResponse> {
     const params: Record<string, string> = {
       tenant_id: String(tenantId),
@@ -2681,7 +2782,7 @@ export class ApiService {
     if (floorId != null && floorId > 0) params['floor_id'] = String(floorId);
     return this.http.get<ReservationBookMonthDayStatesResponse>(
       `${this.apiUrl}/reservations/book-month-day-states`,
-      { params }
+      { params },
     );
   }
 
@@ -2691,7 +2792,7 @@ export class ApiService {
     partySize: number,
     excludeReservationId?: number | null,
     service?: 'lunch' | 'dinner' | null,
-    floorId?: number | null
+    floorId?: number | null,
   ): Observable<ReservationBookDaySlotsResponse> {
     const params: Record<string, string> = {
       tenant_id: String(tenantId),
@@ -2703,18 +2804,31 @@ export class ApiService {
     }
     if (service === 'lunch' || service === 'dinner') params['service'] = service;
     if (floorId != null && floorId > 0) params['floor_id'] = String(floorId);
-    return this.http.get<ReservationBookDaySlotsResponse>(`${this.apiUrl}/reservations/book-day-slots`, {
-      params,
-    });
+    return this.http.get<ReservationBookDaySlotsResponse>(
+      `${this.apiUrl}/reservations/book-day-slots`,
+      {
+        params,
+      },
+    );
   }
 
   cancelReservationPublic(id: number, token: string): Observable<Reservation> {
-    return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}/cancel`, {}, { params: { token } });
+    return this.http.put<Reservation>(
+      `${this.apiUrl}/reservations/${id}/cancel`,
+      {},
+      { params: { token } },
+    );
   }
 
   /** Public: update reservation by token (delay notice, reservation notes, customer notes). */
-  updateReservationPublic(id: number, token: string, body: PublicReservationUpdate): Observable<Reservation> {
-    return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}/public`, body ?? {}, { params: { token } });
+  updateReservationPublic(
+    id: number,
+    token: string,
+    body: PublicReservationUpdate,
+  ): Observable<Reservation> {
+    return this.http.put<Reservation>(`${this.apiUrl}/reservations/${id}/public`, body ?? {}, {
+      params: { token },
+    });
   }
 
   createTable(name: string, floorId?: number): Observable<Table> {
@@ -2727,16 +2841,20 @@ export class ApiService {
     return this.http.put<Table>(`${this.apiUrl}/tables/${id}`, data);
   }
 
-  createTableGroup(tableIds: number[]): Observable<{ id: number; table_ids: number[]; tenant_id: number }> {
+  createTableGroup(
+    tableIds: number[],
+  ): Observable<{ id: number; table_ids: number[]; tenant_id: number }> {
     return this.http.post<{ id: number; table_ids: number[]; tenant_id: number }>(
       `${this.apiUrl}/table-groups`,
-      { table_ids: tableIds }
+      { table_ids: tableIds },
     );
   }
 
-  deleteTableGroup(groupId: number): Observable<{ dissolved: boolean; id: number; table_ids: number[] }> {
+  deleteTableGroup(
+    groupId: number,
+  ): Observable<{ dissolved: boolean; id: number; table_ids: number[] }> {
     return this.http.delete<{ dissolved: boolean; id: number; table_ids: number[] }>(
-      `${this.apiUrl}/table-groups/${groupId}`
+      `${this.apiUrl}/table-groups/${groupId}`,
     );
   }
 
@@ -2758,7 +2876,10 @@ export class ApiService {
   }
 
   regenerateTablePin(tableId: number): Observable<TableActivateResponse> {
-    return this.http.post<TableActivateResponse>(`${this.apiUrl}/tables/${tableId}/regenerate-pin`, {});
+    return this.http.post<TableActivateResponse>(
+      `${this.apiUrl}/tables/${tableId}/regenerate-pin`,
+      {},
+    );
   }
 
   assignWaiterToTable(tableId: number, waiterId: number | null): Observable<any> {
@@ -2770,16 +2891,14 @@ export class ApiService {
   }
 
   getWaiters(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/users`).pipe(
-      map((users: User[]) => users.filter(u => u.role === 'waiter'))
-    );
+    return this.http
+      .get<User[]>(`${this.apiUrl}/users`)
+      .pipe(map((users: User[]) => users.filter((u) => u.role === 'waiter')));
   }
 
   /** Tenant users with courier role (for Satisfecho Delivery assign). Uses ORDER_READ-scoped endpoint. */
   getCouriers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/users/couriers`).pipe(
-      catchError(() => of([]))
-    );
+    return this.http.get<User[]>(`${this.apiUrl}/users/couriers`).pipe(catchError(() => of([])));
   }
 
   // Orders
@@ -2788,8 +2907,13 @@ export class ApiService {
     return this.http.get<Order[]>(`${this.apiUrl}/orders`, params);
   }
 
-  createSatisfechoDeliveryOrder(body: SatisfechoDeliveryOrderCreate): Observable<SatisfechoDeliveryOrderResponse> {
-    return this.http.post<SatisfechoDeliveryOrderResponse>(`${this.apiUrl}/orders/satisfecho-delivery`, body);
+  createSatisfechoDeliveryOrder(
+    body: SatisfechoDeliveryOrderCreate,
+  ): Observable<SatisfechoDeliveryOrderResponse> {
+    return this.http.post<SatisfechoDeliveryOrderResponse>(
+      `${this.apiUrl}/orders/satisfecho-delivery`,
+      body,
+    );
   }
 
   /** Public guest: create Satisfecho Delivery order (address + phone required). */
@@ -2820,14 +2944,22 @@ export class ApiService {
     );
   }
 
-  updateOrderDelivery(orderId: number, body: OrderDeliveryUpdate): Observable<SatisfechoDeliveryOrderResponse> {
-    return this.http.put<SatisfechoDeliveryOrderResponse>(`${this.apiUrl}/orders/${orderId}/delivery`, body);
+  updateOrderDelivery(
+    orderId: number,
+    body: OrderDeliveryUpdate,
+  ): Observable<SatisfechoDeliveryOrderResponse> {
+    return this.http.put<SatisfechoDeliveryOrderResponse>(
+      `${this.apiUrl}/orders/${orderId}/delivery`,
+      body,
+    );
   }
 
   /** Staff-only: get a short-lived token to open the public menu for a table without PIN. */
-  getStaffMenuToken(tableId: number): Observable<{ token: string; table_token: string; expires_in: number }> {
+  getStaffMenuToken(
+    tableId: number,
+  ): Observable<{ token: string; table_token: string; expires_in: number }> {
     return this.http.get<{ token: string; table_token: string; expires_in: number }>(
-      `${this.apiUrl}/tables/${tableId}/staff-menu-token`
+      `${this.apiUrl}/tables/${tableId}/staff-menu-token`,
     );
   }
 
@@ -2835,14 +2967,25 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/status`, { status });
   }
 
-  updateOrderItemStatus(orderId: number, itemId: number, status: string, userId?: number): Observable<any> {
+  updateOrderItemStatus(
+    orderId: number,
+    itemId: number,
+    status: string,
+    userId?: number,
+  ): Observable<any> {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/items/${itemId}/status`, {
       status,
-      user_id: userId
+      user_id: userId,
     });
   }
 
-  removeOrderItem(tableToken: string, orderId: number, itemId: number, sessionId?: string, reason?: string): Observable<any> {
+  removeOrderItem(
+    tableToken: string,
+    orderId: number,
+    itemId: number,
+    sessionId?: string,
+    reason?: string,
+  ): Observable<any> {
     let url = `${this.apiUrl}/menu/${tableToken}/order/${orderId}/items/${itemId}`;
     const params: string[] = [];
     if (sessionId) {
@@ -2857,7 +3000,13 @@ export class ApiService {
     return this.http.delete(url);
   }
 
-  updateOrderItemQuantity(tableToken: string, orderId: number, itemId: number, quantity: number, sessionId?: string): Observable<any> {
+  updateOrderItemQuantity(
+    tableToken: string,
+    orderId: number,
+    itemId: number,
+    quantity: number,
+    sessionId?: string,
+  ): Observable<any> {
     let url = `${this.apiUrl}/menu/${tableToken}/order/${orderId}/items/${itemId}`;
     if (sessionId) {
       url += `?session_id=${encodeURIComponent(sessionId)}`;
@@ -2882,7 +3031,7 @@ export class ApiService {
       tipAmountCents?: number | null;
       amountPaidCents?: number | null;
       tipEntryMode?: 'preset' | 'overpayment';
-    }
+    },
   ): Observable<any> {
     const body: {
       payment_method: string;
@@ -2930,7 +3079,7 @@ export class ApiService {
       tip_amount_cents?: number | null;
       note?: string | null;
       order_item_ids?: number[] | null;
-    }
+    },
   ): Observable<{
     status: string;
     order_id: number;
@@ -2957,7 +3106,10 @@ export class ApiService {
     }>(`${this.apiUrl}/orders/${orderId}/payments`, body);
   }
 
-  voidOrderPayment(orderId: number, paymentId: number): Observable<{
+  voidOrderPayment(
+    orderId: number,
+    paymentId: number,
+  ): Observable<{
     status: string;
     order_id: number;
     amount_remaining_cents: number;
@@ -3013,7 +3165,7 @@ export class ApiService {
       tipAmountCents?: number | null;
       amountPaidCents?: number | null;
       tipEntryMode?: 'preset' | 'overpayment';
-    }
+    },
   ): Observable<any> {
     const body: {
       payment_method: string;
@@ -3034,26 +3186,36 @@ export class ApiService {
     return this.http.put(`${this.apiUrl}/orders/${orderId}/finish`, body);
   }
 
-  unmarkOrderPaid(orderId: number): Observable<{ status: string; order_id: number; new_status: string }> {
+  unmarkOrderPaid(
+    orderId: number,
+  ): Observable<{ status: string; order_id: number; new_status: string }> {
     return this.http.put<{ status: string; order_id: number; new_status: string }>(
       `${this.apiUrl}/orders/${orderId}/unmark-paid`,
-      {}
+      {},
     );
   }
 
   deleteOrder(orderId: number): Observable<{ status: string; order_id: number }> {
-    return this.http.delete<{ status: string; order_id: number }>(`${this.apiUrl}/orders/${orderId}`);
+    return this.http.delete<{ status: string; order_id: number }>(
+      `${this.apiUrl}/orders/${orderId}`,
+    );
   }
 
-  setOrderBillingCustomer(orderId: number, billingCustomerId: number | null): Observable<{ order_id: number; billing_customer_id: number | null }> {
+  setOrderBillingCustomer(
+    orderId: number,
+    billingCustomerId: number | null,
+  ): Observable<{ order_id: number; billing_customer_id: number | null }> {
     return this.http.put<{ order_id: number; billing_customer_id: number | null }>(
       `${this.apiUrl}/orders/${orderId}/billing-customer`,
-      { billing_customer_id: billingCustomerId }
+      { billing_customer_id: billingCustomerId },
     );
   }
 
   issueOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
-    return this.http.post<FiscalInvoicePublic>(`${this.apiUrl}/orders/${orderId}/fiscal-invoice/issue`, {});
+    return this.http.post<FiscalInvoicePublic>(
+      `${this.apiUrl}/orders/${orderId}/fiscal-invoice/issue`,
+      {},
+    );
   }
 
   getOrderFiscalInvoice(orderId: number): Observable<FiscalInvoicePublic> {
@@ -3065,7 +3227,10 @@ export class ApiService {
   }
 
   signOrderTseTransaction(orderId: number): Observable<TseTransactionPublic> {
-    return this.http.post<TseTransactionPublic>(`${this.apiUrl}/orders/${orderId}/tse-transaction/sign`, {});
+    return this.http.post<TseTransactionPublic>(
+      `${this.apiUrl}/orders/${orderId}/tse-transaction/sign`,
+      {},
+    );
   }
 
   exportTseDsfinvk(from: string, to: string): Observable<Record<string, unknown>> {
@@ -3074,16 +3239,20 @@ export class ApiService {
     });
   }
 
-  setOrderStaffUrgent(orderId: number, urgent: boolean): Observable<{ order_id: number; staff_urgent: boolean }> {
+  setOrderStaffUrgent(
+    orderId: number,
+    urgent: boolean,
+  ): Observable<{ order_id: number; staff_urgent: boolean }> {
     return this.http.put<{ order_id: number; staff_urgent: boolean }>(
       `${this.apiUrl}/orders/${orderId}/staff-urgent`,
-      { urgent }
+      { urgent },
     );
   }
 
   // Billing customers (Factura)
   getBillingCustomers(search?: string): Observable<BillingCustomer[]> {
-    const params = search != null && search.trim() !== '' ? { params: { search: search.trim() } } : {};
+    const params =
+      search != null && search.trim() !== '' ? { params: { search: search.trim() } } : {};
     return this.http.get<BillingCustomer[]>(`${this.apiUrl}/billing-customers`, params);
   }
 
@@ -3133,7 +3302,9 @@ export class ApiService {
   }
 
   joinRestaurantGroup(joinCode: string): Observable<RestaurantGroup> {
-    return this.http.post<RestaurantGroup>(`${this.apiUrl}/restaurant-group/join`, { join_code: joinCode });
+    return this.http.post<RestaurantGroup>(`${this.apiUrl}/restaurant-group/join`, {
+      join_code: joinCode,
+    });
   }
 
   leaveRestaurantGroup(): Observable<{ status: string }> {
@@ -3159,7 +3330,7 @@ export class ApiService {
   updateHubFulfillment(
     fulfillmentId: number,
     status: string,
-    notes?: string | null
+    notes?: string | null,
   ): Observable<HubFulfillment> {
     return this.http.patch<HubFulfillment>(`${this.apiUrl}/hub-fulfillments/${fulfillmentId}`, {
       status,
@@ -3286,7 +3457,7 @@ export class ApiService {
 
   getOrderHistory(tableToken: string, limit = 10): Observable<OrderHistoryItem[]> {
     return this.http.get<OrderHistoryItem[]>(`${this.apiUrl}/menu/${tableToken}/order-history`, {
-      params: { limit }
+      params: { limit },
     });
   }
 
@@ -3302,7 +3473,10 @@ export class ApiService {
     } else if (tableToken) {
       params.set('table_token', tableToken);
     }
-    return this.http.post(`${this.apiUrl}/orders/${orderId}/create-payment-intent?${params.toString()}`, {});
+    return this.http.post(
+      `${this.apiUrl}/orders/${orderId}/create-payment-intent?${params.toString()}`,
+      {},
+    );
   }
 
   confirmPayment(
@@ -3358,7 +3532,12 @@ export class ApiService {
     );
   }
 
-  requestPayment(tableToken: string, orderId: number, paymentMethod: string, message?: string): Observable<any> {
+  requestPayment(
+    tableToken: string,
+    orderId: number,
+    paymentMethod: string,
+    message?: string,
+  ): Observable<any> {
     return this.http.post(`${this.apiUrl}/menu/${tableToken}/order/${orderId}/request-payment`, {
       payment_method: paymentMethod,
       message: message || null,
@@ -3392,7 +3571,7 @@ export class ApiService {
         console.error('Failed to load tenant Stripe key:', err);
         // Fallback to environment key
         this.tenantStripeKey.set(null);
-      }
+      },
     });
   }
 
@@ -3420,7 +3599,7 @@ export class ApiService {
       catchError(() => {
         this.applyTenantUiModulesFromSettings(null);
         return of(void 0);
-      })
+      }),
     );
   }
 
@@ -3438,7 +3617,7 @@ export class ApiService {
         this.applyTenantUiModulesFromSettings(s);
         const n = typeof s?.name === 'string' ? s.name.trim() : '';
         this.tenantDisplayName.set(n || null);
-      })
+      }),
     );
   }
 
@@ -3449,12 +3628,14 @@ export class ApiService {
           const n = s.name.trim();
           this.tenantDisplayName.set(n || null);
         }
-      })
+      }),
     );
   }
 
   getOpeningHoursSchedule(): Observable<OpeningHoursScheduleResponse> {
-    return this.http.get<OpeningHoursScheduleResponse>(`${this.apiUrl}/tenant/opening-hours/schedule`);
+    return this.http.get<OpeningHoursScheduleResponse>(
+      `${this.apiUrl}/tenant/opening-hours/schedule`,
+    );
   }
 
   createOpeningHoursBaseline(body: {
@@ -3466,7 +3647,9 @@ export class ApiService {
   }
 
   deleteOpeningHoursBaseline(id: number): Observable<{ status: string }> {
-    return this.http.delete<{ status: string }>(`${this.apiUrl}/tenant/opening-hours/baselines/${id}`);
+    return this.http.delete<{ status: string }>(
+      `${this.apiUrl}/tenant/opening-hours/baselines/${id}`,
+    );
   }
 
   createOpeningHoursOverride(body: {
@@ -3480,7 +3663,9 @@ export class ApiService {
   }
 
   deleteOpeningHoursOverride(id: number): Observable<{ status: string }> {
-    return this.http.delete<{ status: string }>(`${this.apiUrl}/tenant/opening-hours/overrides/${id}`);
+    return this.http.delete<{ status: string }>(
+      `${this.apiUrl}/tenant/opening-hours/overrides/${id}`,
+    );
   }
 
   /** Kitchen/Bar display: wait-time thresholds (minutes) for card color. */
@@ -3494,59 +3679,81 @@ export class ApiService {
 
   updateKitchenStation(
     id: number,
-    body: Partial<{ name: string; sort_order: number; display_route: 'kitchen' | 'bar' }>
+    body: Partial<{ name: string; sort_order: number; display_route: 'kitchen' | 'bar' }>,
   ): Observable<KitchenStation> {
     return this.http.put<KitchenStation>(`${this.apiUrl}/tenant/kitchen-stations/${id}`, body);
   }
 
   deleteKitchenStation(id: number): Observable<{ status: string; id: number }> {
-    return this.http.delete<{ status: string; id: number }>(`${this.apiUrl}/tenant/kitchen-stations/${id}`);
+    return this.http.delete<{ status: string; id: number }>(
+      `${this.apiUrl}/tenant/kitchen-stations/${id}`,
+    );
   }
 
   getKitchenStationDefaults(): Observable<KitchenStationDefaults> {
     return this.http.get<KitchenStationDefaults>(`${this.apiUrl}/tenant/kitchen-station-defaults`);
   }
 
-  updateKitchenStationDefaults(body: Partial<KitchenStationDefaults>): Observable<KitchenStationDefaults> {
-    return this.http.put<KitchenStationDefaults>(`${this.apiUrl}/tenant/kitchen-station-defaults`, body);
+  updateKitchenStationDefaults(
+    body: Partial<KitchenStationDefaults>,
+  ): Observable<KitchenStationDefaults> {
+    return this.http.put<KitchenStationDefaults>(
+      `${this.apiUrl}/tenant/kitchen-station-defaults`,
+      body,
+    );
   }
 
   getDeliveryIntegrationCatalog(): Observable<DeliveryProviderCatalogRow[]> {
-    return this.http.get<DeliveryProviderCatalogRow[]>(`${this.apiUrl}/tenant/delivery-integrations/catalog`);
+    return this.http.get<DeliveryProviderCatalogRow[]>(
+      `${this.apiUrl}/tenant/delivery-integrations/catalog`,
+    );
   }
 
   getDeliveryIntegrations(): Observable<DeliveryIntegrationPublic[]> {
-    return this.http.get<DeliveryIntegrationPublic[]>(`${this.apiUrl}/tenant/delivery-integrations`);
+    return this.http.get<DeliveryIntegrationPublic[]>(
+      `${this.apiUrl}/tenant/delivery-integrations`,
+    );
   }
 
-  upsertDeliveryIntegration(body: DeliveryIntegrationUpsert): Observable<DeliveryIntegrationPublic> {
-    return this.http.put<DeliveryIntegrationPublic>(`${this.apiUrl}/tenant/delivery-integrations`, body);
+  upsertDeliveryIntegration(
+    body: DeliveryIntegrationUpsert,
+  ): Observable<DeliveryIntegrationPublic> {
+    return this.http.put<DeliveryIntegrationPublic>(
+      `${this.apiUrl}/tenant/delivery-integrations`,
+      body,
+    );
   }
 
   testDeliveryIntegration(integrationId: number): Observable<{ ok: boolean; message: string }> {
     return this.http.post<{ ok: boolean; message: string }>(
       `${this.apiUrl}/tenant/delivery-integrations/${integrationId}/test`,
-      {}
+      {},
     );
   }
 
   getDeliveryMappings(integrationId: number): Observable<DeliveryCatalogMappingRow[]> {
     return this.http.get<DeliveryCatalogMappingRow[]>(
-      `${this.apiUrl}/tenant/delivery-integrations/${integrationId}/mappings`
+      `${this.apiUrl}/tenant/delivery-integrations/${integrationId}/mappings`,
     );
   }
 
-  putDeliveryMappings(integrationId: number, mappings: DeliveryCatalogMappingRow[]): Observable<{ ok: boolean; count: number }> {
+  putDeliveryMappings(
+    integrationId: number,
+    mappings: DeliveryCatalogMappingRow[],
+  ): Observable<{ ok: boolean; count: number }> {
     return this.http.put<{ ok: boolean; count: number }>(
       `${this.apiUrl}/tenant/delivery-integrations/${integrationId}/mappings`,
-      { mappings }
+      { mappings },
     );
   }
 
-  getDeliveryIntegrationEvents(integrationId: number, limit = 50): Observable<DeliveryIntegrationEventRow[]> {
+  getDeliveryIntegrationEvents(
+    integrationId: number,
+    limit = 50,
+  ): Observable<DeliveryIntegrationEventRow[]> {
     return this.http.get<DeliveryIntegrationEventRow[]>(
       `${this.apiUrl}/tenant/delivery-integrations/${integrationId}/events`,
-      { params: { limit: String(limit) } }
+      { params: { limit: String(limit) } },
     );
   }
 
@@ -3561,13 +3768,13 @@ export class ApiService {
   postSocialMetaAuthorizeUrl(): Observable<{ authorize_url: string }> {
     return this.http.post<{ authorize_url: string }>(
       `${this.apiUrl}/tenant/social/oauth/meta/authorize-url`,
-      {}
+      {},
     );
   }
 
   disconnectSocialProvider(providerKey: string): Observable<{ ok: boolean }> {
     return this.http.delete<{ ok: boolean }>(
-      `${this.apiUrl}/tenant/social/connections/${encodeURIComponent(providerKey)}`
+      `${this.apiUrl}/tenant/social/connections/${encodeURIComponent(providerKey)}`,
     );
   }
 
@@ -3595,9 +3802,13 @@ export class ApiService {
     return this.http.post<SocialPostPublic>(`${this.apiUrl}/tenant/social/posts`, fd);
   }
 
-  getKitchenDisplaySettings(): Observable<{ yellow_minutes: number; orange_minutes: number; red_minutes: number }> {
+  getKitchenDisplaySettings(): Observable<{
+    yellow_minutes: number;
+    orange_minutes: number;
+    red_minutes: number;
+  }> {
     return this.http.get<{ yellow_minutes: number; orange_minutes: number; red_minutes: number }>(
-      `${this.apiUrl}/tenant/kitchen-display-settings`
+      `${this.apiUrl}/tenant/kitchen-display-settings`,
     );
   }
 
@@ -3608,21 +3819,34 @@ export class ApiService {
   }): Observable<{ yellow_minutes: number; orange_minutes: number; red_minutes: number }> {
     return this.http.put<{ yellow_minutes: number; orange_minutes: number; red_minutes: number }>(
       `${this.apiUrl}/tenant/kitchen-display-settings`,
-      settings
+      settings,
     );
   }
 
   getTaxes(currentOnly = true): Observable<Tax[]> {
     return this.http.get<Tax[]>(`${this.apiUrl}/taxes`, {
-      params: { current_only: currentOnly }
+      params: { current_only: currentOnly },
     });
   }
 
-  createTax(data: { name: string; rate_percent: number; valid_from: string; valid_to?: string | null }): Observable<Tax> {
+  createTax(data: {
+    name: string;
+    rate_percent: number;
+    valid_from: string;
+    valid_to?: string | null;
+  }): Observable<Tax> {
     return this.http.post<Tax>(`${this.apiUrl}/taxes`, data);
   }
 
-  updateTax(id: number, data: Partial<{ name: string; rate_percent: number; valid_from: string; valid_to: string | null }>): Observable<Tax> {
+  updateTax(
+    id: number,
+    data: Partial<{
+      name: string;
+      rate_percent: number;
+      valid_from: string;
+      valid_to: string | null;
+    }>,
+  ): Observable<Tax> {
     return this.http.put<Tax>(`${this.apiUrl}/taxes/${id}`, data);
   }
 
@@ -3640,12 +3864,18 @@ export class ApiService {
     return this.http.delete<TenantSettings>(`${this.apiUrl}/tenant/logo`);
   }
 
-  getTenantLogoUrl(logoFilename: string | null | undefined, tenantId: number | null | undefined): string | null {
+  getTenantLogoUrl(
+    logoFilename: string | null | undefined,
+    tenantId: number | null | undefined,
+  ): string | null {
     if (!logoFilename || !tenantId) return null;
     return `${this.apiUrl}/uploads/${tenantId}/logo/${logoFilename}`;
   }
 
-  getTenantHeaderBackgroundUrl(filename: string | null | undefined, tenantId: number | null | undefined): string | null {
+  getTenantHeaderBackgroundUrl(
+    filename: string | null | undefined,
+    tenantId: number | null | undefined,
+  ): string | null {
     if (!filename || !tenantId) return null;
     return `${this.apiUrl}/uploads/${tenantId}/header/${filename}`;
   }
@@ -3681,7 +3911,7 @@ export class ApiService {
   /** Public: list bookable seating zones (active floors with ≥1 table). */
   getReservationBookZones(tenantId: number): Observable<ReservationBookZonesResponse> {
     return this.http.get<ReservationBookZonesResponse>(
-      `${this.apiUrl}/public/tenants/${tenantId}/reservation-book-zones`
+      `${this.apiUrl}/public/tenants/${tenantId}/reservation-book-zones`,
     );
   }
 
@@ -3690,7 +3920,10 @@ export class ApiService {
   }
 
   /** Read-only grouped menu for a tenant (public marketing / QR menu page). */
-  getPublicTenantMenu(tenantId: number, lang?: string | null): Observable<PublicTenantMenuResponse> {
+  getPublicTenantMenu(
+    tenantId: number,
+    lang?: string | null,
+  ): Observable<PublicTenantMenuResponse> {
     let params = new HttpParams();
     const resolvedLang = (lang ?? this.language.getLanguage()).trim();
     if (resolvedLang) {
@@ -3720,9 +3953,7 @@ export class ApiService {
   }
 
   getPublicLoyaltyProgram(tenantId: number): Observable<LoyaltyProgramPublic> {
-    return this.http.get<LoyaltyProgramPublic>(
-      `${this.apiUrl}/public/tenants/${tenantId}/loyalty`,
-    );
+    return this.http.get<LoyaltyProgramPublic>(`${this.apiUrl}/public/tenants/${tenantId}/loyalty`);
   }
 
   joinPublicLoyalty(
@@ -3789,11 +4020,13 @@ export class ApiService {
     return this.http.get<PricePromotion[]>(`${this.apiUrl}/promos`, { params });
   }
 
-  createPromo(body: Partial<PricePromotion> & {
-    name: string;
-    percent_off: number;
-    category: string;
-  }): Observable<PricePromotion> {
+  createPromo(
+    body: Partial<PricePromotion> & {
+      name: string;
+      percent_off: number;
+      category: string;
+    },
+  ): Observable<PricePromotion> {
     return this.http.post<PricePromotion>(`${this.apiUrl}/promos`, body);
   }
 
@@ -3878,10 +4111,7 @@ export class ApiService {
     return this.http.get<PrintAgent[]>(`${this.apiUrl}/tenant/print-agents`);
   }
 
-  createPrintAgent(body: {
-    device_id: string;
-    display_name?: string;
-  }): Observable<PrintAgent> {
+  createPrintAgent(body: { device_id: string; display_name?: string }): Observable<PrintAgent> {
     return this.http.post<PrintAgent>(`${this.apiUrl}/tenant/print-agents`, body);
   }
 
@@ -3936,7 +4166,10 @@ export class ApiService {
 
     // Fetch token so we can pass it in the URL; cookie may not be sent on WebSocket upgrade (e.g. cross-origin)
     this.getWsToken().subscribe({
-      next: (res) => { if (user.tenant_id != null) this.connectWebSocketWithToken(user.tenant_id, res.access_token); },
+      next: (res) => {
+        if (user.tenant_id != null)
+          this.connectWebSocketWithToken(user.tenant_id, res.access_token);
+      },
       error: (err) => {
         console.warn('Could not get WebSocket token, connection may fail:', err?.status ?? err);
         if (user.tenant_id != null) this.connectWebSocketWithToken(user.tenant_id, null);
@@ -3948,7 +4181,7 @@ export class ApiService {
     if (this.ws) return;
 
     let wsUrl = this.wsUrl;
-    
+
     // Handle relative URLs (e.g. '/ws')
     if (wsUrl.startsWith('/')) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -3974,10 +4207,16 @@ export class ApiService {
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          const isReservation = data?.type && [
-            'new_reservation', 'reservation_updated', 'reservation_status',
-            'reservation_seated', 'reservation_finished', 'reservation_cancelled'
-          ].includes(data.type);
+          const isReservation =
+            data?.type &&
+            [
+              'new_reservation',
+              'reservation_updated',
+              'reservation_status',
+              'reservation_seated',
+              'reservation_finished',
+              'reservation_cancelled',
+            ].includes(data.type);
           if (isReservation) {
             this.reservationUpdates.next(data);
           } else {
@@ -3991,7 +4230,9 @@ export class ApiService {
       this.ws.onclose = (event) => {
         this.ws = null;
         if (!environment.production) {
-          console.log(`WebSocket closed: code=${event.code}, reason="${event.reason || 'none'}", wasClean=${event.wasClean}`);
+          console.log(
+            `WebSocket closed: code=${event.code}, reason="${event.reason || 'none'}", wasClean=${event.wasClean}`,
+          );
         }
 
         // Only reconnect if it wasn't a normal closure (code 1000)
@@ -4062,7 +4303,10 @@ export class ApiService {
   }
 
   /** Create a product on a tenant-owned (personal) provider (admin/settings). */
-  createProductForProvider(providerId: number, body: ProviderProductCreate): Observable<ProviderProduct> {
+  createProductForProvider(
+    providerId: number,
+    body: ProviderProductCreate,
+  ): Observable<ProviderProduct> {
     return this.http.post<ProviderProduct>(`${this.apiUrl}/providers/${providerId}/products`, body);
   }
 
@@ -4084,10 +4328,10 @@ export class ApiService {
   }
 
   createTenantSubcategory(category: string, name: string): Observable<Record<string, string[]>> {
-    return this.http.post<Record<string, string[]>>(
-      `${this.apiUrl}/tenant/subcategories`,
-      { category, name },
-    );
+    return this.http.post<Record<string, string[]>>(`${this.apiUrl}/tenant/subcategories`, {
+      category,
+      name,
+    });
   }
 
   renameTenantSubcategory(
@@ -4095,10 +4339,11 @@ export class ApiService {
     oldName: string,
     newName: string,
   ): Observable<Record<string, string[]>> {
-    return this.http.put<Record<string, string[]>>(
-      `${this.apiUrl}/tenant/subcategories`,
-      { category, old_name: oldName, new_name: newName },
-    );
+    return this.http.put<Record<string, string[]>>(`${this.apiUrl}/tenant/subcategories`, {
+      category,
+      old_name: oldName,
+      new_name: newName,
+    });
   }
 
   deleteTenantSubcategory(category: string, name: string): Observable<Record<string, string[]>> {
@@ -4121,7 +4366,13 @@ export class ApiService {
     return this.http.get<TenantProduct[]>(`${this.apiUrl}/tenant-products`, { params });
   }
 
-  createTenantProduct(catalogId: number, providerProductId?: number, name?: string, priceCents?: number, costCents?: number | null): Observable<TenantProduct> {
+  createTenantProduct(
+    catalogId: number,
+    providerProductId?: number,
+    name?: string,
+    priceCents?: number,
+    costCents?: number | null,
+  ): Observable<TenantProduct> {
     const body: Record<string, unknown> = { catalog_id: catalogId };
     if (providerProductId) body['provider_product_id'] = providerProductId;
     if (name) body['name'] = name;
@@ -4139,12 +4390,24 @@ export class ApiService {
   }
 
   // Translations
-  getTranslations(entityType: string, entityId: number): Observable<{ entity_type: string; entity_id: number; translations: any }> {
-    return this.http.get<{ entity_type: string; entity_id: number; translations: any }>(`${this.apiUrl}/i18n/${entityType}/${entityId}`);
+  getTranslations(
+    entityType: string,
+    entityId: number,
+  ): Observable<{ entity_type: string; entity_id: number; translations: any }> {
+    return this.http.get<{ entity_type: string; entity_id: number; translations: any }>(
+      `${this.apiUrl}/i18n/${entityType}/${entityId}`,
+    );
   }
 
-  updateTranslations(entityType: string, entityId: number, translations: any): Observable<{ message: string; updated: string[] }> {
-    return this.http.put<{ message: string; updated: string[] }>(`${this.apiUrl}/i18n/${entityType}/${entityId}`, translations);
+  updateTranslations(
+    entityType: string,
+    entityId: number,
+    translations: any,
+  ): Observable<{ message: string; updated: string[] }> {
+    return this.http.put<{ message: string; updated: string[] }>(
+      `${this.apiUrl}/i18n/${entityType}/${entityId}`,
+      translations,
+    );
   }
 
   // User Management
@@ -4203,7 +4466,9 @@ export class ApiService {
   }
 
   listStaffContractTemplatePresets(): Observable<StaffContractTemplatePreset[]> {
-    return this.http.get<StaffContractTemplatePreset[]>(`${this.apiUrl}/staff-contract-templates/presets`);
+    return this.http.get<StaffContractTemplatePreset[]>(
+      `${this.apiUrl}/staff-contract-templates/presets`,
+    );
   }
 
   importStaffContractTemplateFromPreset(body: {
@@ -4216,7 +4481,9 @@ export class ApiService {
     );
   }
 
-  createStaffContractTemplate(body: StaffContractTemplateCreate): Observable<StaffContractTemplate> {
+  createStaffContractTemplate(
+    body: StaffContractTemplateCreate,
+  ): Observable<StaffContractTemplate> {
     return this.http.post<StaffContractTemplate>(`${this.apiUrl}/staff-contract-templates`, body);
   }
 
@@ -4224,7 +4491,10 @@ export class ApiService {
     id: number,
     body: StaffContractTemplateUpdate,
   ): Observable<StaffContractTemplate> {
-    return this.http.patch<StaffContractTemplate>(`${this.apiUrl}/staff-contract-templates/${id}`, body);
+    return this.http.patch<StaffContractTemplate>(
+      `${this.apiUrl}/staff-contract-templates/${id}`,
+      body,
+    );
   }
 
   deleteStaffContractTemplate(id: number): Observable<{ ok: boolean }> {
@@ -4281,9 +4551,12 @@ export class ApiService {
     if (userId != null) {
       params = params.set('user_id', String(userId));
     }
-    return this.http.get<{ rows: PlannedVsActualRow[] }>(`${this.apiUrl}/schedule/planned-vs-actual`, {
-      params,
-    });
+    return this.http.get<{ rows: PlannedVsActualRow[] }>(
+      `${this.apiUrl}/schedule/planned-vs-actual`,
+      {
+        params,
+      },
+    );
   }
 
   /** Planned vs clocked table for a date range as Excel (.xlsx); optional staff filter. */
@@ -4366,7 +4639,10 @@ export class ApiService {
   }
 
   endMyWorkSessionBreak(payload?: WorkSessionClockPayload): Observable<WorkSession> {
-    return this.http.post<WorkSession>(`${this.apiUrl}/users/me/work-session/break/end`, payload ?? {});
+    return this.http.post<WorkSession>(
+      `${this.apiUrl}/users/me/work-session/break/end`,
+      payload ?? {},
+    );
   }
 
   getMyWorkSessions(fromDate: string, toDate: string): Observable<WorkSession[]> {
@@ -4375,7 +4651,11 @@ export class ApiService {
   }
 
   /** Owner/admin: all staff attendance in range (UTC days by started_at). */
-  getReportWorkSessions(fromDate: string, toDate: string, userId?: number): Observable<WorkSession[]> {
+  getReportWorkSessions(
+    fromDate: string,
+    toDate: string,
+    userId?: number,
+  ): Observable<WorkSession[]> {
     let params = new HttpParams().set('from_date', fromDate).set('to_date', toDate);
     if (userId != null) {
       params = params.set('user_id', String(userId));
@@ -4432,7 +4712,10 @@ export class ApiService {
     sessionId: number,
     body: { note?: string; started_at?: string | null; ended_at?: string | null },
   ): Observable<WorkSession> {
-    return this.http.post<WorkSession>(`${this.apiUrl}/reports/work-sessions/${sessionId}/adjust`, body);
+    return this.http.post<WorkSession>(
+      `${this.apiUrl}/reports/work-sessions/${sessionId}/adjust`,
+      body,
+    );
   }
 
   /** Changelog (CHANGELOG.md from project root, served by backend). */

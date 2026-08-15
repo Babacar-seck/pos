@@ -334,6 +334,13 @@ class TestFormatPublicPrice(unittest.TestCase):
     def test_ca_uses_comma(self):
         self.assertEqual(format_public_price(1250, "ca"), "12,50")
 
+    def test_zero_decimal_currency_no_fractional_split(self):
+        # XOF/XAF-style: stored amount IS the whole unit, not cents.
+        self.assertEqual(format_public_price(1500, "en", decimal_places=0), "1500")
+
+    def test_three_decimal_currency(self):
+        self.assertEqual(format_public_price(12345, "en", decimal_places=3), "12.345")
+
 
 if __name__ == "__main__":
     unittest.main()

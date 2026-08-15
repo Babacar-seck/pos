@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel
-from sqlalchemy import delete, desc
+from sqlalchemy import delete, desc, func
 from sqlmodel import Session, select
 
 from app import models
@@ -27,15 +27,18 @@ DELIVERY_PROVIDER_CATALOG: list[dict[str, str]] = [
     {"provider_key": "uber_eats", "display_name": "Uber Eats"},
     {"provider_key": "glovo", "display_name": "Glovo"},
     {"provider_key": "deliveroo", "display_name": "Deliveroo"},
+    {"provider_key": "just_eat", "display_name": "Just Eat"},
 ]
 
 
 class DeliveryIntegrationPublic(BaseModel):
     id: int
     tenant_id: int
+    tenant_name: str
     provider_key: str
     display_name: str
     connection_status: str
+    status_badge: str
     enabled: bool
     external_store_id: str | None
     credentials_configured: bool
@@ -43,6 +46,10 @@ class DeliveryIntegrationPublic(BaseModel):
     webhook_ingest_token: str
     last_test_at: str | None = None
     last_test_ok: bool | None = None
+    last_order_received_at: str | None = None
+    mapping_count: int = 0
+    mapping_last_modified_at: str | None = None
+    unmapped_rejections_7d: int = 0
     updated_at: str
 
 
@@ -53,16 +60,66 @@ def _display_name(provider_key: str) -> str:
     return provider_key
 
 
-def _serialize_integration(row: models.DeliveryMarketplaceIntegration, request: Request) -> DeliveryIntegrationPublic:
+def _status_badge(row: models.DeliveryMarketplaceIntegration) -> str:
+    """disconnected | pending_test | connected | error (see CONTEXT.md: Statut de connexion)."""
+    if not row.enabled:
+        return "disconnected"
+    if row.last_test_ok is None:
+        return "pending_test"
+    return "connected" if row.last_test_ok else "error"
+
+
+def _serialize_integration(
+    row: models.DeliveryMarketplaceIntegration,
+    request: Request,
+    session: Session,
+    tenant_name: str,
+) -> DeliveryIntegrationPublic:
     creds_set = bool((row.credentials_encrypted or "").strip())
     root = str(request.base_url).rstrip("/")
     hint = f"{root}/public/webhooks/delivery/{row.webhook_ingest_token}"
+
+    last_order_at = session.exec(
+        select(models.DeliveryIntegrationEventLog.created_at)
+        .where(
+            models.DeliveryIntegrationEventLog.integration_id == row.id,
+            models.DeliveryIntegrationEventLog.event_type == "webhook_order",
+        )
+        .order_by(desc(models.DeliveryIntegrationEventLog.created_at))
+        .limit(1)
+    ).first()
+
+    mapping_count = session.exec(
+        select(func.count())
+        .select_from(models.DeliveryCatalogMapping)
+        .where(models.DeliveryCatalogMapping.integration_id == row.id)
+    ).one()
+
+    mapping_last_modified_at = session.exec(
+        select(func.max(models.DeliveryCatalogMapping.updated_at)).where(
+            models.DeliveryCatalogMapping.integration_id == row.id
+        )
+    ).first()
+
+    since = datetime.now(timezone.utc) - timedelta(days=7)
+    unmapped_rejections_7d = session.exec(
+        select(func.count())
+        .select_from(models.DeliveryIntegrationEventLog)
+        .where(
+            models.DeliveryIntegrationEventLog.integration_id == row.id,
+            models.DeliveryIntegrationEventLog.event_type == "import_error",
+            models.DeliveryIntegrationEventLog.created_at >= since,
+        )
+    ).one()
+
     return DeliveryIntegrationPublic(
         id=int(row.id or 0),
         tenant_id=row.tenant_id,
+        tenant_name=tenant_name,
         provider_key=row.provider_key,
         display_name=_display_name(row.provider_key),
         connection_status=row.connection_status,
+        status_badge=_status_badge(row),
         enabled=bool(row.enabled),
         external_store_id=row.external_store_id,
         credentials_configured=creds_set,
@@ -70,8 +127,17 @@ def _serialize_integration(row: models.DeliveryMarketplaceIntegration, request: 
         webhook_ingest_token=row.webhook_ingest_token,
         last_test_at=row.last_test_at.isoformat() if row.last_test_at else None,
         last_test_ok=row.last_test_ok,
+        last_order_received_at=last_order_at.isoformat() if last_order_at else None,
+        mapping_count=int(mapping_count or 0),
+        mapping_last_modified_at=mapping_last_modified_at.isoformat() if mapping_last_modified_at else None,
+        unmapped_rejections_7d=int(unmapped_rejections_7d or 0),
         updated_at=row.updated_at.isoformat() if row.updated_at else "",
     )
+
+
+def _tenant_name(session: Session, tenant_id: int) -> str:
+    tenant = session.get(models.Tenant, tenant_id)
+    return tenant.name if tenant else ""
 
 
 @router.get("/delivery-integrations/catalog", response_model=list[dict])
@@ -96,7 +162,8 @@ def list_delivery_integrations(
             models.DeliveryMarketplaceIntegration.tenant_id == current_user.tenant_id
         )
     ).all()
-    return [_serialize_integration(r, request) for r in rows]
+    tenant_name = _tenant_name(session, current_user.tenant_id)
+    return [_serialize_integration(r, request, session, tenant_name) for r in rows]
 
 
 @router.put("/delivery-integrations", response_model=DeliveryIntegrationPublic)
@@ -144,7 +211,8 @@ def upsert_delivery_integration(
         session.commit()
         session.refresh(row)
 
-    return _serialize_integration(row, request)
+    tenant_name = _tenant_name(session, current_user.tenant_id)
+    return _serialize_integration(row, request, session, tenant_name)
 
 
 @router.post("/delivery-integrations/{integration_id}/test")

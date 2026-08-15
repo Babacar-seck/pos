@@ -103,6 +103,7 @@ from .contact_validation import normalize_email_address, normalize_phone_e164
 from .tenant_currency import (
     apply_tenant_currency_api_dict,
     normalize_tenant_currency_fields,
+    resolve_tenant_decimal_places,
     sync_tenant_currency_symbol_from_code,
 )
 from . import restaurant_groups as rg
@@ -1263,6 +1264,9 @@ def get_public_satisfecho_delivery_config(
         "restaurant_longitude": float(tenant.longitude) if radius_active else None,
         "currency_code": tenant.currency_code,
         "currency": tenant.currency,
+        "currency_decimal_places_resolved": resolve_tenant_decimal_places(
+            tenant.currency_code, tenant.currency_decimal_places
+        ),
     }
 
 
@@ -4115,6 +4119,14 @@ def update_tenant_settings(
         sym = sync_tenant_currency_symbol_from_code(tenant.currency_code)
         if sym is not None:
             tenant.currency = sym
+
+    if tenant_update.currency_decimal_places is not None:
+        if not (0 <= tenant_update.currency_decimal_places <= 4):
+            raise HTTPException(
+                status_code=400,
+                detail="currency_decimal_places must be between 0 and 4",
+            )
+        tenant.currency_decimal_places = tenant_update.currency_decimal_places
 
     if tenant_update.default_language is not None:
         lang = (
@@ -12412,6 +12424,9 @@ def get_menu(
             )
         )[0],
         "tenant_currency": _menu_cc[1],
+        "tenant_currency_decimal_places_resolved": resolve_tenant_decimal_places(
+            _menu_cc[0], tenant.currency_decimal_places if tenant else None
+        ),
         "tenant_stripe_publishable_key": tenant.stripe_publishable_key
         if tenant
         else None,

@@ -1,15 +1,30 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+  OnDestroy,
+  HostListener,
+} from '@angular/core';
 import { DomSanitizer, SafeResourceUrl, SafeStyle } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, SlicePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { ApiService, Product, ProductQuestion, OrderItemCreate, OrderHistoryItem } from '../services/api.service';
+import {
+  ApiService,
+  Product,
+  ProductQuestion,
+  OrderItemCreate,
+  OrderHistoryItem,
+} from '../services/api.service';
 import { AudioService } from '../services/audio.service';
 import { environment } from '../../environments/environment';
 import { FocusFirstInputDirective } from '../shared/focus-first-input.directive';
 import { LanguagePickerComponent } from '../shared/language-picker.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { getSubcategoryLabel as resolveSubcategoryLabel } from '../shared/product-subcategory-label.util';
+import { resolveDecimalPlaces, toDisplayAmount } from '../shared/currency-format';
 
 interface CartItem {
   product: Product;
@@ -19,8 +34,8 @@ interface CartItem {
   customization_answers?: Record<string, string | number | string[]>;
   /** From API after order placed */
   customization_summary?: string | null;
-  status?: string;  // Item status from backend
-  itemId?: number;  // Backend item ID for editing
+  status?: string; // Item status from backend
+  itemId?: number; // Backend item ID for editing
 }
 
 interface PlacedOrder {
@@ -34,9 +49,16 @@ interface PlacedOrder {
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [CommonModule, FormsModule, FocusFirstInputDirective, LanguagePickerComponent, TranslateModule, SlicePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    FocusFirstInputDirective,
+    LanguagePickerComponent,
+    TranslateModule,
+    SlicePipe,
+  ],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.scss'
+  styleUrl: './menu.component.scss',
 })
 export class MenuComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
@@ -71,6 +93,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   tenantWebsite = signal<string | null>(null);
   tenantCurrency = signal<string>('€');
   tenantCurrencyCode = signal<string>('EUR');
+  tenantDecimalPlaces = signal<number>(2);
   immediatePaymentRequired = signal(false);
   tenantPublicBackgroundColor = signal<string | null>(null);
   tenantRevolutConfigured = signal(false);
@@ -123,12 +146,12 @@ export class MenuComponent implements OnInit, OnDestroy {
   nameInputValue = '';
 
   // Table session
-  tableIsActive = signal(true);  // Default true for backward compatibility
+  tableIsActive = signal(true); // Default true for backward compatibility
   tableRequiresPin = signal(false);
   showPinModal = signal(false);
   pinValue = signal('');
   pinError = signal('');
-  private currentPin = '';  // Stored after successful validation
+  private currentPin = ''; // Stored after successful validation
 
   // Payment options
   showPaymentOptions = signal(false);
@@ -178,7 +201,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   // Featured products (first 5 with images, for now)
   featuredProducts = computed(() => {
     return this.products()
-      .filter(p => p.image_filename)
+      .filter((p) => p.image_filename)
       .slice(0, 6);
   });
 
@@ -231,8 +254,8 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   private generateUUID(): string {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
   }
@@ -257,10 +280,10 @@ export class MenuComponent implements OnInit, OnDestroy {
   // ============================================
   loadMenu() {
     this.api.getMenu(this.tableToken, this.staffAccess ?? undefined).subscribe({
-      next: data => {
+      next: (data) => {
         const productsWithSource = data.products.map((product: Product) => ({
           ...product,
-          _source: product._source || 'unknown'
+          _source: product._source || 'unknown',
         }));
         this.products.set(productsWithSource);
         this.tenantName.set(data.tenant_name);
@@ -281,7 +304,9 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.applyFilter(null, null);
 
         if (data.tenant_logo && data.tenant_id) {
-          this.tenantLogo.set(`${environment.apiUrl}/uploads/${data.tenant_id}/logo/${data.tenant_logo}`);
+          this.tenantLogo.set(
+            `${environment.apiUrl}/uploads/${data.tenant_id}/logo/${data.tenant_logo}`,
+          );
         }
 
         this.tenantDescription.set(data.tenant_description || null);
@@ -292,6 +317,9 @@ export class MenuComponent implements OnInit, OnDestroy {
         const code = (data.tenant_currency_code || 'EUR').toUpperCase();
         this.tenantCurrencyCode.set(code);
         this.tenantCurrency.set(data.tenant_currency || '€');
+        this.tenantDecimalPlaces.set(
+          resolveDecimalPlaces(code, data.tenant_currency_decimal_places_resolved ?? null),
+        );
         this.immediatePaymentRequired.set(data.tenant_immediate_payment_required || false);
         this.tenantPublicBackgroundColor.set(data.tenant_public_background_color ?? null);
         this.tenantHeaderBackgroundFilename.set(data.tenant_header_background_filename ?? null);
@@ -302,7 +330,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.tenantRevolutConfigured.set(!!data.tenant_revolut_configured);
 
         // Table session status
-        this.tableIsActive.set(data.table_is_active !== false);  // Default true for backward compatibility
+        this.tableIsActive.set(data.table_is_active !== false); // Default true for backward compatibility
         this.tableRequiresPin.set(data.table_requires_pin === true);
 
         // Check if the table session has changed (table was closed and reopened).
@@ -351,14 +379,14 @@ export class MenuComponent implements OnInit, OnDestroy {
           this.tenantHeaderBackgroundFilename.set(detail.tenant_header_background_filename ?? null);
           if (detail.tenant_logo && detail.tenant_id) {
             this.closedTenantLogo.set(
-              `${environment.apiUrl}/uploads/${detail.tenant_id}/logo/${detail.tenant_logo}`
+              `${environment.apiUrl}/uploads/${detail.tenant_id}/logo/${detail.tenant_logo}`,
             );
           }
         } else {
           this.error.set(true);
         }
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -367,7 +395,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   // ============================================
   connectWebSocket() {
     if (this.ws || !this.tableToken) return;
-    
+
     let wsUrl = environment.wsUrl;
     // Handle relative URLs (e.g. '/ws')
     if (wsUrl.startsWith('/')) {
@@ -400,22 +428,30 @@ export class MenuComponent implements OnInit, OnDestroy {
           return;
         } else if (data.type === 'status_update') {
           this.audio.playCustomerStatusChange();
-          this.placedOrders.update(orders => orders.map(o => o.id === data.order_id ? { ...o, status: data.status } : o));
+          this.placedOrders.update((orders) =>
+            orders.map((o) => (o.id === data.order_id ? { ...o, status: data.status } : o)),
+          );
           this.saveOrders();
           this.loadStoredOrders();
         } else if (data.type === 'item_status_update') {
           this.audio.playCustomerStatusChange();
           if (data.status) {
-            this.placedOrders.update(orders =>
-              orders.map(o => o.id === data.order_id ? { ...o, status: data.status } : o)
+            this.placedOrders.update((orders) =>
+              orders.map((o) => (o.id === data.order_id ? { ...o, status: data.status } : o)),
             );
           }
           this.loadStoredOrders();
-        } else if (data.type === 'item_removed' || data.type === 'item_updated' || data.type === 'order_cancelled' || data.type === 'items_added' || data.type === 'new_order') {
+        } else if (
+          data.type === 'item_removed' ||
+          data.type === 'item_updated' ||
+          data.type === 'order_cancelled' ||
+          data.type === 'items_added' ||
+          data.type === 'new_order'
+        ) {
           this.audio.playCustomerOrderChange();
           this.loadStoredOrders();
         }
-      } catch { }
+      } catch {}
     };
     this.ws.onclose = () => {
       this.ws = null;
@@ -455,10 +491,12 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.products().forEach((product: Product) => {
       if (product.category === category) {
         if (product.subcategory_codes && product.subcategory_codes.length > 0) {
-          product.subcategory_codes.forEach(code => subcategoryCodes.add(code));
+          product.subcategory_codes.forEach((code) => subcategoryCodes.add(code));
         } else {
           if (product.subcategory) {
-            const wineTypeCode = this.getWineTypeCodeFromString(product.wine_type || product.subcategory);
+            const wineTypeCode = this.getWineTypeCodeFromString(
+              product.wine_type || product.subcategory,
+            );
             if (wineTypeCode) {
               subcategoryCodes.add(wineTypeCode);
             }
@@ -466,24 +504,50 @@ export class MenuComponent implements OnInit, OnDestroy {
               subcategoryCodes.add('WINE_BY_GLASS');
             }
             const otherCodes = this.extractOtherSubcategoryCodes(product.subcategory);
-            otherCodes.forEach(code => subcategoryCodes.add(code));
+            otherCodes.forEach((code) => subcategoryCodes.add(code));
           }
         }
       }
     });
 
     const orderedCodes = [
-      'WINE_RED', 'WINE_WHITE', 'WINE_SPARKLING', 'WINE_ROSE', 'WINE_SWEET', 'WINE_FORTIFIED',
-      'HOT_DRINKS', 'COLD_DRINKS', 'ALCOHOLIC', 'NON_ALCOHOLIC', 'BEER', 'COCKTAILS', 'SOFT_DRINKS',
-      'APPETIZERS', 'SALADS', 'SOUPS', 'BREAD_DIPS',
-      'MEAT', 'FISH', 'POULTRY', 'VEGETARIAN', 'VEGAN', 'PASTA', 'RICE', 'PIZZA',
-      'CAKES', 'ICE_CREAM', 'FRUIT', 'CHEESE',
-      'VEGETABLES', 'POTATOES', 'BREAD',
-      'WINE_BY_GLASS'
+      'WINE_RED',
+      'WINE_WHITE',
+      'WINE_SPARKLING',
+      'WINE_ROSE',
+      'WINE_SWEET',
+      'WINE_FORTIFIED',
+      'HOT_DRINKS',
+      'COLD_DRINKS',
+      'ALCOHOLIC',
+      'NON_ALCOHOLIC',
+      'BEER',
+      'COCKTAILS',
+      'SOFT_DRINKS',
+      'APPETIZERS',
+      'SALADS',
+      'SOUPS',
+      'BREAD_DIPS',
+      'MEAT',
+      'FISH',
+      'POULTRY',
+      'VEGETARIAN',
+      'VEGAN',
+      'PASTA',
+      'RICE',
+      'PIZZA',
+      'CAKES',
+      'ICE_CREAM',
+      'FRUIT',
+      'CHEESE',
+      'VEGETABLES',
+      'POTATOES',
+      'BREAD',
+      'WINE_BY_GLASS',
     ];
 
     const subcategories: string[] = [];
-    orderedCodes.forEach(code => {
+    orderedCodes.forEach((code) => {
       if (subcategoryCodes.has(code)) {
         subcategories.push(code);
       }
@@ -496,10 +560,15 @@ export class MenuComponent implements OnInit, OnDestroy {
     const codes: string[] = [];
     const subcatLower = subcategory.toLowerCase();
 
-    if (subcategory === 'Appetizers' || subcatLower.includes('appetizers')) codes.push('APPETIZERS');
+    if (subcategory === 'Appetizers' || subcatLower.includes('appetizers'))
+      codes.push('APPETIZERS');
     if (subcategory === 'Salads' || subcatLower.includes('salads')) codes.push('SALADS');
     if (subcategory === 'Soups' || subcatLower.includes('soups')) codes.push('SOUPS');
-    if (subcategory === 'Bread & Dips' || (subcatLower.includes('bread') && subcatLower.includes('dips'))) codes.push('BREAD_DIPS');
+    if (
+      subcategory === 'Bread & Dips' ||
+      (subcatLower.includes('bread') && subcatLower.includes('dips'))
+    )
+      codes.push('BREAD_DIPS');
     if (subcategory === 'Meat') codes.push('MEAT');
     if (subcategory === 'Fish') codes.push('FISH');
     if (subcategory === 'Poultry') codes.push('POULTRY');
@@ -541,17 +610,18 @@ export class MenuComponent implements OnInit, OnDestroy {
     let filtered = this.products();
 
     if (category) {
-      filtered = filtered.filter(p => p.category === category);
+      filtered = filtered.filter((p) => p.category === category);
     }
 
     if (subcategoryCode) {
       if (subcategoryCode === 'WINE_BY_GLASS') {
-        filtered = filtered.filter(p =>
-          p.subcategory_codes?.includes('WINE_BY_GLASS') ||
-          (p.subcategory && p.subcategory.includes('Wine by Glass'))
+        filtered = filtered.filter(
+          (p) =>
+            p.subcategory_codes?.includes('WINE_BY_GLASS') ||
+            (p.subcategory && p.subcategory.includes('Wine by Glass')),
         );
       } else {
-        filtered = filtered.filter(p => {
+        filtered = filtered.filter((p) => {
           if (p.subcategory_codes && p.subcategory_codes.includes(subcategoryCode)) {
             return true;
           }
@@ -561,9 +631,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       }
     }
 
-    filtered = filtered.map(p => ({
+    filtered = filtered.map((p) => ({
       ...p,
-      _source: p._source || 'unknown'
+      _source: p._source || 'unknown',
     }));
 
     this.filteredProducts.set(filtered);
@@ -578,22 +648,22 @@ export class MenuComponent implements OnInit, OnDestroy {
   // ============================================
   getCategoryIcon(category: string): string {
     const icons: Record<string, string> = {
-      'Starters': '🥗',
+      Starters: '🥗',
       'Main Course': '🍝',
-      'Desserts': '🍰',
-      'Beverages': '🍷',
-      'Sides': '🥔',
-      'Wine': '🍷',
-      'Appetizers': '🥗',
-      'Entrees': '🍖',
-      'Pasta': '🍝',
-      'Pizza': '🍕',
-      'Seafood': '🦐',
-      'Meat': '🥩',
-      'Salads': '🥗',
-      'Soups': '🍲',
-      'Coffee': '☕',
-      'Tea': '🍵',
+      Desserts: '🍰',
+      Beverages: '🍷',
+      Sides: '🥔',
+      Wine: '🍷',
+      Appetizers: '🥗',
+      Entrees: '🍖',
+      Pasta: '🍝',
+      Pizza: '🍕',
+      Seafood: '🦐',
+      Meat: '🥩',
+      Salads: '🥗',
+      Soups: '🍲',
+      Coffee: '☕',
+      Tea: '🍵',
     };
     return icons[category] || '🍽️';
   }
@@ -629,15 +699,19 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  getProductKey(product: Product, customizationAnswers?: Record<string, string | number | string[]>): string {
+  getProductKey(
+    product: Product,
+    customizationAnswers?: Record<string, string | number | string[]>,
+  ): string {
     if (!product) return 'null-product';
     const source = product._source || 'unknown';
     const id = product.id ?? 'no-id';
     const name = product.name || 'no-name';
     const price = product.price_cents ?? 0;
-    const answersKey = customizationAnswers && Object.keys(customizationAnswers).length > 0
-      ? JSON.stringify(customizationAnswers)
-      : '';
+    const answersKey =
+      customizationAnswers && Object.keys(customizationAnswers).length > 0
+        ? JSON.stringify(customizationAnswers)
+        : '';
     return `${source}-${id}-${name}-${price}${answersKey ? '-' + answersKey : ''}`;
   }
 
@@ -648,7 +722,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   toggleCartItemComment(item: CartItem): void {
     const key = this.getCartLineKey(item);
-    this.expandedCommentKeys.update(set => {
+    this.expandedCommentKeys.update((set) => {
       const next = new Set(set);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -663,13 +737,15 @@ export class MenuComponent implements OnInit, OnDestroy {
   updateCartItemNotes(item: CartItem, notes: string): void {
     const trimmed = notes.slice(0, this.maxNoteLength);
     const oldKey = this.getCartLineKey(item);
-    this.cart.update(items =>
-      items.map(i => (this.getCartLineKey(i) === oldKey ? { ...i, notes: trimmed } : i))
+    this.cart.update((items) =>
+      items.map((i) => (this.getCartLineKey(i) === oldKey ? { ...i, notes: trimmed } : i)),
     );
     if (trimmed.trim()) {
-      this.expandedCommentKeys.update(set => {
+      this.expandedCommentKeys.update((set) => {
         const next = new Set(set);
-        next.add(`${this.getProductKey(item.product, item.customization_answers)}|${trimmed.trim()}`);
+        next.add(
+          `${this.getProductKey(item.product, item.customization_answers)}|${trimmed.trim()}`,
+        );
         next.delete(oldKey);
         return next;
       });
@@ -707,35 +783,41 @@ export class MenuComponent implements OnInit, OnDestroy {
   isVegetarian(product: Product): boolean {
     const ingredients = product.ingredients?.toLowerCase() || '';
     const subcategory = product.subcategory?.toLowerCase() || '';
-    return subcategory.includes('vegetarian') ||
+    return (
+      subcategory.includes('vegetarian') ||
       ingredients.includes('vegetariano') ||
-      ingredients.includes('vegetarian');
+      ingredients.includes('vegetarian')
+    );
   }
 
   isVegan(product: Product): boolean {
     const ingredients = product.ingredients?.toLowerCase() || '';
     const subcategory = product.subcategory?.toLowerCase() || '';
-    return subcategory.includes('vegan') ||
+    return (
+      subcategory.includes('vegan') ||
       ingredients.includes('vegano') ||
-      ingredients.includes('vegan');
+      ingredients.includes('vegan')
+    );
   }
 
   isGlutenFree(product: Product): boolean {
     const ingredients = product.ingredients?.toLowerCase() || '';
-    return ingredients.includes('sin gluten') ||
+    return (
+      ingredients.includes('sin gluten') ||
       ingredients.includes('gluten-free') ||
-      ingredients.includes('gluten free');
+      ingredients.includes('gluten free')
+    );
   }
 
   // ============================================
   // PRODUCT DETAIL (legacy toggles + new modal)
   // ============================================
   toggleIngredients(productId: number) {
-    this.showIngredientsFor.update(current => current === productId ? null : productId);
+    this.showIngredientsFor.update((current) => (current === productId ? null : productId));
   }
 
   toggleDescription(productId: number) {
-    this.showDescriptionFor.update(current => current === productId ? null : productId);
+    this.showDescriptionFor.update((current) => (current === productId ? null : productId));
   }
 
   openProductDetail(product: Product) {
@@ -759,12 +841,19 @@ export class MenuComponent implements OnInit, OnDestroy {
   // CART OPERATIONS
   // ============================================
   addToCart(product: Product, customizationAnswers?: Record<string, string | number | string[]>) {
-    const newLine: CartItem = { product, quantity: 1, notes: '', customization_answers: customizationAnswers };
+    const newLine: CartItem = {
+      product,
+      quantity: 1,
+      notes: '',
+      customization_answers: customizationAnswers,
+    };
     const lineKey = this.getCartLineKey(newLine);
-    this.cart.update(items => {
-      const existing = items.find(i => this.getCartLineKey(i) === lineKey);
+    this.cart.update((items) => {
+      const existing = items.find((i) => this.getCartLineKey(i) === lineKey);
       if (existing) {
-        return items.map(i => this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity + 1 } : i);
+        return items.map((i) =>
+          this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity + 1 } : i,
+        );
       }
       return [...items, newLine];
     });
@@ -786,18 +875,18 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   setCustomizationAnswer(questionId: number, value: string | number) {
-    this.customizationAnswersForm.update(prev => ({ ...prev, [questionId]: value }));
+    this.customizationAnswersForm.update((prev) => ({ ...prev, [questionId]: value }));
   }
 
   /** Multi-select choice: toggle one option; keeps sorted unique list. */
   toggleMultiChoiceAnswer(questionId: number, option: string, checked: boolean): void {
-    this.customizationAnswersForm.update(prev => {
+    this.customizationAnswersForm.update((prev) => {
       const cur = prev[questionId];
       let arr = Array.isArray(cur) ? [...cur] : [];
       if (checked) {
         if (!arr.includes(option)) arr.push(option);
       } else {
-        arr = arr.filter(x => x !== option);
+        arr = arr.filter((x) => x !== option);
       }
       arr.sort();
       return { ...prev, [questionId]: arr };
@@ -834,8 +923,8 @@ export class MenuComponent implements OnInit, OnDestroy {
     const product = this.productToAddWithQuestions();
     if (!product) return;
     const answers = this.customizationAnswersForm();
-    const required = product.questions?.filter(q => q.required) ?? [];
-    const missing = required.filter(q => {
+    const required = product.questions?.filter((q) => q.required) ?? [];
+    const missing = required.filter((q) => {
       const v = answers[q.id];
       if (q.type === 'choice' && q.multi) {
         return !Array.isArray(v) || v.length === 0;
@@ -870,16 +959,24 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   incrementItem(item: CartItem) {
     const lineKey = this.getCartLineKey(item);
-    this.cart.update(items => items.map(i => this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity + 1 } : i));
+    this.cart.update((items) =>
+      items.map((i) =>
+        this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity + 1 } : i,
+      ),
+    );
     this.flashProductAdded(item.product, lineKey);
   }
 
   decrementItem(item: CartItem) {
     const lineKey = this.getCartLineKey(item);
     if (item.quantity <= 1) {
-      this.cart.update(items => items.filter(i => this.getCartLineKey(i) !== lineKey));
+      this.cart.update((items) => items.filter((i) => this.getCartLineKey(i) !== lineKey));
     } else {
-      this.cart.update(items => items.map(i => this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity - 1 } : i));
+      this.cart.update((items) =>
+        items.map((i) =>
+          this.getCartLineKey(i) === lineKey ? { ...i, quantity: i.quantity - 1 } : i,
+        ),
+      );
     }
   }
 
@@ -903,18 +1000,18 @@ export class MenuComponent implements OnInit, OnDestroy {
   private flashProductAdded(product: Product, cartLineKey: string): void {
     const pid = product.id;
     if (pid != null) {
-      this.justAddedProductIds.update(s => new Set(s).add(pid));
+      this.justAddedProductIds.update((s) => new Set(s).add(pid));
       setTimeout(() => {
-        this.justAddedProductIds.update(s => {
+        this.justAddedProductIds.update((s) => {
           const next = new Set(s);
           next.delete(pid);
           return next;
         });
       }, 1200);
     }
-    this.justAddedCartKeys.update(s => new Set(s).add(cartLineKey));
+    this.justAddedCartKeys.update((s) => new Set(s).add(cartLineKey));
     setTimeout(() => {
-      this.justAddedCartKeys.update(s => {
+      this.justAddedCartKeys.update((s) => {
         const next = new Set(s);
         next.delete(cartLineKey);
         return next;
@@ -932,12 +1029,15 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   formatPrice(priceCents: number): string {
     const currencyCode = this.tenantCurrencyCode() || 'EUR';
+    const decimalPlaces = this.tenantDecimalPlaces();
     const locale = navigator.language || 'en-US';
     return new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: currencyCode,
       currencyDisplay: 'symbol',
-    }).format(priceCents / 100);
+      minimumFractionDigits: decimalPlaces,
+      maximumFractionDigits: decimalPlaces,
+    }).format(toDisplayAmount(priceCents, decimalPlaces));
   }
 
   sortItems(items: CartItem[]): CartItem[] {
@@ -993,12 +1093,15 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   private async doSubmitOrder() {
-    const items: OrderItemCreate[] = this.cart().map(item => ({
+    const items: OrderItemCreate[] = this.cart().map((item) => ({
       product_id: item.product.id!,
       quantity: item.quantity,
       notes: item.notes?.trim() || undefined,
       source: item.product._source || undefined,
-      customization_answers: item.customization_answers && Object.keys(item.customization_answers).length > 0 ? item.customization_answers : undefined
+      customization_answers:
+        item.customization_answers && Object.keys(item.customization_answers).length > 0
+          ? item.customization_answers
+          : undefined,
     }));
 
     // Try to get location (optional, non-blocking)
@@ -1010,7 +1113,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             timeout: 5000,
-            maximumAge: 60000
+            maximumAge: 60000,
           });
         });
         latitude = position.coords.latitude;
@@ -1021,77 +1124,79 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
 
     this.submitting.set(true);
-    this.api.submitOrder(this.tableToken, {
-      items,
-      notes: this.orderNotes.trim() || undefined,
-      session_id: this.sessionId,
-      customer_name: this.customerName() || undefined,
-      pin: this.currentPin || undefined,
-      staff_access: this.staffAccess ?? undefined,
-      latitude,
-      longitude
-    }).subscribe({
-      next: (response: any) => {
-        const orderId = response.order_id;
+    this.api
+      .submitOrder(this.tableToken, {
+        items,
+        notes: this.orderNotes.trim() || undefined,
+        session_id: this.sessionId,
+        customer_name: this.customerName() || undefined,
+        pin: this.currentPin || undefined,
+        staff_access: this.staffAccess ?? undefined,
+        latitude,
+        longitude,
+      })
+      .subscribe({
+        next: (response: any) => {
+          const orderId = response.order_id;
 
-        if (response.session_id && response.session_id !== this.sessionId) {
-          console.warn('Session ID mismatch - order may belong to different session');
-        }
+          if (response.session_id && response.session_id !== this.sessionId) {
+            console.warn('Session ID mismatch - order may belong to different session');
+          }
 
-        if (response.customer_name && response.customer_name !== this.customerName()) {
-          this.customerName.set(response.customer_name);
-          localStorage.setItem(`customer_name_${this.tableToken}`, response.customer_name);
-        }
+          if (response.customer_name && response.customer_name !== this.customerName()) {
+            this.customerName.set(response.customer_name);
+            localStorage.setItem(`customer_name_${this.tableToken}`, response.customer_name);
+          }
 
-        this.cart.set([]);
-        this.cartExpanded.set(false);
-        this.orderNotes = '';
-        this.expandedCommentKeys.set(new Set());
-        this.lastOrderId.set(orderId);
-        this.showSuccessToast.set(true);
-        setTimeout(() => this.showSuccessToast.set(false), 3000);
-        this.ordersExpanded.set(true);
-        this.submitting.set(false);
+          this.cart.set([]);
+          this.cartExpanded.set(false);
+          this.orderNotes = '';
+          this.expandedCommentKeys.set(new Set());
+          this.lastOrderId.set(orderId);
+          this.showSuccessToast.set(true);
+          setTimeout(() => this.showSuccessToast.set(false), 3000);
+          this.ordersExpanded.set(true);
+          this.submitting.set(false);
 
-        this.loadStoredOrders();
+          this.loadStoredOrders();
 
-        // Auto-trigger payment if immediate payment is required
-        if (this.immediatePaymentRequired()) {
-          setTimeout(() => {
-            const currentOrder = this.placedOrders().find(o => o.id === orderId);
-            if (currentOrder) {
-              this.startCheckout(currentOrder);
-            }
-          }, 500);
-        }
-      },
-      error: (err) => {
-        this.submitting.set(false);
-        const detail = err.error?.detail;
-        const errorMsg = typeof detail === 'string' ? detail : 'Failed to place order.';
+          // Auto-trigger payment if immediate payment is required
+          if (this.immediatePaymentRequired()) {
+            setTimeout(() => {
+              const currentOrder = this.placedOrders().find((o) => o.id === orderId);
+              if (currentOrder) {
+                this.startCheckout(currentOrder);
+              }
+            }, 500);
+          }
+        },
+        error: (err) => {
+          this.submitting.set(false);
+          const detail = err.error?.detail;
+          const errorMsg = typeof detail === 'string' ? detail : 'Failed to place order.';
 
-        if (err.status === 429) {
-          this.currentPin = '';
-          sessionStorage.removeItem(`pin_${this.tableToken}`);
-          this.pinError.set(errorMsg);
-          this.showPinModal.set(true);
-          return;
-        }
+          if (err.status === 429) {
+            this.currentPin = '';
+            sessionStorage.removeItem(`pin_${this.tableToken}`);
+            this.pinError.set(errorMsg);
+            this.showPinModal.set(true);
+            return;
+          }
 
-        // Check if it's a PIN error
-        if (errorMsg.includes('PIN') || errorMsg.includes('pin')) {
-          // Clear the stored PIN and show modal again
-          this.currentPin = '';
-          sessionStorage.removeItem(`pin_${this.tableToken}`);
-          this.pinError.set(errorMsg);
-          this.showPinModal.set(true);
-        } else if (errorMsg.includes('active') || errorMsg.includes('accepting')) {
-          alert('This table is not accepting orders. Please ask staff for assistance.');
-        } else {
-          alert(errorMsg);
-        }
-      }
-    });
+          // Check if it's a PIN error
+          if (errorMsg.includes('PIN') || errorMsg.includes('pin')) {
+            // Clear the stored PIN and show modal again
+            this.currentPin = '';
+            sessionStorage.removeItem(`pin_${this.tableToken}`);
+            this.pinError.set(errorMsg);
+            this.showPinModal.set(true);
+          } else if (errorMsg.includes('active') || errorMsg.includes('accepting')) {
+            alert('This table is not accepting orders. Please ask staff for assistance.');
+          } else {
+            alert(errorMsg);
+          }
+        },
+      });
   }
 
   // ============================================
@@ -1105,7 +1210,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       partially_delivered: 'Partially Delivered',
       paid: 'Paid',
       completed: 'Done',
-      cancelled: 'Cancelled'
+      cancelled: 'Cancelled',
     };
     return labels[status] || status;
   }
@@ -1116,7 +1221,7 @@ export class MenuComponent implements OnInit, OnDestroy {
    */
   formatCustomizationSummary(
     answers: Record<string, string | number | string[]> | undefined,
-    summary?: string | null
+    summary?: string | null,
   ): string {
     const s = summary?.trim();
     if (s) return s;
@@ -1135,7 +1240,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       preparing: 'Preparing',
       ready: 'Ready',
       delivered: 'Delivered',
-      cancelled: 'Cancelled'
+      cancelled: 'Cancelled',
     };
     return labels[status] || status;
   }
@@ -1157,22 +1262,27 @@ export class MenuComponent implements OnInit, OnDestroy {
           const activeItems = response.order.items.filter((item: any) => !item.removed_by_customer);
           const order: PlacedOrder = {
             id: response.order.id,
-            items: this.sortItems(activeItems.map((item: any) => ({
-              product: {
-                id: item.product_id,
-                name: item.product_name,
-                price_cents: item.price_cents
-              } as Product,
-              quantity: item.quantity,
-              notes: item.notes || '',
-              customization_answers: item.customization_answers || undefined,
-              customization_summary: item.customization_summary ?? undefined,
-              status: item.status,
-              itemId: item.id
-            } as CartItem))),
+            items: this.sortItems(
+              activeItems.map(
+                (item: any) =>
+                  ({
+                    product: {
+                      id: item.product_id,
+                      name: item.product_name,
+                      price_cents: item.price_cents,
+                    } as Product,
+                    quantity: item.quantity,
+                    notes: item.notes || '',
+                    customization_answers: item.customization_answers || undefined,
+                    customization_summary: item.customization_summary ?? undefined,
+                    status: item.status,
+                    itemId: item.id,
+                  }) as CartItem,
+              ),
+            ),
             notes: response.order.notes || '',
             total: response.order.total_cents,
-            status: response.order.status
+            status: response.order.status,
           };
           this.placedOrders.set([order]);
           this.saveOrders();
@@ -1184,7 +1294,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.loadFromLocalStorageFallback();
-      }
+      },
     });
   }
 
@@ -1193,13 +1303,13 @@ export class MenuComponent implements OnInit, OnDestroy {
     if (stored) {
       try {
         const orders: PlacedOrder[] = JSON.parse(stored);
-        const activeOrders = orders.filter(o => o.status !== 'paid' && o.status !== 'completed');
-        activeOrders.forEach(o => o.items = this.sortItems(o.items));
+        const activeOrders = orders.filter((o) => o.status !== 'paid' && o.status !== 'completed');
+        activeOrders.forEach((o) => (o.items = this.sortItems(o.items)));
         this.placedOrders.set(activeOrders);
         if (activeOrders.length !== orders.length) {
           this.saveOrders();
         }
-      } catch { }
+      } catch {}
     }
   }
 
@@ -1207,12 +1317,12 @@ export class MenuComponent implements OnInit, OnDestroy {
     if (!this.tableToken) return;
     this.api.getOrderHistory(this.tableToken, 10).subscribe({
       next: (orders) => this.orderHistory.set(orders),
-      error: () => this.orderHistory.set([])
+      error: () => this.orderHistory.set([]),
     });
   }
 
   toggleHistoryOrder(id: number) {
-    this.expandedHistoryId.update(prev => prev === id ? null : id);
+    this.expandedHistoryId.update((prev) => (prev === id ? null : id));
   }
 
   formatHistoryDate(iso: string): string {
@@ -1222,8 +1332,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     if (isToday) {
       return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
     }
-    return d.toLocaleDateString(undefined, { dateStyle: 'short' }) + ' ' +
-      d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return (
+      d.toLocaleDateString(undefined, { dateStyle: 'short' }) +
+      ' ' +
+      d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+    );
   }
 
   canCancelOrder(order: PlacedOrder): boolean {
@@ -1232,8 +1345,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       return false;
     }
     // Check if any items are being prepared, ready, or delivered
-    const hasNonPendingItems = order.items.some(item =>
-      item.status === 'preparing' || item.status === 'ready' || item.status === 'delivered'
+    const hasNonPendingItems = order.items.some(
+      (item) =>
+        item.status === 'preparing' || item.status === 'ready' || item.status === 'delivered',
     );
     return !hasNonPendingItems;
   }
@@ -1258,7 +1372,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         } else {
           alert(errorMsg);
         }
-      }
+      },
     });
   }
 
@@ -1267,15 +1381,15 @@ export class MenuComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const currentOrder = this.placedOrders().find(o => o.id === orderId);
-    const itemToRemove = currentOrder?.items.find(item => item.itemId === itemId);
+    const currentOrder = this.placedOrders().find((o) => o.id === orderId);
+    const itemToRemove = currentOrder?.items.find((item) => item.itemId === itemId);
     const productId = itemToRemove?.product.id;
 
     this.api.removeOrderItem(this.tableToken, orderId, itemId, this.sessionId).subscribe({
       next: () => {
         this.loadStoredOrders();
         if (productId) {
-          this.cart.update(items => items.filter(i => i.product.id !== productId));
+          this.cart.update((items) => items.filter((i) => i.product.id !== productId));
         }
       },
       error: (err) => {
@@ -1285,7 +1399,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         } else {
           alert(errorMsg);
         }
-      }
+      },
     });
   }
 
@@ -1294,19 +1408,25 @@ export class MenuComponent implements OnInit, OnDestroy {
       alert('Quantity must be at least 1');
       return;
     }
-    this.api.updateOrderItemQuantity(this.tableToken, orderId, itemId, quantity, this.sessionId).subscribe({
-      next: () => {
-        this.loadStoredOrders();
-      },
-      error: (err) => {
-        const errorMsg = err.error?.detail || 'Failed to update quantity';
-        if (errorMsg.includes('preparing') || errorMsg.includes('ready') || errorMsg.includes('delivered')) {
-          alert('Cannot modify items that are being prepared, ready, or delivered');
-        } else {
-          alert(errorMsg);
-        }
-      }
-    });
+    this.api
+      .updateOrderItemQuantity(this.tableToken, orderId, itemId, quantity, this.sessionId)
+      .subscribe({
+        next: () => {
+          this.loadStoredOrders();
+        },
+        error: (err) => {
+          const errorMsg = err.error?.detail || 'Failed to update quantity';
+          if (
+            errorMsg.includes('preparing') ||
+            errorMsg.includes('ready') ||
+            errorMsg.includes('delivered')
+          ) {
+            alert('Cannot modify items that are being prepared, ready, or delivered');
+          } else {
+            alert(errorMsg);
+          }
+        },
+      });
   }
 
   // ============================================
@@ -1382,7 +1502,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.paymentRequestSending.set(false);
           alert(err.error?.detail || 'Failed to call waiter.');
-        }
+        },
       });
     } else if (target === 'cash' || target === 'card_terminal') {
       this.api.requestPayment(this.tableToken, this.currentOrderId, target, message).subscribe({
@@ -1394,7 +1514,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         error: (err) => {
           this.paymentRequestSending.set(false);
           alert(err.error?.detail || 'Failed to request payment.');
-        }
+        },
       });
     }
   }
@@ -1441,7 +1561,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         this.processingPayment.set(false);
         this.paymentRequestSending.set(false);
         alert(err.error?.detail || 'Failed to create payment');
-      }
+      },
     });
   }
 
@@ -1463,7 +1583,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.mountCard();
     };
     script.onerror = () => {
-      this.cardError.set('Failed to load payment system. Please check your connection and try again.');
+      this.cardError.set(
+        'Failed to load payment system. Please check your connection and try again.',
+      );
     };
     document.head.appendChild(script);
   }
@@ -1476,9 +1598,9 @@ export class MenuComponent implements OnInit, OnDestroy {
         base: {
           fontSize: '16px',
           color: '#1C1917',
-          '::placeholder': { color: '#78716C' }
-        }
-      }
+          '::placeholder': { color: '#78716C' },
+        },
+      },
     });
     // Retry mounting until the DOM element is available (Angular may need a tick to render)
     const tryMount = (attempts: number) => {
@@ -1486,7 +1608,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       if (container) {
         container.innerHTML = '';
         this.cardElement.mount('#card-element');
-        this.cardElement.on('change', (e: any) => this.cardError.set(e.error ? e.error.message : ''));
+        this.cardElement.on('change', (e: any) =>
+          this.cardError.set(e.error ? e.error.message : ''),
+        );
       } else if (attempts > 0) {
         setTimeout(() => tryMount(attempts - 1), 150);
       } else {
@@ -1501,24 +1625,26 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.processingPayment.set(true);
     this.cardError.set('');
     const { error, paymentIntent } = await this.stripe.confirmCardPayment(this.clientSecret, {
-      payment_method: { card: this.cardElement }
+      payment_method: { card: this.cardElement },
     });
-        if (error) {
+    if (error) {
       this.cardError.set(error.message);
       this.processingPayment.set(false);
     } else if (paymentIntent.status === 'succeeded') {
-      this.api.confirmPayment(this.currentOrderId, this.tableToken, this.paymentIntentId).subscribe({
-        next: () => {
-          this.processingPayment.set(false);
-          this.paymentSuccess.set(true);
-          this.loadStoredOrders();
-          this.loadOrderHistory();
-        },
-        error: () => {
-          this.processingPayment.set(false);
-          this.cardError.set('Payment confirmed but failed to update order.');
-        }
-      });
+      this.api
+        .confirmPayment(this.currentOrderId, this.tableToken, this.paymentIntentId)
+        .subscribe({
+          next: () => {
+            this.processingPayment.set(false);
+            this.paymentSuccess.set(true);
+            this.loadStoredOrders();
+            this.loadOrderHistory();
+          },
+          error: () => {
+            this.processingPayment.set(false);
+            this.cardError.set('Payment confirmed but failed to update order.');
+          },
+        });
     }
   }
 

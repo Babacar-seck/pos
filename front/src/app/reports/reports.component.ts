@@ -31,13 +31,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LanguageService } from '../services/language.service';
 import { intlLocaleFromTranslate } from '../shared/intl-locale';
 import { currencySymbolFromIsoCode } from '../shared/currency-symbol';
+import { resolveDecimalPlaces, toDisplayAmount } from '../shared/currency-format';
 
-export type ReportsDatePreset =
-  | 'today'
-  | 'last7'
-  | 'thisWeek'
-  | 'thisMonth'
-  | 'previousMonth';
+export type ReportsDatePreset = 'today' | 'last7' | 'thisWeek' | 'thisMonth' | 'previousMonth';
 
 @Component({
   selector: 'app-reports',
@@ -98,6 +94,7 @@ export class ReportsComponent implements OnInit {
   toDate = signal('');
   currency = signal('€');
   currencyCode = signal<string | null>(null);
+  decimalPlaces = signal<number>(2);
 
   maxBarValue = computed(() => {
     const r = this.report();
@@ -144,9 +141,13 @@ export class ReportsComponent implements OnInit {
           const list = users
             .filter((u): u is User & { id: number } => u.id != null && Number.isFinite(u.id))
             .sort((a, b) =>
-              (a.full_name || a.email || '').localeCompare(b.full_name || b.email || '', undefined, {
-                sensitivity: 'base',
-              }),
+              (a.full_name || a.email || '').localeCompare(
+                b.full_name || b.email || '',
+                undefined,
+                {
+                  sensitivity: 'base',
+                },
+              ),
             );
           this.attendanceExcelStaffUsers.set(list);
         },
@@ -222,6 +223,7 @@ export class ReportsComponent implements OnInit {
       next: (s) => {
         const code = s.currency_code || null;
         this.currencyCode.set(code);
+        this.decimalPlaces.set(resolveDecimalPlaces(code, s.currency_decimal_places ?? null));
         if (code) {
           this.currency.set(currencySymbolFromIsoCode(this.translate, code));
         } else {
@@ -320,7 +322,9 @@ export class ReportsComponent implements OnInit {
     const ym = (this.attendanceExcelMonth() || '').trim();
     const m = /^(\d{4})-(\d{2})$/.exec(ym);
     if (!m) {
-      this.attendanceExcelError.set(this.translate.instant('REPORTS.ATTENDANCE_EXCEL_INVALID_MONTH'));
+      this.attendanceExcelError.set(
+        this.translate.instant('REPORTS.ATTENDANCE_EXCEL_INVALID_MONTH'),
+      );
       return;
     }
     const year = parseInt(m[1], 10);
@@ -328,7 +332,9 @@ export class ReportsComponent implements OnInit {
     this.attendanceExcelExporting.set(true);
     this.attendanceExcelError.set(null);
     const staffIds =
-      this.attendanceExcelStaffFilterIds.length > 0 ? this.attendanceExcelStaffFilterIds : undefined;
+      this.attendanceExcelStaffFilterIds.length > 0
+        ? this.attendanceExcelStaffFilterIds
+        : undefined;
     this.api.getReportsAttendanceExcel(year, month, staffIds).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -359,11 +365,15 @@ export class ReportsComponent implements OnInit {
                     : this.translate.instant('REPORTS.ATTENDANCE_EXCEL_ERROR'),
                 );
               } catch {
-                this.attendanceExcelError.set(this.translate.instant('REPORTS.ATTENDANCE_EXCEL_ERROR'));
+                this.attendanceExcelError.set(
+                  this.translate.instant('REPORTS.ATTENDANCE_EXCEL_ERROR'),
+                );
               }
             })
             .catch(() =>
-              this.attendanceExcelError.set(this.translate.instant('REPORTS.ATTENDANCE_EXCEL_ERROR')),
+              this.attendanceExcelError.set(
+                this.translate.instant('REPORTS.ATTENDANCE_EXCEL_ERROR'),
+              ),
             );
           return;
         }
@@ -379,7 +389,9 @@ export class ReportsComponent implements OnInit {
     const ym = (this.attendanceExcelMonth() || '').trim();
     const m = /^(\d{4})-(\d{2})$/.exec(ym);
     if (!m) {
-      this.attendanceExcelError.set(this.translate.instant('REPORTS.ATTENDANCE_EXCEL_INVALID_MONTH'));
+      this.attendanceExcelError.set(
+        this.translate.instant('REPORTS.ATTENDANCE_EXCEL_INVALID_MONTH'),
+      );
       return;
     }
     const year = parseInt(m[1], 10);
@@ -387,7 +399,9 @@ export class ReportsComponent implements OnInit {
     this.attendanceRegistroExporting.set(true);
     this.attendanceExcelError.set(null);
     const staffIds =
-      this.attendanceExcelStaffFilterIds.length > 0 ? this.attendanceExcelStaffFilterIds : undefined;
+      this.attendanceExcelStaffFilterIds.length > 0
+        ? this.attendanceExcelStaffFilterIds
+        : undefined;
     this.api.getReportsAttendanceRegistroHorarioExcel(year, month, staffIds).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -401,7 +415,9 @@ export class ReportsComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
         this.attendanceRegistroExporting.set(false);
         if (err.status === 404) {
-          this.attendanceExcelError.set(this.translate.instant('REPORTS.ATTENDANCE_REGISTRO_HORARIO_NO_DATA'));
+          this.attendanceExcelError.set(
+            this.translate.instant('REPORTS.ATTENDANCE_REGISTRO_HORARIO_NO_DATA'),
+          );
           return;
         }
         const body = err.error;
@@ -524,7 +540,9 @@ export class ReportsComponent implements OnInit {
     if (!this.canViewAttendance()) return;
     this.workSessionAdjustTarget.set(row);
     this.workSessionAdjustStartedLocal.set(this.isoToDatetimeLocalValue(row.started_at));
-    this.workSessionAdjustEndedLocal.set(row.ended_at ? this.isoToDatetimeLocalValue(row.ended_at) : '');
+    this.workSessionAdjustEndedLocal.set(
+      row.ended_at ? this.isoToDatetimeLocalValue(row.ended_at) : '',
+    );
     this.workSessionAdjustNote.set('');
     this.workSessionAdjustError.set(null);
     this.workSessionAdjustOpen.set(true);
@@ -544,18 +562,24 @@ export class ReportsComponent implements OnInit {
     const endLocal = (this.workSessionAdjustEndedLocal() || '').trim();
     const startIso = this.datetimeLocalToUtcIso(startLocal);
     if (!startIso) {
-      this.workSessionAdjustError.set(this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_START'));
+      this.workSessionAdjustError.set(
+        this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_START'),
+      );
       return;
     }
     let endIso: string | null = null;
     if (endLocal) {
       endIso = this.datetimeLocalToUtcIso(endLocal);
       if (!endIso) {
-        this.workSessionAdjustError.set(this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_END'));
+        this.workSessionAdjustError.set(
+          this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_END'),
+        );
         return;
       }
       if (new Date(endIso).getTime() < new Date(startIso).getTime()) {
-        this.workSessionAdjustError.set(this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_RANGE'));
+        this.workSessionAdjustError.set(
+          this.translate.instant('REPORTS.WORK_SESSION_ADJUST_INVALID_RANGE'),
+        );
         return;
       }
     }
@@ -601,15 +625,19 @@ export class ReportsComponent implements OnInit {
   formatCurrency(cents: number): string {
     void this.reportIntlRevision();
     const code = this.currencyCode();
+    const decimalPlaces = this.decimalPlaces();
     const locale = intlLocaleFromTranslate(this.translate);
+    const amount = toDisplayAmount(cents, decimalPlaces);
     if (code) {
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: code,
         currencyDisplay: 'symbol',
-      }).format(cents / 100);
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }).format(amount);
     }
-    return `${this.currency()}${(cents / 100).toFixed(2)}`;
+    return `${this.currency()}${amount.toLocaleString(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
   }
 
   formatShortDate(iso: string): string {
@@ -703,7 +731,8 @@ export class ReportsComponent implements OnInit {
     if (!r?.summary.daily?.length) return [];
     const daily = r.summary.daily;
     const w = this.chartWidth - this.chartPad.left - this.chartPad.right;
-    const indices = daily.length === 1 ? [0] : [0, Math.floor((daily.length - 1) / 2), daily.length - 1];
+    const indices =
+      daily.length === 1 ? [0] : [0, Math.floor((daily.length - 1) / 2), daily.length - 1];
     return indices.map((i) => ({
       date: this.formatShortDate(daily[i].date),
       x: this.chartPad.left + (i / (daily.length - 1 || 1)) * w,
@@ -725,18 +754,20 @@ export class ReportsComponent implements OnInit {
     this.exporting.set(true);
     const from = this.fromDate();
     const to = this.toDate();
-    this.api.getReportsExport(from, to, 'xlsx', 'summary', this.languageService.getLanguage()).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `pos2-sales-${from}-${to}.xlsx`;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.exporting.set(false);
-      },
-      error: () => this.exporting.set(false),
-    });
+    this.api
+      .getReportsExport(from, to, 'xlsx', 'summary', this.languageService.getLanguage())
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `pos2-sales-${from}-${to}.xlsx`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
   }
 
   private export(format: 'csv' | 'xlsx', report: string) {
@@ -747,17 +778,19 @@ export class ReportsComponent implements OnInit {
     this.exporting.set(true);
     const from = this.fromDate();
     const to = this.toDate();
-    this.api.getReportsExport(from, to, 'csv', report, this.languageService.getLanguage()).subscribe({
-      next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `pos2-sales-${report}-${from}-${to}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.exporting.set(false);
-      },
-      error: () => this.exporting.set(false),
-    });
+    this.api
+      .getReportsExport(from, to, 'csv', report, this.languageService.getLanguage())
+      .subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `pos2-sales-${report}-${from}-${to}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
   }
 }

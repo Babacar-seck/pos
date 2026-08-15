@@ -30,6 +30,7 @@ import { OfflineCashSaleComponent } from './offline-cash-sale.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { intlLocaleFromTranslate } from '../shared/intl-locale';
 import { currencySymbolFromIsoCode } from '../shared/currency-symbol';
+import { resolveDecimalPlaces, toDisplayAmount, toMinorUnits } from '../shared/currency-format';
 import {
   ColDef,
   ModuleRegistry,
@@ -51,130 +52,773 @@ ModuleRegistry.registerModules([
 @Component({
   selector: 'app-orders',
   standalone: true,
-  imports: [AgGridAngular, SidebarComponent, StaffPosToolbarComponent, FormsModule, FocusFirstInputDirective, TranslateModule, OfflineCashSaleComponent],
+  imports: [
+    AgGridAngular,
+    SidebarComponent,
+    StaffPosToolbarComponent,
+    FormsModule,
+    FocusFirstInputDirective,
+    TranslateModule,
+    OfflineCashSaleComponent,
+  ],
   template: `
     <app-sidebar>
-        <div class="page-header page-header--staff-flow">
-          <app-staff-pos-toolbar />
-          <div class="page-header-row">
-            <h1>{{ 'ORDERS.TITLE' | translate }}</h1>
-            <div class="page-header-actions">
-              @if (canUpdateStatus()) {
-                <button type="button" class="btn btn-primary" (click)="openCreateDeliveryModal()">
-                  {{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}
-                </button>
-              }
-              <button class="btn btn-secondary" (click)="loadOrders()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23,4 23,10 17,10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
-                </svg>
-                {{ 'ORDERS.REFRESH' | translate }}
+      <div class="page-header page-header--staff-flow">
+        <app-staff-pos-toolbar />
+        <div class="page-header-row">
+          <h1>{{ 'ORDERS.TITLE' | translate }}</h1>
+          <div class="page-header-actions">
+            @if (canUpdateStatus()) {
+              <button type="button" class="btn btn-primary" (click)="openCreateDeliveryModal()">
+                {{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}
               </button>
-            </div>
+            }
+            <button class="btn btn-secondary" (click)="loadOrders()">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="23,4 23,10 17,10" />
+                <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+              </svg>
+              {{ 'ORDERS.REFRESH' | translate }}
+            </button>
           </div>
         </div>
+      </div>
 
-        <div class="content">
-          @if (canMarkPaid() && canUpdateStatus()) {
-            <app-offline-cash-sale />
+      <div class="content">
+        @if (canMarkPaid() && canUpdateStatus()) {
+          <app-offline-cash-sale />
+        }
+        @if (loading()) {
+          <div class="empty-state">
+            <p>{{ 'ORDERS.LOADING' | translate }}</p>
+          </div>
+        } @else {
+          @if (tableScopeId() != null) {
+            <div class="orders-table-scope-banner" role="status">
+              <span>{{ 'ORDERS.TABLE_SCOPE_LABEL' | translate: { name: tableScopeLabel() } }}</span>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="clearTableScope()">
+                {{ 'ORDERS.TABLE_SCOPE_CLEAR' | translate }}
+              </button>
+            </div>
           }
-          @if (loading()) {
-            <div class="empty-state"><p>{{ 'ORDERS.LOADING' | translate }}</p></div>
-          } @else {
-            @if (tableScopeId() != null) {
-              <div class="orders-table-scope-banner" role="status">
-                <span>{{ 'ORDERS.TABLE_SCOPE_LABEL' | translate: { name: tableScopeLabel() } }}</span>
-                <button type="button" class="btn btn-sm btn-secondary" (click)="clearTableScope()">
-                  {{ 'ORDERS.TABLE_SCOPE_CLEAR' | translate }}
-                </button>
-              </div>
+          <!-- Filter Toggle -->
+          <div class="filter-tabs">
+            <button
+              class="filter-tab"
+              [class.active]="viewMode() === 'active'"
+              (click)="viewMode.set('active')"
+            >
+              {{ 'ORDERS.ACTIVE_ORDERS' | translate }}
+              @if (activeOrders().length > 0) {
+                <span class="tab-badge">{{ activeOrders().length }}</span>
+              }
+            </button>
+            <button
+              class="filter-tab"
+              [class.active]="viewMode() === 'not_paid'"
+              (click)="viewMode.set('not_paid')"
+            >
+              {{ 'ORDERS.NOT_PAID_YET' | translate }}
+              @if (notPaidOrders().length > 0) {
+                <span class="tab-badge">{{ notPaidOrders().length }}</span>
+              }
+            </button>
+            <button
+              class="filter-tab"
+              [class.active]="viewMode() === 'history'"
+              (click)="viewMode.set('history')"
+            >
+              {{ 'ORDERS.ORDER_HISTORY' | translate }}
+              @if (completedOrders().length > 0) {
+                <span class="tab-badge">{{ completedOrders().length }}</span>
+              }
+            </button>
+            <button
+              class="filter-tab"
+              [class.active]="viewMode() === 'delivery'"
+              (click)="viewMode.set('delivery')"
+            >
+              {{ 'ORDERS.DELIVERY_TAB' | translate }}
+              @if (deliveryOrders().length > 0) {
+                <span class="tab-badge">{{ deliveryOrders().length }}</span>
+              }
+            </button>
+            @if (viewMode() === 'active') {
+              <label class="toggle-removed">
+                <input type="checkbox" [(ngModel)]="showRemovedItems" (change)="loadOrders()" />
+                <span>{{ 'ORDERS.SHOW_REMOVED_ITEMS' | translate }}</span>
+              </label>
             }
-            <!-- Filter Toggle -->
-            <div class="filter-tabs">
-              <button 
-                class="filter-tab" 
-                [class.active]="viewMode() === 'active'"
-                (click)="viewMode.set('active')">
-                {{ 'ORDERS.ACTIVE_ORDERS' | translate }}
-                @if (activeOrders().length > 0) {
-                  <span class="tab-badge">{{ activeOrders().length }}</span>
-                }
-              </button>
-              <button 
-                class="filter-tab" 
-                [class.active]="viewMode() === 'not_paid'"
-                (click)="viewMode.set('not_paid')">
-                {{ 'ORDERS.NOT_PAID_YET' | translate }}
-                @if (notPaidOrders().length > 0) {
-                  <span class="tab-badge">{{ notPaidOrders().length }}</span>
-                }
-              </button>
-              <button 
-                class="filter-tab" 
-                [class.active]="viewMode() === 'history'"
-                (click)="viewMode.set('history')">
-                {{ 'ORDERS.ORDER_HISTORY' | translate }}
-                @if (completedOrders().length > 0) {
-                  <span class="tab-badge">{{ completedOrders().length }}</span>
-                }
-              </button>
-              <button
-                class="filter-tab"
-                [class.active]="viewMode() === 'delivery'"
-                (click)="viewMode.set('delivery')">
-                {{ 'ORDERS.DELIVERY_TAB' | translate }}
-                @if (deliveryOrders().length > 0) {
-                  <span class="tab-badge">{{ deliveryOrders().length }}</span>
-                }
-              </button>
-              @if (viewMode() === 'active') {
-                <label class="toggle-removed">
-                  <input type="checkbox" [(ngModel)]="showRemovedItems" (change)="loadOrders()">
-                  <span>{{ 'ORDERS.SHOW_REMOVED_ITEMS' | translate }}</span>
-                </label>
+          </div>
+
+          <!-- Active Orders Section -->
+          @if (viewMode() === 'active' && activeOrders().length > 0) {
+            <div class="order-grid">
+              @for (order of activeOrders(); track order.id) {
+                <div
+                  class="order-card"
+                  [id]="'order-card-' + order.id"
+                  [class]="
+                    'status-' +
+                    order.status +
+                    (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')
+                  "
+                >
+                  <div class="order-header">
+                    <div class="order-header-main">
+                      <span class="order-id">#{{ order.id }}</span>
+                      <span class="order-table">{{ order.table_name }}</span>
+                      @if (orderChannelBadgeKey(order); as channelKey) {
+                        <span
+                          class="order-channel-badge"
+                          [class.marketplace]="isMarketplaceDelivery(order)"
+                          >{{ channelKey | translate }}</span
+                        >
+                      }
+                      @if (order.table_group_label) {
+                        <span class="order-table-group">{{ order.table_group_label }}</span>
+                      }
+                      @if (order.customer_name) {
+                        <span class="order-customer"
+                          >{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span
+                        >
+                      }
+                      @if (order.staff_urgent) {
+                        <span class="order-urgent-badge">{{
+                          'ORDERS.URGENT_BADGE' | translate
+                        }}</span>
+                      }
+                      @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                        <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{
+                          'ORDERS.HUB_PREPARED_BADGE' | translate
+                        }}</span>
+                      } @else if (order.hub_fulfillment) {
+                        <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{
+                          hubFulfillmentLabel(order.hub_fulfillment.status) | translate
+                        }}</span>
+                      }
+                      <span class="order-time" [title]="formatExactTime(order.created_at)"
+                        >{{ 'ORDERS.ORDER_TIME' | translate }}:
+                        {{ formatOrderTime(order.created_at) }}</span
+                      >
+                    </div>
+                  </div>
+
+                  @if (isDeliveryChannel(order)) {
+                    <div class="order-delivery-meta">
+                      @if (order.delivery_address) {
+                        <div>
+                          {{ 'ORDERS.DELIVERY_ADDRESS' | translate }}: {{ order.delivery_address }}
+                        </div>
+                      }
+                      @if (order.customer_phone) {
+                        <div>
+                          {{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}
+                        </div>
+                      }
+                      @if (isSatisfechoDelivery(order)) {
+                        <div>
+                          {{ 'ORDERS.COURIER' | translate }}:
+                          {{ courierDisplayName(order.courier_user_id) }}
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <div class="order-items">
+                    @for (item of getSortedItems(order.items); track item.id) {
+                      <div class="order-item" [class.removed]="item.removed_by_customer">
+                        <div class="item-name-row">
+                          <span class="item-qty">
+                            @if (
+                              !item.removed_by_customer &&
+                              item.status !== 'cancelled' &&
+                              item.status !== 'delivered'
+                            ) {
+                              <input
+                                type="number"
+                                [value]="item.quantity"
+                                (change)="
+                                  updateItemQuantity(order.id, item.id!, +$any($event.target).value)
+                                "
+                                min="1"
+                                class="quantity-input"
+                              />
+                            } @else {
+                              {{ item.quantity }}x
+                            }
+                          </span>
+                          <span class="item-name">{{ item.product_name }}</span>
+                          @if (hasItemModifiersLine(item)) {
+                            <span class="item-customization">{{
+                              formatItemModifiersLine(item)
+                            }}</span>
+                          }
+                          @if (item.notes?.trim()) {
+                            <span class="item-notes">{{ item.notes }}</span>
+                          }
+                        </div>
+                        <div class="item-details-row">
+                          <span class="item-price">
+                            {{ formatPrice(item.price_cents) }}
+                            @if (item.quantity > 1) {
+                              <span class="price-total"
+                                >({{ formatPrice(item.price_cents * item.quantity) }} total)</span
+                              >
+                            }
+                          </span>
+                          <div class="item-actions">
+                            @if (!item.removed_by_customer && item.status !== 'cancelled') {
+                              <button
+                                class="btn-remove-item"
+                                (click)="
+                                  removeItemStaff(order.id, item.id!, item.status ?? 'pending')
+                                "
+                                [title]="'ORDERS.REMOVE_ITEM' | translate"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2"
+                                >
+                                  <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                              </button>
+                            }
+                            @if (item.status && !item.removed_by_customer) {
+                              <div class="item-status-control">
+                                <button
+                                  class="item-status-badge clickable"
+                                  [class]="'status-' + item.status"
+                                  (click)="toggleItemStatusDropdown(order.id, item.id!)"
+                                  [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate"
+                                >
+                                  {{ getItemStatusLabel(item.status) }}
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                  >
+                                    <polyline points="6,9 12,15 18,9" />
+                                  </svg>
+                                </button>
+                                @if (itemStatusDropdownOpen() === order.id + '-' + item.id) {
+                                  <div
+                                    class="status-dropdown item-status-dropdown"
+                                    (click)="$event.stopPropagation()"
+                                  >
+                                    @if (
+                                      getItemStatusTransitions(item.status).backward.length > 0
+                                    ) {
+                                      <div class="dropdown-section">
+                                        <div class="dropdown-label">
+                                          {{ 'ORDERS.GO_BACK' | translate }}
+                                        </div>
+                                        @for (
+                                          status of getItemStatusTransitions(item.status).backward;
+                                          track status
+                                        ) {
+                                          <button
+                                            class="dropdown-item backward"
+                                            (click)="
+                                              updateItemStatus(order.id, item.id!, status);
+                                              itemStatusDropdownOpen.set(null)
+                                            "
+                                          >
+                                            <svg
+                                              width="12"
+                                              height="12"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                            >
+                                              <polyline points="15,18 9,12 15,6" />
+                                            </svg>
+                                            {{ getItemStatusLabel(status) }}
+                                          </button>
+                                        }
+                                      </div>
+                                    }
+                                    @if (getItemStatusTransitions(item.status).forward.length > 0) {
+                                      <div class="dropdown-section">
+                                        <div class="dropdown-label">
+                                          {{ 'ORDERS.MOVE_FORWARD' | translate }}
+                                        </div>
+                                        @for (
+                                          status of getItemStatusTransitions(item.status).forward;
+                                          track status
+                                        ) {
+                                          <button
+                                            class="dropdown-item forward"
+                                            (click)="
+                                              updateItemStatus(order.id, item.id!, status);
+                                              itemStatusDropdownOpen.set(null)
+                                            "
+                                          >
+                                            {{ getItemStatusLabel(status) }}
+                                            <svg
+                                              width="12"
+                                              height="12"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              stroke-width="2"
+                                            >
+                                              <polyline points="9,18 15,12 9,6" />
+                                            </svg>
+                                          </button>
+                                        }
+                                      </div>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        </div>
+                        @if (item.removed_by_customer) {
+                          <div class="removed-indicator">
+                            <span class="removed-label">{{
+                              'ORDERS.REMOVED_BY_CUSTOMER' | translate
+                            }}</span>
+                            @if (item.removed_at) {
+                              <span class="removed-time">{{ formatTime(item.removed_at) }}</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (displayOrderNotes(order.notes)) {
+                    <div class="order-notes-banner">
+                      {{ 'ORDERS.ORDER_NOTES' | translate }}: {{ displayOrderNotes(order.notes) }}
+                    </div>
+                  }
+
+                  <div class="order-footer">
+                    <div class="order-footer-left">
+                      <span class="order-total"
+                        >{{ 'ORDERS.TOTAL' | translate }}:
+                        {{ formatPrice(order.total_cents) }}</span
+                      >
+                      @if (order.removed_items_count && order.removed_items_count > 0) {
+                        <span class="removed-count">{{
+                          'ORDERS.ITEMS_REMOVED' | translate: { count: order.removed_items_count }
+                        }}</span>
+                      }
+                    </div>
+                    <div class="order-actions">
+                      @if (canUpdateStatus() && order.status !== 'cancelled') {
+                        <button
+                          type="button"
+                          class="btn btn-urgent"
+                          (click)="toggleStaffUrgent(order, $event)"
+                        >
+                          {{
+                            order.staff_urgent
+                              ? ('ORDERS.CLEAR_URGENT' | translate)
+                              : ('ORDERS.MARK_URGENT' | translate)
+                          }}
+                        </button>
+                      }
+                      @if (
+                        canUpdateStatus() &&
+                        order.can_request_hub_fulfillment &&
+                        order.status !== 'cancelled' &&
+                        order.status !== 'paid'
+                      ) {
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-testid="request-hub-fulfillment"
+                          (click)="requestHubFulfillment(order)"
+                        >
+                          {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-edit-order"
+                        (click)="openOrderEdit(order)"
+                        [title]="'ORDERS.EDIT_ORDER' | translate"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        {{ 'COMMON.EDIT' | translate }}
+                      </button>
+                      @if (
+                        isSatisfechoDelivery(order) &&
+                        canUpdateStatus() &&
+                        order.status !== 'cancelled'
+                      ) {
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          (click)="openEditDeliveryModal(order)"
+                        >
+                          {{ 'ORDERS.EDIT_DELIVERY' | translate }}
+                        </button>
+                      }
+                      @if (
+                        order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()
+                      ) {
+                        <button
+                          type="button"
+                          class="btn"
+                          [class.btn-secondary]="canFinishOrder()"
+                          [class.btn-primary]="!canFinishOrder()"
+                          (click)="markAsPaid(order)"
+                          [title]="'ORDERS.PAY_NOW_HINT' | translate"
+                        >
+                          {{ 'ORDERS.PAY_NOW' | translate }}
+                        </button>
+                      }
+                      @if (
+                        order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()
+                      ) {
+                        <button
+                          type="button"
+                          class="btn btn-success"
+                          (click)="openFinishPaymentModal(order)"
+                          [title]="'ORDERS.FINISH_ORDER_MENU' | translate"
+                        >
+                          {{ 'ORDERS.FINISH_ORDER' | translate }}
+                        </button>
+                      }
+                      <div class="status-control">
+                        <button
+                          class="status-badge-btn"
+                          [class]="order.status"
+                          (click)="toggleStatusDropdown(order.id)"
+                          [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate"
+                        >
+                          {{ getStatusLabel(order.status) }}
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="6,9 12,15 18,9" />
+                          </svg>
+                        </button>
+                        @if (statusDropdownOpen() === order.id) {
+                          <div class="status-dropdown" (click)="$event.stopPropagation()">
+                            @if (getOrderStatusTransitions(order.status).backward.length > 0) {
+                              <div class="dropdown-section">
+                                <div class="dropdown-label">{{ 'ORDERS.GO_BACK' | translate }}</div>
+                                @for (
+                                  status of getOrderStatusTransitions(order.status).backward;
+                                  track status
+                                ) {
+                                  <button
+                                    class="dropdown-item backward"
+                                    (click)="updateStatus(order, status)"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="15,18 9,12 15,6" />
+                                    </svg>
+                                    {{ getStatusLabel(status) }}
+                                  </button>
+                                }
+                              </div>
+                            }
+                            @if (getOrderStatusTransitions(order.status).forward.length > 0) {
+                              <div class="dropdown-section">
+                                <div class="dropdown-label">
+                                  {{ 'ORDERS.MOVE_FORWARD' | translate }}
+                                </div>
+                                @for (
+                                  status of getOrderStatusTransitions(order.status).forward;
+                                  track status
+                                ) {
+                                  <button
+                                    class="dropdown-item forward"
+                                    (click)="updateStatus(order, status)"
+                                  >
+                                    {{ getStatusLabel(status) }}
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="9,18 15,12 9,6" />
+                                    </svg>
+                                  </button>
+                                }
+                              </div>
+                            }
+                            @if (
+                              order.status !== 'paid' &&
+                              order.status !== 'cancelled' &&
+                              canMarkPaid()
+                            ) {
+                              <div class="dropdown-section">
+                                <button
+                                  class="dropdown-item forward"
+                                  (click)="markAsPaid(order); statusDropdownOpen.set(null)"
+                                >
+                                  {{ 'ORDERS.MARK_AS_PAID' | translate }}
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                  >
+                                    <polyline points="9,18 15,12 9,6" />
+                                  </svg>
+                                </button>
+                              </div>
+                            }
+                            @if (
+                              order.status !== 'paid' &&
+                              order.status !== 'cancelled' &&
+                              canFinishOrder()
+                            ) {
+                              <div class="dropdown-section">
+                                <button
+                                  class="dropdown-item forward"
+                                  (click)="
+                                    openFinishPaymentModal(order); statusDropdownOpen.set(null)
+                                  "
+                                >
+                                  {{ 'ORDERS.FINISH_ORDER_MENU' | translate }}
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                  >
+                                    <polyline points="9,18 15,12 9,6" />
+                                  </svg>
+                                </button>
+                              </div>
+                            }
+                            @if (order.status === 'paid' && canMarkPaid()) {
+                              <div class="dropdown-section">
+                                <button class="dropdown-item backward" (click)="unmarkPaid(order)">
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                  >
+                                    <polyline points="15,18 9,12 15,6" />
+                                  </svg>
+                                  {{ 'ORDERS.UNMARK_PAID' | translate }}
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                      @if (canDeleteOrder()) {
+                        <button
+                          type="button"
+                          class="btn btn-delete-order"
+                          (click)="deleteOrder(order)"
+                          [title]="'ORDERS.DELETE_ORDER' | translate"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path
+                              d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                            />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                          {{ 'ORDERS.DELETE_ORDER' | translate }}
+                        </button>
+                      }
+                      @if (order.table_id != null && order.table_token) {
+                        <button
+                          type="button"
+                          class="btn btn-menu-link"
+                          (click)="openMenuForOrder(order)"
+                          [title]="'ORDERS.OPEN_MENU_LINK' | translate"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="M18 13v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 15 3 15 3 21" />
+                          </svg>
+                          {{ 'ORDERS.OPEN_MENU' | translate }}
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-print"
+                        (click)="openFacturaModal(order)"
+                        [title]="'CUSTOMERS.PRINT_FACTURA' | translate"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <polyline points="6 9 6 2 18 2 18 9" />
+                          <path
+                            d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               }
             </div>
+          } @else if (
+            viewMode() === 'active' && activeOrders().length === 0 && notPaidOrders().length === 0
+          ) {
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                  <polyline points="14,2 14,8 20,8" />
+                </svg>
+              </div>
+              <h3>{{ 'ORDERS.NO_ORDERS' | translate }}</h3>
+              <p>{{ 'ORDERS.NO_ORDERS_DESC' | translate }}</p>
+            </div>
+          }
 
-            <!-- Active Orders Section -->
-            @if (viewMode() === 'active' && activeOrders().length > 0) {
+          <!-- Not Paid Yet Section -->
+          @if (viewMode() === 'not_paid') {
+            @if (notPaidOrders().length > 0) {
               <div class="order-grid">
-                @for (order of activeOrders(); track order.id) {
-                  <div class="order-card" [id]="'order-card-' + order.id" [class]="'status-' + order.status + (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')">
+                @for (order of notPaidOrders(); track order.id) {
+                  <div
+                    class="order-card"
+                    [id]="'order-card-' + order.id"
+                    [class]="
+                      'status-' +
+                      order.status +
+                      (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')
+                    "
+                  >
                     <div class="order-header">
                       <div class="order-header-main">
                         <span class="order-id">#{{ order.id }}</span>
                         <span class="order-table">{{ order.table_name }}</span>
                         @if (orderChannelBadgeKey(order); as channelKey) {
-                          <span class="order-channel-badge" [class.marketplace]="isMarketplaceDelivery(order)">{{ channelKey | translate }}</span>
+                          <span
+                            class="order-channel-badge"
+                            [class.marketplace]="isMarketplaceDelivery(order)"
+                            >{{ channelKey | translate }}</span
+                          >
                         }
                         @if (order.table_group_label) {
                           <span class="order-table-group">{{ order.table_group_label }}</span>
                         }
                         @if (order.customer_name) {
-                          <span class="order-customer">{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span>
+                          <span class="order-customer"
+                            >{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span
+                          >
                         }
                         @if (order.staff_urgent) {
-                          <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
+                          <span class="order-urgent-badge">{{
+                            'ORDERS.URGENT_BADGE' | translate
+                          }}</span>
                         }
                         @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
-                          <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
+                          <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{
+                            'ORDERS.HUB_PREPARED_BADGE' | translate
+                          }}</span>
                         } @else if (order.hub_fulfillment) {
-                          <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
+                          <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{
+                            hubFulfillmentLabel(order.hub_fulfillment.status) | translate
+                          }}</span>
                         }
-                        <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
+                        <span class="order-time" [title]="formatExactTime(order.created_at)"
+                          >{{ 'ORDERS.ORDER_TIME' | translate }}:
+                          {{ formatOrderTime(order.created_at) }}</span
+                        >
                       </div>
                     </div>
 
                     @if (isDeliveryChannel(order)) {
                       <div class="order-delivery-meta">
                         @if (order.delivery_address) {
-                          <div>{{ 'ORDERS.DELIVERY_ADDRESS' | translate }}: {{ order.delivery_address }}</div>
+                          <div>
+                            {{ 'ORDERS.DELIVERY_ADDRESS' | translate }}:
+                            {{ order.delivery_address }}
+                          </div>
                         }
                         @if (order.customer_phone) {
-                          <div>{{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}</div>
+                          <div>
+                            {{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}
+                          </div>
                         }
                         @if (isSatisfechoDelivery(order)) {
-                          <div>{{ 'ORDERS.COURIER' | translate }}: {{ courierDisplayName(order.courier_user_id) }}</div>
+                          <div>
+                            {{ 'ORDERS.COURIER' | translate }}:
+                            {{ courierDisplayName(order.courier_user_id) }}
+                          </div>
                         }
                       </div>
                     }
@@ -184,11 +828,22 @@ ModuleRegistry.registerModules([
                         <div class="order-item" [class.removed]="item.removed_by_customer">
                           <div class="item-name-row">
                             <span class="item-qty">
-                              @if (!item.removed_by_customer && item.status !== 'cancelled' && item.status !== 'delivered') {
-                                <input type="number" 
-                                  [value]="item.quantity" 
-                                  (change)="updateItemQuantity(order.id, item.id!, +$any($event.target).value)"
-                                  min="1" 
+                              @if (
+                                !item.removed_by_customer &&
+                                item.status !== 'cancelled' &&
+                                item.status !== 'delivered'
+                              ) {
+                                <input
+                                  type="number"
+                                  [value]="item.quantity"
+                                  (change)="
+                                    updateItemQuantity(
+                                      order.id,
+                                      item.id!,
+                                      +$any($event.target).value
+                                    )
+                                  "
+                                  min="1"
                                   class="quantity-input"
                                 />
                               } @else {
@@ -197,7 +852,9 @@ ModuleRegistry.registerModules([
                             </span>
                             <span class="item-name">{{ item.product_name }}</span>
                             @if (hasItemModifiersLine(item)) {
-                              <span class="item-customization">{{ formatItemModifiersLine(item) }}</span>
+                              <span class="item-customization">{{
+                                formatItemModifiersLine(item)
+                              }}</span>
                             }
                             @if (item.notes?.trim()) {
                               <span class="item-notes">{{ item.notes }}</span>
@@ -207,56 +864,119 @@ ModuleRegistry.registerModules([
                             <span class="item-price">
                               {{ formatPrice(item.price_cents) }}
                               @if (item.quantity > 1) {
-                                <span class="price-total">({{ formatPrice(item.price_cents * item.quantity) }} total)</span>
+                                <span class="price-total"
+                                  >({{ formatPrice(item.price_cents * item.quantity) }} total)</span
+                                >
                               }
                             </span>
                             <div class="item-actions">
                               @if (!item.removed_by_customer && item.status !== 'cancelled') {
-                                <button class="btn-remove-item" (click)="removeItemStaff(order.id, item.id!, item.status ?? 'pending')" [title]="'ORDERS.REMOVE_ITEM' | translate">
-                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M18 6L6 18M6 6l12 12"/>
+                                <button
+                                  class="btn-remove-item"
+                                  (click)="
+                                    removeItemStaff(order.id, item.id!, item.status ?? 'pending')
+                                  "
+                                  [title]="'ORDERS.REMOVE_ITEM' | translate"
+                                >
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                  >
+                                    <path d="M18 6L6 18M6 6l12 12" />
                                   </svg>
                                 </button>
                               }
                               @if (item.status && !item.removed_by_customer) {
                                 <div class="item-status-control">
-                                  <button 
-                                    class="item-status-badge clickable" 
+                                  <button
+                                    class="item-status-badge clickable"
                                     [class]="'status-' + item.status"
                                     (click)="toggleItemStatusDropdown(order.id, item.id!)"
-                                    [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate">
+                                    [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate"
+                                  >
                                     {{ getItemStatusLabel(item.status) }}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                      <polyline points="6,9 12,15 18,9"/>
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="6,9 12,15 18,9" />
                                     </svg>
                                   </button>
                                   @if (itemStatusDropdownOpen() === order.id + '-' + item.id) {
-                                    <div class="status-dropdown item-status-dropdown" (click)="$event.stopPropagation()">
-                                      @if (getItemStatusTransitions(item.status).backward.length > 0) {
+                                    <div
+                                      class="status-dropdown item-status-dropdown"
+                                      (click)="$event.stopPropagation()"
+                                    >
+                                      @if (
+                                        getItemStatusTransitions(item.status).backward.length > 0
+                                      ) {
                                         <div class="dropdown-section">
-                                          <div class="dropdown-label">{{ 'ORDERS.GO_BACK' | translate }}</div>
-                                          @for (status of getItemStatusTransitions(item.status).backward; track status) {
-                                            <button 
+                                          <div class="dropdown-label">
+                                            {{ 'ORDERS.GO_BACK' | translate }}
+                                          </div>
+                                          @for (
+                                            status of getItemStatusTransitions(item.status)
+                                              .backward;
+                                            track status
+                                          ) {
+                                            <button
                                               class="dropdown-item backward"
-                                              (click)="updateItemStatus(order.id, item.id!, status); itemStatusDropdownOpen.set(null)">
-                                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="15,18 9,12 15,6"/>
+                                              (click)="
+                                                updateItemStatus(order.id, item.id!, status);
+                                                itemStatusDropdownOpen.set(null)
+                                              "
+                                            >
+                                              <svg
+                                                width="12"
+                                                height="12"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                              >
+                                                <polyline points="15,18 9,12 15,6" />
                                               </svg>
                                               {{ getItemStatusLabel(status) }}
                                             </button>
                                           }
                                         </div>
                                       }
-                                      @if (getItemStatusTransitions(item.status).forward.length > 0) {
+                                      @if (
+                                        getItemStatusTransitions(item.status).forward.length > 0
+                                      ) {
                                         <div class="dropdown-section">
-                                          <div class="dropdown-label">{{ 'ORDERS.MOVE_FORWARD' | translate }}</div>
-                                          @for (status of getItemStatusTransitions(item.status).forward; track status) {
-                                            <button 
+                                          <div class="dropdown-label">
+                                            {{ 'ORDERS.MOVE_FORWARD' | translate }}
+                                          </div>
+                                          @for (
+                                            status of getItemStatusTransitions(item.status).forward;
+                                            track status
+                                          ) {
+                                            <button
                                               class="dropdown-item forward"
-                                              (click)="updateItemStatus(order.id, item.id!, status); itemStatusDropdownOpen.set(null)">
+                                              (click)="
+                                                updateItemStatus(order.id, item.id!, status);
+                                                itemStatusDropdownOpen.set(null)
+                                              "
+                                            >
                                               {{ getItemStatusLabel(status) }}
-                                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <polyline points="9,18 15,12 9,6"/>
+                                              <svg
+                                                width="12"
+                                                height="12"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                stroke-width="2"
+                                              >
+                                                <polyline points="9,18 15,12 9,6" />
                                               </svg>
                                             </button>
                                           }
@@ -270,7 +990,9 @@ ModuleRegistry.registerModules([
                           </div>
                           @if (item.removed_by_customer) {
                             <div class="removed-indicator">
-                              <span class="removed-label">{{ 'ORDERS.REMOVED_BY_CUSTOMER' | translate }}</span>
+                              <span class="removed-label">{{
+                                'ORDERS.REMOVED_BY_CUSTOMER' | translate
+                              }}</span>
                               @if (item.removed_at) {
                                 <span class="removed-time">{{ formatTime(item.removed_at) }}</span>
                               }
@@ -280,24 +1002,38 @@ ModuleRegistry.registerModules([
                       }
                     </div>
 
-                    @if (displayOrderNotes(order.notes)) {
-                      <div class="order-notes-banner">{{ 'ORDERS.ORDER_NOTES' | translate }}: {{ displayOrderNotes(order.notes) }}</div>
-                    }
-
                     <div class="order-footer">
                       <div class="order-footer-left">
-                        <span class="order-total">{{ 'ORDERS.TOTAL' | translate }}: {{ formatPrice(order.total_cents) }}</span>
+                        <span class="order-total"
+                          >{{ 'ORDERS.TOTAL' | translate }}:
+                          {{ formatPrice(order.total_cents) }}</span
+                        >
                         @if (order.removed_items_count && order.removed_items_count > 0) {
-                          <span class="removed-count">{{ 'ORDERS.ITEMS_REMOVED' | translate:{ count: order.removed_items_count } }}</span>
+                          <span class="removed-count">{{
+                            'ORDERS.ITEMS_REMOVED' | translate: { count: order.removed_items_count }
+                          }}</span>
                         }
                       </div>
                       <div class="order-actions">
                         @if (canUpdateStatus() && order.status !== 'cancelled') {
-                          <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
-                            {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
+                          <button
+                            type="button"
+                            class="btn btn-urgent"
+                            (click)="toggleStaffUrgent(order, $event)"
+                          >
+                            {{
+                              order.staff_urgent
+                                ? ('ORDERS.CLEAR_URGENT' | translate)
+                                : ('ORDERS.MARK_URGENT' | translate)
+                            }}
                           </button>
                         }
-                        @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
+                        @if (
+                          canUpdateStatus() &&
+                          order.can_request_hub_fulfillment &&
+                          order.status !== 'cancelled' &&
+                          order.status !== 'paid'
+                        ) {
                           <button
                             type="button"
                             class="btn btn-secondary"
@@ -307,31 +1043,63 @@ ModuleRegistry.registerModules([
                             {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
                           </button>
                         }
-                        <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        <button
+                          type="button"
+                          class="btn btn-edit-order"
+                          (click)="openOrderEdit(order)"
+                          [title]="'ORDERS.EDIT_ORDER' | translate"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                           {{ 'COMMON.EDIT' | translate }}
                         </button>
-                        @if (isSatisfechoDelivery(order) && canUpdateStatus() && order.status !== 'cancelled') {
-                          <button type="button" class="btn btn-secondary" (click)="openEditDeliveryModal(order)">
+                        @if (
+                          isSatisfechoDelivery(order) &&
+                          canUpdateStatus() &&
+                          order.status !== 'cancelled'
+                        ) {
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            (click)="openEditDeliveryModal(order)"
+                          >
                             {{ 'ORDERS.EDIT_DELIVERY' | translate }}
                           </button>
                         }
-                        @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
+                        @if (
+                          order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()
+                        ) {
                           <button
                             type="button"
                             class="btn"
                             [class.btn-secondary]="canFinishOrder()"
                             [class.btn-primary]="!canFinishOrder()"
                             (click)="markAsPaid(order)"
-                            [title]="'ORDERS.PAY_NOW_HINT' | translate">
+                            [title]="'ORDERS.PAY_NOW_HINT' | translate"
+                          >
                             {{ 'ORDERS.PAY_NOW' | translate }}
                           </button>
                         }
-                        @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
-                          <button type="button" class="btn btn-success" (click)="openFinishPaymentModal(order)" [title]="'ORDERS.FINISH_ORDER_MENU' | translate">
+                        @if (
+                          order.status !== 'paid' &&
+                          order.status !== 'cancelled' &&
+                          canFinishOrder()
+                        ) {
+                          <button
+                            type="button"
+                            class="btn btn-success"
+                            (click)="openFinishPaymentModal(order)"
+                            [title]="'ORDERS.FINISH_ORDER_MENU' | translate"
+                          >
                             {{ 'ORDERS.FINISH_ORDER' | translate }}
                           </button>
                         }
@@ -340,23 +1108,44 @@ ModuleRegistry.registerModules([
                             class="status-badge-btn"
                             [class]="order.status"
                             (click)="toggleStatusDropdown(order.id)"
-                            [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate">
+                            [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate"
+                          >
                             {{ getStatusLabel(order.status) }}
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <polyline points="6,9 12,15 18,9"/>
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <polyline points="6,9 12,15 18,9" />
                             </svg>
                           </button>
                           @if (statusDropdownOpen() === order.id) {
                             <div class="status-dropdown" (click)="$event.stopPropagation()">
                               @if (getOrderStatusTransitions(order.status).backward.length > 0) {
                                 <div class="dropdown-section">
-                                  <div class="dropdown-label">{{ 'ORDERS.GO_BACK' | translate }}</div>
-                                  @for (status of getOrderStatusTransitions(order.status).backward; track status) {
+                                  <div class="dropdown-label">
+                                    {{ 'ORDERS.GO_BACK' | translate }}
+                                  </div>
+                                  @for (
+                                    status of getOrderStatusTransitions(order.status).backward;
+                                    track status
+                                  ) {
                                     <button
                                       class="dropdown-item backward"
-                                      (click)="updateStatus(order, status)">
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="15,18 9,12 15,6"/>
+                                      (click)="updateStatus(order, status)"
+                                    >
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                      >
+                                        <polyline points="15,18 9,12 15,6" />
                                       </svg>
                                       {{ getStatusLabel(status) }}
                                     </button>
@@ -365,39 +1154,78 @@ ModuleRegistry.registerModules([
                               }
                               @if (getOrderStatusTransitions(order.status).forward.length > 0) {
                                 <div class="dropdown-section">
-                                  <div class="dropdown-label">{{ 'ORDERS.MOVE_FORWARD' | translate }}</div>
-                                  @for (status of getOrderStatusTransitions(order.status).forward; track status) {
+                                  <div class="dropdown-label">
+                                    {{ 'ORDERS.MOVE_FORWARD' | translate }}
+                                  </div>
+                                  @for (
+                                    status of getOrderStatusTransitions(order.status).forward;
+                                    track status
+                                  ) {
                                     <button
                                       class="dropdown-item forward"
-                                      (click)="updateStatus(order, status)">
+                                      (click)="updateStatus(order, status)"
+                                    >
                                       {{ getStatusLabel(status) }}
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="9,18 15,12 9,6"/>
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                      >
+                                        <polyline points="9,18 15,12 9,6" />
                                       </svg>
                                     </button>
                                   }
                                 </div>
                               }
-                              @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
+                              @if (
+                                order.status !== 'paid' &&
+                                order.status !== 'cancelled' &&
+                                canMarkPaid()
+                              ) {
                                 <div class="dropdown-section">
                                   <button
                                     class="dropdown-item forward"
-                                    (click)="markAsPaid(order); statusDropdownOpen.set(null)">
+                                    (click)="markAsPaid(order); statusDropdownOpen.set(null)"
+                                  >
                                     {{ 'ORDERS.MARK_AS_PAID' | translate }}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                      <polyline points="9,18 15,12 9,6"/>
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="9,18 15,12 9,6" />
                                     </svg>
                                   </button>
                                 </div>
                               }
-                              @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
+                              @if (
+                                order.status !== 'paid' &&
+                                order.status !== 'cancelled' &&
+                                canFinishOrder()
+                              ) {
                                 <div class="dropdown-section">
                                   <button
                                     class="dropdown-item forward"
-                                    (click)="openFinishPaymentModal(order); statusDropdownOpen.set(null)">
+                                    (click)="
+                                      openFinishPaymentModal(order); statusDropdownOpen.set(null)
+                                    "
+                                  >
                                     {{ 'ORDERS.FINISH_ORDER_MENU' | translate }}
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                      <polyline points="9,18 15,12 9,6"/>
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="9,18 15,12 9,6" />
                                     </svg>
                                   </button>
                                 </div>
@@ -406,9 +1234,17 @@ ModuleRegistry.registerModules([
                                 <div class="dropdown-section">
                                   <button
                                     class="dropdown-item backward"
-                                    (click)="unmarkPaid(order)">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                      <polyline points="15,18 9,12 15,6"/>
+                                    (click)="unmarkPaid(order)"
+                                  >
+                                    <svg
+                                      width="14"
+                                      height="14"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      stroke-width="2"
+                                    >
+                                      <polyline points="15,18 9,12 15,6" />
                                     </svg>
                                     {{ 'ORDERS.UNMARK_PAID' | translate }}
                                   </button>
@@ -418,25 +1254,69 @@ ModuleRegistry.registerModules([
                           }
                         </div>
                         @if (canDeleteOrder()) {
-                          <button type="button" class="btn btn-delete-order" (click)="deleteOrder(order)" [title]="'ORDERS.DELETE_ORDER' | translate">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                              <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                          <button
+                            type="button"
+                            class="btn btn-delete-order"
+                            (click)="deleteOrder(order)"
+                            [title]="'ORDERS.DELETE_ORDER' | translate"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path
+                                d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                              />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
                             </svg>
                             {{ 'ORDERS.DELETE_ORDER' | translate }}
                           </button>
                         }
                         @if (order.table_id != null && order.table_token) {
-                          <button type="button" class="btn btn-menu-link" (click)="openMenuForOrder(order)" [title]="'ORDERS.OPEN_MENU_LINK' | translate">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M18 13v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6"/><polyline points="15 3 21 3 21 9"/><polyline points="9 15 3 15 3 21"/>
+                          <button
+                            type="button"
+                            class="btn btn-menu-link"
+                            (click)="openMenuForOrder(order)"
+                            [title]="'ORDERS.OPEN_MENU_LINK' | translate"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path d="M18 13v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6" />
+                              <polyline points="15 3 21 3 21 9" />
+                              <polyline points="9 15 3 15 3 21" />
                             </svg>
                             {{ 'ORDERS.OPEN_MENU' | translate }}
                           </button>
                         }
-                        <button type="button" class="btn btn-print" (click)="openFacturaModal(order)" [title]="'CUSTOMERS.PRINT_FACTURA' | translate">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+                        <button
+                          type="button"
+                          class="btn btn-print"
+                          (click)="openFacturaModal(order)"
+                          [title]="'CUSTOMERS.PRINT_FACTURA' | translate"
+                        >
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="6 9 6 2 18 2 18 9" />
+                            <path
+                              d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -444,2055 +1324,2581 @@ ModuleRegistry.registerModules([
                   </div>
                 }
               </div>
-            } @else if (viewMode() === 'active' && activeOrders().length === 0 && notPaidOrders().length === 0) {
+            } @else {
               <div class="empty-state">
                 <div class="empty-icon">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                    <polyline points="14,2 14,8 20,8"/>
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path
+                      d="M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+                    />
                   </svg>
                 </div>
-                <h3>{{ 'ORDERS.NO_ORDERS' | translate }}</h3>
-                <p>{{ 'ORDERS.NO_ORDERS_DESC' | translate }}</p>
+                <h3>{{ 'ORDERS.ALL_ORDERS_PAID' | translate }}</h3>
+                <p>{{ 'ORDERS.NO_UNPAID_ORDERS' | translate }}</p>
               </div>
-            }
-
-            <!-- Not Paid Yet Section -->
-            @if (viewMode() === 'not_paid') {
-              @if (notPaidOrders().length > 0) {
-                <div class="order-grid">
-                  @for (order of notPaidOrders(); track order.id) {
-                    <div class="order-card" [id]="'order-card-' + order.id" [class]="'status-' + order.status + (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')">
-                      <div class="order-header">
-                        <div class="order-header-main">
-                          <span class="order-id">#{{ order.id }}</span>
-                          <span class="order-table">{{ order.table_name }}</span>
-                          @if (orderChannelBadgeKey(order); as channelKey) {
-                            <span class="order-channel-badge" [class.marketplace]="isMarketplaceDelivery(order)">{{ channelKey | translate }}</span>
-                          }
-                          @if (order.table_group_label) {
-                            <span class="order-table-group">{{ order.table_group_label }}</span>
-                          }
-                          @if (order.customer_name) {
-                            <span class="order-customer">{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span>
-                          }
-                          @if (order.staff_urgent) {
-                            <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
-                          }
-                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
-                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
-                          } @else if (order.hub_fulfillment) {
-                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
-                          }
-                          <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
-                        </div>
-                      </div>
-
-                      @if (isDeliveryChannel(order)) {
-                        <div class="order-delivery-meta">
-                          @if (order.delivery_address) {
-                            <div>{{ 'ORDERS.DELIVERY_ADDRESS' | translate }}: {{ order.delivery_address }}</div>
-                          }
-                          @if (order.customer_phone) {
-                            <div>{{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}</div>
-                          }
-                          @if (isSatisfechoDelivery(order)) {
-                            <div>{{ 'ORDERS.COURIER' | translate }}: {{ courierDisplayName(order.courier_user_id) }}</div>
-                          }
-                        </div>
-                      }
-
-                      <div class="order-items">
-                        @for (item of getSortedItems(order.items); track item.id) {
-                          <div class="order-item" [class.removed]="item.removed_by_customer">
-                            <div class="item-name-row">
-                              <span class="item-qty">
-                                @if (!item.removed_by_customer && item.status !== 'cancelled' && item.status !== 'delivered') {
-                                  <input type="number"
-                                    [value]="item.quantity"
-                                    (change)="updateItemQuantity(order.id, item.id!, +$any($event.target).value)"
-                                    min="1"
-                                    class="quantity-input"
-                                  />
-                                } @else {
-                                  {{ item.quantity }}x
-                                }
-                              </span>
-                              <span class="item-name">{{ item.product_name }}</span>
-                              @if (hasItemModifiersLine(item)) {
-                                <span class="item-customization">{{ formatItemModifiersLine(item) }}</span>
-                              }
-                              @if (item.notes?.trim()) {
-                                <span class="item-notes">{{ item.notes }}</span>
-                              }
-                            </div>
-                            <div class="item-details-row">
-                              <span class="item-price">
-                                {{ formatPrice(item.price_cents) }}
-                                @if (item.quantity > 1) {
-                                  <span class="price-total">({{ formatPrice(item.price_cents * item.quantity) }} total)</span>
-                                }
-                              </span>
-                              <div class="item-actions">
-                                @if (!item.removed_by_customer && item.status !== 'cancelled') {
-                                  <button class="btn-remove-item" (click)="removeItemStaff(order.id, item.id!, item.status ?? 'pending')" [title]="'ORDERS.REMOVE_ITEM' | translate">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                      <path d="M18 6L6 18M6 6l12 12"/>
-                                    </svg>
-                                  </button>
-                                }
-                                @if (item.status && !item.removed_by_customer) {
-                                  <div class="item-status-control">
-                                    <button
-                                      class="item-status-badge clickable"
-                                      [class]="'status-' + item.status"
-                                      (click)="toggleItemStatusDropdown(order.id, item.id!)"
-                                      [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate">
-                                      {{ getItemStatusLabel(item.status) }}
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="6,9 12,15 18,9"/>
-                                      </svg>
-                                    </button>
-                                    @if (itemStatusDropdownOpen() === order.id + '-' + item.id) {
-                                      <div class="status-dropdown item-status-dropdown" (click)="$event.stopPropagation()">
-                                        @if (getItemStatusTransitions(item.status).backward.length > 0) {
-                                          <div class="dropdown-section">
-                                            <div class="dropdown-label">{{ 'ORDERS.GO_BACK' | translate }}</div>
-                                            @for (status of getItemStatusTransitions(item.status).backward; track status) {
-                                              <button
-                                                class="dropdown-item backward"
-                                                (click)="updateItemStatus(order.id, item.id!, status); itemStatusDropdownOpen.set(null)">
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <polyline points="15,18 9,12 15,6"/>
-                                                </svg>
-                                                {{ getItemStatusLabel(status) }}
-                                              </button>
-                                            }
-                                          </div>
-                                        }
-                                        @if (getItemStatusTransitions(item.status).forward.length > 0) {
-                                          <div class="dropdown-section">
-                                            <div class="dropdown-label">{{ 'ORDERS.MOVE_FORWARD' | translate }}</div>
-                                            @for (status of getItemStatusTransitions(item.status).forward; track status) {
-                                              <button
-                                                class="dropdown-item forward"
-                                                (click)="updateItemStatus(order.id, item.id!, status); itemStatusDropdownOpen.set(null)">
-                                                {{ getItemStatusLabel(status) }}
-                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <polyline points="9,18 15,12 9,6"/>
-                                                </svg>
-                                              </button>
-                                            }
-                                          </div>
-                                        }
-                                      </div>
-                                    }
-                                  </div>
-                                }
-                              </div>
-                            </div>
-                            @if (item.removed_by_customer) {
-                              <div class="removed-indicator">
-                                <span class="removed-label">{{ 'ORDERS.REMOVED_BY_CUSTOMER' | translate }}</span>
-                                @if (item.removed_at) {
-                                  <span class="removed-time">{{ formatTime(item.removed_at) }}</span>
-                                }
-                              </div>
-                            }
-                          </div>
-                        }
-                      </div>
-
-                      <div class="order-footer">
-                        <div class="order-footer-left">
-                          <span class="order-total">{{ 'ORDERS.TOTAL' | translate }}: {{ formatPrice(order.total_cents) }}</span>
-                          @if (order.removed_items_count && order.removed_items_count > 0) {
-                            <span class="removed-count">{{ 'ORDERS.ITEMS_REMOVED' | translate:{ count: order.removed_items_count } }}</span>
-                          }
-                        </div>
-                        <div class="order-actions">
-                          @if (canUpdateStatus() && order.status !== 'cancelled') {
-                            <button type="button" class="btn btn-urgent" (click)="toggleStaffUrgent(order, $event)">
-                              {{ order.staff_urgent ? ('ORDERS.CLEAR_URGENT' | translate) : ('ORDERS.MARK_URGENT' | translate) }}
-                            </button>
-                          }
-                          @if (canUpdateStatus() && order.can_request_hub_fulfillment && order.status !== 'cancelled' && order.status !== 'paid') {
-                            <button
-                              type="button"
-                              class="btn btn-secondary"
-                              data-testid="request-hub-fulfillment"
-                              (click)="requestHubFulfillment(order)"
-                            >
-                              {{ 'ORDERS.REQUEST_HQ_PREP' | translate }}
-                            </button>
-                          }
-                          <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                            </svg>
-                            {{ 'COMMON.EDIT' | translate }}
-                          </button>
-                          @if (isSatisfechoDelivery(order) && canUpdateStatus() && order.status !== 'cancelled') {
-                            <button type="button" class="btn btn-secondary" (click)="openEditDeliveryModal(order)">
-                              {{ 'ORDERS.EDIT_DELIVERY' | translate }}
-                            </button>
-                          }
-                          @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
-                            <button
-                              type="button"
-                              class="btn"
-                              [class.btn-secondary]="canFinishOrder()"
-                              [class.btn-primary]="!canFinishOrder()"
-                              (click)="markAsPaid(order)"
-                              [title]="'ORDERS.PAY_NOW_HINT' | translate">
-                              {{ 'ORDERS.PAY_NOW' | translate }}
-                            </button>
-                          }
-                          @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
-                            <button type="button" class="btn btn-success" (click)="openFinishPaymentModal(order)" [title]="'ORDERS.FINISH_ORDER_MENU' | translate">
-                              {{ 'ORDERS.FINISH_ORDER' | translate }}
-                            </button>
-                          }
-                          <div class="status-control">
-                            <button
-                              class="status-badge-btn"
-                              [class]="order.status"
-                              (click)="toggleStatusDropdown(order.id)"
-                              [title]="'ORDERS.CLICK_TO_CHANGE_STATUS' | translate">
-                              {{ getStatusLabel(order.status) }}
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="6,9 12,15 18,9"/>
-                              </svg>
-                            </button>
-                            @if (statusDropdownOpen() === order.id) {
-                              <div class="status-dropdown" (click)="$event.stopPropagation()">
-                                @if (getOrderStatusTransitions(order.status).backward.length > 0) {
-                                  <div class="dropdown-section">
-                                    <div class="dropdown-label">{{ 'ORDERS.GO_BACK' | translate }}</div>
-                                    @for (status of getOrderStatusTransitions(order.status).backward; track status) {
-                                      <button
-                                        class="dropdown-item backward"
-                                        (click)="updateStatus(order, status)">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                          <polyline points="15,18 9,12 15,6"/>
-                                        </svg>
-                                        {{ getStatusLabel(status) }}
-                                      </button>
-                                    }
-                                  </div>
-                                }
-                                @if (getOrderStatusTransitions(order.status).forward.length > 0) {
-                                  <div class="dropdown-section">
-                                    <div class="dropdown-label">{{ 'ORDERS.MOVE_FORWARD' | translate }}</div>
-                                    @for (status of getOrderStatusTransitions(order.status).forward; track status) {
-                                      <button
-                                        class="dropdown-item forward"
-                                        (click)="updateStatus(order, status)">
-                                        {{ getStatusLabel(status) }}
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                          <polyline points="9,18 15,12 9,6"/>
-                                        </svg>
-                                      </button>
-                                    }
-                                  </div>
-                                }
-                                @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
-                                  <div class="dropdown-section">
-                                    <button
-                                      class="dropdown-item forward"
-                                      (click)="markAsPaid(order); statusDropdownOpen.set(null)">
-                                      {{ 'ORDERS.MARK_AS_PAID' | translate }}
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="9,18 15,12 9,6"/>
-                                      </svg>
-                                    </button>
-                                  </div>
-                                }
-                                @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
-                                  <div class="dropdown-section">
-                                    <button
-                                      class="dropdown-item forward"
-                                      (click)="openFinishPaymentModal(order); statusDropdownOpen.set(null)">
-                                      {{ 'ORDERS.FINISH_ORDER_MENU' | translate }}
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="9,18 15,12 9,6"/>
-                                      </svg>
-                                    </button>
-                                  </div>
-                                }
-                                @if (order.status === 'paid' && canMarkPaid()) {
-                                  <div class="dropdown-section">
-                                    <button
-                                      class="dropdown-item backward"
-                                      (click)="unmarkPaid(order)">
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <polyline points="15,18 9,12 15,6"/>
-                                      </svg>
-                                      {{ 'ORDERS.UNMARK_PAID' | translate }}
-                                    </button>
-                                  </div>
-                                }
-                              </div>
-                            }
-                          </div>
-                          @if (canDeleteOrder()) {
-                            <button type="button" class="btn btn-delete-order" (click)="deleteOrder(order)" [title]="'ORDERS.DELETE_ORDER' | translate">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                                <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
-                              </svg>
-                              {{ 'ORDERS.DELETE_ORDER' | translate }}
-                            </button>
-                          }
-                          @if (order.table_id != null && order.table_token) {
-                            <button type="button" class="btn btn-menu-link" (click)="openMenuForOrder(order)" [title]="'ORDERS.OPEN_MENU_LINK' | translate">
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M18 13v6a2 2 0 01-2 2H8a2 2 0 01-2-2v-6"/><polyline points="15 3 21 3 21 9"/><polyline points="9 15 3 15 3 21"/>
-                              </svg>
-                              {{ 'ORDERS.OPEN_MENU' | translate }}
-                            </button>
-                          }
-                          <button type="button" class="btn btn-print" (click)="openFacturaModal(order)" [title]="'CUSTOMERS.PRINT_FACTURA' | translate">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <div class="empty-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M9 12l2 2 4-4M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
-                    </svg>
-                  </div>
-                  <h3>{{ 'ORDERS.ALL_ORDERS_PAID' | translate }}</h3>
-                  <p>{{ 'ORDERS.NO_UNPAID_ORDERS' | translate }}</p>
-                </div>
-              }
-            }
-
-            <!-- Delivery Orders Section -->
-            @if (viewMode() === 'delivery') {
-              @if (deliveryOrders().length > 0) {
-                <div class="order-grid">
-                  @for (order of deliveryOrders(); track order.id) {
-                    <div class="order-card" [id]="'order-card-' + order.id" [class]="'status-' + order.status + (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')">
-                      <div class="order-header">
-                        <div class="order-header-main">
-                          <span class="order-id">#{{ order.id }}</span>
-                          <span class="order-table">{{ order.table_name }}</span>
-                          @if (orderChannelBadgeKey(order); as channelKey) {
-                            <span class="order-channel-badge" [class.marketplace]="isMarketplaceDelivery(order)">{{ channelKey | translate }}</span>
-                          }
-                          @if (order.customer_name) {
-                            <span class="order-customer">{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span>
-                          }
-                          @if (order.staff_urgent) {
-                            <span class="order-urgent-badge">{{ 'ORDERS.URGENT_BADGE' | translate }}</span>
-                          }
-                          @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
-                            <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{ 'ORDERS.HUB_PREPARED_BADGE' | translate }}</span>
-                          } @else if (order.hub_fulfillment) {
-                            <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{ hubFulfillmentLabel(order.hub_fulfillment.status) | translate }}</span>
-                          }
-                          <span class="order-time" [title]="formatExactTime(order.created_at)">{{ 'ORDERS.ORDER_TIME' | translate }}: {{ formatOrderTime(order.created_at) }}</span>
-                        </div>
-                      </div>
-                      <div class="order-delivery-meta">
-                        @if (order.delivery_address) {
-                          <div>{{ 'ORDERS.DELIVERY_ADDRESS' | translate }}: {{ order.delivery_address }}</div>
-                        }
-                        @if (order.customer_phone) {
-                          <div>{{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}</div>
-                        }
-                        @if (isSatisfechoDelivery(order)) {
-                          <div>{{ 'ORDERS.COURIER' | translate }}: {{ courierDisplayName(order.courier_user_id) }}</div>
-                        }
-                        @if (isMarketplaceDelivery(order) && order.external_order_ref) {
-                          <div>{{ 'ORDERS.MARKETPLACE_REF' | translate }}: {{ order.external_order_ref }}</div>
-                        }
-                      </div>
-                      <div class="order-items">
-                        @for (item of getSortedItems(order.items); track item.id) {
-                          <div class="order-item" [class.removed]="item.removed_by_customer">
-                            <div class="item-name-row">
-                              <span class="item-qty">{{ item.quantity }}x</span>
-                              <span class="item-name">{{ item.product_name }}</span>
-                              @if (item.notes?.trim()) {
-                                <span class="item-notes">{{ item.notes }}</span>
-                              }
-                            </div>
-                            <div class="item-details-row">
-                              <span class="item-price">{{ formatPrice(item.price_cents) }}</span>
-                              @if (item.status) {
-                                <span class="item-status-badge" [class]="'status-' + item.status">{{ getItemStatusLabel(item.status) }}</span>
-                              }
-                            </div>
-                          </div>
-                        }
-                      </div>
-                      @if (displayOrderNotes(order.notes)) {
-                        <div class="order-notes-banner">{{ 'ORDERS.ORDER_NOTES' | translate }}: {{ displayOrderNotes(order.notes) }}</div>
-                      }
-                      <div class="order-footer">
-                        <div class="order-footer-left">
-                          <span class="order-total">{{ 'ORDERS.TOTAL' | translate }}: {{ formatPrice(order.total_cents) }}</span>
-                        </div>
-                        <div class="order-actions">
-                          <button type="button" class="btn btn-edit-order" (click)="openOrderEdit(order)" [title]="'ORDERS.EDIT_ORDER' | translate">
-                            {{ 'COMMON.EDIT' | translate }}
-                          </button>
-                          @if (isSatisfechoDelivery(order) && canUpdateStatus() && order.status !== 'cancelled') {
-                            <button type="button" class="btn btn-secondary" (click)="openEditDeliveryModal(order)">
-                              {{ 'ORDERS.EDIT_DELIVERY' | translate }}
-                            </button>
-                          }
-                          @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
-                            <button type="button" class="btn btn-primary" (click)="markAsPaid(order)">{{ 'ORDERS.PAY_NOW' | translate }}</button>
-                          }
-                          @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
-                            <button type="button" class="btn btn-success" (click)="openFinishPaymentModal(order)">{{ 'ORDERS.FINISH_ORDER' | translate }}</button>
-                          }
-                        </div>
-                      </div>
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <div class="empty-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                      <polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                  </div>
-                  <h3>{{ 'ORDERS.NO_DELIVERY_ORDERS' | translate }}</h3>
-                  <p>{{ 'ORDERS.NO_DELIVERY_ORDERS_DESC' | translate }}</p>
-                  @if (canUpdateStatus()) {
-                    <button type="button" class="btn btn-primary" (click)="openCreateDeliveryModal()">{{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}</button>
-                  }
-                </div>
-              }
-            }
-
-            <!-- Order History Section (AG Grid) - only when History tab is selected -->
-            @if (viewMode() === 'history') {
-              @if (completedOrders().length > 0) {
-                <div class="section-header history-header">
-                  <h2>{{ 'ORDERS.ORDER_HISTORY' | translate }}</h2>
-                  <span class="badge secondary">{{ completedOrders().length }}</span>
-                </div>
-                <div class="grid-container" (click)="onGridClick($event)">
-                  <ag-grid-angular
-                    style="width: 100%; height: 400px;"
-                    [theme]="gridTheme"
-                    [rowData]="completedOrders()"
-                    [columnDefs]="columnDefs"
-                    [defaultColDef]="defaultColDef"
-                  />
-                </div>
-              } @else {
-                <div class="empty-state">
-                  <div class="empty-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                      <polyline points="14,2 14,8 20,8"/>
-                    </svg>
-                  </div>
-                  <h3>{{ 'ORDERS.ORDER_HISTORY' | translate }}</h3>
-                  <p>{{ 'ORDERS.NO_ORDER_HISTORY_YET' | translate }}</p>
-                </div>
-              }
             }
           }
-        </div>
 
-        <!-- Order Edit Widget Modal (add/remove/change items, billing, print) -->
-        @if (editOrder(); as order) {
-          <div class="modal-overlay">
-            <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ 'ORDERS.EDIT_ORDER' | translate }} — #{{ order.id }} {{ order.table_name }}</h3>
-                <button class="icon-btn" (click)="closeOrderEdit()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p class="order-summary">{{ 'ORDERS.TOTAL' | translate }}: {{ formatPrice(order.total_cents) }}{{ order.customer_name ? ' · ' + ('ORDERS.CUSTOMER' | translate) + ': ' + order.customer_name : '' }}</p>
-
-                <div class="edit-order-items">
-                  <div class="edit-order-label">{{ 'ORDERS.ITEMS' | translate }}</div>
-                  @for (item of getSortedItems(order.items); track item.id) {
-                    @if (!item.removed_by_customer) {
-                      <div class="edit-order-item-block">
-                        <div class="edit-order-row">
-                          <span class="edit-item-name">{{ item.product_name }}</span>
-                          <input type="number" class="quantity-input" [value]="item.quantity" min="1"
-                            (change)="updateEditItemQuantity(order.id, item.id!, +$any($event.target).value)"
-                          />
-                          <select class="form-select edit-item-status" [ngModel]="item.status"
-                            (ngModelChange)="updateEditItemStatus(order.id, item.id!, $event)"
-                            [name]="'edit-status-' + item.id">
-                            @for (s of ['pending','preparing','ready','delivered','cancelled']; track s) {
-                              <option [value]="s">{{ getItemStatusLabel(s) }}</option>
-                            }
-                          </select>
-                          <button type="button" class="btn btn-sm btn-secondary" (click)="toggleModifierEdit(item)">
-                            {{ modifierEditItemId === item.id ? ('COMMON.CANCEL' | translate) : ('ORDERS.MODIFIERS' | translate) }}
-                          </button>
-                          <button type="button" class="btn btn-sm btn-remove-item" (click)="removeEditItem(order.id, item.id!, item.status ?? 'pending')" [title]="'ORDERS.REMOVE_ITEM' | translate">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                          </button>
-                        </div>
-                        @if (modifierEditItemId === item.id) {
-                          <div class="modifier-edit-fields">
-                            <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_REMOVE' | translate }}</label>
-                            <input type="text" class="form-input" [(ngModel)]="modifierEditRemove" [name]="'mod-rem-' + item.id" [placeholder]="'ORDERS.LINE_MODIFIERS_REMOVE_PLACEHOLDER' | translate" />
-                            <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_ADD' | translate }}</label>
-                            <input type="text" class="form-input" [(ngModel)]="modifierEditAdd" [name]="'mod-add-' + item.id" [placeholder]="'ORDERS.LINE_MODIFIERS_ADD_PLACEHOLDER' | translate" />
-                            <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_SUBSTITUTE' | translate }}</label>
-                            <textarea class="form-input modifier-textarea" rows="2" [(ngModel)]="modifierEditSubstitute" [name]="'mod-sub-' + item.id" [placeholder]="'ORDERS.LINE_MODIFIERS_SUBSTITUTE_PLACEHOLDER' | translate"></textarea>
-                            <button type="button" class="btn btn-primary btn-sm" (click)="saveItemModifiers(order.id, item)" [disabled]="savingItemModifiers()">
-                              {{ savingItemModifiers() ? ('COMMON.LOADING' | translate) : ('ORDERS.SAVE_MODIFIERS' | translate) }}
-                            </button>
-                          </div>
+          <!-- Delivery Orders Section -->
+          @if (viewMode() === 'delivery') {
+            @if (deliveryOrders().length > 0) {
+              <div class="order-grid">
+                @for (order of deliveryOrders(); track order.id) {
+                  <div
+                    class="order-card"
+                    [id]="'order-card-' + order.id"
+                    [class]="
+                      'status-' +
+                      order.status +
+                      (orderCardHasOpenStatusDropdown(order.id) ? ' status-dropdown-open' : '')
+                    "
+                  >
+                    <div class="order-header">
+                      <div class="order-header-main">
+                        <span class="order-id">#{{ order.id }}</span>
+                        <span class="order-table">{{ order.table_name }}</span>
+                        @if (orderChannelBadgeKey(order); as channelKey) {
+                          <span
+                            class="order-channel-badge"
+                            [class.marketplace]="isMarketplaceDelivery(order)"
+                            >{{ channelKey | translate }}</span
+                          >
                         }
-                        <label class="modifier-label">{{ 'ORDERS.ITEM_NOTES' | translate }}</label>
-                        <textarea class="form-input modifier-textarea" rows="2" [(ngModel)]="item.notes" [name]="'item-notes-' + item.id"
-                          [placeholder]="'ORDERS.ITEM_NOTES_PLACEHOLDER' | translate" maxlength="500"
-                          (blur)="saveEditItemNotes(order.id, item)"></textarea>
+                        @if (order.customer_name) {
+                          <span class="order-customer"
+                            >{{ 'ORDERS.CUSTOMER' | translate }}: {{ order.customer_name }}</span
+                          >
+                        }
+                        @if (order.staff_urgent) {
+                          <span class="order-urgent-badge">{{
+                            'ORDERS.URGENT_BADGE' | translate
+                          }}</span>
+                        }
+                        @if (order.hub_fulfillment?.status === 'prepared_at_hq') {
+                          <span class="order-hub-badge prepared" data-testid="hub-prepared-badge">{{
+                            'ORDERS.HUB_PREPARED_BADGE' | translate
+                          }}</span>
+                        } @else if (order.hub_fulfillment) {
+                          <span class="order-hub-badge" data-testid="hub-fulfillment-badge">{{
+                            hubFulfillmentLabel(order.hub_fulfillment.status) | translate
+                          }}</span>
+                        }
+                        <span class="order-time" [title]="formatExactTime(order.created_at)"
+                          >{{ 'ORDERS.ORDER_TIME' | translate }}:
+                          {{ formatOrderTime(order.created_at) }}</span
+                        >
+                      </div>
+                    </div>
+                    <div class="order-delivery-meta">
+                      @if (order.delivery_address) {
+                        <div>
+                          {{ 'ORDERS.DELIVERY_ADDRESS' | translate }}: {{ order.delivery_address }}
+                        </div>
+                      }
+                      @if (order.customer_phone) {
+                        <div>
+                          {{ 'ORDERS.DELIVERY_PHONE' | translate }}: {{ order.customer_phone }}
+                        </div>
+                      }
+                      @if (isSatisfechoDelivery(order)) {
+                        <div>
+                          {{ 'ORDERS.COURIER' | translate }}:
+                          {{ courierDisplayName(order.courier_user_id) }}
+                        </div>
+                      }
+                      @if (isMarketplaceDelivery(order) && order.external_order_ref) {
+                        <div>
+                          {{ 'ORDERS.MARKETPLACE_REF' | translate }}: {{ order.external_order_ref }}
+                        </div>
+                      }
+                    </div>
+                    <div class="order-items">
+                      @for (item of getSortedItems(order.items); track item.id) {
+                        <div class="order-item" [class.removed]="item.removed_by_customer">
+                          <div class="item-name-row">
+                            <span class="item-qty">{{ item.quantity }}x</span>
+                            <span class="item-name">{{ item.product_name }}</span>
+                            @if (item.notes?.trim()) {
+                              <span class="item-notes">{{ item.notes }}</span>
+                            }
+                          </div>
+                          <div class="item-details-row">
+                            <span class="item-price">{{ formatPrice(item.price_cents) }}</span>
+                            @if (item.status) {
+                              <span class="item-status-badge" [class]="'status-' + item.status">{{
+                                getItemStatusLabel(item.status)
+                              }}</span>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                    @if (displayOrderNotes(order.notes)) {
+                      <div class="order-notes-banner">
+                        {{ 'ORDERS.ORDER_NOTES' | translate }}: {{ displayOrderNotes(order.notes) }}
                       </div>
                     }
-                  }
-                </div>
-
-                @if (canAddItemsToOrder(order)) {
-                  <div class="form-group add-items-section">
-                    <div class="edit-order-label">{{ 'ORDERS.ADD_ITEM' | translate }}</div>
-                    <div class="add-items-row">
-                      <select class="form-select" [(ngModel)]="addItemProductId" name="addProduct">
-                        <option [ngValue]="null">{{ 'COMMON.SELECT' | translate }}</option>
-                        @for (p of editOrderTenantProducts(); track p.id) {
-                          <option [ngValue]="p.id">{{ p.name }} — {{ formatPrice(p.price_cents) }}</option>
+                    <div class="order-footer">
+                      <div class="order-footer-left">
+                        <span class="order-total"
+                          >{{ 'ORDERS.TOTAL' | translate }}:
+                          {{ formatPrice(order.total_cents) }}</span
+                        >
+                      </div>
+                      <div class="order-actions">
+                        <button
+                          type="button"
+                          class="btn btn-edit-order"
+                          (click)="openOrderEdit(order)"
+                          [title]="'ORDERS.EDIT_ORDER' | translate"
+                        >
+                          {{ 'COMMON.EDIT' | translate }}
+                        </button>
+                        @if (
+                          isSatisfechoDelivery(order) &&
+                          canUpdateStatus() &&
+                          order.status !== 'cancelled'
+                        ) {
+                          <button
+                            type="button"
+                            class="btn btn-secondary"
+                            (click)="openEditDeliveryModal(order)"
+                          >
+                            {{ 'ORDERS.EDIT_DELIVERY' | translate }}
+                          </button>
                         }
-                      </select>
-                      <input type="number" class="quantity-input" [(ngModel)]="addItemQuantity" min="1" name="addQty" />
-                      <button type="button" class="btn btn-primary" (click)="addItemToEditOrder()" [disabled]="!addItemProductId || addItemQuantity < 1 || addingItem()">
-                        {{ addingItem() ? ('COMMON.LOADING' | translate) : ('COMMON.ADD' | translate) }}
-                      </button>
-                    </div>
-                    <div class="add-modifiers-fields">
-                      <label class="modifier-label">{{ 'ORDERS.ITEM_NOTES' | translate }}</label>
-                      <textarea class="form-input modifier-textarea" rows="2" [(ngModel)]="addItemNotes" name="addItemNotes"
-                        [placeholder]="'ORDERS.ITEM_NOTES_PLACEHOLDER' | translate" maxlength="500"></textarea>
-                      <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_REMOVE' | translate }}</label>
-                      <input type="text" class="form-input" [(ngModel)]="addItemModifiersRemove" name="addModRem" [placeholder]="'ORDERS.LINE_MODIFIERS_REMOVE_PLACEHOLDER' | translate" />
-                      <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_ADD' | translate }}</label>
-                      <input type="text" class="form-input" [(ngModel)]="addItemModifiersAdd" name="addModAdd" [placeholder]="'ORDERS.LINE_MODIFIERS_ADD_PLACEHOLDER' | translate" />
-                      <label class="modifier-label">{{ 'ORDERS.LINE_MODIFIERS_SUBSTITUTE' | translate }}</label>
-                      <textarea class="form-input modifier-textarea" rows="2" [(ngModel)]="addItemModifiersSubstitute" name="addModSub" [placeholder]="'ORDERS.LINE_MODIFIERS_SUBSTITUTE_PLACEHOLDER' | translate"></textarea>
+                        @if (
+                          order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()
+                        ) {
+                          <button type="button" class="btn btn-primary" (click)="markAsPaid(order)">
+                            {{ 'ORDERS.PAY_NOW' | translate }}
+                          </button>
+                        }
+                        @if (
+                          order.status !== 'paid' &&
+                          order.status !== 'cancelled' &&
+                          canFinishOrder()
+                        ) {
+                          <button
+                            type="button"
+                            class="btn btn-success"
+                            (click)="openFinishPaymentModal(order)"
+                          >
+                            {{ 'ORDERS.FINISH_ORDER' | translate }}
+                          </button>
+                        }
+                      </div>
                     </div>
                   </div>
                 }
-
-                <div class="form-group">
-                  <label for="edit-billing-customer">{{ 'CUSTOMERS.SELECT_FOR_FACTURA' | translate }}</label>
-                  <select id="edit-billing-customer" class="form-select" [(ngModel)]="editOrderBillingId" name="editBillingCustomer">
-                    <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
-                    @for (c of editOrderBillingCustomers(); track c.id) {
-                      <option [ngValue]="c.id">{{ c.company_name || c.name }}{{ c.tax_id ? ' (' + c.tax_id + ')' : '' }}</option>
-                    }
-                  </select>
-                </div>
               </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" (click)="closeOrderEdit()">{{ 'COMMON.CLOSE' | translate }}</button>
-                <button type="button" class="btn btn-secondary" (click)="saveEditOrderBilling()">{{ 'COMMON.SAVE' | translate }}</button>
-                <button type="button" class="btn btn-secondary" (click)="printEditOrderInvoice()">{{ 'ORDERS.PRINT_INVOICE' | translate }}</button>
-                <button type="button" class="btn btn-secondary" (click)="printEditOrderKitchen()">{{ 'ORDERS.PRINT_KITCHEN' | translate }}</button>
-                @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
-                  <button type="button" class="btn btn-primary" (click)="markEditOrderAsPaid(order)">{{ 'ORDERS.MARK_AS_PAID' | translate }}</button>
-                }
-                @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
-                  <button type="button" class="btn btn-success" (click)="markEditOrderFinish(order)">{{ 'ORDERS.FINISH_ORDER' | translate }}</button>
-                }
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Create Satisfecho Delivery Order Modal -->
-        @if (createDeliveryOpen()) {
-          <div class="modal-overlay">
-            <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}</h3>
-                <button class="icon-btn" (click)="closeCreateDeliveryModal()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
+            } @else {
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
                   </svg>
-                </button>
+                </div>
+                <h3>{{ 'ORDERS.NO_DELIVERY_ORDERS' | translate }}</h3>
+                <p>{{ 'ORDERS.NO_DELIVERY_ORDERS_DESC' | translate }}</p>
+                @if (canUpdateStatus()) {
+                  <button type="button" class="btn btn-primary" (click)="openCreateDeliveryModal()">
+                    {{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}
+                  </button>
+                }
               </div>
-              <div class="modal-body">
-                <p class="modal-hint">{{ 'ORDERS.NEW_DELIVERY_HINT' | translate }}</p>
-                <div class="form-group">
-                  <label for="delivery-address">{{ 'ORDERS.DELIVERY_ADDRESS' | translate }} *</label>
-                  <input id="delivery-address" type="text" class="form-input" [(ngModel)]="deliveryFormAddress" name="deliveryAddress" required />
+            }
+          }
+
+          <!-- Order History Section (AG Grid) - only when History tab is selected -->
+          @if (viewMode() === 'history') {
+            @if (completedOrders().length > 0) {
+              <div class="section-header history-header">
+                <h2>{{ 'ORDERS.ORDER_HISTORY' | translate }}</h2>
+                <span class="badge secondary">{{ completedOrders().length }}</span>
+              </div>
+              <div class="grid-container" (click)="onGridClick($event)">
+                <ag-grid-angular
+                  style="width: 100%; height: 400px;"
+                  [theme]="gridTheme"
+                  [rowData]="completedOrders()"
+                  [columnDefs]="columnDefs"
+                  [defaultColDef]="defaultColDef"
+                />
+              </div>
+            } @else {
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg
+                    width="48"
+                    height="48"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                  >
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14,2 14,8 20,8" />
+                  </svg>
                 </div>
-                <div class="form-group">
-                  <label for="delivery-phone">{{ 'ORDERS.DELIVERY_PHONE' | translate }}</label>
-                  <input id="delivery-phone" type="tel" class="form-input" [(ngModel)]="deliveryFormPhone" name="deliveryPhone" />
-                </div>
-                <div class="form-group">
-                  <label for="delivery-customer">{{ 'ORDERS.CUSTOMER' | translate }}</label>
-                  <input id="delivery-customer" type="text" class="form-input" [(ngModel)]="deliveryFormCustomerName" name="deliveryCustomer" />
-                </div>
-                <div class="form-group">
-                  <label for="delivery-notes">{{ 'ORDERS.ORDER_NOTES' | translate }}</label>
-                  <textarea id="delivery-notes" class="form-input modifier-textarea" rows="2" [(ngModel)]="deliveryFormNotes" name="deliveryNotes"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="delivery-courier">{{ 'ORDERS.COURIER' | translate }}</label>
-                  <select id="delivery-courier" class="form-select" [(ngModel)]="deliveryFormCourierId" name="deliveryCourier">
-                    <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
-                    @for (c of couriers(); track c.id) {
-                      <option [ngValue]="c.id">{{ c.full_name || c.email }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="edit-order-label">{{ 'ORDERS.ITEMS' | translate }} *</div>
-                <div class="delivery-draft-items">
-                  @for (line of deliveryDraftItems; track $index; let i = $index) {
-                    <div class="edit-order-row">
-                      <span class="edit-item-name">{{ line.name }} × {{ line.quantity }}</span>
-                      <button type="button" class="btn btn-sm btn-secondary" (click)="removeDeliveryDraftItem(i)">{{ 'ORDERS.REMOVE_ITEM' | translate }}</button>
+                <h3>{{ 'ORDERS.ORDER_HISTORY' | translate }}</h3>
+                <p>{{ 'ORDERS.NO_ORDER_HISTORY_YET' | translate }}</p>
+              </div>
+            }
+          }
+        }
+      </div>
+
+      <!-- Order Edit Widget Modal (add/remove/change items, billing, print) -->
+      @if (editOrder(); as order) {
+        <div class="modal-overlay">
+          <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>
+                {{ 'ORDERS.EDIT_ORDER' | translate }} — #{{ order.id }} {{ order.table_name }}
+              </h3>
+              <button class="icon-btn" (click)="closeOrderEdit()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="order-summary">
+                {{ 'ORDERS.TOTAL' | translate }}: {{ formatPrice(order.total_cents)
+                }}{{
+                  order.customer_name
+                    ? ' · ' + ('ORDERS.CUSTOMER' | translate) + ': ' + order.customer_name
+                    : ''
+                }}
+              </p>
+
+              <div class="edit-order-items">
+                <div class="edit-order-label">{{ 'ORDERS.ITEMS' | translate }}</div>
+                @for (item of getSortedItems(order.items); track item.id) {
+                  @if (!item.removed_by_customer) {
+                    <div class="edit-order-item-block">
+                      <div class="edit-order-row">
+                        <span class="edit-item-name">{{ item.product_name }}</span>
+                        <input
+                          type="number"
+                          class="quantity-input"
+                          [value]="item.quantity"
+                          min="1"
+                          (change)="
+                            updateEditItemQuantity(order.id, item.id!, +$any($event.target).value)
+                          "
+                        />
+                        <select
+                          class="form-select edit-item-status"
+                          [ngModel]="item.status"
+                          (ngModelChange)="updateEditItemStatus(order.id, item.id!, $event)"
+                          [name]="'edit-status-' + item.id"
+                        >
+                          @for (
+                            s of ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];
+                            track s
+                          ) {
+                            <option [value]="s">{{ getItemStatusLabel(s) }}</option>
+                          }
+                        </select>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-secondary"
+                          (click)="toggleModifierEdit(item)"
+                        >
+                          {{
+                            modifierEditItemId === item.id
+                              ? ('COMMON.CANCEL' | translate)
+                              : ('ORDERS.MODIFIERS' | translate)
+                          }}
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-remove-item"
+                          (click)="removeEditItem(order.id, item.id!, item.status ?? 'pending')"
+                          [title]="'ORDERS.REMOVE_ITEM' | translate"
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      </div>
+                      @if (modifierEditItemId === item.id) {
+                        <div class="modifier-edit-fields">
+                          <label class="modifier-label">{{
+                            'ORDERS.LINE_MODIFIERS_REMOVE' | translate
+                          }}</label>
+                          <input
+                            type="text"
+                            class="form-input"
+                            [(ngModel)]="modifierEditRemove"
+                            [name]="'mod-rem-' + item.id"
+                            [placeholder]="'ORDERS.LINE_MODIFIERS_REMOVE_PLACEHOLDER' | translate"
+                          />
+                          <label class="modifier-label">{{
+                            'ORDERS.LINE_MODIFIERS_ADD' | translate
+                          }}</label>
+                          <input
+                            type="text"
+                            class="form-input"
+                            [(ngModel)]="modifierEditAdd"
+                            [name]="'mod-add-' + item.id"
+                            [placeholder]="'ORDERS.LINE_MODIFIERS_ADD_PLACEHOLDER' | translate"
+                          />
+                          <label class="modifier-label">{{
+                            'ORDERS.LINE_MODIFIERS_SUBSTITUTE' | translate
+                          }}</label>
+                          <textarea
+                            class="form-input modifier-textarea"
+                            rows="2"
+                            [(ngModel)]="modifierEditSubstitute"
+                            [name]="'mod-sub-' + item.id"
+                            [placeholder]="
+                              'ORDERS.LINE_MODIFIERS_SUBSTITUTE_PLACEHOLDER' | translate
+                            "
+                          ></textarea>
+                          <button
+                            type="button"
+                            class="btn btn-primary btn-sm"
+                            (click)="saveItemModifiers(order.id, item)"
+                            [disabled]="savingItemModifiers()"
+                          >
+                            {{
+                              savingItemModifiers()
+                                ? ('COMMON.LOADING' | translate)
+                                : ('ORDERS.SAVE_MODIFIERS' | translate)
+                            }}
+                          </button>
+                        </div>
+                      }
+                      <label class="modifier-label">{{ 'ORDERS.ITEM_NOTES' | translate }}</label>
+                      <textarea
+                        class="form-input modifier-textarea"
+                        rows="2"
+                        [(ngModel)]="item.notes"
+                        [name]="'item-notes-' + item.id"
+                        [placeholder]="'ORDERS.ITEM_NOTES_PLACEHOLDER' | translate"
+                        maxlength="500"
+                        (blur)="saveEditItemNotes(order.id, item)"
+                      ></textarea>
                     </div>
                   }
-                </div>
-                <div class="add-items-row">
-                  <select class="form-select" [(ngModel)]="deliveryAddProductId" name="deliveryAddProduct">
-                    <option [ngValue]="null">{{ 'COMMON.SELECT' | translate }}</option>
-                    @for (p of deliveryProducts(); track p.id) {
-                      <option [ngValue]="p.id">{{ p.name }} — {{ formatPrice(p.price_cents) }}</option>
-                    }
-                  </select>
-                  <input type="number" class="quantity-input" [(ngModel)]="deliveryAddQuantity" min="1" name="deliveryAddQty" />
-                  <button type="button" class="btn btn-secondary" (click)="addDeliveryDraftItem()" [disabled]="!deliveryAddProductId || deliveryAddQuantity < 1">
-                    {{ 'COMMON.ADD' | translate }}
-                  </button>
-                </div>
-              </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" (click)="closeCreateDeliveryModal()">{{ 'COMMON.CANCEL' | translate }}</button>
-                <button type="button" class="btn btn-primary" (click)="submitCreateDelivery()" [disabled]="creatingDelivery() || !deliveryFormAddress.trim() || deliveryDraftItems.length === 0">
-                  {{ creatingDelivery() ? ('COMMON.LOADING' | translate) : ('ORDERS.CREATE_DELIVERY' | translate) }}
-                </button>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Edit Satisfecho Delivery metadata Modal -->
-        @if (editDeliveryOrder(); as dOrder) {
-          <div class="modal-overlay">
-            <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ 'ORDERS.EDIT_DELIVERY' | translate }} — #{{ dOrder.id }}</h3>
-                <button class="icon-btn" (click)="closeEditDeliveryModal()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="modal-body">
-                <div class="form-group">
-                  <label for="edit-delivery-address">{{ 'ORDERS.DELIVERY_ADDRESS' | translate }} *</label>
-                  <input id="edit-delivery-address" type="text" class="form-input" [(ngModel)]="deliveryFormAddress" name="editDeliveryAddress" />
-                </div>
-                <div class="form-group">
-                  <label for="edit-delivery-phone">{{ 'ORDERS.DELIVERY_PHONE' | translate }}</label>
-                  <input id="edit-delivery-phone" type="tel" class="form-input" [(ngModel)]="deliveryFormPhone" name="editDeliveryPhone" />
-                </div>
-                <div class="form-group">
-                  <label for="edit-delivery-customer">{{ 'ORDERS.CUSTOMER' | translate }}</label>
-                  <input id="edit-delivery-customer" type="text" class="form-input" [(ngModel)]="deliveryFormCustomerName" name="editDeliveryCustomer" />
-                </div>
-                <div class="form-group">
-                  <label for="edit-delivery-notes">{{ 'ORDERS.ORDER_NOTES' | translate }}</label>
-                  <textarea id="edit-delivery-notes" class="form-input modifier-textarea" rows="2" [(ngModel)]="deliveryFormNotes" name="editDeliveryNotes"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="edit-delivery-courier">{{ 'ORDERS.COURIER' | translate }}</label>
-                  <select id="edit-delivery-courier" class="form-select" [(ngModel)]="deliveryFormCourierId" name="editDeliveryCourier">
-                    <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
-                    @for (c of couriers(); track c.id) {
-                      <option [ngValue]="c.id">{{ c.full_name || c.email }}</option>
-                    }
-                  </select>
-                </div>
-              </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" (click)="closeEditDeliveryModal()">{{ 'COMMON.CANCEL' | translate }}</button>
-                <button type="button" class="btn btn-primary" (click)="submitEditDelivery()" [disabled]="savingDelivery() || !deliveryFormAddress.trim()">
-                  {{ savingDelivery() ? ('COMMON.LOADING' | translate) : ('COMMON.SAVE' | translate) }}
-                </button>
-              </div>
-            </div>
-          </div>
-        }
-
-        <!-- Print Factura Modal -->
-        @if (facturaOrder()) {
-          <div class="modal-overlay">
-            <div class="modal modal-edit-order" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ facturaModalEditMode() ? ('ORDERS.EDIT_ORDER' | translate) : ('CUSTOMERS.PRINT_FACTURA' | translate) }}</h3>
-                <button class="icon-btn" (click)="closeFacturaModal()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p class="order-summary">{{ 'ORDERS.ORDER_ID' | translate }}{{ facturaOrder()!.id }} — {{ facturaOrder()!.table_name }} — {{ formatPrice(facturaOrder()!.total_cents) }}</p>
-                <div class="form-group">
-                  <label for="factura-customer">{{ 'CUSTOMERS.SELECT_FOR_FACTURA' | translate }}</label>
-                  <select id="factura-customer" class="form-select" [(ngModel)]="facturaCustomerId" name="facturaCustomer">
-                    <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
-                    @for (c of facturaCustomers(); track c.id) {
-                      <option [ngValue]="c.id">{{ c.company_name || c.name }}{{ c.tax_id ? ' (' + c.tax_id + ')' : '' }}</option>
-                    }
-                  </select>
-                </div>
-              </div>
-              <div class="modal-actions">
-                <button type="button" class="btn btn-secondary" (click)="closeFacturaModal()">{{ 'COMMON.CANCEL' | translate }}</button>
-                @if (facturaModalEditMode()) {
-                  <button type="button" class="btn btn-secondary" (click)="printFacturaAndClose()">
-                    {{ 'ORDERS.PRINT_INVOICE' | translate }}
-                  </button>
-                  <button type="button" class="btn btn-primary" (click)="saveFacturaCustomerAndClose()">
-                    {{ 'COMMON.SAVE' | translate }}
-                  </button>
-                } @else {
-                  <button type="button" class="btn btn-primary" (click)="printFacturaAndClose()">
-                    {{ 'ORDERS.PRINT_INVOICE' | translate }}
-                  </button>
                 }
               </div>
-            </div>
-          </div>
-        }
 
-        <!-- Mark as Paid / Finish order Modal -->
-        @if (orderToMarkPaid()) {
-          <div class="modal-overlay">
-            <div class="modal" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ paymentModalFinishMode() ? ('ORDERS.FINISH_ORDER_TITLE' | translate) : ('ORDERS.MARK_ORDER_AS_PAID' | translate) }}</h3>
-                <button class="icon-btn" (click)="closePaymentModal()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p>{{ 'ORDERS.ORDER_ID' | translate }}{{ orderToMarkPaid()!.id }}</p>
-                <p class="payment-amount-line">
-                  {{ 'ORDERS.SUBTOTAL' | translate }}: {{ formatPrice(orderPaymentSubtotal(orderToMarkPaid()!)) }}
-                </p>
-                @if ((orderToMarkPaid()!.loyalty_discount_cents || 0) > 0) {
-                  <p class="payment-amount-line" data-testid="loyalty-discount-line">
-                    {{ 'ORDERS.LOYALTY_DISCOUNT' | translate }}:
-                    −{{ formatPrice(orderToMarkPaid()!.loyalty_discount_cents || 0) }}
-                  </p>
-                }
-                @if (canRedeemLoyalty() && !(orderToMarkPaid()!.loyalty_units_redeemed)) {
-                  <div class="form-group" data-testid="loyalty-redeem-block">
-                    <label for="loyalty-member-token">{{ 'ORDERS.LOYALTY_MEMBER_TOKEN' | translate }}</label>
+              @if (canAddItemsToOrder(order)) {
+                <div class="form-group add-items-section">
+                  <div class="edit-order-label">{{ 'ORDERS.ADD_ITEM' | translate }}</div>
+                  <div class="add-items-row">
+                    <select class="form-select" [(ngModel)]="addItemProductId" name="addProduct">
+                      <option [ngValue]="null">{{ 'COMMON.SELECT' | translate }}</option>
+                      @for (p of editOrderTenantProducts(); track p.id) {
+                        <option [ngValue]="p.id">
+                          {{ p.name }} — {{ formatPrice(p.price_cents) }}
+                        </option>
+                      }
+                    </select>
                     <input
-                      id="loyalty-member-token"
-                      type="text"
-                      class="form-control"
-                      [(ngModel)]="loyaltyRedeemToken"
-                      name="loyaltyRedeemToken"
-                      [placeholder]="'ORDERS.LOYALTY_MEMBER_TOKEN_HINT' | translate"
+                      type="number"
+                      class="quantity-input"
+                      [(ngModel)]="addItemQuantity"
+                      min="1"
+                      name="addQty"
                     />
                     <button
                       type="button"
-                      class="btn btn-secondary"
-                      style="margin-top: 0.5rem"
-                      [disabled]="!loyaltyRedeemToken.trim() || loyaltyRedeeming()"
-                      (click)="redeemLoyaltyForPaymentOrder()"
+                      class="btn btn-primary"
+                      (click)="addItemToEditOrder()"
+                      [disabled]="!addItemProductId || addItemQuantity < 1 || addingItem()"
                     >
-                      {{ 'ORDERS.LOYALTY_REDEEM' | translate }}
+                      {{
+                        addingItem() ? ('COMMON.LOADING' | translate) : ('COMMON.ADD' | translate)
+                      }}
                     </button>
-                    @if (loyaltyRedeemError()) {
-                      <p class="modal-hint" style="color:#b00020">{{ loyaltyRedeemError() }}</p>
-                    }
+                  </div>
+                  <div class="add-modifiers-fields">
+                    <label class="modifier-label">{{ 'ORDERS.ITEM_NOTES' | translate }}</label>
+                    <textarea
+                      class="form-input modifier-textarea"
+                      rows="2"
+                      [(ngModel)]="addItemNotes"
+                      name="addItemNotes"
+                      [placeholder]="'ORDERS.ITEM_NOTES_PLACEHOLDER' | translate"
+                      maxlength="500"
+                    ></textarea>
+                    <label class="modifier-label">{{
+                      'ORDERS.LINE_MODIFIERS_REMOVE' | translate
+                    }}</label>
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="addItemModifiersRemove"
+                      name="addModRem"
+                      [placeholder]="'ORDERS.LINE_MODIFIERS_REMOVE_PLACEHOLDER' | translate"
+                    />
+                    <label class="modifier-label">{{
+                      'ORDERS.LINE_MODIFIERS_ADD' | translate
+                    }}</label>
+                    <input
+                      type="text"
+                      class="form-input"
+                      [(ngModel)]="addItemModifiersAdd"
+                      name="addModAdd"
+                      [placeholder]="'ORDERS.LINE_MODIFIERS_ADD_PLACEHOLDER' | translate"
+                    />
+                    <label class="modifier-label">{{
+                      'ORDERS.LINE_MODIFIERS_SUBSTITUTE' | translate
+                    }}</label>
+                    <textarea
+                      class="form-input modifier-textarea"
+                      rows="2"
+                      [(ngModel)]="addItemModifiersSubstitute"
+                      name="addModSub"
+                      [placeholder]="'ORDERS.LINE_MODIFIERS_SUBSTITUTE_PLACEHOLDER' | translate"
+                    ></textarea>
+                  </div>
+                </div>
+              }
+
+              <div class="form-group">
+                <label for="edit-billing-customer">{{
+                  'CUSTOMERS.SELECT_FOR_FACTURA' | translate
+                }}</label>
+                <select
+                  id="edit-billing-customer"
+                  class="form-select"
+                  [(ngModel)]="editOrderBillingId"
+                  name="editBillingCustomer"
+                >
+                  <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
+                  @for (c of editOrderBillingCustomers(); track c.id) {
+                    <option [ngValue]="c.id">
+                      {{ c.company_name || c.name }}{{ c.tax_id ? ' (' + c.tax_id + ')' : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeOrderEdit()">
+                {{ 'COMMON.CLOSE' | translate }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="saveEditOrderBilling()">
+                {{ 'COMMON.SAVE' | translate }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="printEditOrderInvoice()">
+                {{ 'ORDERS.PRINT_INVOICE' | translate }}
+              </button>
+              <button type="button" class="btn btn-secondary" (click)="printEditOrderKitchen()">
+                {{ 'ORDERS.PRINT_KITCHEN' | translate }}
+              </button>
+              @if (order.status !== 'paid' && order.status !== 'cancelled' && canMarkPaid()) {
+                <button type="button" class="btn btn-primary" (click)="markEditOrderAsPaid(order)">
+                  {{ 'ORDERS.MARK_AS_PAID' | translate }}
+                </button>
+              }
+              @if (order.status !== 'paid' && order.status !== 'cancelled' && canFinishOrder()) {
+                <button type="button" class="btn btn-success" (click)="markEditOrderFinish(order)">
+                  {{ 'ORDERS.FINISH_ORDER' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Create Satisfecho Delivery Order Modal -->
+      @if (createDeliveryOpen()) {
+        <div class="modal-overlay">
+          <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>{{ 'ORDERS.NEW_DELIVERY_ORDER' | translate }}</h3>
+              <button class="icon-btn" (click)="closeCreateDeliveryModal()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="modal-hint">{{ 'ORDERS.NEW_DELIVERY_HINT' | translate }}</p>
+              <div class="form-group">
+                <label for="delivery-address">{{ 'ORDERS.DELIVERY_ADDRESS' | translate }} *</label>
+                <input
+                  id="delivery-address"
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormAddress"
+                  name="deliveryAddress"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="delivery-phone">{{ 'ORDERS.DELIVERY_PHONE' | translate }}</label>
+                <input
+                  id="delivery-phone"
+                  type="tel"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormPhone"
+                  name="deliveryPhone"
+                />
+              </div>
+              <div class="form-group">
+                <label for="delivery-customer">{{ 'ORDERS.CUSTOMER' | translate }}</label>
+                <input
+                  id="delivery-customer"
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormCustomerName"
+                  name="deliveryCustomer"
+                />
+              </div>
+              <div class="form-group">
+                <label for="delivery-notes">{{ 'ORDERS.ORDER_NOTES' | translate }}</label>
+                <textarea
+                  id="delivery-notes"
+                  class="form-input modifier-textarea"
+                  rows="2"
+                  [(ngModel)]="deliveryFormNotes"
+                  name="deliveryNotes"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label for="delivery-courier">{{ 'ORDERS.COURIER' | translate }}</label>
+                <select
+                  id="delivery-courier"
+                  class="form-select"
+                  [(ngModel)]="deliveryFormCourierId"
+                  name="deliveryCourier"
+                >
+                  <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
+                  @for (c of couriers(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.full_name || c.email }}</option>
+                  }
+                </select>
+              </div>
+              <div class="edit-order-label">{{ 'ORDERS.ITEMS' | translate }} *</div>
+              <div class="delivery-draft-items">
+                @for (line of deliveryDraftItems; track $index; let i = $index) {
+                  <div class="edit-order-row">
+                    <span class="edit-item-name">{{ line.name }} × {{ line.quantity }}</span>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-secondary"
+                      (click)="removeDeliveryDraftItem(i)"
+                    >
+                      {{ 'ORDERS.REMOVE_ITEM' | translate }}
+                    </button>
                   </div>
                 }
-                @if (tipEntryModeOverpayment()) {
-                  <p class="modal-hint">{{ 'ORDERS.OVERPAYMENT_PAYMENT_HINT' | translate }}</p>
-                  <div class="form-group">
-                    <label for="payment-amount-charged">{{ 'ORDERS.AMOUNT_CHARGED' | translate }}</label>
-                    <input
-                      id="payment-amount-charged"
-                      type="text"
-                      inputmode="decimal"
-                      class="form-control"
-                      [(ngModel)]="paymentAmountPaidInput"
-                      (ngModelChange)="onPaymentAmountPaidChange()"
-                      name="paymentAmountPaid"
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label for="payment-tip-amount">{{ 'ORDERS.TIP_AMOUNT_EDIT' | translate }}</label>
-                    <input
-                      id="payment-tip-amount"
-                      type="text"
-                      inputmode="decimal"
-                      class="form-control"
-                      [(ngModel)]="paymentTipAmountInput"
-                      name="paymentTipAmount"
-                    />
-                  </div>
-                  <p class="modal-hint payment-tip-preview">
-                    {{ 'ORDERS.TIP_AMOUNT' | translate }}: {{ formatPrice(paymentTipAmountDisplayCents()) }}
-                    — {{ 'ORDERS.AMOUNT_DUE' | translate }}: {{ formatPrice(paymentOverpaymentGrandTotalCents()) }}
-                  </p>
-                } @else if (tipPresetsForPayment().length > 0) {
-                  <div class="form-group payment-tip-group">
-                    <span class="form-label-text">{{ 'ORDERS.TIP' | translate }}</span>
-                    <div class="tip-preset-buttons">
-                      <button type="button" class="btn btn-sm" [class.btn-primary]="paymentTipPercent === 0" [class.btn-secondary]="paymentTipPercent !== 0" (click)="paymentTipPercent = 0">
-                        {{ 'ORDERS.TIP_NONE' | translate }}
+              </div>
+              <div class="add-items-row">
+                <select
+                  class="form-select"
+                  [(ngModel)]="deliveryAddProductId"
+                  name="deliveryAddProduct"
+                >
+                  <option [ngValue]="null">{{ 'COMMON.SELECT' | translate }}</option>
+                  @for (p of deliveryProducts(); track p.id) {
+                    <option [ngValue]="p.id">
+                      {{ p.name }} — {{ formatPrice(p.price_cents) }}
+                    </option>
+                  }
+                </select>
+                <input
+                  type="number"
+                  class="quantity-input"
+                  [(ngModel)]="deliveryAddQuantity"
+                  min="1"
+                  name="deliveryAddQty"
+                />
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  (click)="addDeliveryDraftItem()"
+                  [disabled]="!deliveryAddProductId || deliveryAddQuantity < 1"
+                >
+                  {{ 'COMMON.ADD' | translate }}
+                </button>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeCreateDeliveryModal()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="submitCreateDelivery()"
+                [disabled]="
+                  creatingDelivery() ||
+                  !deliveryFormAddress.trim() ||
+                  deliveryDraftItems.length === 0
+                "
+              >
+                {{
+                  creatingDelivery()
+                    ? ('COMMON.LOADING' | translate)
+                    : ('ORDERS.CREATE_DELIVERY' | translate)
+                }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Edit Satisfecho Delivery metadata Modal -->
+      @if (editDeliveryOrder(); as dOrder) {
+        <div class="modal-overlay">
+          <div class="modal modal-order-edit" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>{{ 'ORDERS.EDIT_DELIVERY' | translate }} — #{{ dOrder.id }}</h3>
+              <button class="icon-btn" (click)="closeEditDeliveryModal()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="form-group">
+                <label for="edit-delivery-address"
+                  >{{ 'ORDERS.DELIVERY_ADDRESS' | translate }} *</label
+                >
+                <input
+                  id="edit-delivery-address"
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormAddress"
+                  name="editDeliveryAddress"
+                />
+              </div>
+              <div class="form-group">
+                <label for="edit-delivery-phone">{{ 'ORDERS.DELIVERY_PHONE' | translate }}</label>
+                <input
+                  id="edit-delivery-phone"
+                  type="tel"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormPhone"
+                  name="editDeliveryPhone"
+                />
+              </div>
+              <div class="form-group">
+                <label for="edit-delivery-customer">{{ 'ORDERS.CUSTOMER' | translate }}</label>
+                <input
+                  id="edit-delivery-customer"
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="deliveryFormCustomerName"
+                  name="editDeliveryCustomer"
+                />
+              </div>
+              <div class="form-group">
+                <label for="edit-delivery-notes">{{ 'ORDERS.ORDER_NOTES' | translate }}</label>
+                <textarea
+                  id="edit-delivery-notes"
+                  class="form-input modifier-textarea"
+                  rows="2"
+                  [(ngModel)]="deliveryFormNotes"
+                  name="editDeliveryNotes"
+                ></textarea>
+              </div>
+              <div class="form-group">
+                <label for="edit-delivery-courier">{{ 'ORDERS.COURIER' | translate }}</label>
+                <select
+                  id="edit-delivery-courier"
+                  class="form-select"
+                  [(ngModel)]="deliveryFormCourierId"
+                  name="editDeliveryCourier"
+                >
+                  <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
+                  @for (c of couriers(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.full_name || c.email }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeEditDeliveryModal()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                (click)="submitEditDelivery()"
+                [disabled]="savingDelivery() || !deliveryFormAddress.trim()"
+              >
+                {{
+                  savingDelivery() ? ('COMMON.LOADING' | translate) : ('COMMON.SAVE' | translate)
+                }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Print Factura Modal -->
+      @if (facturaOrder()) {
+        <div class="modal-overlay">
+          <div class="modal modal-edit-order" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>
+                {{
+                  facturaModalEditMode()
+                    ? ('ORDERS.EDIT_ORDER' | translate)
+                    : ('CUSTOMERS.PRINT_FACTURA' | translate)
+                }}
+              </h3>
+              <button class="icon-btn" (click)="closeFacturaModal()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p class="order-summary">
+                {{ 'ORDERS.ORDER_ID' | translate }}{{ facturaOrder()!.id }} —
+                {{ facturaOrder()!.table_name }} — {{ formatPrice(facturaOrder()!.total_cents) }}
+              </p>
+              <div class="form-group">
+                <label for="factura-customer">{{
+                  'CUSTOMERS.SELECT_FOR_FACTURA' | translate
+                }}</label>
+                <select
+                  id="factura-customer"
+                  class="form-select"
+                  [(ngModel)]="facturaCustomerId"
+                  name="facturaCustomer"
+                >
+                  <option [ngValue]="null">{{ 'COMMON.NONE' | translate }}</option>
+                  @for (c of facturaCustomers(); track c.id) {
+                    <option [ngValue]="c.id">
+                      {{ c.company_name || c.name }}{{ c.tax_id ? ' (' + c.tax_id + ')' : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" (click)="closeFacturaModal()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+              @if (facturaModalEditMode()) {
+                <button type="button" class="btn btn-secondary" (click)="printFacturaAndClose()">
+                  {{ 'ORDERS.PRINT_INVOICE' | translate }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="saveFacturaCustomerAndClose()"
+                >
+                  {{ 'COMMON.SAVE' | translate }}
+                </button>
+              } @else {
+                <button type="button" class="btn btn-primary" (click)="printFacturaAndClose()">
+                  {{ 'ORDERS.PRINT_INVOICE' | translate }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Mark as Paid / Finish order Modal -->
+      @if (orderToMarkPaid()) {
+        <div class="modal-overlay">
+          <div class="modal" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>
+                {{
+                  paymentModalFinishMode()
+                    ? ('ORDERS.FINISH_ORDER_TITLE' | translate)
+                    : ('ORDERS.MARK_ORDER_AS_PAID' | translate)
+                }}
+              </h3>
+              <button class="icon-btn" (click)="closePaymentModal()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>{{ 'ORDERS.ORDER_ID' | translate }}{{ orderToMarkPaid()!.id }}</p>
+              <p class="payment-amount-line">
+                {{ 'ORDERS.SUBTOTAL' | translate }}:
+                {{ formatPrice(orderPaymentSubtotal(orderToMarkPaid()!)) }}
+              </p>
+              @if ((orderToMarkPaid()!.loyalty_discount_cents || 0) > 0) {
+                <p class="payment-amount-line" data-testid="loyalty-discount-line">
+                  {{ 'ORDERS.LOYALTY_DISCOUNT' | translate }}: −{{
+                    formatPrice(orderToMarkPaid()!.loyalty_discount_cents || 0)
+                  }}
+                </p>
+              }
+              @if (canRedeemLoyalty() && !orderToMarkPaid()!.loyalty_units_redeemed) {
+                <div class="form-group" data-testid="loyalty-redeem-block">
+                  <label for="loyalty-member-token">{{
+                    'ORDERS.LOYALTY_MEMBER_TOKEN' | translate
+                  }}</label>
+                  <input
+                    id="loyalty-member-token"
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="loyaltyRedeemToken"
+                    name="loyaltyRedeemToken"
+                    [placeholder]="'ORDERS.LOYALTY_MEMBER_TOKEN_HINT' | translate"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    style="margin-top: 0.5rem"
+                    [disabled]="!loyaltyRedeemToken.trim() || loyaltyRedeeming()"
+                    (click)="redeemLoyaltyForPaymentOrder()"
+                  >
+                    {{ 'ORDERS.LOYALTY_REDEEM' | translate }}
+                  </button>
+                  @if (loyaltyRedeemError()) {
+                    <p class="modal-hint" style="color:#b00020">{{ loyaltyRedeemError() }}</p>
+                  }
+                </div>
+              }
+              @if (tipEntryModeOverpayment()) {
+                <p class="modal-hint">{{ 'ORDERS.OVERPAYMENT_PAYMENT_HINT' | translate }}</p>
+                <div class="form-group">
+                  <label for="payment-amount-charged">{{
+                    'ORDERS.AMOUNT_CHARGED' | translate
+                  }}</label>
+                  <input
+                    id="payment-amount-charged"
+                    type="text"
+                    inputmode="decimal"
+                    class="form-control"
+                    [(ngModel)]="paymentAmountPaidInput"
+                    (ngModelChange)="onPaymentAmountPaidChange()"
+                    name="paymentAmountPaid"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="payment-tip-amount">{{ 'ORDERS.TIP_AMOUNT_EDIT' | translate }}</label>
+                  <input
+                    id="payment-tip-amount"
+                    type="text"
+                    inputmode="decimal"
+                    class="form-control"
+                    [(ngModel)]="paymentTipAmountInput"
+                    name="paymentTipAmount"
+                  />
+                </div>
+                <p class="modal-hint payment-tip-preview">
+                  {{ 'ORDERS.TIP_AMOUNT' | translate }}:
+                  {{ formatPrice(paymentTipAmountDisplayCents()) }} —
+                  {{ 'ORDERS.AMOUNT_DUE' | translate }}:
+                  {{ formatPrice(paymentOverpaymentGrandTotalCents()) }}
+                </p>
+              } @else if (tipPresetsForPayment().length > 0) {
+                <div class="form-group payment-tip-group">
+                  <span class="form-label-text">{{ 'ORDERS.TIP' | translate }}</span>
+                  <div class="tip-preset-buttons">
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [class.btn-primary]="paymentTipPercent === 0"
+                      [class.btn-secondary]="paymentTipPercent !== 0"
+                      (click)="paymentTipPercent = 0"
+                    >
+                      {{ 'ORDERS.TIP_NONE' | translate }}
+                    </button>
+                    @for (p of tipPresetsForPayment(); track p) {
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        [class.btn-primary]="paymentTipPercent === p"
+                        [class.btn-secondary]="paymentTipPercent !== p"
+                        (click)="paymentTipPercent = p"
+                      >
+                        {{ p }}%
                       </button>
-                      @for (p of tipPresetsForPayment(); track p) {
-                        <button type="button" class="btn btn-sm" [class.btn-primary]="paymentTipPercent === p" [class.btn-secondary]="paymentTipPercent !== p" (click)="paymentTipPercent = p">
-                          {{ p }}%
-                        </button>
-                      }
-                    </div>
-                    @if (paymentTipPercent > 0) {
-                      <p class="modal-hint payment-tip-preview">
-                        {{ 'ORDERS.TIP_AMOUNT' | translate }}: {{ formatPrice(paymentTipPreviewCents(orderToMarkPaid()!)) }}
-                        — {{ 'ORDERS.AMOUNT_DUE' | translate }}: {{ formatPrice(paymentGrandTotalCents(orderToMarkPaid()!)) }}
-                      </p>
                     }
                   </div>
-                }
-                @if (paymentModalFinishMode()) {
-                  <p class="modal-hint">{{ 'ORDERS.FINISH_ORDER_HELP' | translate }}</p>
-                } @else {
-                  <p class="modal-hint">{{ 'ORDERS.PAY_NOW_HELP' | translate }}</p>
-                }
-                @if (orderToMarkPaid(); as payOrder) {
-                  <div class="split-pay-summary" data-testid="split-pay-summary">
-                    <p class="modal-hint">
-                      {{ 'ORDERS.AMOUNT_DUE' | translate }}: {{ formatPrice(paymentAmountDueCents(payOrder)) }}
-                      @if ((payOrder.amount_paid_cents || 0) > 0) {
-                        — {{ 'ORDERS.AMOUNT_PAID' | translate }}: {{ formatPrice(payOrder.amount_paid_cents || 0) }}
-                        — {{ 'ORDERS.AMOUNT_REMAINING' | translate }}: {{ formatPrice(paymentAmountRemainingCents(payOrder)) }}
-                      }
+                  @if (paymentTipPercent > 0) {
+                    <p class="modal-hint payment-tip-preview">
+                      {{ 'ORDERS.TIP_AMOUNT' | translate }}:
+                      {{ formatPrice(paymentTipPreviewCents(orderToMarkPaid()!)) }} —
+                      {{ 'ORDERS.AMOUNT_DUE' | translate }}:
+                      {{ formatPrice(paymentGrandTotalCents(orderToMarkPaid()!)) }}
                     </p>
-                    @if (payOrder.payments && payOrder.payments.length > 0) {
-                      <ul class="split-pay-list" data-testid="split-pay-list">
-                        @for (p of payOrder.payments; track p.id) {
+                  }
+                </div>
+              }
+              @if (paymentModalFinishMode()) {
+                <p class="modal-hint">{{ 'ORDERS.FINISH_ORDER_HELP' | translate }}</p>
+              } @else {
+                <p class="modal-hint">{{ 'ORDERS.PAY_NOW_HELP' | translate }}</p>
+              }
+              @if (orderToMarkPaid(); as payOrder) {
+                <div class="split-pay-summary" data-testid="split-pay-summary">
+                  <p class="modal-hint">
+                    {{ 'ORDERS.AMOUNT_DUE' | translate }}:
+                    {{ formatPrice(paymentAmountDueCents(payOrder)) }}
+                    @if ((payOrder.amount_paid_cents || 0) > 0) {
+                      — {{ 'ORDERS.AMOUNT_PAID' | translate }}:
+                      {{ formatPrice(payOrder.amount_paid_cents || 0) }} —
+                      {{ 'ORDERS.AMOUNT_REMAINING' | translate }}:
+                      {{ formatPrice(paymentAmountRemainingCents(payOrder)) }}
+                    }
+                  </p>
+                  @if (payOrder.payments && payOrder.payments.length > 0) {
+                    <ul class="split-pay-list" data-testid="split-pay-list">
+                      @for (p of payOrder.payments; track p.id) {
+                        <li>
+                          {{ formatPrice(p.amount_cents) }} · {{ p.payment_method }}
+                          @if (p.payer_label) {
+                            ({{ p.payer_label }})
+                          }
+                        </li>
+                      }
+                    </ul>
+                  }
+                  @if (!paymentModalFinishMode() && paymentAmountRemainingCents(payOrder) > 0) {
+                    <div class="form-group" data-testid="split-by-line">
+                      <label>{{ 'ORDERS.SPLIT_BY_LINE' | translate }}</label>
+                      <p class="modal-hint">{{ 'ORDERS.SPLIT_BY_LINE_HINT' | translate }}</p>
+                      <ul class="split-line-list">
+                        @for (item of payableSplitLines(payOrder); track item.id) {
                           <li>
-                            {{ formatPrice(p.amount_cents) }} · {{ p.payment_method }}
-                            @if (p.payer_label) { ({{ p.payer_label }}) }
+                            <label class="split-line-row">
+                              <input
+                                type="checkbox"
+                                [checked]="isSplitLineSelected(item.id)"
+                                (change)="toggleSplitLine(item.id)"
+                                [attr.data-testid]="'split-line-' + item.id"
+                              />
+                              <span>
+                                {{ item.quantity }}× {{ item.product_name }} —
+                                {{ formatPrice((item.price_cents || 0) * (item.quantity || 0)) }}
+                              </span>
+                            </label>
                           </li>
                         }
                       </ul>
-                    }
-                    @if (!paymentModalFinishMode() && paymentAmountRemainingCents(payOrder) > 0) {
-                      <div class="form-group" data-testid="split-by-line">
-                        <label>{{ 'ORDERS.SPLIT_BY_LINE' | translate }}</label>
-                        <p class="modal-hint">{{ 'ORDERS.SPLIT_BY_LINE_HINT' | translate }}</p>
-                        <ul class="split-line-list">
-                          @for (item of payableSplitLines(payOrder); track item.id) {
-                            <li>
-                              <label class="split-line-row">
-                                <input
-                                  type="checkbox"
-                                  [checked]="isSplitLineSelected(item.id)"
-                                  (change)="toggleSplitLine(item.id)"
-                                  [attr.data-testid]="'split-line-' + item.id"
-                                />
-                                <span>
-                                  {{ item.quantity }}× {{ item.product_name }}
-                                  — {{ formatPrice((item.price_cents || 0) * (item.quantity || 0)) }}
-                                </span>
-                              </label>
-                            </li>
-                          }
-                        </ul>
-                        @if (selectedSplitLineTotalCents(payOrder) > 0) {
-                          <p class="modal-hint" data-testid="split-line-total">
-                            {{ 'ORDERS.SPLIT_LINE_TOTAL' | translate }}:
-                            {{ formatPrice(selectedSplitLineTotalCents(payOrder)) }}
-                          </p>
-                        }
-                      </div>
-                      <div class="form-group">
-                        <label for="partial-pay-amount">{{ 'ORDERS.PARTIAL_PAYMENT_AMOUNT' | translate }}</label>
-                        <input
-                          id="partial-pay-amount"
-                          type="text"
-                          inputmode="decimal"
-                          class="form-control"
-                          [(ngModel)]="partialPaymentAmountInput"
-                          name="partialPaymentAmount"
-                          data-testid="partial-pay-amount"
-                          [disabled]="selectedSplitLineIds.size > 0"
-                        />
-                      </div>
-                      <div class="form-group">
-                        <label for="partial-pay-label">{{ 'ORDERS.PAYER_LABEL' | translate }}</label>
-                        <input
-                          id="partial-pay-label"
-                          type="text"
-                          class="form-control"
-                          [(ngModel)]="partialPaymentPayerLabel"
-                          name="partialPaymentPayerLabel"
-                          data-testid="partial-pay-label"
-                          [placeholder]="'ORDERS.PAYER_LABEL_HINT' | translate"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-testid="record-partial-payment"
-                        (click)="confirmPartialPayment()"
-                        [disabled]="processingPayment()"
-                      >
-                        {{ 'ORDERS.RECORD_PARTIAL_PAYMENT' | translate }}
-                      </button>
-                    }
-                  </div>
-                }
-                <div class="form-group">
-                  <label for="payment-method">{{ 'ORDERS.PAYMENT_METHOD' | translate }}</label>
-                  <select id="payment-method" [(ngModel)]="paymentMethod" class="form-select">
-                    <option value="cash">{{ 'ORDERS.CASH' | translate }}</option>
-                    <option value="terminal">{{ 'ORDERS.CARD_TERMINAL' | translate }}</option>
-                    <option value="stripe">{{ 'ORDERS.STRIPE_ONLINE' | translate }}</option>
-                    <option value="other">{{ 'ORDERS.OTHER' | translate }}</option>
-                  </select>
-                </div>
-              </div>
-              <div class="modal-actions">
-                <button class="btn btn-secondary" (click)="closePaymentModal()">{{ 'ORDERS.CANCEL' | translate }}</button>
-                <button class="btn btn-primary" (click)="confirmMarkAsPaid()" [disabled]="processingPayment()">
-                  @if (processingPayment()) {
-                    {{ 'ORDERS.PROCESSING' | translate }}
-                  } @else if (paymentModalFinishMode()) {
-                    {{ 'ORDERS.FINISH_ORDER_CONFIRM' | translate }}
-                  } @else {
-                    {{ 'ORDERS.MARK_AS_PAID' | translate }}
+                      @if (selectedSplitLineTotalCents(payOrder) > 0) {
+                        <p class="modal-hint" data-testid="split-line-total">
+                          {{ 'ORDERS.SPLIT_LINE_TOTAL' | translate }}:
+                          {{ formatPrice(selectedSplitLineTotalCents(payOrder)) }}
+                        </p>
+                      }
+                    </div>
+                    <div class="form-group">
+                      <label for="partial-pay-amount">{{
+                        'ORDERS.PARTIAL_PAYMENT_AMOUNT' | translate
+                      }}</label>
+                      <input
+                        id="partial-pay-amount"
+                        type="text"
+                        inputmode="decimal"
+                        class="form-control"
+                        [(ngModel)]="partialPaymentAmountInput"
+                        name="partialPaymentAmount"
+                        data-testid="partial-pay-amount"
+                        [disabled]="selectedSplitLineIds.size > 0"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label for="partial-pay-label">{{ 'ORDERS.PAYER_LABEL' | translate }}</label>
+                      <input
+                        id="partial-pay-label"
+                        type="text"
+                        class="form-control"
+                        [(ngModel)]="partialPaymentPayerLabel"
+                        name="partialPaymentPayerLabel"
+                        data-testid="partial-pay-label"
+                        [placeholder]="'ORDERS.PAYER_LABEL_HINT' | translate"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-secondary"
+                      data-testid="record-partial-payment"
+                      (click)="confirmPartialPayment()"
+                      [disabled]="processingPayment()"
+                    >
+                      {{ 'ORDERS.RECORD_PARTIAL_PAYMENT' | translate }}
+                    </button>
                   }
-                </button>
+                </div>
+              }
+              <div class="form-group">
+                <label for="payment-method">{{ 'ORDERS.PAYMENT_METHOD' | translate }}</label>
+                <select id="payment-method" [(ngModel)]="paymentMethod" class="form-select">
+                  <option value="cash">{{ 'ORDERS.CASH' | translate }}</option>
+                  <option value="terminal">{{ 'ORDERS.CARD_TERMINAL' | translate }}</option>
+                  <option value="stripe">{{ 'ORDERS.STRIPE_ONLINE' | translate }}</option>
+                  <option value="other">{{ 'ORDERS.OTHER' | translate }}</option>
+                </select>
               </div>
             </div>
-          </div>
-        }
-
-        <!-- Confirmation Modal (replaces native confirm/prompt) -->
-        @if (confirmAction()) {
-          <div class="modal-overlay" (click)="closeConfirmModal()">
-            <div class="modal" (click)="$event.stopPropagation()" appFocusFirstInput>
-              <div class="modal-header">
-                <h3>{{ 'COMMON.CONFIRM' | translate }}</h3>
-                <button class="icon-btn" (click)="closeConfirmModal()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-              </div>
-              <div class="modal-body">
-                <p>{{ confirmAction()!.message }}</p>
-                @if (confirmAction()!.requireReason) {
-                  <div class="form-group">
-                    <textarea 
-                      class="form-textarea"
-                      [(ngModel)]="confirmReason"
-                      rows="3"
-                      [placeholder]="'COMMON.DESCRIPTION' | translate"
-                    ></textarea>
-                  </div>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" (click)="closePaymentModal()">
+                {{ 'ORDERS.CANCEL' | translate }}
+              </button>
+              <button
+                class="btn btn-primary"
+                (click)="confirmMarkAsPaid()"
+                [disabled]="processingPayment()"
+              >
+                @if (processingPayment()) {
+                  {{ 'ORDERS.PROCESSING' | translate }}
+                } @else if (paymentModalFinishMode()) {
+                  {{ 'ORDERS.FINISH_ORDER_CONFIRM' | translate }}
+                } @else {
+                  {{ 'ORDERS.MARK_AS_PAID' | translate }}
                 }
-              </div>
-              <div class="modal-actions">
-                <button class="btn btn-secondary" (click)="closeConfirmModal()">{{ 'COMMON.CANCEL' | translate }}</button>
-                <button class="btn btn-primary" (click)="handleConfirm()">
-                  {{ confirmAction()!.confirmText || ('COMMON.CONFIRM' | translate) }}
-                </button>
-              </div>
+              </button>
             </div>
           </div>
-        }
+        </div>
+      }
 
-        <!-- Toast Notification -->
-        @if (toast()) {
-          <div class="toast" [class]="toast()!.type">
-            <span>{{ toast()!.message }}</span>
-            <button class="toast-close" (click)="toast.set(null)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
-          </div>
-        }
-
-        <!-- Waiter Alert Banner -->
-        @if (waiterAlert()) {
-          <div class="waiter-alert-banner" [class.payment]="waiterAlert()!.type === 'payment_requested'">
-            <div class="waiter-alert-icon">
-              @if (waiterAlert()!.type === 'call_waiter') {
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94"/>
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.61.68 2.36a2 2 0 0 1-.45 2.11L8.91 10.5a16 16 0 0 0 6.59 6.59l1.31-1.32a2 2 0 0 1 2.11-.45c.75.32 1.55.55 2.36.68A2 2 0 0 1 22 16.92z"/>
+      <!-- Confirmation Modal (replaces native confirm/prompt) -->
+      @if (confirmAction()) {
+        <div class="modal-overlay" (click)="closeConfirmModal()">
+          <div class="modal" (click)="$event.stopPropagation()" appFocusFirstInput>
+            <div class="modal-header">
+              <h3>{{ 'COMMON.CONFIRM' | translate }}</h3>
+              <button class="icon-btn" (click)="closeConfirmModal()">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
-              } @else {
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
-                  <line x1="1" y1="10" x2="23" y2="10"/>
-                </svg>
+              </button>
+            </div>
+            <div class="modal-body">
+              <p>{{ confirmAction()!.message }}</p>
+              @if (confirmAction()!.requireReason) {
+                <div class="form-group">
+                  <textarea
+                    class="form-textarea"
+                    [(ngModel)]="confirmReason"
+                    rows="3"
+                    [placeholder]="'COMMON.DESCRIPTION' | translate"
+                  ></textarea>
+                </div>
               }
             </div>
-            <div class="waiter-alert-text">
-              <strong>{{ waiterAlert()!.tableName }}</strong>
-              <span>{{ waiterAlert()!.type === 'call_waiter' ? ('NOTIFICATIONS.CALL_WAITER_YOURS' | translate) : ('NOTIFICATIONS.PAYMENT_REQUEST_YOURS' | translate) }}</span>
-              @if (waiterAlert()!.message) {
-                <span class="waiter-alert-message">"{{ waiterAlert()!.message }}"</span>
-              }
+            <div class="modal-actions">
+              <button class="btn btn-secondary" (click)="closeConfirmModal()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+              <button class="btn btn-primary" (click)="handleConfirm()">
+                {{ confirmAction()!.confirmText || ('COMMON.CONFIRM' | translate) }}
+              </button>
             </div>
-            <button class="waiter-alert-dismiss" (click)="dismissWaiterAlert()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            </button>
           </div>
-        }
+        </div>
+      }
+
+      <!-- Toast Notification -->
+      @if (toast()) {
+        <div class="toast" [class]="toast()!.type">
+          <span>{{ toast()!.message }}</span>
+          <button class="toast-close" (click)="toast.set(null)">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      }
+
+      <!-- Waiter Alert Banner -->
+      @if (waiterAlert()) {
+        <div
+          class="waiter-alert-banner"
+          [class.payment]="waiterAlert()!.type === 'payment_requested'"
+        >
+          <div class="waiter-alert-icon">
+            @if (waiterAlert()!.type === 'call_waiter') {
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M15.05 5A5 5 0 0 1 19 8.95M15.05 1A9 9 0 0 1 23 8.94" />
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 3 5.18 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.72c.13.81.36 1.61.68 2.36a2 2 0 0 1-.45 2.11L8.91 10.5a16 16 0 0 0 6.59 6.59l1.31-1.32a2 2 0 0 1 2.11-.45c.75.32 1.55.55 2.36.68A2 2 0 0 1 22 16.92z"
+                />
+              </svg>
+            } @else {
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+            }
+          </div>
+          <div class="waiter-alert-text">
+            <strong>{{ waiterAlert()!.tableName }}</strong>
+            <span>{{
+              waiterAlert()!.type === 'call_waiter'
+                ? ('NOTIFICATIONS.CALL_WAITER_YOURS' | translate)
+                : ('NOTIFICATIONS.PAYMENT_REQUEST_YOURS' | translate)
+            }}</span>
+            @if (waiterAlert()!.message) {
+              <span class="waiter-alert-message">"{{ waiterAlert()!.message }}"</span>
+            }
+          </div>
+          <button class="waiter-alert-dismiss" (click)="dismissWaiterAlert()">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      }
     </app-sidebar>
   `,
-  styles: [`
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); }
-    .page-header.page-header--staff-flow {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0;
-    }
-    .page-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-4);
-    }
-    .page-header h1 { font-size: 1.5rem; font-weight: 600; color: var(--color-text); margin: 0; }
-
-    .orders-table-scope-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: var(--space-3);
-      padding: var(--space-3) var(--space-4);
-      margin-bottom: var(--space-4);
-      background: var(--color-primary-light);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-size: 0.9375rem;
-      font-weight: 500;
-      color: var(--color-text);
-    }
-
-    .page-header-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .order-delivery-meta {
-      font-size: 0.8125rem;
-      color: var(--color-text-muted);
-      padding: 0.35rem 0.75rem 0.5rem;
-      line-height: 1.4;
-      border-bottom: 1px solid var(--color-border, #E7E5E4);
-    }
-    .order-channel-badge {
-      display: inline-block;
-      font-size: 0.6875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-      padding: 0.15rem 0.45rem;
-      border-radius: 4px;
-      background: rgba(211, 82, 51, 0.12);
-      color: #D35233;
-      margin-left: 0.35rem;
-    }
-    .order-channel-badge.marketplace {
-      background: rgba(59, 130, 246, 0.12);
-      color: #2563eb;
-    }
-    .delivery-draft-items {
-      margin-bottom: 0.75rem;
-    }
-        .filter-tabs {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      margin-bottom: var(--space-4);
-      border-bottom: 2px solid var(--color-border);
-    }
-    .filter-tab {
-      padding: var(--space-3) var(--space-4);
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--color-text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      margin-bottom: -2px;
-    }
-    .filter-tab:hover {
-      color: var(--color-text);
-    }
-    .filter-tab.active {
-      color: var(--color-primary);
-      border-bottom-color: var(--color-primary);
-    }
-    .tab-badge {
-      background: var(--color-primary);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
-    .section-header { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
-    .section-header h2 { font-size: 1.125rem; font-weight: 600; color: var(--color-text); margin: 0; }
-    .history-header { margin-top: var(--space-6); }
-    .badge {
-      padding: var(--space-1) var(--space-3); border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-      background: var(--color-primary); color: white;
-      &.secondary { background: var(--color-text-muted); }
-    }
-
-    .btn { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-3) var(--space-4); border: none; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; }
-    .btn-primary { background: var(--color-primary); color: white; &:hover { background: var(--color-primary-hover); } }
-    .btn-secondary { background: var(--color-bg); color: var(--color-text); border: 1px solid var(--color-border); &:hover { background: var(--color-border); } }
-    .btn-success { background: var(--color-success); color: white; &:hover { background: #15803d; } }
-    .btn-sm { padding: var(--space-2) var(--space-3); font-size: 0.8125rem; }
-
-    .empty-state {
-      text-align: center; padding: var(--space-8); background: var(--color-surface);
-      border: 1px dashed var(--color-border); border-radius: var(--radius-lg);
-      .empty-icon { color: var(--color-text-muted); margin-bottom: var(--space-4); }
-      h3 { margin: 0 0 var(--space-2); font-size: 1.125rem; color: var(--color-text); }
-      p { margin: 0; color: var(--color-text-muted); }
-    }
-
-    .order-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: var(--space-4); 
-      align-items: start;
-    }
-    
-    .grid-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .order-card {
-      position: relative;
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-left: 4px solid transparent;
-      border-radius: var(--radius-lg);
-      overflow: visible;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-      max-width: 100%;
-      z-index: 1;
-      &:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
+  styles: [
+    `
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-5);
       }
-      &.status-dropdown-open {
-        z-index: 9998;
+      .page-header.page-header--staff-flow {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
       }
-      &.status-pending { border-left-color: var(--color-warning); }
-      &.status-preparing { border-left-color: #3B82F6; }
-      &.status-ready { border-left-color: var(--color-success); }
-      &.status-paid { border-left-color: var(--color-success); }
-      &.status-completed { border-left-color: var(--color-text-muted); }
-    }
+      .page-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-4);
+      }
+      .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin: 0;
+      }
 
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: var(--space-3);
-      padding: var(--space-4);
-      border-bottom: 1px solid var(--color-border);
-      margin-bottom: var(--space-3);
-    }
-    .order-header-main { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; flex: 1; }
-    .btn-edit-order {
-      display: inline-flex; align-items: center; gap: var(--space-2);
-      padding: var(--space-2) var(--space-3); min-height: 44px;
-      border-radius: 14px; font-size: 0.875rem; font-weight: 500;
-      border: 1px solid var(--color-border); background: var(--color-surface);
-      color: var(--color-text); cursor: pointer; transition: all 0.15s;
-    }
-    .btn-edit-order:hover { background: var(--color-bg); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
-    .btn-urgent {
-      display: inline-flex; align-items: center; gap: var(--space-2);
-      padding: var(--space-2) var(--space-3); min-height: 44px;
-      border-radius: 14px; font-size: 0.8125rem; font-weight: 600;
-      border: 1px solid rgba(220, 38, 38, 0.35); background: rgba(220, 38, 38, 0.08);
-      color: #b91c1c; cursor: pointer; transition: all 0.15s;
-    }
-    .btn-urgent:hover { background: rgba(220, 38, 38, 0.14); }
-    .order-urgent-badge {
-      font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-      color: #b91c1c; background: rgba(220, 38, 38, 0.1);
-      padding: 2px 8px; border-radius: 6px; width: fit-content;
-    }
-    .order-hub-badge {
-      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
-      color: #1e40af; background: rgba(37, 99, 235, 0.1);
-      padding: 2px 8px; border-radius: 6px; width: fit-content;
-    }
-    .order-hub-badge.prepared {
-      color: #166534; background: rgba(22, 163, 74, 0.12);
-    }
-    .btn-delete-order {
-      display: inline-flex; align-items: center; gap: var(--space-2);
-      padding: var(--space-2) var(--space-3); min-height: 44px;
-      border-radius: 14px; font-size: 0.875rem; font-weight: 500;
-      border: 1px solid var(--color-border); background: var(--color-surface);
-      color: var(--color-text-muted); cursor: pointer; transition: all 0.15s;
-    }
-    .btn-delete-order:hover { background: rgba(220, 38, 38, 0.08); color: var(--color-error, #dc2626); border-color: rgba(220, 38, 38, 0.3); }
-    .order-id { font-weight: 600; color: var(--color-text); }
-    .order-table { color: var(--color-text-muted); font-size: 0.875rem; }
-    .order-table-group { color: var(--color-text-muted); font-size: 0.75rem; margin-left: 0.35rem; opacity: 0.9; }
-    .order-customer { color: var(--color-primary); font-size: 0.875rem; font-weight: 500; }
-    .order-time { color: var(--color-text-muted); font-size: 0.75rem; }
+      .orders-table-scope-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        margin-bottom: var(--space-4);
+        background: var(--color-primary-light);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
 
-    .status-badge {
-      padding: var(--space-1) var(--space-3); border-radius: 20px; font-size: 0.75rem; font-weight: 600;
-      &.pending { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
-      &.preparing { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
-      &.ready { background: var(--color-success-light); color: var(--color-success); }
-      &.paid { background: var(--color-success-light); color: var(--color-success); }
-      &.completed { background: var(--color-bg); color: var(--color-text-muted); }
-    }
+      .page-header-actions {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .order-delivery-meta {
+        font-size: 0.8125rem;
+        color: var(--color-text-muted);
+        padding: 0.35rem 0.75rem 0.5rem;
+        line-height: 1.4;
+        border-bottom: 1px solid var(--color-border, #e7e5e4);
+      }
+      .order-channel-badge {
+        display: inline-block;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: rgba(211, 82, 51, 0.12);
+        color: #d35233;
+        margin-left: 0.35rem;
+      }
+      .order-channel-badge.marketplace {
+        background: rgba(59, 130, 246, 0.12);
+        color: #2563eb;
+      }
+      .delivery-draft-items {
+        margin-bottom: 0.75rem;
+      }
+      .filter-tabs {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+        border-bottom: 2px solid var(--color-border);
+      }
+      .filter-tab {
+        padding: var(--space-3) var(--space-4);
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-bottom: -2px;
+      }
+      .filter-tab:hover {
+        color: var(--color-text);
+      }
+      .filter-tab.active {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+      }
+      .tab-badge {
+        background: var(--color-primary);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+      }
+      .section-header h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-text);
+        margin: 0;
+      }
+      .history-header {
+        margin-top: var(--space-6);
+      }
+      .badge {
+        padding: var(--space-1) var(--space-3);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background: var(--color-primary);
+        color: white;
+        &.secondary {
+          background: var(--color-text-muted);
+        }
+      }
 
-    .order-items { padding: 0 var(--space-4); }
-    .order-item { 
-      display: flex; 
-      flex-direction: column;
-      gap: var(--space-1); 
-      padding: var(--space-3) 0; 
-      font-size: 0.9375rem; 
-    }
-    .order-item:not(:last-child) { border-bottom: 1px solid var(--color-border); }
-    .order-item.removed { 
-      opacity: 0.6; 
-      text-decoration: line-through;
-      background: var(--color-bg);
-      padding: var(--space-3);
-      margin: 0 calc(-1 * var(--space-4));
-      padding-left: var(--space-4);
-      padding-right: var(--space-4);
-    }
-    .item-name-row { 
-      display: flex; 
-      flex-wrap: wrap;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .item-details-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-2);
-    }
-    .item-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .item-qty { 
-      font-weight: 600; 
-      color: var(--color-primary); 
-      flex-shrink: 0;
-    }
-    .quantity-input {
-      width: 42px;
-      padding: 4px 4px;
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      font-size: 0.875rem;
-      text-align: center;
-      background: var(--color-surface);
-      color: var(--color-text);
-      box-sizing: border-box;
-    }
-    .quantity-input:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px var(--color-primary-light);
-    }
-    .item-name { 
-      color: var(--color-text); 
-      font-weight: 500;
-    }
-    .item-customization {
-      width: 100%;
-      font-size: 0.8125rem;
-      color: var(--color-text-muted);
-    }
-    .item-notes {
-      width: 100%;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--color-warning);
-      font-style: italic;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .order-notes-banner {
-      margin: 0 var(--space-4) var(--space-2);
-      padding: var(--space-2) var(--space-3);
-      background: rgba(245, 158, 11, 0.1);
-      border-left: 3px solid var(--color-warning);
-      font-size: 0.875rem;
-      color: var(--color-text);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .item-price { 
-      color: var(--color-text-muted); 
-      font-size: 0.875rem;
-    }
-    .price-total {
-      color: var(--color-text-muted);
-      font-size: 0.75rem;
-      font-weight: 400;
-      margin-left: 4px;
-    }
-    .btn-remove-item {
-      background: none;
-      border: none;
-      color: var(--color-error);
-      cursor: pointer;
-      min-width: 44px;
-      min-height: 44px;
-      padding: var(--space-2);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0.7;
-      transition: opacity 0.15s;
-    }
-    .btn-remove-item:hover {
-      opacity: 1;
-    }
-    .item-status-badge {
-      min-height: 44px;
-      padding: var(--space-2) var(--space-3);
-      border-radius: 14px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      white-space: nowrap;
-      border: 1px solid var(--color-border);
-    }
-    .item-status-badge.status-pending { 
-      background: rgba(245, 158, 11, 0.15); 
-      color: var(--color-warning);
-    }
-    .item-status-badge.status-pending.clickable:hover {
-      background: var(--color-warning);
-      color: white;
-      transform: scale(1.05);
-    }
-    .item-status-badge.status-preparing { 
-      background: rgba(59, 130, 246, 0.15); 
-      color: #3B82F6;
-    }
-    .item-status-badge.status-preparing.clickable:hover {
-      background: #3B82F6;
-      color: white;
-      transform: scale(1.05);
-    }
-    .item-status-badge.status-ready { 
-      background: var(--color-success-light); 
-      color: var(--color-success);
-    }
-    .item-status-badge.clickable {
-      cursor: pointer;
-      transition: all 0.15s;
-      user-select: none;
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .item-status-badge.clickable svg {
-      transition: transform 0.15s;
-    }
-    .item-status-control:has(.item-status-dropdown:not([style*="display: none"])) .item-status-badge.clickable svg {
-      transform: rotate(180deg);
-    }
-    .item-status-badge.status-ready.clickable:hover {
-      background: var(--color-success);
-      color: white;
-      transform: scale(1.05);
-    }
-    .item-status-badge.status-delivered { 
-      background: var(--color-bg); 
-      color: var(--color-text-muted);
-      border: 1px solid var(--color-border);
-    }
-    .item-status-badge.status-delivered.clickable:hover {
-      background: rgba(59, 130, 246, 0.15);
-      color: #3B82F6;
-      border-color: #3B82F6;
-      transform: scale(1.05);
-    }
-    .item-status-badge.status-cancelled { background: var(--color-bg); color: var(--color-text-muted); }
-    .item-actions {
-      display: flex;
-      gap: var(--space-2);
-      margin-top: var(--space-1);
-    }
-    .btn-xs {
-      padding: 4px 8px;
-      font-size: 0.75rem;
-    }
-    .btn-info {
-      background: #3B82F6;
-      color: white;
-    }
-    .btn-info:hover {
-      background: #2563eb;
-    }
-    .btn-secondary {
-      background: var(--color-text-muted);
-      color: white;
-    }
-    .btn-secondary:hover {
-      background: #57534e;
-    }
-    .btn-print,
-    .btn-menu-link {
-      background: var(--color-surface);
-      color: var(--color-text);
-      border: 1px solid var(--color-border);
-    }
-    .btn-print:hover,
-    .btn-menu-link:hover {
-      background: var(--color-bg);
-    }
-    .btn-danger {
-      background: var(--color-error);
-      color: white;
-    }
-    .btn-danger:hover {
-      background: #dc2626;
-    }
-    .quantity-input:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 2px var(--color-primary-light);
-    }
-    .removed-indicator {
-      display: flex;
-      gap: var(--space-2);
-      font-size: 0.75rem;
-      color: var(--color-text-muted);
-      font-style: italic;
-      margin-top: var(--space-1);
-    }
-    .removed-label { color: var(--color-error); }
-    .removed-time { color: var(--color-text-muted); }
-    .removed-count {
-      font-size: 0.75rem;
-      color: var(--color-text-muted);
-      font-style: italic;
-    }
-    .toggle-removed {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      font-size: 0.875rem;
-      color: var(--color-text);
-      cursor: pointer;
-      margin-left: auto;
-      padding: var(--space-2) var(--space-3);
-    }
-    .toggle-removed input[type="checkbox"] {
-      cursor: pointer;
-    }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .btn-primary {
+        background: var(--color-primary);
+        color: white;
+        &:hover {
+          background: var(--color-primary-hover);
+        }
+      }
+      .btn-secondary {
+        background: var(--color-bg);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+        &:hover {
+          background: var(--color-border);
+        }
+      }
+      .btn-success {
+        background: var(--color-success);
+        color: white;
+        &:hover {
+          background: #15803d;
+        }
+      }
+      .btn-sm {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.8125rem;
+      }
 
-    .order-footer { 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      padding: var(--space-4); 
-      background: none;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      margin-top: var(--space-3);
-      border-top: 1px solid var(--color-border);
-      overflow: visible;
-    }
-    .order-footer-left {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-    .order-total { font-weight: 600; color: var(--color-text); }
-    .order-actions {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: flex-end;
-      gap: var(--space-2);
-      position: relative;
-      overflow: visible;
-    }
-    
-    .status-control {
-      position: relative;
-      overflow: visible;
-      z-index: 1;
-    }
-    .order-card.status-dropdown-open .status-control {
-      z-index: 9999;
-    }
-    
-    .status-badge-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      min-height: 44px;
-      padding: var(--space-2) var(--space-3);
-      border-radius: 14px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid var(--color-border);
-      transition: all 0.15s;
-      position: relative;
-    }
-    .status-badge-btn svg {
-      transition: transform 0.15s;
-    }
-    .status-control:has(.status-dropdown:not([style*="display: none"])) .status-badge-btn svg {
-      transform: rotate(180deg);
-    }
-    .status-badge-btn.pending { background: rgba(245, 158, 11, 0.15); color: var(--color-warning); }
-    .status-badge-btn.preparing { background: rgba(59, 130, 246, 0.15); color: #3B82F6; }
-    .status-badge-btn.ready { background: var(--color-success-light); color: var(--color-success); }
-    .status-badge-btn.completed { background: var(--color-bg); color: var(--color-text-muted); }
-    .status-badge-btn.paid { background: var(--color-success-light); color: var(--color-success); }
-    .status-badge-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .status-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: auto;
-      margin-top: 6px;
-      margin-left: 0;
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 10000;
-      min-width: 220px;
-      overflow: hidden;
-    }
-    .item-status-dropdown {
-      min-width: 200px;
-    }
-    
-    .dropdown-section {
-      padding: var(--space-2) 0;
-    }
-    .dropdown-section:not(:last-child) {
-      border-bottom: 1px solid var(--color-border);
-    }
-    
-    .dropdown-label {
-      padding: var(--space-2) var(--space-3);
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--color-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .dropdown-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-2);
-      width: 100%;
-      min-height: 48px;
-      padding: var(--space-3) var(--space-4);
-      background: none;
-      border: none;
-      text-align: left;
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--color-text);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .dropdown-item:hover {
-      background: var(--color-bg);
-    }
-    .dropdown-item.forward {
-      color: var(--color-primary);
-    }
-    .dropdown-item.backward {
-      color: var(--color-text-muted);
-    }
-    .dropdown-item svg {
-      flex-shrink: 0;
-    }
-    
-    .item-status-control {
-      position: relative;
-      display: inline-flex;
-      z-index: 10;
-    }
-    .order-item:hover .item-status-control {
-      z-index: 50;
-    }
+      .empty-state {
+        text-align: center;
+        padding: var(--space-8);
+        background: var(--color-surface);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--radius-lg);
+        .empty-icon {
+          color: var(--color-text-muted);
+          margin-bottom: var(--space-4);
+        }
+        h3 {
+          margin: 0 0 var(--space-2);
+          font-size: 1.125rem;
+          color: var(--color-text);
+        }
+        p {
+          margin: 0;
+          color: var(--color-text-muted);
+        }
+      }
 
-    .grid-container {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-    }
-    .grid-container .btn-factura-row,
-    .grid-container .btn-edit-order-row {
-      display: inline-flex !important;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      padding: 0 !important;
-      cursor: pointer;
-      background: #fff !important;
-      color: #333 !important;
-      border: 1px solid #ddd !important;
-      border-radius: 8px;
-      transition: background 0.15s ease;
-    }
-    .grid-container .btn-factura-row:hover,
-    .grid-container .btn-edit-order-row:hover {
-      background: #f5f5f5 !important;
-    }
-    .grid-container .btn-factura-row svg,
-    .grid-container .btn-edit-order-row svg {
-      flex-shrink: 0;
-    }
+      .order-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-4);
+        align-items: start;
+      }
 
-    .mobile-header { display: none; position: fixed; top: 0; left: 0; right: 0; height: 56px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 0 var(--space-4); align-items: center; gap: var(--space-3); z-index: 99; }
-    .menu-toggle { display: flex; flex-direction: column; gap: 4px; background: none; border: none; padding: var(--space-2); cursor: pointer; }
-    .menu-toggle span { display: block; width: 20px; height: 2px; background: var(--color-text); border-radius: 1px; }
-    .header-title { font-weight: 700; color: var(--color-primary); }
-    .overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 99; }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      width: 90%;
-      max-width: 400px;
-      overflow: hidden;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: var(--space-4);
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--color-text);
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      cursor: pointer;
-      padding: var(--space-2);
-      display: flex;
-      align-items: center;
-      transition: color 0.15s;
-    }
-
-    .icon-btn:hover {
-      color: var(--color-text);
-    }
-
-    .modal-body {
-      padding: var(--space-4);
-    }
-
-    .modal-body p {
-      margin: 0 0 var(--space-4);
-      color: var(--color-text);
-      font-weight: 500;
-    }
-
-    .modal-body p.modal-hint {
-      margin-top: calc(-1 * var(--space-3));
-      font-weight: 400;
-      font-size: 0.875rem;
-      color: var(--color-text-muted);
-    }
-
-    .payment-amount-line { margin-bottom: var(--space-3); }
-    .payment-tip-group .form-label-text {
-      display: block;
-      font-size: 0.875rem;
-      font-weight: 600;
-      margin-bottom: var(--space-2);
-    }
-    .tip-preset-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-2);
-      margin-bottom: var(--space-2);
-    }
-    .tip-preset-buttons .btn-sm {
-      padding: var(--space-2) var(--space-3);
-      font-size: 0.8125rem;
-    }
-    .payment-tip-preview { margin-top: var(--space-2); margin-bottom: 0; }
-
-    .modal-order-edit { max-width: 520px; }
-    .modal-order-edit .modal-body { max-height: 70vh; overflow-y: auto; }
-    .edit-order-items { margin-bottom: var(--space-4); }
-    .edit-order-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; margin-bottom: var(--space-2); }
-    .edit-order-row {
-      display: flex; align-items: center; gap: var(--space-2);
-      padding: var(--space-2) 0;
-    }
-    .modal-order-edit .edit-order-row { border-bottom: none; }
-    .edit-order-row .edit-item-name { flex: 1; min-width: 0; font-size: 0.9375rem; }
-    .edit-order-row .quantity-input { width: 56px; }
-    .edit-order-row .edit-item-status { width: 120px; }
-    .edit-order-row .btn-remove-item { flex-shrink: 0; padding: var(--space-2); color: var(--color-text-muted); border: none; background: none; cursor: pointer; border-radius: 6px; }
-    .edit-order-row .btn-remove-item:hover { color: var(--color-error, #dc2626); background: rgba(0,0,0,0.05); }
-    .add-items-section .add-items-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
-    .add-items-section .add-items-row .form-select { flex: 1; min-width: 160px; }
-    .add-items-section .add-items-row .quantity-input { width: 56px; }
-    .edit-order-item-block { border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-2); margin-bottom: var(--space-1); }
-    .edit-order-item-block:last-child { border-bottom: none; }
-    .modifier-edit-fields, .add-modifiers-fields {
-      display: flex; flex-direction: column; gap: var(--space-1);
-      margin-top: var(--space-2); padding-left: var(--space-1);
-    }
-    .modifier-label { font-size: 0.6875rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; margin-top: var(--space-1); }
-    .modifier-textarea { resize: vertical; min-height: 2.5rem; font-family: inherit; }
-    .add-modifiers-fields { margin-top: var(--space-3); }
-
-    .form-group {
-      margin-bottom: var(--space-4);
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: var(--space-2);
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--color-text);
-    }
-
-    .form-select {
-      width: 100%;
-      padding: var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-size: 0.9375rem;
-      background: var(--color-surface);
-      color: var(--color-text);
-    }
-
-    .form-select:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px var(--color-primary-light);
-    }
-
-    .form-input {
-      width: 100%;
-      padding: var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-size: 0.9375rem;
-      background: var(--color-surface);
-      color: var(--color-text);
-      box-sizing: border-box;
-    }
-    .form-input:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px var(--color-primary-light);
-    }
-
-    .modal-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-3);
-      justify-content: flex-end;
-      align-items: center;
-      width: 100%;
-      box-sizing: border-box;
-      padding: var(--space-4);
-      border-top: 1px solid var(--color-border);
-    }
-    .modal-actions .btn {
-      flex: 0 1 auto;
-      min-width: 6rem;
-    }
-
-    @media (max-width: 768px) {
-      .mobile-header { display: flex; }
-      .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
-      .sidebar-open .sidebar { transform: translateX(0); }
-      .sidebar-open .overlay { display: block; }
-      .close-btn { display: block; }
-      .main { margin-left: 0; padding: calc(56px + var(--space-4)) var(--space-4) var(--space-4); }
-      .order-grid { grid-template-columns: 1fr; }
-      
       .grid-container {
-        margin-left: calc(-1 * var(--space-4));
-        margin-right: calc(-1 * var(--space-4));
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .order-card {
+        position: relative;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-left: 4px solid transparent;
+        border-radius: var(--radius-lg);
+        overflow: visible;
+        box-shadow: var(--shadow-sm);
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.2s ease;
+        max-width: 100%;
+        z-index: 1;
+        &:hover {
+          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+        }
+        &.status-dropdown-open {
+          z-index: 9998;
+        }
+        &.status-pending {
+          border-left-color: var(--color-warning);
+        }
+        &.status-preparing {
+          border-left-color: #3b82f6;
+        }
+        &.status-ready {
+          border-left-color: var(--color-success);
+        }
+        &.status-paid {
+          border-left-color: var(--color-success);
+        }
+        &.status-completed {
+          border-left-color: var(--color-text-muted);
+        }
+      }
+
+      .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: var(--space-3);
+      }
+      .order-header-main {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        min-width: 0;
+        flex: 1;
+      }
+      .btn-edit-order {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        min-height: 44px;
+        border-radius: 14px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-text);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-edit-order:hover {
+        background: var(--color-bg);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+      .btn-urgent {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        min-height: 44px;
+        border-radius: 14px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        border: 1px solid rgba(220, 38, 38, 0.35);
+        background: rgba(220, 38, 38, 0.08);
+        color: #b91c1c;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-urgent:hover {
+        background: rgba(220, 38, 38, 0.14);
+      }
+      .order-urgent-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #b91c1c;
+        background: rgba(220, 38, 38, 0.1);
+        padding: 2px 8px;
+        border-radius: 6px;
+        width: fit-content;
+      }
+      .order-hub-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #1e40af;
+        background: rgba(37, 99, 235, 0.1);
+        padding: 2px 8px;
+        border-radius: 6px;
+        width: fit-content;
+      }
+      .order-hub-badge.prepared {
+        color: #166534;
+        background: rgba(22, 163, 74, 0.12);
+      }
+      .btn-delete-order {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        min-height: 44px;
+        border-radius: 14px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        color: var(--color-text-muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .btn-delete-order:hover {
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--color-error, #dc2626);
+        border-color: rgba(220, 38, 38, 0.3);
+      }
+      .order-id {
+        font-weight: 600;
+        color: var(--color-text);
+      }
+      .order-table {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+      }
+      .order-table-group {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        margin-left: 0.35rem;
+        opacity: 0.9;
+      }
+      .order-customer {
+        color: var(--color-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      .order-time {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+      }
+
+      .status-badge {
+        padding: var(--space-1) var(--space-3);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        &.pending {
+          background: rgba(245, 158, 11, 0.15);
+          color: var(--color-warning);
+        }
+        &.preparing {
+          background: rgba(59, 130, 246, 0.15);
+          color: #3b82f6;
+        }
+        &.ready {
+          background: var(--color-success-light);
+          color: var(--color-success);
+        }
+        &.paid {
+          background: var(--color-success-light);
+          color: var(--color-success);
+        }
+        &.completed {
+          background: var(--color-bg);
+          color: var(--color-text-muted);
+        }
+      }
+
+      .order-items {
         padding: 0 var(--space-4);
       }
-      
+      .order-item {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        padding: var(--space-3) 0;
+        font-size: 0.9375rem;
+      }
+      .order-item:not(:last-child) {
+        border-bottom: 1px solid var(--color-border);
+      }
+      .order-item.removed {
+        opacity: 0.6;
+        text-decoration: line-through;
+        background: var(--color-bg);
+        padding: var(--space-3);
+        margin: 0 calc(-1 * var(--space-4));
+        padding-left: var(--space-4);
+        padding-right: var(--space-4);
+      }
+      .item-name-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .item-details-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+      }
+      .item-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .item-qty {
+        font-weight: 600;
+        color: var(--color-primary);
+        flex-shrink: 0;
+      }
+      .quantity-input {
+        width: 42px;
+        padding: 4px 4px;
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        font-size: 0.875rem;
+        text-align: center;
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-sizing: border-box;
+      }
+      .quantity-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px var(--color-primary-light);
+      }
+      .item-name {
+        color: var(--color-text);
+        font-weight: 500;
+      }
+      .item-customization {
+        width: 100%;
+        font-size: 0.8125rem;
+        color: var(--color-text-muted);
+      }
+      .item-notes {
+        width: 100%;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-warning);
+        font-style: italic;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .order-notes-banner {
+        margin: 0 var(--space-4) var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background: rgba(245, 158, 11, 0.1);
+        border-left: 3px solid var(--color-warning);
+        font-size: 0.875rem;
+        color: var(--color-text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .item-price {
+        color: var(--color-text-muted);
+        font-size: 0.875rem;
+      }
+      .price-total {
+        color: var(--color-text-muted);
+        font-size: 0.75rem;
+        font-weight: 400;
+        margin-left: 4px;
+      }
+      .btn-remove-item {
+        background: none;
+        border: none;
+        color: var(--color-error);
+        cursor: pointer;
+        min-width: 44px;
+        min-height: 44px;
+        padding: var(--space-2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.7;
+        transition: opacity 0.15s;
+      }
+      .btn-remove-item:hover {
+        opacity: 1;
+      }
+      .item-status-badge {
+        min-height: 44px;
+        padding: var(--space-2) var(--space-3);
+        border-radius: 14px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        border: 1px solid var(--color-border);
+      }
+      .item-status-badge.status-pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--color-warning);
+      }
+      .item-status-badge.status-pending.clickable:hover {
+        background: var(--color-warning);
+        color: white;
+        transform: scale(1.05);
+      }
+      .item-status-badge.status-preparing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+      }
+      .item-status-badge.status-preparing.clickable:hover {
+        background: #3b82f6;
+        color: white;
+        transform: scale(1.05);
+      }
+      .item-status-badge.status-ready {
+        background: var(--color-success-light);
+        color: var(--color-success);
+      }
+      .item-status-badge.clickable {
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+      .item-status-badge.clickable svg {
+        transition: transform 0.15s;
+      }
+      .item-status-control:has(.item-status-dropdown:not([style*='display: none']))
+        .item-status-badge.clickable
+        svg {
+        transform: rotate(180deg);
+      }
+      .item-status-badge.status-ready.clickable:hover {
+        background: var(--color-success);
+        color: white;
+        transform: scale(1.05);
+      }
+      .item-status-badge.status-delivered {
+        background: var(--color-bg);
+        color: var(--color-text-muted);
+        border: 1px solid var(--color-border);
+      }
+      .item-status-badge.status-delivered.clickable:hover {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+        border-color: #3b82f6;
+        transform: scale(1.05);
+      }
+      .item-status-badge.status-cancelled {
+        background: var(--color-bg);
+        color: var(--color-text-muted);
+      }
+      .item-actions {
+        display: flex;
+        gap: var(--space-2);
+        margin-top: var(--space-1);
+      }
+      .btn-xs {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+      }
+      .btn-info {
+        background: #3b82f6;
+        color: white;
+      }
+      .btn-info:hover {
+        background: #2563eb;
+      }
+      .btn-secondary {
+        background: var(--color-text-muted);
+        color: white;
+      }
+      .btn-secondary:hover {
+        background: #57534e;
+      }
+      .btn-print,
+      .btn-menu-link {
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: 1px solid var(--color-border);
+      }
+      .btn-print:hover,
+      .btn-menu-link:hover {
+        background: var(--color-bg);
+      }
+      .btn-danger {
+        background: var(--color-error);
+        color: white;
+      }
+      .btn-danger:hover {
+        background: #dc2626;
+      }
+      .quantity-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px var(--color-primary-light);
+      }
+      .removed-indicator {
+        display: flex;
+        gap: var(--space-2);
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+        font-style: italic;
+        margin-top: var(--space-1);
+      }
+      .removed-label {
+        color: var(--color-error);
+      }
+      .removed-time {
+        color: var(--color-text-muted);
+      }
+      .removed-count {
+        font-size: 0.75rem;
+        color: var(--color-text-muted);
+        font-style: italic;
+      }
+      .toggle-removed {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: 0.875rem;
+        color: var(--color-text);
+        cursor: pointer;
+        margin-left: auto;
+        padding: var(--space-2) var(--space-3);
+      }
+      .toggle-removed input[type='checkbox'] {
+        cursor: pointer;
+      }
+
+      .order-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-4);
+        background: none;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-3);
+        border-top: 1px solid var(--color-border);
+        overflow: visible;
+      }
+      .order-footer-left {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+      }
+      .order-total {
+        font-weight: 600;
+        color: var(--color-text);
+      }
+      .order-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--space-2);
+        position: relative;
+        overflow: visible;
+      }
+
+      .status-control {
+        position: relative;
+        overflow: visible;
+        z-index: 1;
+      }
+      .order-card.status-dropdown-open .status-control {
+        z-index: 9999;
+      }
+
+      .status-badge-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        min-height: 44px;
+        padding: var(--space-2) var(--space-3);
+        border-radius: 14px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid var(--color-border);
+        transition: all 0.15s;
+        position: relative;
+      }
+      .status-badge-btn svg {
+        transition: transform 0.15s;
+      }
+      .status-control:has(.status-dropdown:not([style*='display: none'])) .status-badge-btn svg {
+        transform: rotate(180deg);
+      }
+      .status-badge-btn.pending {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--color-warning);
+      }
+      .status-badge-btn.preparing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #3b82f6;
+      }
+      .status-badge-btn.ready {
+        background: var(--color-success-light);
+        color: var(--color-success);
+      }
+      .status-badge-btn.completed {
+        background: var(--color-bg);
+        color: var(--color-text-muted);
+      }
+      .status-badge-btn.paid {
+        background: var(--color-success-light);
+        color: var(--color-success);
+      }
+      .status-badge-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
       .status-dropdown {
-        min-width: 200px;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: auto;
+        margin-top: 6px;
+        margin-left: 0;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        min-width: 220px;
+        overflow: hidden;
       }
       .item-status-dropdown {
+        min-width: 200px;
+      }
+
+      .dropdown-section {
+        padding: var(--space-2) 0;
+      }
+      .dropdown-section:not(:last-child) {
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .dropdown-label {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-2);
+        width: 100%;
+        min-height: 48px;
+        padding: var(--space-3) var(--space-4);
+        background: none;
+        border: none;
+        text-align: left;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--color-text);
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .dropdown-item:hover {
+        background: var(--color-bg);
+      }
+      .dropdown-item.forward {
+        color: var(--color-primary);
+      }
+      .dropdown-item.backward {
+        color: var(--color-text-muted);
+      }
+      .dropdown-item svg {
+        flex-shrink: 0;
+      }
+
+      .item-status-control {
+        position: relative;
+        display: inline-flex;
+        z-index: 10;
+      }
+      .order-item:hover .item-status-control {
+        z-index: 50;
+      }
+
+      .grid-container {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+      .grid-container .btn-factura-row,
+      .grid-container .btn-edit-order-row {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding: 0 !important;
+        cursor: pointer;
+        background: #fff !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        border-radius: 8px;
+        transition: background 0.15s ease;
+      }
+      .grid-container .btn-factura-row:hover,
+      .grid-container .btn-edit-order-row:hover {
+        background: #f5f5f5 !important;
+      }
+      .grid-container .btn-factura-row svg,
+      .grid-container .btn-edit-order-row svg {
+        flex-shrink: 0;
+      }
+
+      .mobile-header {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
         right: 0;
-        left: auto;
+        height: 56px;
+        background: var(--color-surface);
+        border-bottom: 1px solid var(--color-border);
+        padding: 0 var(--space-4);
+        align-items: center;
+        gap: var(--space-3);
+        z-index: 99;
       }
-    }
-
-    /* Toast Notification */
-    .toast {
-      position: fixed;
-      bottom: var(--space-6);
-      right: var(--space-6);
-      padding: var(--space-4) var(--space-5);
-      background: var(--color-surface);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-lg);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      z-index: 1100;
-      animation: slideInUp 0.3s ease;
-      max-width: 400px;
-      border-left: 4px solid var(--color-text-muted);
-    }
-    .toast.success {
-      border-left-color: var(--color-success);
-    }
-    .toast.error {
-      border-left-color: var(--color-error);
-    }
-    .toast-close {
-      background: none;
-      border: none;
-      color: var(--color-text-muted);
-      cursor: pointer;
-      padding: 4px;
-      display: flex;
-      transition: color 0.15s;
-    }
-    .toast-close:hover {
-      color: var(--color-text);
-    }
-    @keyframes slideInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
+      .menu-toggle {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: none;
+        border: none;
+        padding: var(--space-2);
+        cursor: pointer;
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+      .menu-toggle span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: var(--color-text);
+        border-radius: 1px;
       }
-    }
+      .header-title {
+        font-weight: 700;
+        color: var(--color-primary);
+      }
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 99;
+      }
 
-    /* Waiter Alert Banner */
-    .waiter-alert-banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1200;
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-      padding: var(--space-4) var(--space-5);
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      animation: slideDown 0.3s ease, pulse 1.5s ease-in-out 3;
-      box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-    }
-    .waiter-alert-banner.payment {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
-    }
-    .waiter-alert-icon {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      animation: ring 0.6s ease-in-out 3;
-    }
-    .waiter-alert-text {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .waiter-alert-text strong {
-      font-size: 1rem;
-    }
-    .waiter-alert-text span {
-      font-size: 0.875rem;
-      opacity: 0.9;
-    }
-    .waiter-alert-message {
-      font-style: italic;
-      margin-top: 2px;
-    }
-    .waiter-alert-dismiss {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      border-radius: var(--radius-sm);
-      color: white;
-      cursor: pointer;
-      padding: var(--space-2);
-      display: flex;
-      transition: background 0.15s;
-    }
-    .waiter-alert-dismiss:hover {
-      background: rgba(255,255,255,0.35);
-    }
-    .split-pay-summary {
-      margin: var(--space-3) 0;
-      padding: var(--space-3) 0;
-      border-top: 1px solid var(--color-border);
-    }
-    .split-pay-list {
-      margin: 0.5rem 0 0.75rem;
-      padding-left: 1.25rem;
-      font-size: 0.875rem;
-      color: var(--color-text-muted, #666);
-    }
-    .split-line-list {
-      list-style: none;
-      margin: 0.35rem 0 0.5rem;
-      padding: 0;
-      max-height: 10rem;
-      overflow: auto;
-    }
-    .split-line-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      margin-bottom: 0.35rem;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-    .split-pay-summary .btn {
-      margin-bottom: var(--space-3);
-    }
-    @keyframes slideDown {
-      from { transform: translateY(-100%); }
-      to { transform: translateY(0); }
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.85; }
-    }
-    @keyframes ring {
-      0%, 100% { transform: rotate(0); }
-      25% { transform: rotate(15deg); }
-      75% { transform: rotate(-15deg); }
-    }
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
 
-    /* Form textarea */
-    .form-textarea {
-      width: 100%;
-      padding: var(--space-3);
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      font-size: 0.9375rem;
-      font-family: var(--font-sans);
-      background: var(--color-surface);
-      color: var(--color-text);
-      resize: vertical;
-      min-height: 80px;
-    }
-    .form-textarea:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px var(--color-primary-light);
-    }
-  `]
+      .modal {
+        background: var(--color-surface);
+        border-radius: var(--radius-lg);
+        width: 90%;
+        max-width: 400px;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--color-text);
+      }
+
+      .icon-btn {
+        background: none;
+        border: none;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        padding: var(--space-2);
+        display: flex;
+        align-items: center;
+        transition: color 0.15s;
+      }
+
+      .icon-btn:hover {
+        color: var(--color-text);
+      }
+
+      .modal-body {
+        padding: var(--space-4);
+      }
+
+      .modal-body p {
+        margin: 0 0 var(--space-4);
+        color: var(--color-text);
+        font-weight: 500;
+      }
+
+      .modal-body p.modal-hint {
+        margin-top: calc(-1 * var(--space-3));
+        font-weight: 400;
+        font-size: 0.875rem;
+        color: var(--color-text-muted);
+      }
+
+      .payment-amount-line {
+        margin-bottom: var(--space-3);
+      }
+      .payment-tip-group .form-label-text {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: var(--space-2);
+      }
+      .tip-preset-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
+      }
+      .tip-preset-buttons .btn-sm {
+        padding: var(--space-2) var(--space-3);
+        font-size: 0.8125rem;
+      }
+      .payment-tip-preview {
+        margin-top: var(--space-2);
+        margin-bottom: 0;
+      }
+
+      .modal-order-edit {
+        max-width: 520px;
+      }
+      .modal-order-edit .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      .edit-order-items {
+        margin-bottom: var(--space-4);
+      }
+      .edit-order-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-bottom: var(--space-2);
+      }
+      .edit-order-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
+      }
+      .modal-order-edit .edit-order-row {
+        border-bottom: none;
+      }
+      .edit-order-row .edit-item-name {
+        flex: 1;
+        min-width: 0;
+        font-size: 0.9375rem;
+      }
+      .edit-order-row .quantity-input {
+        width: 56px;
+      }
+      .edit-order-row .edit-item-status {
+        width: 120px;
+      }
+      .edit-order-row .btn-remove-item {
+        flex-shrink: 0;
+        padding: var(--space-2);
+        color: var(--color-text-muted);
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: 6px;
+      }
+      .edit-order-row .btn-remove-item:hover {
+        color: var(--color-error, #dc2626);
+        background: rgba(0, 0, 0, 0.05);
+      }
+      .add-items-section .add-items-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+      }
+      .add-items-section .add-items-row .form-select {
+        flex: 1;
+        min-width: 160px;
+      }
+      .add-items-section .add-items-row .quantity-input {
+        width: 56px;
+      }
+      .edit-order-item-block {
+        border-bottom: 1px solid var(--color-border);
+        padding-bottom: var(--space-2);
+        margin-bottom: var(--space-1);
+      }
+      .edit-order-item-block:last-child {
+        border-bottom: none;
+      }
+      .modifier-edit-fields,
+      .add-modifiers-fields {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        margin-top: var(--space-2);
+        padding-left: var(--space-1);
+      }
+      .modifier-label {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        text-transform: uppercase;
+        margin-top: var(--space-1);
+      }
+      .modifier-textarea {
+        resize: vertical;
+        min-height: 2.5rem;
+        font-family: inherit;
+      }
+      .add-modifiers-fields {
+        margin-top: var(--space-3);
+      }
+
+      .form-group {
+        margin-bottom: var(--space-4);
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: var(--space-2);
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text);
+      }
+
+      .form-select {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.9375rem;
+        background: var(--color-surface);
+        color: var(--color-text);
+      }
+
+      .form-select:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.9375rem;
+        background: var(--color-surface);
+        color: var(--color-text);
+        box-sizing: border-box;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light);
+      }
+
+      .modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+        justify-content: flex-end;
+        align-items: center;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-4);
+        border-top: 1px solid var(--color-border);
+      }
+      .modal-actions .btn {
+        flex: 0 1 auto;
+        min-width: 6rem;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-header {
+          display: flex;
+        }
+        .sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.25s ease;
+        }
+        .sidebar-open .sidebar {
+          transform: translateX(0);
+        }
+        .sidebar-open .overlay {
+          display: block;
+        }
+        .close-btn {
+          display: block;
+        }
+        .main {
+          margin-left: 0;
+          padding: calc(56px + var(--space-4)) var(--space-4) var(--space-4);
+        }
+        .order-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .grid-container {
+          margin-left: calc(-1 * var(--space-4));
+          margin-right: calc(-1 * var(--space-4));
+          padding: 0 var(--space-4);
+        }
+
+        .status-dropdown {
+          min-width: 200px;
+        }
+        .item-status-dropdown {
+          right: 0;
+          left: auto;
+        }
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        bottom: var(--space-6);
+        right: var(--space-6);
+        padding: var(--space-4) var(--space-5);
+        background: var(--color-surface);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        z-index: 1100;
+        animation: slideInUp 0.3s ease;
+        max-width: 400px;
+        border-left: 4px solid var(--color-text-muted);
+      }
+      .toast.success {
+        border-left-color: var(--color-success);
+      }
+      .toast.error {
+        border-left-color: var(--color-error);
+      }
+      .toast-close {
+        background: none;
+        border: none;
+        color: var(--color-text-muted);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        transition: color 0.15s;
+      }
+      .toast-close:hover {
+        color: var(--color-text);
+      }
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Waiter Alert Banner */
+      .waiter-alert-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1200;
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-4) var(--space-5);
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        animation:
+          slideDown 0.3s ease,
+          pulse 1.5s ease-in-out 3;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+      }
+      .waiter-alert-banner.payment {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+      }
+      .waiter-alert-icon {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        animation: ring 0.6s ease-in-out 3;
+      }
+      .waiter-alert-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .waiter-alert-text strong {
+        font-size: 1rem;
+      }
+      .waiter-alert-text span {
+        font-size: 0.875rem;
+        opacity: 0.9;
+      }
+      .waiter-alert-message {
+        font-style: italic;
+        margin-top: 2px;
+      }
+      .waiter-alert-dismiss {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: var(--radius-sm);
+        color: white;
+        cursor: pointer;
+        padding: var(--space-2);
+        display: flex;
+        transition: background 0.15s;
+      }
+      .waiter-alert-dismiss:hover {
+        background: rgba(255, 255, 255, 0.35);
+      }
+      .split-pay-summary {
+        margin: var(--space-3) 0;
+        padding: var(--space-3) 0;
+        border-top: 1px solid var(--color-border);
+      }
+      .split-pay-list {
+        margin: 0.5rem 0 0.75rem;
+        padding-left: 1.25rem;
+        font-size: 0.875rem;
+        color: var(--color-text-muted, #666);
+      }
+      .split-line-list {
+        list-style: none;
+        margin: 0.35rem 0 0.5rem;
+        padding: 0;
+        max-height: 10rem;
+        overflow: auto;
+      }
+      .split-line-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        margin-bottom: 0.35rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      .split-pay-summary .btn {
+        margin-bottom: var(--space-3);
+      }
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100%);
+        }
+        to {
+          transform: translateY(0);
+        }
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.85;
+        }
+      }
+      @keyframes ring {
+        0%,
+        100% {
+          transform: rotate(0);
+        }
+        25% {
+          transform: rotate(15deg);
+        }
+        75% {
+          transform: rotate(-15deg);
+        }
+      }
+
+      /* Form textarea */
+      .form-textarea {
+        width: 100%;
+        padding: var(--space-3);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        font-size: 0.9375rem;
+        font-family: var(--font-sans);
+        background: var(--color-surface);
+        color: var(--color-text);
+        resize: vertical;
+        min-height: 80px;
+      }
+      .form-textarea:focus {
+        outline: none;
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px var(--color-primary-light);
+      }
+    `,
+  ],
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
@@ -2505,20 +3911,33 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private printBridge = inject(PrintBridgeService);
 
   // Permission checks for UI
-  canUpdateStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status'));
-  canUpdateItemStatus = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:item_status'));
-  canMarkPaid = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid'));
+  canUpdateStatus = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status'),
+  );
+  canUpdateItemStatus = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:item_status'),
+  );
+  canMarkPaid = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid'),
+  );
   canRedeemLoyalty = computed(() =>
     this.permissions.hasPermission(this.api.getCurrentUser(), 'loyalty:redeem'),
   );
   /** Finish (deliver all + pay) needs both status updates and mark-paid (same as backend). */
-  canFinishOrder = computed(() =>
-    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status') &&
-    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid')
+  canFinishOrder = computed(
+    () =>
+      this.permissions.hasPermission(this.api.getCurrentUser(), 'order:update_status') &&
+      this.permissions.hasPermission(this.api.getCurrentUser(), 'order:mark_paid'),
   );
-  canCancelOrder = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:cancel'));
-  canRemoveItem = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:remove_item'));
-  canDeleteOrder = computed(() => this.permissions.hasPermission(this.api.getCurrentUser(), 'order:delete'));
+  canCancelOrder = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:cancel'),
+  );
+  canRemoveItem = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:remove_item'),
+  );
+  canDeleteOrder = computed(() =>
+    this.permissions.hasPermission(this.api.getCurrentUser(), 'order:delete'),
+  );
 
   // Get browser's timezone automatically
   private getBrowserTimezone(): string {
@@ -2630,18 +4049,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
   tableScopeLabel = computed(() => {
     const tid = this.tableScopeId();
     if (tid == null) return '';
-    const o = this.orders().find(x => x.table_id === tid);
-    return (o?.table_name && String(o.table_name).trim()) ? String(o.table_name) : `#${tid}`;
+    const o = this.orders().find((x) => x.table_id === tid);
+    return o?.table_name && String(o.table_name).trim() ? String(o.table_name) : `#${tid}`;
   });
 
   // Computed signals for separating active and completed orders
   // Paid orders stay active until delivered (status → completed), so waiters/kitchen/bar still see them
   activeOrders = computed(() => {
     const tid = this.tableScopeId();
-    let list = this.orders().filter(o =>
-      ['pending', 'preparing', 'ready', 'out_for_delivery', 'partially_delivered', 'paid'].includes(o.status)
+    let list = this.orders().filter((o) =>
+      ['pending', 'preparing', 'ready', 'out_for_delivery', 'partially_delivered', 'paid'].includes(
+        o.status,
+      ),
     );
-    if (tid != null) list = list.filter(o => o.table_id === tid);
+    if (tid != null) list = list.filter((o) => o.table_id === tid);
     return [...list].sort((a, b) => {
       if (!!a.staff_urgent !== !!b.staff_urgent) {
         return a.staff_urgent ? -1 : 1;
@@ -2651,19 +4072,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
   });
   completedOrders = computed(() => {
     const tid = this.tableScopeId();
-    let list = this.orders().filter(o => ['completed', 'cancelled', 'paid'].includes(o.status));
-    if (tid != null) list = list.filter(o => o.table_id === tid);
+    let list = this.orders().filter((o) => ['completed', 'cancelled', 'paid'].includes(o.status));
+    if (tid != null) list = list.filter((o) => o.table_id === tid);
     return list;
   });
   notPaidOrders = computed(() => {
     const tid = this.tableScopeId();
-    let list = this.orders().filter(o => o.status === 'completed' && !o.paid_at);
-    if (tid != null) list = list.filter(o => o.table_id === tid);
+    let list = this.orders().filter((o) => o.status === 'completed' && !o.paid_at);
+    if (tid != null) list = list.filter((o) => o.table_id === tid);
     return list;
   });
   /** Satisfecho Delivery + marketplace delivery orders (Delivery tab). */
   deliveryOrders = computed(() => {
-    return this.orders().filter(o => this.isDeliveryChannel(o));
+    return this.orders().filter((o) => this.isDeliveryChannel(o));
   });
 
   // AG Grid configuration - custom light theme matching app colors
@@ -2685,16 +4106,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
   get columnDefs(): ColDef[] {
     const currencySymbol = this.currency();
     const currencyCode = this.currencyCode();
+    const decimalPlaces = this.decimalPlaces();
     const locale = intlLocaleFromTranslate(this.translate);
     const formatCurrency = (value: number) => {
+      const amount = toDisplayAmount(value, decimalPlaces);
       if (currencyCode) {
         return new Intl.NumberFormat(locale, {
           style: 'currency',
           currency: currencyCode,
-          currencyDisplay: 'symbol'
-        }).format(value / 100);
+          currencyDisplay: 'symbol',
+          minimumFractionDigits: decimalPlaces,
+          maximumFractionDigits: decimalPlaces,
+        }).format(amount);
       }
-      return `${currencySymbol}${(value / 100).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      return `${currencySymbol}${amount.toLocaleString(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
     };
     return [
       {
@@ -2720,7 +4145,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
         flex: 1,
         valueFormatter: (params) => {
           if (!params.value) return '';
-          return params.value.map((item: any) => `${item.quantity}x ${item.product_name}`).join(', ');
+          return params.value
+            .map((item: any) => `${item.quantity}x ${item.product_name}`)
+            .join(', ');
         },
       },
       {
@@ -2740,8 +4167,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
           const status = params.value;
           const statusLabel = this.translate.instant(`ORDER_STATUS.${status}`) || status;
           const colorMap: Record<string, string> = {
-            completed: '#78716C',  // matches --color-text-muted
-            paid: '#16A34A',       // matches --color-success
+            completed: '#78716C', // matches --color-text-muted
+            paid: '#16A34A', // matches --color-success
           };
           const color = colorMap[status] || '#78716C';
           return `<span style="
@@ -2763,9 +4190,12 @@ export class OrdersComponent implements OnInit, OnDestroy {
         valueFormatter: (params) => {
           if (!params.value) return '';
           // Parse date - backend sends ISO without timezone, treat as UTC
-          const dateStr = params.value.endsWith('Z') || params.value.includes('+') || params.value.includes('-', 10)
-            ? params.value
-            : params.value + 'Z';
+          const dateStr =
+            params.value.endsWith('Z') ||
+            params.value.includes('+') ||
+            params.value.includes('-', 10)
+              ? params.value
+              : params.value + 'Z';
           const date = new Date(dateStr);
           if (isNaN(date.getTime())) return '';
           // Use browser's local timezone for display
@@ -2778,7 +4208,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
             minute: '2-digit',
             second: '2-digit',
             timeZone: timeZone,
-            hour12: false
+            hour12: false,
           });
         },
       },
@@ -2792,7 +4222,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
           if (id == null) return '';
           const editTitle = this.translate.instant('ORDERS.EDIT_ORDER');
           const safeEditTitle = (editTitle || 'Edit').replace(/"/g, '&quot;');
-          const editIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+          const editIcon =
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
           return `<button type="button" class="btn-edit-order-row" data-order-id="${id}" title="${safeEditTitle}" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;cursor:pointer;background:#fff;color:#333;border:1px solid #ddd;border-radius:8px;">${editIcon}</button>`;
         },
       },
@@ -2805,25 +4236,31 @@ export class OrdersComponent implements OnInit, OnDestroy {
           const id = params.data?.id;
           if (id == null) return '';
           const title = this.translate.instant('CUSTOMERS.PRINT_FACTURA');
-          const icon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/></svg>';
+          const icon =
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/></svg>';
           const safeTitle = (title || '').replace(/"/g, '&quot;');
           return `<button type="button" class="btn-factura-row" data-order-id="${id}" title="${safeTitle}" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;cursor:pointer;background:#fff;color:#333;border:1px solid #ddd;border-radius:8px;">${icon}</button>`;
         },
       },
-      ...(this.canDeleteOrder() ? [{
-        headerName: '',
-        width: 56,
-        sortable: false,
-        filter: false,
-        cellRenderer: (params: ICellRendererParams) => {
-          const id = params.data?.id;
-          if (id == null) return '';
-          const deleteTitle = this.translate.instant('ORDERS.DELETE_ORDER');
-          const safeDeleteTitle = (deleteTitle || 'Delete').replace(/"/g, '&quot;');
-          const deleteIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
-          return `<button type="button" class="btn-delete-order-row" data-order-id="${id}" title="${safeDeleteTitle}" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;cursor:pointer;background:#fff;color:#666;border:1px solid #ddd;border-radius:8px;">${deleteIcon}</button>`;
-        },
-      }] : []),
+      ...(this.canDeleteOrder()
+        ? [
+            {
+              headerName: '',
+              width: 56,
+              sortable: false,
+              filter: false,
+              cellRenderer: (params: ICellRendererParams) => {
+                const id = params.data?.id;
+                if (id == null) return '';
+                const deleteTitle = this.translate.instant('ORDERS.DELETE_ORDER');
+                const safeDeleteTitle = (deleteTitle || 'Delete').replace(/"/g, '&quot;');
+                const deleteIcon =
+                  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+                return `<button type="button" class="btn-delete-order-row" data-order-id="${id}" title="${safeDeleteTitle}" style="display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;cursor:pointer;background:#fff;color:#666;border:1px solid #ddd;border-radius:8px;">${deleteIcon}</button>`;
+              },
+            },
+          ]
+        : []),
     ];
   }
 
@@ -2834,7 +4271,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit() {
-    this.tableScopeQuerySub = this.route.queryParamMap.subscribe(q => {
+    this.tableScopeQuerySub = this.route.queryParamMap.subscribe((q) => {
       const t = q.get('table');
       const id = t != null && t !== '' ? Number(t) : NaN;
       this.tableScopeId.set(Number.isFinite(id) && id > 0 ? id : null);
@@ -2857,7 +4294,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
               const item = this.waiterAlerts.add(
                 update.table_name || 'Table',
                 update.message || '',
-                update.type
+                update.type,
               );
               this.waiterAlert.set(item);
               this.audio.playUrgentWaiterAlert();
@@ -2867,7 +4304,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
             }
           } else {
             // Play sound notification for order changes
-            const changeTypes = ['item_removed', 'item_updated', 'order_cancelled', 'new_order', 'items_added'];
+            const changeTypes = [
+              'item_removed',
+              'item_updated',
+              'order_cancelled',
+              'new_order',
+              'items_added',
+            ];
             if (changeTypes.includes(update.type)) {
               this.audio.playRestaurantOrderChange();
             }
@@ -2911,16 +4354,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
     });
   }
 
-
   loadOrders() {
     this.loading.set(true);
     this.api.getOrders(this.showRemovedItems).subscribe({
-      next: orders => {
+      next: (orders) => {
         this.orders.set(orders);
         this.loading.set(false);
         this.applyStaffOrdersFocusFromQuery();
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -2935,19 +4377,17 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (!focusOrderRaw && !focusTableRaw) return;
 
     const focusOrderId =
-      focusOrderRaw != null && focusOrderRaw !== ''
-        ? Number(focusOrderRaw)
-        : NaN;
+      focusOrderRaw != null && focusOrderRaw !== '' ? Number(focusOrderRaw) : NaN;
     const focusTableId =
-      focusTableRaw != null && focusTableRaw !== ''
-        ? Number(focusTableRaw)
-        : NaN;
+      focusTableRaw != null && focusTableRaw !== '' ? Number(focusTableRaw) : NaN;
 
     /** Resolve focus using full order list (ignore table scope filter). */
-    const rawActive = this.orders().filter(o =>
-      ['pending', 'preparing', 'ready', 'out_for_delivery', 'partially_delivered', 'paid'].includes(o.status)
+    const rawActive = this.orders().filter((o) =>
+      ['pending', 'preparing', 'ready', 'out_for_delivery', 'partially_delivered', 'paid'].includes(
+        o.status,
+      ),
     );
-    const rawNotPaid = this.orders().filter(o => o.status === 'completed' && !o.paid_at);
+    const rawNotPaid = this.orders().filter((o) => o.status === 'completed' && !o.paid_at);
 
     let preserveTableId: number | null = null;
 
@@ -2969,15 +4409,15 @@ export class OrdersComponent implements OnInit, OnDestroy {
     let openEdit: Order | null = null;
 
     if (Number.isFinite(focusOrderId) && focusOrderId > 0) {
-      const order = this.orders().find(o => o.id === focusOrderId);
+      const order = this.orders().find((o) => o.id === focusOrderId);
       if (order) {
         if (order.table_id != null && order.table_id > 0) {
           preserveTableId = order.table_id;
         }
-        if (rawActive.some(o => o.id === focusOrderId)) {
+        if (rawActive.some((o) => o.id === focusOrderId)) {
           mode = 'active';
           scrollId = focusOrderId;
-        } else if (rawNotPaid.some(o => o.id === focusOrderId)) {
+        } else if (rawNotPaid.some((o) => o.id === focusOrderId)) {
           mode = 'not_paid';
           scrollId = focusOrderId;
         } else {
@@ -2987,22 +4427,29 @@ export class OrdersComponent implements OnInit, OnDestroy {
       }
     } else if (Number.isFinite(focusTableId) && focusTableId > 0) {
       preserveTableId = focusTableId;
-      const forTable = this.orders().filter(o => o.table_id === focusTableId);
-      const activeStatuses = ['pending', 'preparing', 'ready', 'out_for_delivery', 'partially_delivered', 'paid'];
+      const forTable = this.orders().filter((o) => o.table_id === focusTableId);
+      const activeStatuses = [
+        'pending',
+        'preparing',
+        'ready',
+        'out_for_delivery',
+        'partially_delivered',
+        'paid',
+      ];
       const activeForTable = forTable
-        .filter(o => activeStatuses.includes(o.status))
+        .filter((o) => activeStatuses.includes(o.status))
         .sort((a, b) => (b.staff_urgent ? 1 : 0) - (a.staff_urgent ? 1 : 0) || a.id - b.id);
       if (activeForTable.length > 0) {
         mode = 'active';
         scrollId = activeForTable[0].id;
       } else {
-        const notPaid = forTable.filter(o => o.status === 'completed' && !o.paid_at);
+        const notPaid = forTable.filter((o) => o.status === 'completed' && !o.paid_at);
         if (notPaid.length > 0) {
           mode = 'not_paid';
           scrollId = notPaid[0].id;
         } else {
           const hist = forTable
-            .filter(o => ['completed', 'cancelled', 'paid'].includes(o.status))
+            .filter((o) => ['completed', 'cancelled', 'paid'].includes(o.status))
             .sort((a, b) => b.id - a.id);
           if (hist.length > 0) {
             mode = 'history';
@@ -3034,11 +4481,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
   /** Refresh orders list and update editOrder with the latest order so the edit modal stays in sync. */
   refreshEditOrder(orderId: number) {
     this.api.getOrders(this.showRemovedItems).subscribe({
-      next: orders => {
+      next: (orders) => {
         this.orders.set(orders);
-        const o = orders.find(ord => ord.id === orderId);
+        const o = orders.find((ord) => ord.id === orderId);
         if (o) this.editOrder.set(o);
-      }
+      },
     });
   }
 
@@ -3062,7 +4509,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   courierDisplayName(courierUserId: number | null | undefined): string {
     if (courierUserId == null) return this.translate.instant('ORDERS.COURIER_UNASSIGNED');
-    const c = this.couriers().find(u => u.id === courierUserId);
+    const c = this.couriers().find((u) => u.id === courierUserId);
     if (c) return (c.full_name || c.email || `#${courierUserId}`).trim();
     return `#${courierUserId}`;
   }
@@ -3081,13 +4528,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private ensureDeliveryLookups(): void {
     if (this.couriers().length === 0) {
       this.api.getCouriers().subscribe({
-        next: list => this.couriers.set(list),
+        next: (list) => this.couriers.set(list),
         error: () => this.couriers.set([]),
       });
     }
     if (this.deliveryProducts().length === 0) {
       this.api.getProducts().subscribe({
-        next: list => this.deliveryProducts.set(list.filter(p => p.id != null)),
+        next: (list) => this.deliveryProducts.set(list.filter((p) => p.id != null)),
         error: () => this.deliveryProducts.set([]),
       });
     }
@@ -3123,9 +4570,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   addDeliveryDraftItem(): void {
     if (!this.deliveryAddProductId || this.deliveryAddQuantity < 1) return;
-    const product = this.deliveryProducts().find(p => p.id === this.deliveryAddProductId);
+    const product = this.deliveryProducts().find((p) => p.id === this.deliveryAddProductId);
     if (!product?.id) return;
-    const existing = this.deliveryDraftItems.find(l => l.product_id === product.id);
+    const existing = this.deliveryDraftItems.find((l) => l.product_id === product.id);
     if (existing) {
       existing.quantity += this.deliveryAddQuantity;
     } else {
@@ -3146,30 +4593,37 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const address = this.deliveryFormAddress.trim();
     if (!address || this.deliveryDraftItems.length === 0) return;
     this.creatingDelivery.set(true);
-    this.api.createSatisfechoDeliveryOrder({
-      items: this.deliveryDraftItems.map(l => ({ product_id: l.product_id, quantity: l.quantity })),
-      delivery_address: address,
-      customer_phone: this.deliveryFormPhone.trim() || null,
-      customer_name: this.deliveryFormCustomerName.trim() || null,
-      notes: this.deliveryFormNotes.trim() || null,
-      courier_user_id: this.deliveryFormCourierId,
-    }).subscribe({
-      next: () => {
-        this.creatingDelivery.set(false);
-        this.closeCreateDeliveryModal();
-        this.viewMode.set('delivery');
-        this.loadOrders();
-        this.showToast(this.translate.instant('ORDERS.DELIVERY_CREATED'), 'success');
-      },
-      error: (err) => {
-        this.creatingDelivery.set(false);
-        const detail = err?.error?.detail;
-        this.showToast(
-          typeof detail === 'string' ? detail : this.translate.instant('ORDERS.DELIVERY_CREATE_FAILED'),
-          'error'
-        );
-      },
-    });
+    this.api
+      .createSatisfechoDeliveryOrder({
+        items: this.deliveryDraftItems.map((l) => ({
+          product_id: l.product_id,
+          quantity: l.quantity,
+        })),
+        delivery_address: address,
+        customer_phone: this.deliveryFormPhone.trim() || null,
+        customer_name: this.deliveryFormCustomerName.trim() || null,
+        notes: this.deliveryFormNotes.trim() || null,
+        courier_user_id: this.deliveryFormCourierId,
+      })
+      .subscribe({
+        next: () => {
+          this.creatingDelivery.set(false);
+          this.closeCreateDeliveryModal();
+          this.viewMode.set('delivery');
+          this.loadOrders();
+          this.showToast(this.translate.instant('ORDERS.DELIVERY_CREATED'), 'success');
+        },
+        error: (err) => {
+          this.creatingDelivery.set(false);
+          const detail = err?.error?.detail;
+          this.showToast(
+            typeof detail === 'string'
+              ? detail
+              : this.translate.instant('ORDERS.DELIVERY_CREATE_FAILED'),
+            'error',
+          );
+        },
+      });
   }
 
   submitEditDelivery(): void {
@@ -3187,8 +4641,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.api.updateOrderDelivery(order.id, body).subscribe({
       next: (res) => {
         this.savingDelivery.set(false);
-        this.orders.update(list =>
-          list.map(o =>
+        this.orders.update((list) =>
+          list.map((o) =>
             o.id === order.id
               ? {
                   ...o,
@@ -3198,8 +4652,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
                   notes: res.notes ?? undefined,
                   courier_user_id: res.courier_user_id,
                 }
-              : o
-          )
+              : o,
+          ),
         );
         this.closeEditDeliveryModal();
         this.showToast(this.translate.instant('ORDERS.DELIVERY_UPDATED'), 'success');
@@ -3208,29 +4662,37 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.savingDelivery.set(false);
         const detail = err?.error?.detail;
         this.showToast(
-          typeof detail === 'string' ? detail : this.translate.instant('ORDERS.DELIVERY_UPDATE_FAILED'),
-          'error'
+          typeof detail === 'string'
+            ? detail
+            : this.translate.instant('ORDERS.DELIVERY_UPDATE_FAILED'),
+          'error',
         );
       },
     });
   }
 
   canAddItemsToOrder(order: Order): boolean {
-    return !!(order.table_id != null && order.table_token && order.status !== 'paid' && order.status !== 'cancelled');
+    return !!(
+      order.table_id != null &&
+      order.table_token &&
+      order.status !== 'paid' &&
+      order.status !== 'cancelled'
+    );
   }
 
   updateEditItemQuantity(orderId: number, itemId: number, quantity: number) {
     if (quantity < 1) return;
     this.api.updateOrderItemQuantityStaff(orderId, itemId, quantity).subscribe({
       next: () => this.refreshEditOrder(orderId),
-      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error')
+      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error'),
     });
   }
 
   updateEditItemStatus(orderId: number, itemId: number, status: string) {
     this.api.updateOrderItemStatus(orderId, itemId, status).subscribe({
       next: () => this.refreshEditOrder(orderId),
-      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_STATUS'), 'error')
+      error: () =>
+        this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_STATUS'), 'error'),
     });
   }
 
@@ -3240,7 +4702,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   addItemToEditOrder() {
     const order = this.editOrder();
-    if (!order?.table_token || !this.addItemProductId || this.addItemQuantity < 1 || !this.staffMenuToken) return;
+    if (
+      !order?.table_token ||
+      !this.addItemProductId ||
+      this.addItemQuantity < 1 ||
+      !this.staffMenuToken
+    )
+      return;
     this.addingItem.set(true);
     const lm = this.buildLineModifiersFromStrings(
       this.addItemModifiersRemove,
@@ -3256,48 +4724,60 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (note) row.notes = note;
     if (lm) row.line_modifiers = lm;
     const items: OrderItemCreate[] = [row];
-    this.api.submitOrder(order.table_token, { items, staff_access: this.staffMenuToken }).subscribe({
-      next: () => {
-        this.addingItem.set(false);
-        this.addItemProductId = null;
-        this.addItemQuantity = 1;
-        this.addItemNotes = '';
-        this.addItemModifiersRemove = '';
-        this.addItemModifiersAdd = '';
-        this.addItemModifiersSubstitute = '';
-        this.refreshEditOrder(order.id);
-      },
-      error: () => {
-        this.addingItem.set(false);
-        this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error');
-      }
-    });
+    this.api
+      .submitOrder(order.table_token, { items, staff_access: this.staffMenuToken })
+      .subscribe({
+        next: () => {
+          this.addingItem.set(false);
+          this.addItemProductId = null;
+          this.addItemQuantity = 1;
+          this.addItemNotes = '';
+          this.addItemModifiersRemove = '';
+          this.addItemModifiersAdd = '';
+          this.addItemModifiersSubstitute = '';
+          this.refreshEditOrder(order.id);
+        },
+        error: () => {
+          this.addingItem.set(false);
+          this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error');
+        },
+      });
   }
 
   saveEditOrderBilling() {
     const order = this.editOrder();
     if (!order) return;
-    const customer = this.editOrderBillingId != null
-      ? this.editOrderBillingCustomers().find(c => c.id === this.editOrderBillingId)
-      : null;
+    const customer =
+      this.editOrderBillingId != null
+        ? this.editOrderBillingCustomers().find((c) => c.id === this.editOrderBillingId)
+        : null;
     this.api.setOrderBillingCustomer(order.id, this.editOrderBillingId).subscribe({
       next: () => {
-        this.orders.update(list =>
-          list.map(o => o.id === order.id ? { ...o, billing_customer_id: this.editOrderBillingId, billing_customer: customer ?? undefined } : o)
+        this.orders.update((list) =>
+          list.map((o) =>
+            o.id === order.id
+              ? {
+                  ...o,
+                  billing_customer_id: this.editOrderBillingId,
+                  billing_customer: customer ?? undefined,
+                }
+              : o,
+          ),
         );
-        this.editOrder.set(this.orders().find(o => o.id === order.id) ?? null);
+        this.editOrder.set(this.orders().find((o) => o.id === order.id) ?? null);
         this.showToast(this.translate.instant('ORDERS.ITEM_UPDATED'), 'success');
       },
-      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error')
+      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error'),
     });
   }
 
   printEditOrderInvoice() {
     const order = this.editOrder();
     if (!order) return;
-    const customer = this.editOrderBillingId != null
-      ? this.editOrderBillingCustomers().find(c => c.id === this.editOrderBillingId)
-      : undefined;
+    const customer =
+      this.editOrderBillingId != null
+        ? this.editOrderBillingCustomers().find((c) => c.id === this.editOrderBillingId)
+        : undefined;
     if (this.fiscalInvoicingEnabled()) {
       this.api.issueOrderFiscalInvoice(order.id).subscribe({
         next: (fi) => {
@@ -3313,7 +4793,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (this.editOrderBillingId != null) {
       this.api.setOrderBillingCustomer(order.id, this.editOrderBillingId).subscribe({
         next: () => this.refreshEditOrder(order.id),
-        error: () => {}
+        error: () => {},
       });
     }
   }
@@ -3386,7 +4866,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (!notes?.trim()) return null;
     const cleaned = notes
       .split('\n')
-      .filter(line => !/^\[PAID:/i.test(line.trim()))
+      .filter((line) => !/^\[PAID:/i.test(line.trim()))
       .join('\n')
       .trim();
     return cleaned || null;
@@ -3436,7 +4916,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (m.remove?.length) parts.push(`Remove: ${m.remove.join(', ')}`);
     if (m.add?.length) parts.push(`Add: ${m.add.join(', ')}`);
     if (m.substitute?.length) {
-      parts.push(`Sub: ${m.substitute.map(s => `${s.from}→${s.to}`).join(', ')}`);
+      parts.push(`Sub: ${m.substitute.map((s) => `${s.from}→${s.to}`).join(', ')}`);
     }
     return parts.join(' · ');
   }
@@ -3452,13 +4932,16 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private parseCommaSeparatedLabels(s: string): string[] {
     return s
       .split(/[,;]/)
-      .map(x => x.trim())
+      .map((x) => x.trim())
       .filter(Boolean);
   }
 
   private parseSubstituteLines(s: string): { from: string; to: string }[] {
     const out: { from: string; to: string }[] = [];
-    const lines = s.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const lines = s
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
     for (const line of lines) {
       let from = '';
       let to = '';
@@ -3484,7 +4967,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return out;
   }
 
-  buildLineModifiersFromStrings(remove: string, add: string, substitute: string): OrderLineModifiers | undefined {
+  buildLineModifiersFromStrings(
+    remove: string,
+    add: string,
+    substitute: string,
+  ): OrderLineModifiers | undefined {
     const r = this.parseCommaSeparatedLabels(remove);
     const a = this.parseCommaSeparatedLabels(add);
     const sub = this.parseSubstituteLines(substitute);
@@ -3500,8 +4987,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const m = item.line_modifiers;
     this.modifierEditRemove = m?.remove?.join(', ') ?? '';
     this.modifierEditAdd = m?.add?.join(', ') ?? '';
-    this.modifierEditSubstitute =
-      m?.substitute?.map(p => `${p.from} → ${p.to}`).join('\n') ?? '';
+    this.modifierEditSubstitute = m?.substitute?.map((p) => `${p.from} → ${p.to}`).join('\n') ?? '';
   }
 
   toggleModifierEdit(item: OrderItem) {
@@ -3536,7 +5022,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   formatCustomizationFromAnswers(
-    answers: Record<string, string | number | string[]> | null | undefined
+    answers: Record<string, string | number | string[]> | null | undefined,
   ): string {
     if (!answers || Object.keys(answers).length === 0) return '';
     const parts: string[] = [];
@@ -3564,13 +5050,17 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.toast.set({ message, type });
   }
 
-  openConfirmModal(message: string, onConfirm: () => void, options?: { confirmText?: string; requireReason?: boolean }) {
+  openConfirmModal(
+    message: string,
+    onConfirm: () => void,
+    options?: { confirmText?: string; requireReason?: boolean },
+  ) {
     this.confirmReason = '';
     this.confirmAction.set({
       message,
       onConfirm,
       confirmText: options?.confirmText,
-      requireReason: options?.requireReason
+      requireReason: options?.requireReason,
     });
   }
 
@@ -3589,20 +5079,22 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   formatTime(isoString: string): string {
     // Parse date - backend sends ISO without timezone, treat as UTC
-    const dateStr = isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
-      ? isoString
-      : isoString + 'Z';
+    const dateStr =
+      isoString.endsWith('Z') || isoString.includes('+') || isoString.includes('-', 10)
+        ? isoString
+        : isoString + 'Z';
     const date = new Date(dateStr);
     // Use browser's local timezone for display
     const timeZone = this.getBrowserTimezone();
     return date.toLocaleTimeString(undefined, {
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: timeZone
+      timeZone: timeZone,
     });
   }
 
   tenantSettings = signal<TenantSettings | null>(null);
+  decimalPlaces = signal<number>(2);
 
   loadTenantSettings() {
     this.api.getTenantSettings().subscribe({
@@ -3610,6 +5102,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.tenantSettings.set(settings);
         const code = settings.currency_code || null;
         this.currencyCode.set(code);
+        this.decimalPlaces.set(
+          resolveDecimalPlaces(code, settings.currency_decimal_places ?? null),
+        );
         if (code) {
           this.currency.set(currencySymbolFromIsoCode(this.translate, code));
         } else {
@@ -3618,7 +5113,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Failed to load tenant settings:', err);
-      }
+      },
     });
   }
 
@@ -3629,7 +5124,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
         const url = `${window.location.origin}/menu/${res.table_token}?staff_access=${encodeURIComponent(res.token)}`;
         window.open(url, '_blank');
       },
-      error: () => this.showToast(this.translate.instant('ORDERS.OPEN_MENU_ERROR') || 'Could not open menu link', 'error')
+      error: () =>
+        this.showToast(
+          this.translate.instant('ORDERS.OPEN_MENU_ERROR') || 'Could not open menu link',
+          'error',
+        ),
     });
   }
 
@@ -3638,8 +5137,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.facturaOrder.set(order);
     this.facturaCustomerId = order.billing_customer_id ?? null;
     this.api.getBillingCustomers().subscribe({
-      next: list => this.facturaCustomers.set(list),
-      error: () => this.facturaCustomers.set([])
+      next: (list) => this.facturaCustomers.set(list),
+      error: () => this.facturaCustomers.set([]),
     });
   }
 
@@ -3657,17 +5156,21 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.modifierEditAdd = '';
     this.modifierEditSubstitute = '';
     this.api.getTenantProducts(true).subscribe({
-      next: list => this.editOrderTenantProducts.set(list),
-      error: () => this.editOrderTenantProducts.set([])
+      next: (list) => this.editOrderTenantProducts.set(list),
+      error: () => this.editOrderTenantProducts.set([]),
     });
     this.api.getBillingCustomers().subscribe({
-      next: list => this.editOrderBillingCustomers.set(list),
-      error: () => this.editOrderBillingCustomers.set([])
+      next: (list) => this.editOrderBillingCustomers.set(list),
+      error: () => this.editOrderBillingCustomers.set([]),
     });
     if (order.table_id != null) {
       this.api.getStaffMenuToken(order.table_id).subscribe({
-        next: res => { this.staffMenuToken = res.token; },
-        error: () => { this.staffMenuToken = null; }
+        next: (res) => {
+          this.staffMenuToken = res.token;
+        },
+        error: () => {
+          this.staffMenuToken = null;
+        },
       });
     } else {
       this.staffMenuToken = null;
@@ -3702,19 +5205,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const deleteBtn = target.closest('.btn-delete-order-row');
     if (editBtn) {
       const id = +(editBtn.getAttribute('data-order-id') || 0);
-      const order = this.orders().find(o => o.id === id);
+      const order = this.orders().find((o) => o.id === id);
       if (order) this.openEditOrderModal(order);
       return;
     }
     if (facturaBtn) {
       const id = +(facturaBtn.getAttribute('data-order-id') || 0);
-      const order = this.orders().find(o => o.id === id);
+      const order = this.orders().find((o) => o.id === id);
       if (order) this.openFacturaModal(order);
       return;
     }
     if (deleteBtn) {
       const id = +(deleteBtn.getAttribute('data-order-id') || 0);
-      const order = this.orders().find(o => o.id === id);
+      const order = this.orders().find((o) => o.id === id);
       if (order) this.deleteOrder(order);
     }
   }
@@ -3722,27 +5225,41 @@ export class OrdersComponent implements OnInit, OnDestroy {
   saveFacturaCustomerAndClose() {
     const order = this.facturaOrder();
     if (!order) return;
-    const customer = this.facturaCustomerId != null
-      ? this.facturaCustomers().find(c => c.id === this.facturaCustomerId)
-      : null;
+    const customer =
+      this.facturaCustomerId != null
+        ? this.facturaCustomers().find((c) => c.id === this.facturaCustomerId)
+        : null;
     this.api.setOrderBillingCustomer(order.id, this.facturaCustomerId).subscribe({
       next: () => {
-        this.orders.update(list =>
-          list.map(o => o.id === order.id ? { ...o, billing_customer_id: this.facturaCustomerId, billing_customer: customer ?? undefined } : o)
+        this.orders.update((list) =>
+          list.map((o) =>
+            o.id === order.id
+              ? {
+                  ...o,
+                  billing_customer_id: this.facturaCustomerId,
+                  billing_customer: customer ?? undefined,
+                }
+              : o,
+          ),
         );
         this.showToast(this.translate.instant('ORDERS.ITEM_UPDATED') || 'Saved', 'success');
         this.closeFacturaModal();
       },
-      error: () => this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM') || 'Failed to save', 'error')
+      error: () =>
+        this.showToast(
+          this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM') || 'Failed to save',
+          'error',
+        ),
     });
   }
 
   printFacturaAndClose() {
     const order = this.facturaOrder();
     if (!order) return;
-    const customer = this.facturaCustomerId != null
-      ? this.facturaCustomers().find(c => c.id === this.facturaCustomerId)
-      : null;
+    const customer =
+      this.facturaCustomerId != null
+        ? this.facturaCustomers().find((c) => c.id === this.facturaCustomerId)
+        : null;
     if (this.fiscalInvoicingEnabled()) {
       this.api.issueOrderFiscalInvoice(order.id).subscribe({
         next: (fi) => {
@@ -3777,19 +5294,26 @@ export class OrdersComponent implements OnInit, OnDestroy {
     return this.translate.instant('ORDERS.FISCAL_ISSUE_FAILED') || 'Could not issue fiscal invoice';
   }
 
-  private afterFacturaPrintPersistCustomer(order: Order, customer: BillingCustomer | null | undefined) {
+  private afterFacturaPrintPersistCustomer(
+    order: Order,
+    customer: BillingCustomer | null | undefined,
+  ) {
     if (this.facturaCustomerId != null) {
       this.api.setOrderBillingCustomer(order.id, this.facturaCustomerId).subscribe({
         next: () => {
-          this.orders.update(list =>
-            list.map(o =>
+          this.orders.update((list) =>
+            list.map((o) =>
               o.id === order.id
-                ? { ...o, billing_customer_id: this.facturaCustomerId, billing_customer: customer ?? undefined }
-                : o
-            )
+                ? {
+                    ...o,
+                    billing_customer_id: this.facturaCustomerId,
+                    billing_customer: customer ?? undefined,
+                  }
+                : o,
+            ),
           );
         },
-        error: () => {}
+        error: () => {},
       });
     }
   }
@@ -3797,7 +5321,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   async printInvoice(
     order: Order,
     billingCustomer?: BillingCustomer | null,
-    fiscalMeta?: FiscalInvoicePublic | null
+    fiscalMeta?: FiscalInvoicePublic | null,
   ) {
     let tseMeta: TseTransactionPublic | null = null;
     if (order.id != null && this.tseEnabled()) {
@@ -3833,47 +5357,55 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
     const settings = this.tenantSettings();
     const tenantId = this.api.getCurrentUser()?.tenant_id;
-    const logoUrl = settings?.logo_filename && tenantId
-      ? this.api.getTenantLogoUrl(settings.logo_filename, tenantId)
-      : null;
+    const logoUrl =
+      settings?.logo_filename && tenantId
+        ? this.api.getTenantLogoUrl(settings.logo_filename, tenantId)
+        : null;
 
     const businessName = settings?.name || 'Business';
     const address = settings?.address ? `<p>${this.escapeHtml(settings.address)}</p>` : '';
     const taxLine: string[] = [];
     if (settings?.tax_id) taxLine.push(`Tax ID: ${this.escapeHtml(settings.tax_id)}`);
     if (settings?.cif) taxLine.push(`CIF: ${this.escapeHtml(settings.cif)}`);
-    const taxBlock = taxLine.length ? `<p style="font-size:11px;color:#555;">${taxLine.join(' &nbsp;|&nbsp; ')}</p>` : '';
-
-    const dateStr = order.created_at
-      ? new Date(order.created_at.endsWith('Z') || order.created_at.includes('+') || order.created_at.includes('-', 10) ? order.created_at : order.created_at + 'Z').toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    const taxBlock = taxLine.length
+      ? `<p style="font-size:11px;color:#555;">${taxLine.join(' &nbsp;|&nbsp; ')}</p>`
       : '';
 
-    const items = (order.items || []).filter(i => !i.removed_by_customer);
-    const rows = items.map(i => {
-      const lineTotal = (i.price_cents || 0) * (i.quantity || 1);
-      const taxCents = i.tax_amount_cents ?? 0;
-      const cust = this.formatItemModifiersLine(i);
-      const nameCell = cust
-        ? `${this.escapeHtml(i.product_name || '')}<br/><span style="font-size:11px;color:#555;">${this.escapeHtml(cust)}</span>`
-        : this.escapeHtml(i.product_name || '');
-      return `<tr>
+    const dateStr = order.created_at
+      ? new Date(
+          order.created_at.endsWith('Z') ||
+            order.created_at.includes('+') ||
+            order.created_at.includes('-', 10)
+            ? order.created_at
+            : order.created_at + 'Z',
+        ).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+      : '';
+
+    const items = (order.items || []).filter((i) => !i.removed_by_customer);
+    const rows = items
+      .map((i) => {
+        const lineTotal = (i.price_cents || 0) * (i.quantity || 1);
+        const taxCents = i.tax_amount_cents ?? 0;
+        const cust = this.formatItemModifiersLine(i);
+        const nameCell = cust
+          ? `${this.escapeHtml(i.product_name || '')}<br/><span style="font-size:11px;color:#555;">${this.escapeHtml(cust)}</span>`
+          : this.escapeHtml(i.product_name || '');
+        return `<tr>
         <td>${nameCell}</td>
         <td style="text-align:center">${i.quantity || 1}</td>
         <td style="text-align:right">${this.formatPrice(i.price_cents || 0)}</td>
         <td style="text-align:right">${taxCents > 0 ? this.formatPrice(taxCents) : '—'}</td>
         <td style="text-align:right">${this.formatPrice(lineTotal)}</td>
       </tr>`;
-    }).join('');
+      })
+      .join('');
 
-    const subtotalCents = items.reduce(
-      (s, i) => s + (i.price_cents || 0) * (i.quantity || 1),
-      0
-    );
+    const subtotalCents = items.reduce((s, i) => s + (i.price_cents || 0) * (i.quantity || 1), 0);
     const tipAmt = order.tip_amount_cents || 0;
     const tipPct = order.tip_percent_applied;
     const tipTaxRate = Math.min(
       100,
-      Math.max(0, Math.floor(Number(settings?.tip_tax_rate_percent) || 0))
+      Math.max(0, Math.floor(Number(settings?.tip_tax_rate_percent) || 0)),
     );
     let tipTaxPart = 0;
     if (tipAmt > 0 && tipTaxRate > 0) {
@@ -3899,7 +5431,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
     // Totals by tax rate for invoice breakdown
     const taxByRate: Record<number, number> = {};
-    items.forEach(i => {
+    items.forEach((i) => {
       const rate = i.tax_rate_percent ?? 0;
       const cents = i.tax_amount_cents ?? 0;
       if (rate > 0 && cents > 0) {
@@ -3912,15 +5444,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const totalTaxCents = Object.values(taxByRate).reduce((a, b) => a + b, 0);
     const taxSummaryRows = Object.entries(taxByRate)
       .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([rate, cents]) =>
-        `<tr><td colspan="4" style="text-align:right; font-size: 12px; color: #555;">IVA ${rate}%</td><td style="text-align:right">${this.formatPrice(cents)}</td></tr>`
-      ).join('');
+      .map(
+        ([rate, cents]) =>
+          `<tr><td colspan="4" style="text-align:right; font-size: 12px; color: #555;">IVA ${rate}%</td><td style="text-align:right">${this.formatPrice(cents)}</td></tr>`,
+      )
+      .join('');
 
     let qrDataUrl = '';
     if (fiscalMeta?.verification_qr_content) {
       try {
         const QRCode = (await import('qrcode')).default;
-        qrDataUrl = await QRCode.toDataURL(fiscalMeta.verification_qr_content, { width: 180, margin: 1 });
+        qrDataUrl = await QRCode.toDataURL(fiscalMeta.verification_qr_content, {
+          width: 180,
+          margin: 1,
+        });
       } catch (e) {
         console.warn('Fiscal QR generation failed', e);
       }
@@ -3997,7 +5534,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
     ${address}
     ${taxBlock}
   </div>
-  ${billingCustomer ? `
+  ${
+    billingCustomer
+      ? `
   <div class="bill-to" style="margin-bottom: 16px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 13px;">
     <strong style="font-size: 11px; text-transform: uppercase; color: #64748b;">${this.translate.instant('CUSTOMERS.BILL_TO')}</strong>
     <p style="margin: 6px 0 0; font-weight: 600;">${this.escapeHtml(billingCustomer.company_name || billingCustomer.name)}</p>
@@ -4005,7 +5544,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
     ${billingCustomer.address ? `<p style="margin: 2px 0 0; color: #555;">${this.escapeHtml(billingCustomer.address)}</p>` : ''}
     ${billingCustomer.email ? `<p style="margin: 2px 0 0; color: #555;">${this.escapeHtml(billingCustomer.email)}</p>` : ''}
   </div>
-  ` : ''}
+  `
+      : ''
+  }
   <div class="meta">
     <strong>${this.translate.instant('ORDERS.INVOICE')}</strong>${fiscalMeta ? ' ' + this.escapeHtml(fiscalMeta.full_number) : ' #' + order.id} &nbsp;|&nbsp;
     ${this.translate.instant('ORDERS.ORDER_TIME')}: ${this.escapeHtml(dateStr)} &nbsp;|&nbsp;
@@ -4065,15 +5606,19 @@ export class OrdersComponent implements OnInit, OnDestroy {
   formatPrice(priceCents: number): string {
     const currencySymbol = this.currency();
     const currencyCode = this.currencyCode();
+    const decimalPlaces = this.decimalPlaces();
     const locale = intlLocaleFromTranslate(this.translate);
+    const amount = toDisplayAmount(priceCents, decimalPlaces);
     if (currencyCode) {
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: currencyCode,
-        currencyDisplay: 'symbol'
-      }).format(priceCents / 100);
+        currencyDisplay: 'symbol',
+        minimumFractionDigits: decimalPlaces,
+        maximumFractionDigits: decimalPlaces,
+      }).format(amount);
     }
-    return `${currencySymbol}${(priceCents / 100).toFixed(2)}`;
+    return `${currencySymbol}${amount.toLocaleString(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces })}`;
   }
 
   formatExactTime(dateString: string): string {
@@ -4082,9 +5627,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
     try {
       // Parse as UTC if it has timezone indicator, otherwise assume UTC
       // Backend sends ISO format without timezone, so we treat it as UTC
-      const dateStr = dateString.endsWith('Z') || dateString.includes('+') || dateString.includes('-', 10)
-        ? dateString
-        : dateString + 'Z';
+      const dateStr =
+        dateString.endsWith('Z') || dateString.includes('+') || dateString.includes('-', 10)
+          ? dateString
+          : dateString + 'Z';
       const date = new Date(dateStr);
 
       if (isNaN(date.getTime())) {
@@ -4101,7 +5647,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         minute: '2-digit',
         second: '2-digit',
         hour12: true,
-        timeZone: timeZone
+        timeZone: timeZone,
       });
     } catch {
       return dateString;
@@ -4115,9 +5661,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
     let date: Date;
     try {
       // If the string doesn't end with Z or timezone, assume it's UTC
-      const dateStr = dateString.endsWith('Z') || dateString.includes('+') || dateString.includes('-', 10)
-        ? dateString
-        : dateString + 'Z';
+      const dateStr =
+        dateString.endsWith('Z') || dateString.includes('+') || dateString.includes('-', 10)
+          ? dateString
+          : dateString + 'Z';
       date = new Date(dateStr);
     } catch {
       date = new Date(dateString);
@@ -4166,7 +5713,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: timeZone
+      timeZone: timeZone,
     });
   }
 
@@ -4177,7 +5724,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       preparing: 1,
       ready: 2,
       delivered: 3,
-      cancelled: 4
+      cancelled: 4,
     };
     return [...items].sort((a, b) => {
       const aOrder = statusOrder[a.status || 'pending'] ?? 5;
@@ -4196,7 +5743,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       completed: { forward: [], backward: ['ready'] }, // Paid is handled via modal
       partially_delivered: { forward: ['completed'], backward: [] },
       paid: { forward: [], backward: [] }, // Unmark paid is a separate action (clears paid mark only)
-      cancelled: { forward: [], backward: [] }
+      cancelled: { forward: [], backward: [] },
     };
     const key = (currentStatus ?? '').toString().toLowerCase();
     return transitions[key] ?? { forward: [], backward: [] };
@@ -4209,7 +5756,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       preparing: { forward: ['ready'], backward: ['pending'] },
       ready: { forward: ['delivered'], backward: ['preparing'] },
       delivered: { forward: [], backward: ['ready'] },
-      cancelled: { forward: [], backward: [] }
+      cancelled: { forward: [], backward: [] },
     };
     const key = (currentStatus ?? '').toString().toLowerCase();
     return transitions[key] ?? { forward: [], backward: [] };
@@ -4221,12 +5768,12 @@ export class OrdersComponent implements OnInit, OnDestroy {
   }
 
   toggleStatusDropdown(orderId: number) {
-    this.statusDropdownOpen.update(current => current === orderId ? null : orderId);
+    this.statusDropdownOpen.update((current) => (current === orderId ? null : orderId));
   }
 
   toggleItemStatusDropdown(orderId: number, itemId: number) {
     const key = `${orderId}-${itemId}`;
-    this.itemStatusDropdownOpen.update(current => current === key ? null : key);
+    this.itemStatusDropdownOpen.update((current) => (current === key ? null : key));
   }
 
   /**
@@ -4251,7 +5798,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.api.setOrderStaffUrgent(order.id, next).subscribe({
       next: (res) => {
         this.orders.update((list) =>
-          list.map((o) => (o.id === order.id ? { ...o, staff_urgent: res.staff_urgent } : o))
+          list.map((o) => (o.id === order.id ? { ...o, staff_urgent: res.staff_urgent } : o)),
         );
       },
     });
@@ -4278,8 +5825,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
           list.map((o) =>
             o.id === order.id
               ? { ...o, hub_fulfillment: ff, can_request_hub_fulfillment: false }
-              : o
-          )
+              : o,
+          ),
         );
       },
     });
@@ -4289,10 +5836,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.statusDropdownOpen.set(null); // Close dropdown
     this.api.updateOrderStatus(order.id, status).subscribe({
       next: () => {
-        this.orders.update(list =>
-          list.map(o => o.id === order.id ? { ...o, status } : o)
-        );
-      }
+        this.orders.update((list) => list.map((o) => (o.id === order.id ? { ...o, status } : o)));
+      },
     });
   }
 
@@ -4300,18 +5845,18 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.statusDropdownOpen.set(null);
     this.api.unmarkOrderPaid(order.id).subscribe({
       next: (res) => {
-        this.orders.update(list =>
-          list.map(o => {
+        this.orders.update((list) =>
+          list.map((o) => {
             if (o.id !== order.id) return o;
             return {
               ...o,
               status: res.new_status,
               paid_at: null,
-              payment_method: null
+              payment_method: null,
             };
-          })
+          }),
         );
-      }
+      },
     });
   }
 
@@ -4321,13 +5866,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
       () => {
         this.api.deleteOrder(order.id).subscribe({
           next: () => {
-            this.orders.update(list => list.filter(o => o.id !== order.id));
+            this.orders.update((list) => list.filter((o) => o.id !== order.id));
             this.showToast(this.translate.instant('ORDERS.DELETE_ORDER_DONE'), 'success');
           },
-          error: () => this.showToast(this.translate.instant('ORDERS.DELETE_ORDER_FAILED'), 'error')
+          error: () =>
+            this.showToast(this.translate.instant('ORDERS.DELETE_ORDER_FAILED'), 'error'),
         });
       },
-      { confirmText: this.translate.instant('ORDERS.DELETE_ORDER') }
+      { confirmText: this.translate.instant('ORDERS.DELETE_ORDER') },
     );
   }
 
@@ -4339,7 +5885,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Failed to update item status:', err);
         this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_STATUS'), 'error');
-      }
+      },
     });
   }
 
@@ -4350,7 +5896,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.showToast(this.translate.instant('ORDERS.FAILED_TO_RESET_STATUS'), 'error');
-      }
+      },
     });
   }
 
@@ -4368,10 +5914,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
           },
           error: () => {
             this.showToast(this.translate.instant('ORDERS.FAILED_TO_CANCEL_ITEM'), 'error');
-          }
+          },
         });
       },
-      { requireReason: true, confirmText: this.translate.instant('COMMON.CONFIRM') }
+      { requireReason: true, confirmText: this.translate.instant('COMMON.CONFIRM') },
     );
   }
 
@@ -4391,7 +5937,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.showToast(this.translate.instant('ORDERS.FAILED_TO_UPDATE_ITEM'), 'error');
-        }
+        },
       });
     }, 400);
   }
@@ -4408,13 +5954,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
           }
           this.doRemoveItem(orderId, itemId, this.confirmReason, onSuccess);
         },
-        { requireReason: true, confirmText: this.translate.instant('COMMON.CONFIRM') }
+        { requireReason: true, confirmText: this.translate.instant('COMMON.CONFIRM') },
       );
     } else {
       this.openConfirmModal(
         this.translate.instant('ORDERS.REMOVE_ITEM_CONFIRM'),
         () => this.doRemoveItem(orderId, itemId, undefined, onSuccess),
-        { confirmText: this.translate.instant('COMMON.CONFIRM') }
+        { confirmText: this.translate.instant('COMMON.CONFIRM') },
       );
     }
   }
@@ -4428,7 +5974,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.showToast(this.translate.instant('ORDERS.FAILED_TO_REMOVE_ITEM'), 'error');
-      }
+      },
     });
   }
 
@@ -4494,10 +6040,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
     return (order.items || []).filter(
       (i) =>
-        i.id != null &&
-        !i.removed_by_customer &&
-        i.status !== 'cancelled' &&
-        !allocated.has(i.id),
+        i.id != null && !i.removed_by_customer && i.status !== 'cancelled' && !allocated.has(i.id),
     );
   }
 
@@ -4597,7 +6140,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.processingPayment.set(false);
         const detail = err?.error?.detail || this.translate.instant('ORDERS.FAILED_TO_MARK_PAID');
         this.showToast(
-          typeof detail === 'string' ? detail : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'),
+          typeof detail === 'string'
+            ? detail
+            : this.translate.instant('ORDERS.FAILED_TO_MARK_PAID'),
           'error',
         );
       },
@@ -4609,7 +6154,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return order.subtotal_cents;
     }
     const items = (order.items || []).filter(
-      i => !i.removed_by_customer && i.status !== 'cancelled'
+      (i) => !i.removed_by_customer && i.status !== 'cancelled',
     );
     return items.reduce((s, i) => s + (i.price_cents || 0) * (i.quantity || 0), 0);
   }
@@ -4628,7 +6173,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     if (!t) return 0;
     const n = parseFloat(t);
     if (Number.isNaN(n) || n < 0) return 0;
-    return Math.round(n * 100);
+    return toMinorUnits(n, this.decimalPlaces());
   }
 
   onPaymentAmountPaidChange(): void {
@@ -4637,7 +6182,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     const sub = this.orderPaymentSubtotal(order);
     const paid = this.parseMoneyMajorToCents(this.paymentAmountPaidInput);
     const tip = Math.max(0, paid - sub);
-    this.paymentTipAmountInput = (tip / 100).toFixed(2);
+    const d = this.decimalPlaces();
+    this.paymentTipAmountInput = toDisplayAmount(tip, d).toFixed(d);
   }
 
   tipPresetsForPayment(): number[] {
@@ -4675,7 +6221,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
   paymentGrandTotalCents(order: Order | null | undefined): number {
     if (!order) return 0;
     const discount = Math.max(0, order.loyalty_discount_cents || 0);
-    return Math.max(0, this.orderPaymentSubtotal(order) - discount) + this.paymentTipPreviewCents(order);
+    return (
+      Math.max(0, this.orderPaymentSubtotal(order) - discount) + this.paymentTipPreviewCents(order)
+    );
   }
 
   paymentOverpaymentGrandTotalCents(): number {
@@ -4700,10 +6248,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
         order.loyalty_discount_cents = res.discount_cents;
         order.loyalty_units_redeemed = res.units_redeemed;
         order.loyalty_membership_id = res.membership_id;
-        order.total_cents = Math.max(
-          0,
-          this.orderPaymentSubtotal(order) - (res.discount_cents || 0),
-        ) + (order.tip_amount_cents || 0);
+        order.total_cents =
+          Math.max(0, this.orderPaymentSubtotal(order) - (res.discount_cents || 0)) +
+          (order.tip_amount_cents || 0);
         this.loyaltyRedeemToken = '';
         this.orderToMarkPaid.set({ ...order });
       },
@@ -4724,8 +6271,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
       const tip = this.parseMoneyMajorToCents(this.paymentTipAmountInput);
       if (paid < sub + tip) {
         this.showToast(
-          this.translate.instant('ORDERS.OVERPAYMENT_VALIDATE') || 'Amount charged must cover subtotal and tip',
-          'error'
+          this.translate.instant('ORDERS.OVERPAYMENT_VALIDATE') ||
+            'Amount charged must cover subtotal and tip',
+          'error',
         );
         return;
       }
@@ -4748,11 +6296,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
           this.processingPayment.set(false);
           this.showToast(
             this.translate.instant(
-              this.paymentModalFinishMode() ? 'ORDERS.FAILED_TO_FINISH' : 'ORDERS.FAILED_TO_MARK_PAID'
+              this.paymentModalFinishMode()
+                ? 'ORDERS.FAILED_TO_FINISH'
+                : 'ORDERS.FAILED_TO_MARK_PAID',
             ),
-            'error'
+            'error',
           );
-        }
+        },
       });
       return;
     }
@@ -4776,11 +6326,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.processingPayment.set(false);
         this.showToast(
           this.translate.instant(
-            this.paymentModalFinishMode() ? 'ORDERS.FAILED_TO_FINISH' : 'ORDERS.FAILED_TO_MARK_PAID'
+            this.paymentModalFinishMode()
+              ? 'ORDERS.FAILED_TO_FINISH'
+              : 'ORDERS.FAILED_TO_MARK_PAID',
           ),
-          'error'
+          'error',
         );
-      }
+      },
     });
   }
 }

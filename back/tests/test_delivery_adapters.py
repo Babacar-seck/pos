@@ -20,3 +20,5 @@ def test_stub_parse_webhook():
 def test_get_adapter_registered_brands():
     assert get_adapter("uber_eats").provider_key == "uber_eats"
     assert get_adapter("glovo").provider_key == "glovo"
+    assert get_adapter("deliveroo").provider_key == "deliveroo"
+    assert get_adapter("just_eat").provider_key == "just_eat"

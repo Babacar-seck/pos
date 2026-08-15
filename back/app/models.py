@@ -115,6 +115,10 @@ class Tenant(SQLModel, table=True):
         default=None
     )  # ISO 4217, e.g. EUR, USD, MXN, INR, CNY, TWD
     currency: str | None = Field(default=None)  # Legacy symbol (€, $, etc.)
+    # Decimal places for displaying/entering amounts. NULL = derive from currency_code
+    # (see app/currency_utils.py: Stripe's zero-decimal e.g. XOF/XAF and three-decimal currency lists).
+    # Explicit value lets the manager override the currency's usual convention.
+    currency_decimal_places: int | None = Field(default=None)
 
     # Default UI language for this tenant (e.g. en, es, ca, de, zh-CN, hi)
     default_language: str | None = Field(default=None)
@@ -1823,6 +1827,9 @@ class TenantUpdate(SQLModel):
 
     # Legacy symbol (still accepted, but currency_code is used for Stripe/formatting).
     currency: str | None = None
+
+    # Explicit decimal-places override (0-4); null = derive from currency_code.
+    currency_decimal_places: int | None = None
 
     default_language: str | None = None
     timezone: str | None = None
